@@ -19,6 +19,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 12 | Importador de Notion: traduce tus bases a nodos y conexiones y genera un SQL para pegar en Supabase | `importador-notion/` |
 | 13 | Mapa ordenado: esconde lo hecho, filtros por tipo en la leyenda, nombres según el zoom y caja "Sin conectar" | `docs/index.html` |
 | 14 | Cajas dentro de cajas: cada materia, proyecto y área es un espacio propio con todo lo suyo adentro | `docs/index.html` |
+| 15 | Inicio: menú, captura rápida, Hoy, próximos 7 días, Inbox y proyectos en curso | `docs/index.html` |
 
 ## Pruebas
 

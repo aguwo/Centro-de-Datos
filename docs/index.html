@@ -18,6 +18,10 @@
     7. Tocar un tipo en la leyenda lo esconde o lo vuelve a mostrar.
     8. Los nombres aparecen solo cuando hay zoom suficiente, al pasar el mouse o al enfocar un nodo.
     9. Los nodos sin ninguna conexión se juntan en una caja "Sin conectar".
+    Paso 15: el Inicio, tu panel de control. Un menú arriba cambia entre "Inicio" y "Mapa".
+    11. Captura rápida: escribes algo, Enter, y queda como tarea en el Inbox.
+    12. Hoy (y lo atrasado), próximos 7 días, Inbox y proyectos en curso. El check marca una tarea como Hecha;
+        si es repetitiva, en vez de cerrarse salta a la semana siguiente. Clic en el nombre abre su panel.
     Paso 14: cajas dentro de cajas, para que nada se tape.
     10. Cada nodo se dibuja DENTRO de lo que lo contiene: la tarea dentro de su proyecto o materia,
         la materia dentro de su área. Así cada materia es un espacio propio con todo lo suyo.
@@ -61,6 +65,25 @@
     .centro { max-width:400px; margin:64px auto; padding:0 16px; }
     .centro input { width:100%; padding:10px 12px; border:1px solid var(--borde); border-radius:8px; background:transparent; color:inherit; font:inherit; margin:8px 0 12px; }
     .oculto { display:none !important; }
+    nav { display:flex; gap:4px; }
+    nav button { border:0; }
+    nav button.activo { background:var(--borde); }
+    #inicio { flex:1; min-width:0; overflow-y:auto; padding:20px 16px; }
+    #inicio .tablero { max-width:1100px; margin:0 auto; display:grid; gap:16px; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); }
+    #inicio form { max-width:1100px; margin:0 auto 16px; display:flex; gap:8px; }
+    #inicio form input { flex:1; padding:10px 12px; border:1px solid var(--borde); border-radius:8px; background:transparent; color:inherit; font:inherit; }
+    .tarjeta { border:1px solid var(--borde); border-radius:12px; padding:14px 16px; }
+    .tarjeta h2 { font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; color:var(--suave); margin:0 0 8px; display:flex; justify-content:space-between; }
+    .tarjeta ul { list-style:none; padding:0; margin:0; }
+    .tarjeta li { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--borde); font-size:.9rem; }
+    .tarjeta li:last-child { border-bottom:0; }
+    .tarjeta li input { margin:0; width:16px; height:16px; accent-color:var(--acento); }
+    .tarjeta li .punto { width:8px; height:8px; border-radius:50%; background:var(--c); flex:none; }
+    .tarjeta li a { color:inherit; text-decoration:none; cursor:pointer; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tarjeta li a:hover { text-decoration:underline; }
+    .tarjeta .meta { color:var(--suave); font-size:.78rem; white-space:nowrap; }
+    .tarjeta .atrasada { color:#dc2626; }
+    .tarjeta .vacio { color:var(--suave); font-size:.85rem; }
     #mensaje { color:var(--suave); text-align:center; padding:8px; margin:0; }
   </style>
 </head>
@@ -76,12 +99,20 @@
 
   <header id="barra" class="oculto">
     <h1>Centro de datos</h1>
-    <div class="leyenda" id="leyenda"></div>
+    <nav id="menu">
+      <button data-vista="inicio" class="activo">Inicio</button>
+      <button data-vista="mapa">Mapa</button>
+    </nav>
+    <div class="leyenda oculto" id="leyenda"></div>
     <button id="nuevo" class="principal">+ Nuevo</button>
     <button id="salir">Salir</button>
   </header>
   <main id="app" class="oculto">
-    <div id="grafo"></div>
+    <section id="inicio">
+      <form id="form-captura"><input id="captura" placeholder="Captura rápida: escribe una tarea y presiona Enter…" autocomplete="off"></form>
+      <div class="tablero" id="tablero"></div>
+    </section>
+    <div id="grafo" class="oculto"></div>
     <aside id="panel" class="oculto"></aside>
   </main>
   <p id="mensaje"></p>
@@ -127,7 +158,10 @@
     tipos = [...porClave.values()];
     avisar(nodos.data.length ? "" : "Todavía no tienes nodos. Crea el primero con «+ Nuevo».");
     dibujar(nodos.data, conexiones.data);
-    if (enfocarId && cy.getElementById(enfocarId).length) enfocar(enfocarId);
+    dibujarInicio(nodos.data, conexiones.data);
+    if (enfocarId && cy.getElementById(enfocarId).length) {
+      if (vista === "mapa") enfocar(enfocarId); else mostrarPanel(enfocarId, cy.getElementById(enfocarId));
+    }
   }
 
   // Convierte las filas de Supabase en los "elementos" que entiende Cytoscape y los dibuja.
@@ -412,10 +446,13 @@
       cargarGrafo();
     };
 
+    const cerrar = el("button", { textContent: "Cerrar" });
+    cerrar.onclick = desenfocar;
+
     $("panel").replaceChildren(
       chip,
       el("h2", { textContent: n.titulo }),
-      el("div", { className: "acciones" }, editar, archivar),
+      el("div", { className: "acciones" }, editar, archivar, cerrar),
       datos,
       ...(n.contenido ? [el("div", { className: "contenido", textContent: n.contenido })] : []),
       el("h3", { textContent: `Conectado con (${nodo.connectedEdges().length})` }),
@@ -514,6 +551,112 @@
   }
 
   $("nuevo").onclick = () => formulario();
+
+  // ---------- Paso 15: el Inicio ----------
+
+  // Menú: muestra una vista y esconde la otra. La leyenda (filtros) solo tiene sentido en el mapa.
+  let vista = "inicio";
+  for (const b of $("menu").children) b.onclick = () => cambiarVista(b.dataset.vista);
+  function cambiarVista(v) {
+    vista = v;
+    for (const b of $("menu").children) b.classList.toggle("activo", b.dataset.vista === v);
+    $("inicio").classList.toggle("oculto", v !== "inicio");
+    $("grafo").classList.toggle("oculto", v !== "mapa");
+    $("leyenda").classList.toggle("oculto", v !== "mapa");
+    if (v === "mapa" && cy) { cy.resize(); cy.fit(cy.nodes().not(".escondido"), 30); }
+  }
+
+  // El día de una fecha, como texto "2026-11-01".
+  // Las fechas sin hora (las de Notion, guardadas a medianoche UTC) se leen tal cual, sin zona horaria,
+  // para que no se corran un día. Las que tienen hora se pasan a tu hora local.
+  function dia(fecha) {
+    if (!fecha) return null;
+    const d = new Date(fecha);
+    if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0) return fecha.slice(0, 10);
+    return d.toLocaleDateString("sv-SE"); // "sv-SE" escribe las fechas como AAAA-MM-DD
+  }
+  const hora = (fecha) => {
+    const d = new Date(fecha);
+    return d.getUTCHours() === 0 && d.getUTCMinutes() === 0 ? "" : d.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+  };
+  const sumarDias = (texto, n) => { const d = new Date(texto + "T12:00:00"); d.setDate(d.getDate() + n); return d.toLocaleDateString("sv-SE"); };
+
+  function dibujarInicio(nodos, conexiones) {
+    const hoy = new Date().toLocaleDateString("sv-SE");
+    const enSemana = sumarDias(hoy, 7);
+    const porId = new Map(nodos.map((n) => [n.id, n]));
+    // Para mostrar al lado de cada tarea a qué proyecto o área pertenece.
+    const contexto = new Map();
+    for (const c of conexiones) {
+      const destino = porId.get(c.destino_id);
+      if (c.relacion === "pertenece_a" && destino && !contexto.has(c.origen_id)) contexto.set(c.origen_id, destino.titulo);
+    }
+    const abierta = (n) => n.estado !== "Hecho";
+    const accionable = (n) => ["tarea", "evento"].includes(n.tipos.clave);
+    const porFecha = (a, b) => (a.fecha ?? "").localeCompare(b.fecha ?? "");
+
+    const deHoy = nodos.filter((n) => accionable(n) && abierta(n) && dia(n.fecha) && dia(n.fecha) <= hoy
+                                       && !(n.tipos.clave === "evento" && dia(n.fecha) < hoy)) // eventos pasados no se arrastran
+                       .sort(porFecha);
+    const proximos = nodos.filter((n) => accionable(n) && abierta(n) && dia(n.fecha) > hoy && dia(n.fecha) <= enSemana).sort(porFecha);
+    const inbox = nodos.filter((n) => n.estado === "Inbox" && n.tipos.clave === "tarea");
+    const proyectos = nodos.filter((n) => n.tipos.clave === "proyecto" && n.estado === "En curso");
+
+    const fila = (n, { conCheck = true, mostrarDia = false } = {}) => {
+      const li = el("li");
+      if (conCheck && n.tipos.clave === "tarea") {
+        const check = el("input", { type: "checkbox", title: "Marcar como hecha" });
+        check.onchange = () => completar(n);
+        li.append(check);
+      } else {
+        const p = el("span", { className: "punto" });
+        p.style.setProperty("--c", COLORES[n.tipos.clave] ?? "#78716c");
+        li.append(p);
+      }
+      const nombre = el("a", { textContent: n.titulo, title: n.titulo });
+      nombre.onclick = () => mostrarPanel(n.id, cy.getElementById(n.id));
+      const d = n.tipos.clave === "proyecto" ? null : dia(n.fecha); // en un proyecto la fecha es su inicio: no se muestra
+      const cuando = [mostrarDia || (d && d < hoy) ? d?.split("-").reverse().slice(0, 2).join("/") : "", d ? hora(n.fecha) : ""].filter(Boolean).join(" ");
+      const meta = el("span", { className: "meta" + (d && d < hoy ? " atrasada" : ""),
+                                textContent: [contexto.get(n.id), cuando].filter(Boolean).join(" · ") });
+      li.append(nombre, meta);
+      return li;
+    };
+    const tarjeta = (titulo, lista, vacio, opciones) => el("section", { className: "tarjeta" },
+      el("h2", {}, el("span", { textContent: titulo }), el("span", { textContent: String(lista.length) })),
+      lista.length ? el("ul", {}, ...lista.map((n) => fila(n, opciones))) : el("p", { className: "vacio", textContent: vacio }));
+
+    $("tablero").replaceChildren(
+      tarjeta("Hoy", deHoy, "Nada para hoy. 🎉"),
+      tarjeta("Próximos 7 días", proximos, "Semana despejada.", { mostrarDia: true }),
+      tarjeta("Inbox", inbox, "Inbox vacío: todo está ordenado."),
+      tarjeta("Proyectos en curso", proyectos, "No hay proyectos en curso.", { conCheck: false }),
+    );
+  }
+
+  // Marcar hecha. Una tarea repetitiva no se cierra: su fecha salta a la próxima vez que toca.
+  const SALTO = { Diaria: 1, Semanal: 7, Mensual: 30 };
+  async function completar(n) {
+    const salto = SALTO[n.props?.repeticion];
+    const cambios = salto && n.fecha
+      ? { fecha: new Date(new Date(n.fecha).getTime() + salto * 864e5).toISOString() }
+      : { estado: "Hecho" };
+    const { error } = await db.from("nodos").update(cambios).eq("id", n.id);
+    if (error) return avisar(error.message);
+    cargarGrafo();
+  }
+
+  // Captura rápida: crea una tarea en el Inbox, sin fecha ni conexiones. Después la ordenas.
+  $("form-captura").onsubmit = async (e) => {
+    e.preventDefault();
+    const titulo = $("captura").value.trim();
+    if (!titulo) return;
+    const tarea = tipos.find((t) => t.clave === "tarea");
+    const { error } = await db.from("nodos").insert({ tipo_id: tarea.id, titulo, estado: "Inbox" });
+    if (error) return avisar(error.message);
+    $("captura").value = "";
+    cargarGrafo();
+  };
 
   $("form-login").onsubmit = async (e) => {
     e.preventDefault();
