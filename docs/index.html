@@ -234,6 +234,11 @@
   // Paso 14: ¿dentro de qué caja se dibuja cada nodo?
   // Solo estos tipos pueden contener a otros. El número es el nivel: un nodo solo puede quedar
   // dentro de algo de nivel MENOR (más general), así nunca hay una caja dentro de sí misma.
+  // Reglas de subcajas: "dentro de un <dentroDe>, junta los <tipo> en una caja llamada <nombre>".
+  // Para agrupar otra cosa basta agregar una línea, sin tocar el resto del código.
+  const SUBCAJAS = [
+    { dentroDe: "topico", tipo: "evento", nombre: "Evaluaciones" },
+  ];
   const NIVEL = { area: 0, topico: 1, proyecto: 2, objetivo: 2, rutina: 2, categoria: 2 };
   const nivel = (tipo) => NIVEL[tipo] ?? 3;
 
@@ -258,19 +263,20 @@
     const ids = new Set(nodos.map((n) => n.id));
     const validas = conexiones.filter((c) => ids.has(c.origen_id) && ids.has(c.destino_id)); // por si alguna apunta a un nodo archivado
     const padres = elegirPadres(nodos, validas);
-    // Paso 18: dentro de cada ramo, las evaluaciones (eventos de la materia) van en su propia caja.
-    // La caja "Evaluaciones" no existe en la base: se inventa aquí, una por ramo, solo para dibujar.
+    // Paso 18: subcajas. Dentro de una caja, los nodos de cierto tipo se juntan en su propia subcaja.
+    // Las cajas no existen en la base: se inventan aquí, solo para dibujar. Una pasada por los nodos.
     const tipoDe = new Map(nodos.map((n) => [n.id, n.tipos.clave]));
-    const grupos = new Map();
+    const grupos = new Map();   // id de la subcaja -> { caja donde va, nombre }
     for (const n of nodos) {
-      const ramo = padres.get(n.id);
-      if (n.tipos.clave !== "evento" || tipoDe.get(ramo) !== "topico") continue;
-      const id = `_eval:${ramo}`;
-      grupos.set(id, ramo);
+      const caja = padres.get(n.id);
+      const regla = SUBCAJAS.find((r) => r.tipo === n.tipos.clave && r.dentroDe === tipoDe.get(caja));
+      if (!regla) continue;
+      const id = `_sub:${caja}:${regla.tipo}`;
+      grupos.set(id, { caja, nombre: regla.nombre, tipo: regla.tipo });
       padres.set(n.id, id);
     }
     const elementos = [
-      ...[...grupos].map(([id, ramo]) => ({ data: { id, label: "Evaluaciones", caja: true, grupo: true, color: COLORES.evento, padre: ramo } })),
+      ...[...grupos].map(([id, g]) => ({ data: { id, label: g.nombre, caja: true, grupo: true, color: COLORES[g.tipo] ?? "#78716c", padre: g.caja } })),
       // La caja "Sin conectar" es un nodo "padre": Cytoscape dibuja a sus hijos adentro.
       // Quién entra a la caja se decide en aplicarFiltros(), según lo que esté a la vista.
       { data: { id: SUELTOS, label: "Sin conectar", caja: true } },
@@ -316,7 +322,7 @@
             "border-style": "dashed", shape: "round-rectangle", label: "data(label)", "text-valign": "top",
             "font-size": 20, color: suave, "min-zoomed-font-size": 0, padding: 16,
         } },
-        // La caja "Evaluaciones" dentro de cada ramo: del color de los eventos, más chica.
+        // Las subcajas (ej. "Evaluaciones"): del color del tipo que agrupan, más chicas.
         { selector: "node[?grupo]", style: {
             "background-color": "data(color)", "border-color": "data(color)", "background-opacity": 0.06,
             color: "data(color)", "font-size": 14, padding: 12,
@@ -387,7 +393,7 @@
         // Lo escondido sale de su caja: así una caja cuyos hijos están todos escondidos vuelve a ser un punto.
         if (oculto && n.parent().nonempty()) n.move({ parent: null });
       });
-      // Una caja "Evaluaciones" se esconde si todas sus evaluaciones están escondidas.
+      // Una subcaja se esconde si todo lo que agrupa está escondido.
       grupos.forEach((g) => {
         const vacia = nodos.filter((n) => n.data("padre") === g.id() && !n.hasClass("escondido")).empty();
         g.toggleClass("escondido", vacia);
