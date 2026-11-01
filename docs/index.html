@@ -1,1 +1,142 @@
-<!doctype html><meta charset="utf-8"><title>Centro de datos</title><p>Centro de datos de Agustin. La pantalla de autorización está en <a href="oauth/consent/">oauth/consent</a>.</p>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Centro de datos</title>
+  <!--
+    Paso 9: la web con el mapa de tu grafo.
+    1. Inicias sesión con tu correo (Supabase Auth).
+    2. La página lee tus nodos y conexiones directo de Supabase. RLS (paso 5) asegura que solo lleguen los tuyos.
+    3. Cytoscape, una librería de grafos, los dibuja: cada nodo es un punto con el color de su tipo
+       y cada conexión es una flecha.
+  -->
+  <style>
+    :root { --fondo:#fafaf9; --texto:#1c1917; --suave:#78716c; --borde:#e7e5e4; --acento:#ea580c; }
+    @media (prefers-color-scheme: dark) { :root { --fondo:#141210; --texto:#f5f5f4; --suave:#a8a29e; --borde:#3a3532; } }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--fondo); color:var(--texto); display:flex; flex-direction:column; }
+    header { display:flex; align-items:center; gap:16px; padding:10px 16px; border-bottom:1px solid var(--borde); flex-wrap:wrap; }
+    header h1 { font-size:1rem; margin:0; margin-right:auto; }
+    .leyenda { display:flex; gap:12px; flex-wrap:wrap; font-size:.8rem; color:var(--suave); }
+    .leyenda span::before { content:""; display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; background:var(--c); vertical-align:-1px; }
+    button { padding:6px 12px; border-radius:8px; font:inherit; cursor:pointer; border:1px solid var(--borde); background:transparent; color:inherit; }
+    button.principal { background:var(--acento); border-color:var(--acento); color:#fff; }
+    #grafo { flex:1; min-height:0; }
+    .centro { max-width:400px; margin:64px auto; padding:0 16px; }
+    .centro input { width:100%; padding:10px 12px; border:1px solid var(--borde); border-radius:8px; background:transparent; color:inherit; font:inherit; margin:8px 0 12px; }
+    .oculto { display:none !important; }
+    #mensaje { color:var(--suave); text-align:center; padding:8px; margin:0; }
+  </style>
+</head>
+<body>
+  <section id="login" class="centro oculto">
+    <h1>Centro de datos</h1>
+    <p>Entra con tu correo. Te llega un enlace para iniciar sesión.</p>
+    <form id="form-login">
+      <input id="correo" type="email" placeholder="tu@correo.cl" required>
+      <button class="principal">Enviar enlace</button>
+    </form>
+  </section>
+
+  <header id="barra" class="oculto">
+    <h1>Centro de datos</h1>
+    <div class="leyenda" id="leyenda"></div>
+    <button id="salir">Salir</button>
+  </header>
+  <div id="grafo" class="oculto"></div>
+  <p id="mensaje"></p>
+
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm";
+  import cytoscape from "https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/+esm";
+  import { SUPABASE_URL, SUPABASE_KEY } from "./config.js";
+
+  const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const $ = (id) => document.getElementById(id);
+  const avisar = (t) => ($("mensaje").textContent = t);
+
+  // Un color por tipo, para reconocerlos de un vistazo.
+  const COLORES = {
+    area: "#2563eb", objetivo: "#7c3aed", hito: "#db2777", proyecto: "#ea580c",
+    tarea: "#16a34a", evento: "#0891b2", nota: "#ca8a04", topico: "#64748b",
+  };
+
+  function mostrarApp(conSesion) {
+    $("login").classList.toggle("oculto", conSesion);
+    $("barra").classList.toggle("oculto", !conSesion);
+    $("grafo").classList.toggle("oculto", !conSesion);
+  }
+
+  // Lee tus nodos y conexiones. No hace falta filtrar por dueño: RLS ya lo hace.
+  async function cargarGrafo() {
+    avisar("Cargando tu grafo…");
+    const [nodos, conexiones] = await Promise.all([
+      db.from("nodos").select("id, titulo, estado, tipos!inner(clave, nombre)").eq("archivado", false),
+      db.from("conexiones").select("id, origen_id, relacion, destino_id").is("valido_hasta", null),
+    ]);
+    if (nodos.error || conexiones.error) return avisar((nodos.error || conexiones.error).message);
+    if (!nodos.data.length) return avisar("Todavía no tienes nodos. Pídele a Claude que cree algunos.");
+    avisar("");
+    dibujar(nodos.data, conexiones.data);
+  }
+
+  // Convierte las filas de Supabase en los "elementos" que entiende Cytoscape y los dibuja.
+  function dibujar(nodos, conexiones) {
+    const ids = new Set(nodos.map((n) => n.id));
+    const elementos = [
+      ...nodos.map((n) => ({
+        data: { id: n.id, label: n.titulo, tipo: n.tipos.clave, color: COLORES[n.tipos.clave] ?? "#78716c", hecho: n.estado === "Hecho" },
+      })),
+      ...conexiones
+        .filter((c) => ids.has(c.origen_id) && ids.has(c.destino_id)) // por si alguna apunta a un nodo archivado
+        .map((c) => ({ data: { id: c.id, source: c.origen_id, target: c.destino_id, label: c.relacion.replaceAll("_", " ") } })),
+    ];
+
+    const estilo = getComputedStyle(document.documentElement);
+    const texto = estilo.getPropertyValue("--texto").trim();
+    const suave = estilo.getPropertyValue("--suave").trim();
+    const fondo = estilo.getPropertyValue("--fondo").trim();
+
+    cytoscape({
+      container: $("grafo"),
+      elements: elementos,
+      layout: { name: "cose", animate: false, nodeRepulsion: 9000, idealEdgeLength: 90 },
+      style: [
+        { selector: "node", style: {
+            "background-color": "data(color)", label: "data(label)", color: texto,
+            "font-size": 12, "text-valign": "bottom", "text-margin-y": 6, width: 26, height: 26,
+        } },
+        { selector: "node[tipo = 'area'], node[tipo = 'objetivo']", style: { width: 40, height: 40, "font-weight": "bold" } },
+        { selector: "node[?hecho]", style: { opacity: 0.45 } },
+        { selector: "edge", style: {
+            width: 1.5, "line-color": suave, "target-arrow-color": suave, "target-arrow-shape": "triangle",
+            "curve-style": "bezier", label: "data(label)", "font-size": 9, color: suave, "text-rotation": "autorotate",
+            "text-background-color": fondo, "text-background-opacity": 1, "text-background-padding": 2,
+        } },
+      ],
+    });
+
+    $("leyenda").replaceChildren(...[...new Set(nodos.map((n) => n.tipos.clave))].map((clave) => {
+      const s = document.createElement("span");
+      s.style.setProperty("--c", COLORES[clave] ?? "#78716c");
+      s.textContent = nodos.find((n) => n.tipos.clave === clave).tipos.nombre;
+      return s;
+    }));
+  }
+
+  $("form-login").onsubmit = async (e) => {
+    e.preventDefault();
+    const { error } = await db.auth.signInWithOtp({ email: $("correo").value, options: { emailRedirectTo: location.href } });
+    avisar(error ? error.message : "Revisa tu correo y abre el enlace desde este navegador.");
+  };
+  $("salir").onclick = () => db.auth.signOut();
+
+  db.auth.onAuthStateChange((_evento, sesion) => {
+    mostrarApp(!!sesion);
+    if (sesion) cargarGrafo(); else avisar("");
+  });
+</script>
+</body>
+</html>
