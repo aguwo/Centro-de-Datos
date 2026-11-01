@@ -11,11 +11,13 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 3 | Tabla de nodos: cada cosa concreta, con estados comunes y búsqueda en español | `supabase/migrations/0003_nodos.sql` |
 | 4 | Conexiones entre nodos y la función vecinos() para navegar el grafo | `supabase/migrations/0004_conexiones.sql` |
 | 5 | Seguridad por usuario: cada uno (y su agente) ve solo lo suyo | `supabase/migrations/0005_seguridad.sql` |
+| 6 | Servidor MCP: la puerta por donde Claude y la web entran a tus datos | `supabase/functions/mcp/` |
 
 ## Pruebas
 
 ```
-DB=postgres:///mi_base_de_prueba bash tests/probar_bd.sh
+npm test                                            # servidor MCP con datos falsos
+DB=postgres:///mi_base_de_prueba bash tests/probar_bd.sh   # base de datos y seguridad
 ```
 
 Crea todo en un Postgres local que imita a Supabase y revisa que cada usuario vea solo lo suyo.

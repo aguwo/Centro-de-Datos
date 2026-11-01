@@ -1,0 +1,7 @@
+# Configuración local de Supabase (supabase start / supabase functions serve).
+project_id = "centro-de-datos"
+
+[functions.mcp]
+# El servidor MCP valida el token por su cuenta para poder responder 401 con los
+# metadatos OAuth que necesita Claude para iniciar sesión.
+verify_jwt = false

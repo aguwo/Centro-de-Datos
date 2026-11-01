@@ -1,0 +1,10 @@
+{
+  "name": "centro-de-datos",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/servidor.test.ts",
+    "test:db": "bash tests/probar_bd.sh"
+  },
+  "engines": { "node": ">=22.18" }
+}
