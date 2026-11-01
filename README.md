@@ -22,6 +22,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 15 | Inicio: menú, captura rápida, Hoy, próximos 7 días, Inbox y proyectos en curso | `docs/index.html` |
 | 16 | Tipos nuevos (cuenta, hábito, planta, alimento, receta, libro...) y tabla `registros` para lo que pasa con fecha (gastos, hábitos cumplidos, comidas, riegos) | `supabase/migrations/0006_vida_y_registros.sql` |
 | 17 | Importador del resto de Notion: finanzas, hábitos, plantas, dieta, biblioteca y rutinas | `importador-notion/traducir-resto.mjs` |
+| 18 | Dentro de cada ramo, las evaluaciones van en su propia caja "Evaluaciones" | `docs/index.html` |
 
 ## Pruebas
 

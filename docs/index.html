@@ -258,7 +258,19 @@
     const ids = new Set(nodos.map((n) => n.id));
     const validas = conexiones.filter((c) => ids.has(c.origen_id) && ids.has(c.destino_id)); // por si alguna apunta a un nodo archivado
     const padres = elegirPadres(nodos, validas);
+    // Paso 18: dentro de cada ramo, las evaluaciones (eventos de la materia) van en su propia caja.
+    // La caja "Evaluaciones" no existe en la base: se inventa aquí, una por ramo, solo para dibujar.
+    const tipoDe = new Map(nodos.map((n) => [n.id, n.tipos.clave]));
+    const grupos = new Map();
+    for (const n of nodos) {
+      const ramo = padres.get(n.id);
+      if (n.tipos.clave !== "evento" || tipoDe.get(ramo) !== "topico") continue;
+      const id = `_eval:${ramo}`;
+      grupos.set(id, ramo);
+      padres.set(n.id, id);
+    }
     const elementos = [
+      ...[...grupos].map(([id, ramo]) => ({ data: { id, label: "Evaluaciones", caja: true, grupo: true, color: COLORES.evento, padre: ramo } })),
       // La caja "Sin conectar" es un nodo "padre": Cytoscape dibuja a sus hijos adentro.
       // Quién entra a la caja se decide en aplicarFiltros(), según lo que esté a la vista.
       { data: { id: SUELTOS, label: "Sin conectar", caja: true } },
@@ -303,6 +315,11 @@
             "background-color": suave, "background-opacity": 0.08, "border-width": 1, "border-color": suave,
             "border-style": "dashed", shape: "round-rectangle", label: "data(label)", "text-valign": "top",
             "font-size": 20, color: suave, "min-zoomed-font-size": 0, padding: 16,
+        } },
+        // La caja "Evaluaciones" dentro de cada ramo: del color de los eventos, más chica.
+        { selector: "node[?grupo]", style: {
+            "background-color": "data(color)", "border-color": "data(color)", "background-opacity": 0.06,
+            color: "data(color)", "font-size": 14, padding: 12,
         } },
         { selector: "node:childless", style: { "text-max-width": 120 } }, // el nombre cabe en su celda
         // Filtros: display none saca el nodo del mapa (y sus flechas con él).
@@ -361,13 +378,20 @@
   function aplicarFiltros() {
     desenfocar();
     const caja = cy.getElementById(SUELTOS);
+    const grupos = cy.nodes("[?grupo]");
     const nodos = cy.nodes().not(caja);
     cy.batch(() => {
-      nodos.forEach((n) => {
+      nodos.not(grupos).forEach((n) => {
         const oculto = tiposOcultos.has(n.data("tipo")) || (!verHechos && n.data("hecho"));
         n.toggleClass("escondido", oculto);
         // Lo escondido sale de su caja: así una caja cuyos hijos están todos escondidos vuelve a ser un punto.
         if (oculto && n.parent().nonempty()) n.move({ parent: null });
+      });
+      // Una caja "Evaluaciones" se esconde si todas sus evaluaciones están escondidas.
+      grupos.forEach((g) => {
+        const vacia = nodos.filter((n) => n.data("padre") === g.id() && !n.hasClass("escondido")).empty();
+        g.toggleClass("escondido", vacia);
+        if (vacia && g.parent().nonempty()) g.move({ parent: null });
       });
       // Cada nodo visible entra a su caja. Si su caja está escondida, sube a la caja de la caja.
       // Si no tiene caja y no le queda ninguna flecha hacia algo visible, va a "Sin conectar"
