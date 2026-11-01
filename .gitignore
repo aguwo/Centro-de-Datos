@@ -5,3 +5,7 @@ supabase/.temp/
 supabase/.branches/
 .DS_Store
 web/config.js
+
+# Exportaciones de Notion: son datos personales, no van al repo
+importador-notion/datos/
+*.sql.local

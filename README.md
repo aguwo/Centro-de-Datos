@@ -16,6 +16,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 9 | Web con el mapa de tu grafo: https://aguwo.github.io/Centro-de-Datos/ | `docs/index.html` |
 | 10 | Clic en un nodo: panel con sus datos y vecinos, y el mapa ilumina su vecindario | `docs/index.html` |
 | 11 | Crear, editar y archivar nodos desde la web | `docs/index.html` |
+| 12 | Importador de Notion: traduce tus bases a nodos y conexiones y genera un SQL para pegar en Supabase | `importador-notion/` |
 
 ## Pruebas
 
