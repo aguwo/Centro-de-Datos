@@ -13,6 +13,11 @@
     4. Al hacer clic en un nodo se abre un panel con sus datos y sus vecinos, y el mapa ilumina
        solo ese nodo y lo que está conectado a él. Clic en el fondo para volver a ver todo.
     5. "+ Nuevo" crea un nodo (y su primera conexión); "Editar" y "Archivar" lo modifican.
+    Paso 13: ordenar el mapa para que se pueda leer con muchos nodos.
+    6. Lo que está Hecho se esconde; el botón "Hechos" de la leyenda lo muestra.
+    7. Tocar un tipo en la leyenda lo esconde o lo vuelve a mostrar.
+    8. Los nombres aparecen solo cuando hay zoom suficiente, al pasar el mouse o al enfocar un nodo.
+    9. Los nodos sin ninguna conexión se juntan en una caja "Sin conectar".
   -->
   <style>
     :root { --fondo:#fafaf9; --texto:#1c1917; --suave:#78716c; --borde:#e7e5e4; --acento:#ea580c; }
@@ -23,7 +28,11 @@
     header { display:flex; align-items:center; gap:16px; padding:10px 16px; border-bottom:1px solid var(--borde); flex-wrap:wrap; }
     header h1 { font-size:1rem; margin:0; margin-right:auto; }
     .leyenda { display:flex; gap:12px; flex-wrap:wrap; font-size:.8rem; color:var(--suave); }
-    .leyenda span::before { content:""; display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; background:var(--c); vertical-align:-1px; }
+    .leyenda button { border:0; padding:2px 6px; color:var(--suave); font-size:.8rem; }
+    .leyenda button::before { content:""; display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; background:var(--c); vertical-align:-1px; }
+    .leyenda button.apagada { opacity:.35; text-decoration:line-through; }
+    .leyenda button.hechos { border:1px solid var(--borde); }
+    .leyenda button.hechos::before { display:none; }
     button { padding:6px 12px; border-radius:8px; font:inherit; cursor:pointer; border:1px solid var(--borde); background:transparent; color:inherit; }
     button.principal { background:var(--acento); border-color:var(--acento); color:#fff; }
     main { flex:1; min-height:0; display:flex; }
@@ -122,16 +131,24 @@
   let cy;            // el grafo dibujado
   let nodosPorId;    // para encontrar rápido los datos completos de cada nodo
 
+  // Filtros del mapa (paso 13). Viven solo en memoria: al recargar la página vuelven a lo normal.
+  let verHechos = false;          // ¿mostrar lo que ya está Hecho?
+  const tiposOcultos = new Set(); // tipos escondidos desde la leyenda
+  const SUELTOS = "_sueltos";     // id de la caja "Sin conectar"
+  const ACOMODO = { name: "cose", animate: false, nodeRepulsion: 12000, idealEdgeLength: 80, nestingFactor: 0.6 };
+
   function dibujar(nodos, conexiones) {
     nodosPorId = new Map(nodos.map((n) => [n.id, n]));
     const ids = new Set(nodos.map((n) => n.id));
+    const validas = conexiones.filter((c) => ids.has(c.origen_id) && ids.has(c.destino_id)); // por si alguna apunta a un nodo archivado
     const elementos = [
+      // La caja "Sin conectar" es un nodo "padre": Cytoscape dibuja a sus hijos adentro.
+      // Quién entra a la caja se decide en aplicarFiltros(), según lo que esté a la vista.
+      { data: { id: SUELTOS, label: "Sin conectar", caja: true } },
       ...nodos.map((n) => ({
         data: { id: n.id, label: n.titulo, tipo: n.tipos.clave, color: COLORES[n.tipos.clave] ?? "#78716c", hecho: n.estado === "Hecho" },
       })),
-      ...conexiones
-        .filter((c) => ids.has(c.origen_id) && ids.has(c.destino_id)) // por si alguna apunta a un nodo archivado
-        .map((c) => ({ data: { id: c.id, source: c.origen_id, target: c.destino_id, label: c.relacion.replaceAll("_", " ") } })),
+      ...validas.map((c) => ({ data: { id: c.id, source: c.origen_id, target: c.destino_id, label: c.relacion.replaceAll("_", " ") } })),
     ];
 
     const estilo = getComputedStyle(document.documentElement);
@@ -143,34 +160,105 @@
     cy = cytoscape({
       container: $("grafo"),
       elements: elementos,
-      layout: { name: "cose", animate: false, nodeRepulsion: 9000, idealEdgeLength: 90 },
+      layout: { name: "preset" }, // la posición real la calcula aplicarFiltros() más abajo
       style: [
         { selector: "node", style: {
             "background-color": "data(color)", label: "data(label)", color: texto,
-            "font-size": 12, "text-valign": "bottom", "text-margin-y": 6, width: 26, height: 26,
+            "font-size": 12, "text-valign": "bottom", "text-margin-y": 6, width: 22, height: 22,
+            // El nombre se esconde si, con el zoom actual, la letra quedaría más chica que 10 px.
+            "min-zoomed-font-size": 10,
+            "text-wrap": "ellipsis", "text-max-width": 160,
         } },
-        { selector: "node[tipo = 'area'], node[tipo = 'objetivo']", style: { width: 40, height: 40, "font-weight": "bold" } },
+        // Áreas y objetivos son más grandes y con letra mayor: se leen aun con poco zoom.
+        { selector: "node[tipo = 'area'], node[tipo = 'objetivo']", style: { width: 40, height: 40, "font-size": 18, "font-weight": "bold" } },
+        { selector: "node[tipo = 'proyecto']", style: { width: 30, height: 30, "font-size": 14 } },
         { selector: "node[?hecho]", style: { opacity: 0.45 } },
+        // La caja "Sin conectar".
+        { selector: "node[?caja]", style: {
+            "background-color": suave, "background-opacity": 0.08, "border-width": 1, "border-color": suave,
+            "border-style": "dashed", shape: "round-rectangle", label: "data(label)", "text-valign": "top",
+            "font-size": 20, color: suave, "min-zoomed-font-size": 0, padding: 16,
+        } },
+        { selector: "node[?caja] > node", style: { "text-max-width": 100 } },
+        // Filtros: display none saca el nodo del mapa (y sus flechas con él).
+        { selector: ".escondido", style: { display: "none" } },
+        // Con el mouse encima, o al enfocar, el nombre se ve siempre.
+        { selector: "node.conEtiqueta", style: { "min-zoomed-font-size": 0, "z-index": 10, "text-max-width": 400 } },
         // Clases para el modo "enfoque": lo que no es vecino del nodo elegido se apaga.
         { selector: ".apagado", style: { opacity: 0.12 } },
         { selector: "node.elegido", style: { "border-width": 3, "border-color": texto } },
         { selector: "edge", style: {
-            width: 1.5, "line-color": suave, "target-arrow-color": suave, "target-arrow-shape": "triangle",
-            "curve-style": "bezier", label: "data(label)", "font-size": 9, color: suave, "text-rotation": "autorotate",
+            width: 1.2, "line-color": suave, "target-arrow-color": suave, "target-arrow-shape": "triangle",
+            "curve-style": "bezier", opacity: 0.6,
+        } },
+        // El nombre de la flecha ("pertenece a") solo aparece en las flechas del nodo enfocado.
+        { selector: "edge.conEtiqueta", style: {
+            label: "data(label)", "font-size": 9, color: suave, "text-rotation": "autorotate", opacity: 1,
             "text-background-color": fondo, "text-background-opacity": 1, "text-background-padding": 2,
         } },
       ],
     });
 
-    cy.on("tap", "node", (e) => enfocar(e.target.id()));
+    cy.on("tap", "node", (e) => { if (!e.target.data("caja")) enfocar(e.target.id()); });
     cy.on("tap", (e) => { if (e.target === cy) desenfocar(); });
+    cy.on("mouseover", "node", (e) => e.target.addClass("conEtiqueta"));
+    cy.on("mouseout", "node", (e) => { if (!e.target.hasClass("vecino")) e.target.removeClass("conEtiqueta"); });
 
-    $("leyenda").replaceChildren(...[...new Set(nodos.map((n) => n.tipos.clave))].map((clave) => {
-      const s = document.createElement("span");
-      s.style.setProperty("--c", COLORES[clave] ?? "#78716c");
-      s.textContent = nodos.find((n) => n.tipos.clave === clave).tipos.nombre;
-      return s;
-    }));
+    dibujarLeyenda(nodos);
+    aplicarFiltros();
+  }
+
+  // La leyenda también es el panel de filtros: cada tipo es un botón que lo esconde o muestra.
+  function dibujarLeyenda(nodos) {
+    const claves = [...new Set(nodos.map((n) => n.tipos.clave))];
+    const botones = claves.map((clave) => {
+      const b = el("button", { textContent: nodos.find((n) => n.tipos.clave === clave).tipos.nombre,
+                               className: tiposOcultos.has(clave) ? "apagada" : "" });
+      b.style.setProperty("--c", COLORES[clave] ?? "#78716c");
+      b.onclick = () => {
+        tiposOcultos.has(clave) ? tiposOcultos.delete(clave) : tiposOcultos.add(clave);
+        b.classList.toggle("apagada");
+        aplicarFiltros();
+      };
+      return b;
+    });
+    const hechos = nodos.filter((n) => n.estado === "Hecho").length;
+    const botonHechos = el("button", { className: "hechos" });
+    const rotular = () => (botonHechos.textContent = `${verHechos ? "Ocultar" : "Mostrar"} hechos (${hechos})`);
+    botonHechos.onclick = () => { verHechos = !verHechos; rotular(); aplicarFiltros(); };
+    rotular();
+    $("leyenda").replaceChildren(...botones, ...(hechos ? [botonHechos] : []));
+  }
+
+  // Esconde lo que piden los filtros y vuelve a acomodar solo lo que queda a la vista.
+  function aplicarFiltros() {
+    desenfocar();
+    const caja = cy.getElementById(SUELTOS);
+    const nodos = cy.nodes().not(caja);
+    cy.batch(() => {
+      nodos.forEach((n) => {
+        n.toggleClass("escondido", tiposOcultos.has(n.data("tipo")) || (!verHechos && n.data("hecho")));
+      });
+      // Un nodo va a la caja si no le queda ninguna flecha hacia algo visible
+      // (por ejemplo, un área cuyas tareas están todas Hechas y escondidas).
+      nodos.not(".escondido").forEach((n) => {
+        const suelto = n.connectedEdges().every((e) => e.source().hasClass("escondido") || e.target().hasClass("escondido"));
+        if (suelto !== (n.parent().id() === SUELTOS)) n.move({ parent: suelto ? SUELTOS : null });
+      });
+      caja.toggleClass("escondido", caja.children().not(".escondido").empty());
+    });
+    // Primero se acomoda el grafo conectado; después los sueltos van en una grilla ordenada debajo.
+    const visibles = cy.nodes().not(".escondido");
+    const sueltos = caja.children().not(".escondido");
+    const resto = visibles.not(caja).not(sueltos);
+    if (resto.nonempty()) resto.union(resto.edgesWith(resto)).layout(ACOMODO).run();
+    if (sueltos.nonempty()) {
+      const bb = resto.nonempty() ? resto.boundingBox() : { x1: 0, y2: 0, w: 0 };
+      const columnas = Math.max(4, Math.ceil(Math.sqrt(sueltos.length * 4)));
+      sueltos.layout({ name: "grid", cols: columnas, boundingBox: {
+        x1: bb.x1, y1: bb.y2 + 100, w: Math.max(bb.w, columnas * 120), h: Math.ceil(sueltos.length / columnas) * 80 } }).run();
+    }
+    cy.fit(visibles, 30);
   }
 
   // Atajo para crear elementos HTML: el("span", { textContent: "hola" }, ...hijos)
@@ -184,15 +272,15 @@
   function enfocar(id) {
     const nodo = cy.getElementById(id);
     const vecindario = nodo.closedNeighborhood(); // el nodo + sus conexiones + los nodos al otro lado
-    cy.elements().removeClass("elegido").addClass("apagado");
-    vecindario.removeClass("apagado");
+    cy.elements().removeClass("elegido conEtiqueta vecino").addClass("apagado");
+    vecindario.removeClass("apagado").addClass("conEtiqueta vecino"); // los vecinos muestran su nombre
     nodo.addClass("elegido");
     cy.animate({ center: { eles: nodo } }, { duration: 300 });
     mostrarPanel(id, nodo);
   }
 
   function desenfocar() {
-    cy.elements().removeClass("apagado elegido");
+    cy.elements().removeClass("apagado elegido conEtiqueta vecino");
     $("panel").classList.add("oculto");
     cy.resize(); // el mapa recupera el ancho que usaba el panel
   }

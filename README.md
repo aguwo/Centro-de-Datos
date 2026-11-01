@@ -17,6 +17,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 10 | Clic en un nodo: panel con sus datos y vecinos, y el mapa ilumina su vecindario | `docs/index.html` |
 | 11 | Crear, editar y archivar nodos desde la web | `docs/index.html` |
 | 12 | Importador de Notion: traduce tus bases a nodos y conexiones y genera un SQL para pegar en Supabase | `importador-notion/` |
+| 13 | Mapa ordenado: esconde lo hecho, filtros por tipo en la leyenda, nombres según el zoom y caja "Sin conectar" | `docs/index.html` |
 
 ## Pruebas
 
