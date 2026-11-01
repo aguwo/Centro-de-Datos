@@ -25,6 +25,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 18 | Dentro de cada ramo, las evaluaciones van en su propia caja "Evaluaciones" | `docs/js/mapa.js` |
 | 19 | La jerarquía vive en la base: cada tipo tiene módulo, orden, color, nivel y subcajas. Vistas `arbol` (ruta completa de cada nodo) y `registros_legibles`. El agente gana `ver_arbol` y la ruta en cada búsqueda | `supabase/migrations/0007_jerarquia.sql` |
 | 20 | Web ordenada en archivos: lee la jerarquía de la base, agrupa la leyenda por módulo y junta lo suelto en la caja de su módulo | `docs/js/` |
+| 21 | El agente anota y consulta registros: `anotar_registro` ("gasté 5.000 en comida") y `consultar_registros` (cuenta, suma y agrupa por día, mes, nodo u otro) | `supabase/functions/mcp/servidor.ts` |
 
 ## Cómo está ordenada la web
 

@@ -2,14 +2,23 @@
 // Ejecutar: node --test tests/servidor.test.ts   (Node 22.18 o superior)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { atenderPost, dibujarArbol, type Nodo, type Repositorio } from "../supabase/functions/mcp/servidor.ts";
+import { atenderPost, dibujarArbol, resumirRegistros, type Nodo, type Registro, type Repositorio } from "../supabase/functions/mcp/servidor.ts";
 
-function repoFalso(): Repositorio & { nodos: Nodo[]; conexiones: string[] } {
+function repoFalso(): Repositorio & { nodos: Nodo[]; conexiones: string[]; anotados: Registro[] } {
   const nodos: Nodo[] = [];
   const conexiones: string[] = [];
+  const anotados: Registro[] = [];
   return {
     nodos,
     conexiones,
+    anotados,
+    async anotarRegistro(r) {
+      anotados.push(r);
+      return { ...r, id: "r1" };
+    },
+    async registros() {
+      return [];
+    },
     async listarTipos() {
       return [{ clave: "tarea", nombre: "Tarea", modulo: "Productividad", propiedades: [], conexiones: [] }];
     },
@@ -63,11 +72,12 @@ test("las notificaciones responden 202 sin cuerpo", async () => {
   assert.equal(status, 202);
 });
 
-test("tools/list incluye las 8 herramientas", async () => {
+test("tools/list incluye las 10 herramientas", async () => {
   const { json } = await llamar(repoFalso(), { jsonrpc: "2.0", id: 2, method: "tools/list" });
   assert.deepEqual(
     json.result.tools.map((t: any) => t.name).sort(),
-    ["actualizar_nodo", "agenda_de_hoy", "buscar_nodos", "conectar_nodos", "crear_nodo", "listar_tipos", "ver_arbol", "ver_nodo"],
+    ["actualizar_nodo", "agenda_de_hoy", "anotar_registro", "buscar_nodos", "conectar_nodos", "consultar_registros",
+     "crear_nodo", "listar_tipos", "ver_arbol", "ver_nodo"],
   );
 });
 
@@ -123,4 +133,31 @@ test("dibujarArbol agrupa por módulo, ordena, sangra y salta lo Hecho", () => {
   assert.equal(dibujarArbol(filas, true).length, 7);
   // Si el padre no vino (ej. se pidió "desde" un nodo), ese nodo es la raíz.
   assert.deepEqual(dibujarArbol(filas.filter((f) => f.id !== "a1")).slice(0, 2), ["# Productividad", "Proyecto BD [proyecto, En curso] p1"]);
+});
+
+test("anotar_registro guarda y rechaza clases inventadas", async () => {
+  const repo = repoFalso();
+  const llamada = (args: unknown) => llamar(repo, { jsonrpc: "2.0", id: 9, method: "tools/call", params: { name: "anotar_registro", arguments: args } });
+  const ok = await llamada({ clase: "gasto", nodo_id: "debito", otro_id: "comida", valor: 5000, unidad: "CLP" });
+  assert.equal(ok.json.result.isError, undefined);
+  assert.equal(repo.anotados[0].valor, 5000);
+  const mal = await llamada({ clase: "propina", valor: 1 });
+  assert.equal(mal.json.result.isError, true);
+});
+
+test("resumirRegistros cuenta, suma y agrupa", () => {
+  const filas = [
+    { clase: "gasto", fecha: "2026-10-01T12:00:00Z", valor: 5000, otro: "Comida" },
+    { clase: "gasto", fecha: "2026-10-02T12:00:00Z", valor: 3000, otro: "Comida" },
+    { clase: "gasto", fecha: "2026-11-01T12:00:00Z", valor: 9000, otro: "Transporte" },
+  ];
+  const r = resumirRegistros(filas, "otro");
+  assert.equal(r.cantidad, 3);
+  assert.equal(r.suma, 17000);
+  assert.deepEqual(r.grupos, [
+    { grupo: "Transporte", cantidad: 1, suma: 9000 },
+    { grupo: "Comida", cantidad: 2, suma: 8000 },
+  ]);
+  assert.equal(r.ultimos[0].fecha, "2026-11-01T12:00:00Z");
+  assert.deepEqual(resumirRegistros(filas, "mes").grupos?.map((g) => g.grupo), ["2026-10", "2026-11"]);
 });

@@ -2,7 +2,7 @@
 // El cliente se crea con el token del usuario, así que Row Level Security filtra todo:
 // el agente nunca puede leer ni escribir datos de otra persona.
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import type { FilaArbol, Nodo, Repositorio, Vecino } from "./servidor.ts";
+import type { FilaArbol, Nodo, Registro, RegistroLegible, Repositorio, Vecino } from "./servidor.ts";
 
 const COLUMNAS = "id, titulo, contenido, estado, fecha, props, tipos!inner(clave)";
 
@@ -98,6 +98,19 @@ export function crearRepositorio(db: SupabaseClient): Repositorio {
           .order("fecha"),
       );
       return (filas ?? []).map(aNodo);
+    },
+
+    async anotarRegistro(r) {
+      return revisar(await db.from("registros").insert(r).select("id, clase, fecha, titulo, valor, unidad, nodo_id, otro_id, props").single()) as Registro;
+    },
+
+    async registros({ clase, nodo_id, desde, hasta }) {
+      let q = db.from("registros_legibles").select("fecha, clase, titulo, valor, unidad, nodo, otro, nodo_id, otro_id, props");
+      if (clase) q = q.eq("clase", clase);
+      if (nodo_id) q = q.or(`nodo_id.eq.${nodo_id},otro_id.eq.${nodo_id}`); // ej. una categoría está en "otro"
+      if (desde) q = q.gte("fecha", desde);
+      if (hasta) q = q.lt("fecha", new Date(new Date(hasta + "T00:00:00Z").getTime() + 86_400_000).toISOString()); // incluye ese día
+      return (revisar(await q.order("fecha", { ascending: false }).limit(5000)) ?? []) as RegistroLegible[];
     },
   };
 }
