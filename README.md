@@ -10,3 +10,12 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 2 | Los 8 tipos de productividad (simplificados desde Notion) como plantilla | `supabase/migrations/0002_plantillas_productividad.sql` |
 | 3 | Tabla de nodos: cada cosa concreta, con estados comunes y búsqueda en español | `supabase/migrations/0003_nodos.sql` |
 | 4 | Conexiones entre nodos y la función vecinos() para navegar el grafo | `supabase/migrations/0004_conexiones.sql` |
+| 5 | Seguridad por usuario: cada uno (y su agente) ve solo lo suyo | `supabase/migrations/0005_seguridad.sql` |
+
+## Pruebas
+
+```
+DB=postgres:///mi_base_de_prueba bash tests/probar_bd.sh
+```
+
+Crea todo en un Postgres local que imita a Supabase y revisa que cada usuario vea solo lo suyo.
