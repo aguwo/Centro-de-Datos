@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Autorizar acceso · Centro de datos</title>
+  <!--
+    Paso 7: pantalla de permiso (consentimiento) OAuth.
+    Cuando conectas Claude a tu servidor MCP, Supabase te manda a esta página con un authorization_id.
+    Aquí inicias sesión (si no lo has hecho), ves qué aplicación pide acceso y apruebas o rechazas.
+    Al aprobar, Supabase le entrega a Claude un token que actúa como TU usuario,
+    así que la seguridad del paso 5 sigue aplicando.
+  -->
+  <style>
+    :root { --fondo:#fafaf9; --texto:#1c1917; --suave:#78716c; --borde:#e7e5e4; --acento:#ea580c; }
+    @media (prefers-color-scheme: dark) { :root { --fondo:#1c1917; --texto:#f5f5f4; --suave:#a8a29e; --borde:#44403c; } }
+    * { box-sizing: border-box; }
+    body { margin:0; font:16px/1.5 system-ui, sans-serif; background:var(--fondo); color:var(--texto); }
+    main { max-width:440px; margin:48px auto; padding:0 16px; }
+    .tarjeta { border:1px solid var(--borde); border-radius:12px; padding:24px; }
+    h1 { font-size:1.25rem; margin:0 0 12px; }
+    p { margin:0 0 16px; }
+    .suave { color:var(--suave); font-size:.9rem; }
+    input { width:100%; padding:10px 12px; border:1px solid var(--borde); border-radius:8px; background:transparent; color:inherit; font:inherit; margin-bottom:12px; }
+    .botones { display:flex; gap:8px; }
+    button { flex:1; padding:10px 14px; border-radius:8px; font:inherit; cursor:pointer; border:1px solid var(--borde); background:transparent; color:inherit; }
+    button.principal { background:var(--acento); border-color:var(--acento); color:#fff; }
+    .oculto { display:none; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="tarjeta">
+    <section id="cargando"><p>Cargando…</p></section>
+
+    <section id="login" class="oculto">
+      <h1>Inicia sesión</h1>
+      <p>Te mandamos un enlace a tu correo para entrar y seguir con la autorización.</p>
+      <form id="form-login">
+        <input id="correo" type="email" placeholder="tu@correo.cl" required>
+        <div class="botones"><button class="principal">Enviar enlace</button></div>
+      </form>
+    </section>
+
+    <section id="permiso" class="oculto">
+      <h1><span id="cliente">Una aplicación</span> quiere acceder a tu centro de datos</h1>
+      <p>Podrá leer, crear y conectar tus nodos <strong>como tú</strong>. No podrá ver datos de otras personas.</p>
+      <p class="suave">Permisos pedidos: <span id="scopes"></span></p>
+      <p class="suave">Sesión: <span id="usuario"></span></p>
+      <div class="botones">
+        <button id="rechazar">Rechazar</button>
+        <button id="aprobar" class="principal">Aprobar</button>
+      </div>
+    </section>
+
+    <p id="mensaje" class="suave"></p>
+  </div>
+</main>
+
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm";
+  import { SUPABASE_URL, SUPABASE_KEY } from "../../config.js";
+
+  const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const $ = (id) => document.getElementById(id);
+  const mostrar = (id) => ["cargando", "login", "permiso"].forEach((s) => $(s).classList.toggle("oculto", s !== id));
+  const avisar = (t) => ($("mensaje").textContent = t);
+
+  // 1. Supabase nos manda aquí con ?authorization_id=...
+  const authorizationId = new URLSearchParams(location.search).get("authorization_id");
+
+  async function iniciar() {
+    if (!authorizationId) { mostrar(null); return avisar("Falta authorization_id. Esta página se abre sola cuando conectas una aplicación."); }
+
+    // 2. ¿Hay sesión? Si no, pedir el correo. El enlace del correo vuelve a esta misma URL.
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) return mostrar("login");
+
+    // 3. Pedir a Supabase los detalles: qué aplicación pide acceso y con qué permisos.
+    const { data, error } = await db.auth.oauth.getAuthorizationDetails(authorizationId);
+    if (error) { mostrar(null); return avisar(error.message); }
+
+    // Si ya habías aprobado antes, Supabase devuelve directo la URL de vuelta.
+    if (!("authorization_id" in data)) return location.assign(data.redirect_url);
+
+    $("cliente").textContent = data.client?.name ?? "Una aplicación";
+    $("scopes").textContent = data.scope || "(ninguno)";
+    $("usuario").textContent = session.user.email;
+    mostrar("permiso");
+  }
+
+  $("form-login").onsubmit = async (e) => {
+    e.preventDefault();
+    const { error } = await db.auth.signInWithOtp({ email: $("correo").value, options: { emailRedirectTo: location.href } });
+    avisar(error ? error.message : "Revisa tu correo y abre el enlace desde este mismo navegador.");
+  };
+
+  // 4. Aprobar o rechazar: Supabase redirige solo de vuelta a la aplicación (Claude).
+  $("aprobar").onclick = async () => {
+    const { error } = await db.auth.oauth.approveAuthorization(authorizationId);
+    if (error) avisar(error.message);
+  };
+  $("rechazar").onclick = async () => {
+    const { error } = await db.auth.oauth.denyAuthorization(authorizationId);
+    if (error) avisar(error.message);
+  };
+
+  // Al volver del enlace del correo, la sesión llega después de cargar la página.
+  db.auth.onAuthStateChange((evento) => { if (evento === "SIGNED_IN") iniciar(); });
+  iniciar();
+</script>
+</body>
+</html>
