@@ -106,7 +106,10 @@ export function dibujar() {
   const estilo = getComputedStyle(document.documentElement);
   const [texto, suave, fondo] = ["--texto", "--suave", "--fondo"].map((v) => estilo.getPropertyValue(v).trim());
 
-  if (cy) cy.destroy(); // al recargar, se reemplaza el mapa anterior
+  // Al recargar se reemplaza el mapa anterior, pero se queda donde lo estabas mirando
+  // (si un cambio llega en tiempo real, el mapa no salta).
+  const vista = cy && { zoom: cy.zoom(), pan: cy.pan() };
+  if (cy) cy.destroy();
   cy = cytoscape({
     container: $("grafo"),
     elements: elementos,
@@ -164,6 +167,7 @@ export function dibujar() {
 
   dibujarLeyenda();
   aplicarFiltros();
+  if (vista) cy.viewport(vista);
 }
 
 // ---------- Leyenda y filtros ----------
@@ -194,7 +198,7 @@ function dibujarLeyenda() {
 
 // Esconde lo que piden los filtros y vuelve a acomodar solo lo que queda a la vista.
 function aplicarFiltros() {
-  desenfocar();
+  quitarEnfoque();
   const virtuales = cy.nodes("[?virtual]");
   const nodos = cy.nodes().not(virtuales);
   cy.batch(() => {
@@ -240,8 +244,9 @@ export function enfocar(id) {
   mostrarPanel(id);
 }
 
+const quitarEnfoque = () => cy?.elements().removeClass("apagado elegido conEtiqueta vecino");
 export function desenfocar() {
-  cy?.elements().removeClass("apagado elegido conEtiqueta vecino");
+  quitarEnfoque();
   cerrarPanel();
 }
 

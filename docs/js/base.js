@@ -22,7 +22,11 @@ export const datos = {
   nodo: new Map(),        // id -> nodo
   conexiones: [],
   padre: new Map(),       // id -> id de la caja donde está (lo calcula la vista "arbol" de la base, paso 19)
+  registros: [],          // lo que pasó en los últimos DIAS_REGISTROS días (gastos, hábitos, riegos...), del más viejo al más nuevo
 };
+
+// Cuántos días de registros se traen. Alcanza para rachas, el gasto del mes y las plantas.
+const DIAS_REGISTROS = 90;
 
 // El día de una fecha, como texto "2026-11-01".
 // Las fechas sin hora (las de Notion, guardadas a medianoche UTC) se leen tal cual, sin zona horaria,
@@ -41,17 +45,19 @@ export const hora = (fecha) => {
 export const colorDe = (clave) => datos.tipo.get(clave)?.color ?? "#78716c";
 
 // Lee todo de Supabase. No hace falta filtrar por dueño: RLS ya lo hace.
-// Cuando termina avisa con el evento "datos", y cada vista (mapa, inicio) se vuelve a dibujar.
+// Cuando termina avisa con el evento "datos", y cada vista (mapa, inicio, panel) se vuelve a dibujar.
 // enfocarId: si viene, se abre ese nodo después de dibujar (útil tras crear o editar).
 export async function recargar(enfocarId) {
-  avisar("Cargando tu grafo…");
-  const [nodos, conexiones, tipos, arbol] = await Promise.all([
+  if (!datos.nodos.length) avisar("Cargando tu grafo…"); // solo la primera vez; después se actualiza sin parpadear
+  const desde = new Date(Date.now() - DIAS_REGISTROS * 864e5).toISOString();
+  const [nodos, conexiones, tipos, arbol, registros] = await Promise.all([
     db.from("nodos").select("id, titulo, contenido, estado, fecha, props, tipos!inner(clave, nombre)").eq("archivado", false),
     db.from("conexiones").select("id, origen_id, relacion, destino_id").is("valido_hasta", null),
     db.from("tipos").select("id, owner_id, clave, nombre, modulo, orden, color, nivel, subcaja, propiedades, conexiones").order("orden"),
     db.from("arbol").select("id, padre_id"),
+    db.from("registros").select("id, fecha, clase, valor, nodo_id, otro_id").gte("fecha", desde).order("fecha"),
   ]);
-  const error = nodos.error || conexiones.error || tipos.error || arbol.error;
+  const error = nodos.error || conexiones.error || tipos.error || arbol.error || registros.error;
   if (error) return avisar(error.message);
 
   datos.tipo = new Map();
@@ -61,7 +67,43 @@ export async function recargar(enfocarId) {
   datos.nodo = new Map(nodos.data.map((n) => [n.id, n]));
   datos.conexiones = conexiones.data.filter((c) => datos.nodo.has(c.origen_id) && datos.nodo.has(c.destino_id)); // por si alguna apunta a un archivado
   datos.padre = new Map(arbol.data.filter((f) => f.padre_id).map((f) => [f.id, f.padre_id]));
+  datos.registros = registros.data;
 
   avisar(nodos.data.length ? "" : "Todavía no tienes nodos. Crea el primero con «+ Nuevo».");
   document.dispatchEvent(new CustomEvent("datos", { detail: { enfocarId } }));
+}
+
+// Pide una recarga, pero espera un momento por si llegan más cambios juntos
+// (ej. el agente crea un nodo y lo conecta: son 2 avisos, y se recarga 1 sola vez).
+let espera;
+export function pedirRecarga() {
+  clearTimeout(espera);
+  espera = setTimeout(() => recargar(), 300);
+}
+
+// Escribe en la base y, si salió bien, pide recargar. Lo usan los botones del Inicio.
+// consulta: cualquier db.from(...).insert/update/delete(...).
+export async function escribir(consulta) {
+  const { error } = await consulta;
+  if (error) avisar(error.message);
+  else pedirRecarga();
+  return !error;
+}
+
+// Tiempo real (paso 25): Supabase avisa cada vez que cambia una de estas tablas, venga el cambio
+// de esta pestaña, de otra, del celular o del agente. RLS también aplica aquí: solo llegan tus cambios.
+const TABLAS = ["nodos", "conexiones", "registros", "tipos"];
+let canal;
+export function escucharCambios() {
+  if (canal) return;
+  canal = db.channel("cambios");
+  for (const table of TABLAS) canal.on("postgres_changes", { event: "*", schema: "public", table }, pedirRecarga);
+  canal.subscribe();
+}
+// Si la pestaña estuvo dormida (el celular bloqueado, otra pestaña), al volver se recarga
+// por si se perdió algún aviso, y de paso "hoy" pasa a ser el día correcto.
+document.addEventListener("visibilitychange", () => { if (canal && !document.hidden) pedirRecarga(); });
+export function dejarDeEscuchar() {
+  if (canal) db.removeChannel(canal);
+  canal = null;
 }

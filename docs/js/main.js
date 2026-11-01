@@ -3,19 +3,22 @@
 //   base.js    conexión a Supabase, atajos y los datos cargados
 //   mapa.js    el mapa de cajas, la leyenda y los filtros
 //   panel.js   el panel de un nodo y el formulario para crear o editar
-//   inicio.js  el panel de control
-import { db, $, avisar, recargar } from "./base.js";
+//   inicio.js  el Inicio: dibuja las señales y las tarjetas
+//   tarjetas.js qué muestra cada tarjeta del Inicio
+import { db, $, avisar, recargar, escucharCambios, dejarDeEscuchar } from "./base.js";
 import { dibujar, enfocar, ajustarMapa } from "./mapa.js";
-import { mostrarPanel, formulario } from "./panel.js";
+import { mostrarPanel, formulario, refrescarPanel } from "./panel.js";
 import { dibujarInicio } from "./inicio.js";
 
 let vista = "inicio";
 
-// Cada vez que se cargan los datos se dibujan las dos vistas (así cambiar de vista es instantáneo).
+// Cada vez que se cargan los datos se dibuja todo (así cambiar de vista es instantáneo
+// y lo que cambió en otro lado aparece solo).
 document.addEventListener("datos", ({ detail }) => {
   dibujar();
   dibujarInicio();
   if (detail.enfocarId) (vista === "mapa" ? enfocar : mostrarPanel)(detail.enfocarId);
+  else refrescarPanel();
 });
 
 // Menú: muestra una vista y esconde la otra. La leyenda (filtros) solo tiene sentido en el mapa.
@@ -45,5 +48,6 @@ $("form-login").onsubmit = async (e) => {
 $("salir").onclick = () => db.auth.signOut();
 db.auth.onAuthStateChange((_evento, sesion) => {
   mostrarApp(!!sesion);
-  if (sesion) recargar(); else avisar("");
+  if (sesion) { recargar(); escucharCambios(); }
+  else { dejarDeEscuchar(); avisar(""); }
 });

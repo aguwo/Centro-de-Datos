@@ -8,7 +8,7 @@
     La web de tu centro de datos. Este archivo tiene solo la estructura de la página;
     el estilo está en estilos.css y el comportamiento en js/ (empieza por js/main.js).
     Pasos: 9-11 mapa y panel · 13 filtros · 14 cajas dentro de cajas · 15 Inicio · 18 subcajas
-    · 19 la jerarquía (colores, cajas y módulos) se lee de la base.
+    · 19 la jerarquía (colores, cajas y módulos) se lee de la base · 25 Inicio por tarjetas y en tiempo real.
   -->
   <link rel="stylesheet" href="estilos.css">
 </head>
@@ -34,7 +34,11 @@
   </header>
   <main id="app" class="oculto">
     <section id="inicio">
-      <form id="form-captura"><input id="captura" placeholder="Captura rápida: escribe una tarea y presiona Enter…" autocomplete="off"></form>
+      <div class="saludo">
+        <h2 id="fecha-hoy"></h2>
+        <form id="form-captura"><input id="captura" placeholder="Captura rápida: escribe una tarea y presiona Enter…" autocomplete="off"></form>
+      </div>
+      <div id="senales"></div>
       <div class="tablero" id="tablero"></div>
     </section>
     <div id="grafo" class="oculto"></div>

@@ -1,6 +1,6 @@
 // El panel lateral: los datos de un nodo con sus conexiones, y el formulario para crear o editar.
 // Lee de los datos cargados (no del mapa), así funciona igual desde el Inicio.
-import { db, $, el, avisar, datos, colorDe, recargar, dia, hora } from "./base.js";
+import { db, $, el, avisar, datos, colorDe, recargar, pedirRecarga, dia, hora } from "./base.js";
 import { enfocar, desenfocar, ajustarMapa } from "./mapa.js";
 
 const ESTADOS = ["Inbox", "Por hacer", "En curso", "Esperando", "Hecho"]; // los mismos del paso 3
@@ -48,13 +48,18 @@ function leer(p, c) {
   return c.value;
 }
 
+// Qué nodo muestra el panel ahora (null si está cerrado o con un formulario abierto).
+let mostrando = null;
+
 function abrir(...contenido) {
+  mostrando = null;
   $("panel").replaceChildren(...contenido);
   $("panel").classList.remove("oculto");
   ajustarMapa(); // el mapa se achica para dejarle espacio al panel
 }
 
 export function cerrarPanel() {
+  mostrando = null;
   $("panel").classList.add("oculto");
   ajustarMapa();
 }
@@ -102,7 +107,7 @@ export function mostrarPanel(id) {
     const { error } = await db.from("nodos").update({ archivado: true }).eq("id", n.id);
     if (error) return avisar(error.message);
     cerrarPanel();
-    recargar();
+    pedirRecarga();
   };
   const cerrar = el("button", { textContent: "Cerrar" });
   cerrar.onclick = desenfocar;
@@ -116,6 +121,13 @@ export function mostrarPanel(id) {
     el("h3", { textContent: `Conectado con (${conexiones.length})` }),
     conexiones.length ? vecinos : el("p", { className: "rel", textContent: "Sin conexiones todavía." }),
   );
+  mostrando = id;
+}
+
+// Cuando cambian los datos, el panel abierto se vuelve a dibujar (o se cierra si el nodo ya no está).
+// Un formulario a medio llenar no se toca.
+export function refrescarPanel() {
+  if (mostrando) datos.nodo.has(mostrando) ? mostrarPanel(mostrando) : cerrarPanel();
 }
 
 // Formulario para crear (sin nodo) o editar (con nodo). Se muestra en el mismo panel.

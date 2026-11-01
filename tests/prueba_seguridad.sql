@@ -54,4 +54,12 @@ do $$ begin
   end;
 end $$;
 reset role;
+
+-- Paso 25: las 4 tablas avisan sus cambios en tiempo real.
+do $$ begin
+  if (select count(*) from pg_publication_tables where pubname = 'supabase_realtime'
+      and tablename in ('nodos', 'conexiones', 'registros', 'tipos')) <> 4 then
+    raise exception 'Faltan tablas en la publicación de tiempo real';
+  end if;
+end $$;
 \echo 'TODAS LAS PRUEBAS PASARON'

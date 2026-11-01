@@ -29,6 +29,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 22 | Control total del agente: archivar, recuperar, cambiar de tipo y borrar (solo lo archivado) nodos; desconectar (queda la historia) y mover varios nodos de caja; editar y borrar registros; crear o personalizar tipos | `supabase/functions/mcp/` |
 | 23 | Cada propiedad de un tipo tiene su clave exacta: el agente solo puede usar las del tipo (con valores válidos) y la web las muestra con su nombre y deja editarlas | `supabase/migrations/0008_propiedades.sql` |
 | 24 | Publicación automática: al subir cambios del agente a GitHub, se corren las pruebas y se publica en Supabase | `.github/workflows/publicar-agente.yml` |
+| 25 | Inicio por tarjetas (Hacer · Cuidarme · Mi vida) con señales arriba, y la web en tiempo real: se actualiza sola cuando algo cambia (tú, otra pestaña o el agente) | `supabase/migrations/0009_tiempo_real.sql`, `docs/js/tarjetas.js` |
 
 ## Cómo está ordenada la web
 
@@ -36,10 +37,11 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 docs/index.html    solo la estructura de la página
 docs/estilos.css   cómo se ve
 docs/js/main.js    punto de partida: sesión, menú y qué se dibuja al llegar los datos
-docs/js/base.js    conexión a Supabase, atajos y los datos cargados
+docs/js/base.js    conexión a Supabase, atajos, los datos cargados y el tiempo real
 docs/js/mapa.js    el mapa de cajas, la leyenda y los filtros
 docs/js/panel.js   el panel de un nodo y el formulario para crear o editar
-docs/js/inicio.js  el panel de control
+docs/js/inicio.js  el Inicio: dibuja las señales y las tarjetas
+docs/js/tarjetas.js  qué muestra cada tarjeta (agregar una = agregar un objeto a TARJETAS)
 ```
 
 ## Pruebas
