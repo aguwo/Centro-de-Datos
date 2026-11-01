@@ -19,6 +19,26 @@ function repoFalso(): Repositorio & { nodos: Nodo[]; conexiones: string[]; anota
     async registros() {
       return [];
     },
+    async editarRegistro(id, cambios) {
+      return { id, clase: "gasto", ...cambios };
+    },
+    async borrarRegistro() {
+      return true;
+    },
+    async borrarNodo(id) {
+      const i = nodos.findIndex((n) => n.id === id && n.archivado);
+      if (i < 0) return false;
+      nodos.splice(i, 1);
+      return true;
+    },
+    async desconectar(o, r, d) {
+      const antes = conexiones.length;
+      conexiones.splice(0, conexiones.length, ...conexiones.filter((c) => !c.startsWith(`${o}-${r}->${d ?? ""}`)));
+      return antes - conexiones.length;
+    },
+    async guardarTipo(t) {
+      return t;
+    },
     async listarTipos() {
       return [{ clave: "tarea", nombre: "Tarea", modulo: "Productividad", propiedades: [], conexiones: [] }];
     },
@@ -72,12 +92,13 @@ test("las notificaciones responden 202 sin cuerpo", async () => {
   assert.equal(status, 202);
 });
 
-test("tools/list incluye las 10 herramientas", async () => {
+test("tools/list incluye las 16 herramientas", async () => {
   const { json } = await llamar(repoFalso(), { jsonrpc: "2.0", id: 2, method: "tools/list" });
   assert.deepEqual(
     json.result.tools.map((t: any) => t.name).sort(),
-    ["actualizar_nodo", "agenda_de_hoy", "anotar_registro", "buscar_nodos", "conectar_nodos", "consultar_registros",
-     "crear_nodo", "listar_tipos", "ver_arbol", "ver_nodo"],
+    ["actualizar_nodo", "agenda_de_hoy", "anotar_registro", "borrar_nodo", "borrar_registro", "buscar_nodos",
+     "conectar_nodos", "consultar_registros", "crear_nodo", "desconectar_nodos", "editar_registro", "guardar_tipo",
+     "listar_tipos", "mover_nodos", "ver_arbol", "ver_nodo"],
   );
 });
 
@@ -160,4 +181,24 @@ test("resumirRegistros cuenta, suma y agrupa", () => {
   ]);
   assert.equal(r.ultimos[0].fecha, "2026-11-01T12:00:00Z");
   assert.deepEqual(resumirRegistros(filas, "mes").grupos?.map((g) => g.grupo), ["2026-10", "2026-11"]);
+});
+
+test("borrar_nodo solo borra lo archivado", async () => {
+  const repo = repoFalso();
+  repo.nodos.push({ id: "a", tipo: "tarea", titulo: "Activa" }, { id: "b", tipo: "tarea", titulo: "Vieja", archivado: true });
+  const borrar = (id: string) => llamar(repo, { jsonrpc: "2.0", id: 10, method: "tools/call", params: { name: "borrar_nodo", arguments: { id } } });
+  assert.equal((await borrar("a")).json.result.isError, true);
+  assert.equal((await borrar("b")).json.result.isError, undefined);
+  assert.deepEqual(repo.nodos.map((n) => n.id), ["a"]);
+});
+
+test("mover_nodos quita la caja anterior y pone la nueva", async () => {
+  const repo = repoFalso();
+  repo.conexiones.push("t1-pertenece_a->viejo", "t2-pertenece_a->viejo", "t1-trata_sobre->ramo");
+  const { json } = await llamar(repo, {
+    jsonrpc: "2.0", id: 11, method: "tools/call",
+    params: { name: "mover_nodos", arguments: { ids: ["t1", "t2"], destino_id: "nuevo" } },
+  });
+  assert.equal(json.result.structuredContent.resultado.movidos, 2);
+  assert.deepEqual(repo.conexiones.sort(), ["t1-pertenece_a->nuevo", "t1-trata_sobre->ramo", "t2-pertenece_a->nuevo"]);
 });

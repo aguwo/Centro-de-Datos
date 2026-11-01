@@ -10,6 +10,7 @@ export type Nodo = {
   estado?: string | null;
   fecha?: string | null;
   props?: Record<string, unknown>;
+  archivado?: boolean;
   ruta?: string; // dónde está, ej. "Universidad / Base de Datos / Proyecto BD"
 };
 
@@ -43,17 +44,38 @@ export type RegistroLegible = Registro & { nodo?: string | null; otro?: string |
 
 export type FiltroRegistros = { clase?: string; nodo_id?: string; desde?: string; hasta?: string };
 
+/** Un tipo (molde de nodo) con su lugar en la jerarquía (paso 19). */
+export type Tipo = {
+  clave: string;
+  nombre?: string;
+  modulo?: string;
+  orden?: number;
+  color?: string;
+  nivel?: number | null;
+  subcaja?: Record<string, string>;
+  propiedades?: unknown[];
+  conexiones?: unknown[];
+};
+
 export interface Repositorio {
   listarTipos(): Promise<{ clave: string; nombre: string; modulo: string; propiedades: unknown; conexiones: unknown }[]>;
   arbol(desde?: string): Promise<FilaArbol[]>;
-  buscarNodos(f: { texto?: string; tipo?: string; estado?: string; limite: number }): Promise<Nodo[]>;
+  buscarNodos(f: { texto?: string; tipo?: string; estado?: string; archivados?: boolean; limite: number }): Promise<Nodo[]>;
   verNodo(id: string, profundidad: number): Promise<{ nodo: Nodo; vecinos: Vecino[] } | null>;
   crearNodo(n: Omit<Nodo, "id">): Promise<Nodo>;
-  actualizarNodo(id: string, cambios: Partial<Omit<Nodo, "id" | "tipo">>): Promise<Nodo>;
+  actualizarNodo(id: string, cambios: Partial<Omit<Nodo, "id">>): Promise<Nodo>;
+  /** Borra de verdad, pero solo si el nodo ya está archivado. Devuelve false si no borró nada. */
+  borrarNodo(id: string): Promise<boolean>;
   conectar(origenId: string, relacion: string, destinoId: string): Promise<void>;
+  /** Cierra conexiones (les pone fecha de término). Sin destino, cierra todas las de esa relación. Devuelve cuántas. */
+  desconectar(origenId: string, relacion: string, destinoId?: string): Promise<number>;
   agendaDelDia(fechaISO: string): Promise<Nodo[]>;
   anotarRegistro(r: Registro): Promise<Registro>;
   registros(f: FiltroRegistros): Promise<RegistroLegible[]>;
+  editarRegistro(id: string, cambios: Partial<Omit<Registro, "id">>): Promise<Registro>;
+  borrarRegistro(id: string): Promise<boolean>;
+  /** Crea o cambia uno de TUS tipos. Si la clave es de una plantilla, hace tu copia y pasa tus nodos a ella. */
+  guardarTipo(t: Tipo): Promise<Tipo>;
 }
 
 // Paso 21: las clases de registro y qué significa "nodo" y "otro" en cada una.
@@ -169,11 +191,12 @@ export const HERRAMIENTAS: Herramienta[] = [
         texto,
         tipo: { ...texto, description: "Clave del tipo, ej. 'tarea'" },
         estado: texto,
+        archivados: { type: "boolean", default: false, description: "Buscar en el archivo en vez de en lo activo" },
         limite: { type: "integer", minimum: 1, maximum: 50, default: 20 },
       },
     },
     ejecutar: (repo, a) =>
-      repo.buscarNodos({ texto: a.texto, tipo: a.tipo, estado: a.estado, limite: Math.min(a.limite ?? 20, 50) }),
+      repo.buscarNodos({ texto: a.texto, tipo: a.tipo, estado: a.estado, archivados: a.archivados ?? false, limite: Math.min(a.limite ?? 20, 50) }),
   },
   {
     name: "ver_nodo",
@@ -222,15 +245,34 @@ export const HERRAMIENTAS: Herramienta[] = [
   },
   {
     name: "actualizar_nodo",
-    description: "Cambia el título, contenido, estado, fecha o propiedades de un nodo.",
+    description:
+      "Cambia lo que quieras de un nodo: título, contenido, estado, fecha, propiedades o tipo. " +
+      "archivado: true lo saca de la vista (se puede recuperar con false); es la forma normal de 'borrar'.",
     inputSchema: {
       type: "object",
-      properties: { id: texto, titulo: texto, contenido: texto, estado: texto, fecha: texto, props: { type: "object" } },
+      properties: {
+        id: texto, titulo: texto, contenido: texto, estado: texto, fecha: texto, props: { type: "object" },
+        tipo: { ...texto, description: "Clave del tipo nuevo, ej. 'proyecto'" },
+        archivado: { type: "boolean" },
+      },
       required: ["id"],
     },
     ejecutar: (repo, a) => {
       const { id, ...cambios } = a;
       return repo.actualizarNodo(id, cambios);
+    },
+  },
+  {
+    name: "borrar_nodo",
+    description:
+      "Borra un nodo para siempre, con sus conexiones. Solo funciona si ya está archivado: " +
+      "archívalo primero con actualizar_nodo y confirma con el usuario antes de borrar.",
+    inputSchema: { type: "object", properties: { id: texto }, required: ["id"] },
+    ejecutar: async (repo, a) => {
+      if (!(await repo.borrarNodo(a.id))) {
+        throw new ErrorHerramienta("No se borró: el nodo no existe o no está archivado. Archívalo primero.");
+      }
+      return { ok: true };
     },
   },
   {
@@ -244,6 +286,41 @@ export const HERRAMIENTAS: Herramienta[] = [
     ejecutar: async (repo, a) => {
       await repo.conectar(a.origen_id, a.relacion, a.destino_id);
       return { ok: true };
+    },
+  },
+  {
+    name: "desconectar_nodos",
+    description:
+      "Quita una conexión. No se pierde: queda con fecha de término, como historia. " +
+      "Sin destino_id quita todas las de esa relación (ej. sacar una tarea de cualquier proyecto).",
+    inputSchema: {
+      type: "object",
+      properties: { origen_id: texto, relacion: texto, destino_id: texto },
+      required: ["origen_id", "relacion"],
+    },
+    ejecutar: async (repo, a) => ({ desconectadas: await repo.desconectar(a.origen_id, a.relacion, a.destino_id) }),
+  },
+  {
+    name: "mover_nodos",
+    description:
+      "Mueve uno o varios nodos a otra caja de una vez: les quita su conexión anterior de esa relación " +
+      "y los conecta al destino. Ej. mover 5 tareas a otro proyecto.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ids: { type: "array", items: texto },
+        destino_id: texto,
+        relacion: { ...texto, default: "pertenece_a" },
+      },
+      required: ["ids", "destino_id"],
+    },
+    ejecutar: async (repo, a) => {
+      const relacion = a.relacion ?? "pertenece_a";
+      for (const id of a.ids) {
+        await repo.desconectar(id, relacion);
+        await repo.conectar(id, relacion, a.destino_id);
+      }
+      return { movidos: a.ids.length };
     },
   },
   {
@@ -295,6 +372,50 @@ export const HERRAMIENTAS: Herramienta[] = [
     },
     ejecutar: async (repo, a) =>
       resumirRegistros(await repo.registros({ clase: a.clase, nodo_id: a.nodo_id, desde: a.desde, hasta: a.hasta }), a.agrupar_por),
+  },
+  {
+    name: "editar_registro",
+    description: "Corrige un registro (usa el id que devuelve consultar_registros): monto, fecha, cuenta, categoría, etc.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: texto, clase: { type: "string", enum: Object.keys(CLASES) }, fecha: texto, titulo: texto,
+        valor: { type: "number" }, unidad: texto, nodo_id: texto, otro_id: texto, props: { type: "object" },
+      },
+      required: ["id"],
+    },
+    ejecutar: (repo, a) => {
+      const { id, ...cambios } = a;
+      return repo.editarRegistro(id, cambios);
+    },
+  },
+  {
+    name: "borrar_registro",
+    description: "Borra un registro anotado por error. Confirma con el usuario antes.",
+    inputSchema: { type: "object", properties: { id: texto }, required: ["id"] },
+    ejecutar: async (repo, a) => {
+      if (!(await repo.borrarRegistro(a.id))) throw new ErrorHerramienta(`No existe el registro ${a.id}`);
+      return { ok: true };
+    },
+  },
+  {
+    name: "guardar_tipo",
+    description:
+      "Crea un tipo nuevo o personaliza uno existente: nombre, módulo (General, Finanzas...), orden en la leyenda, " +
+      "color, nivel (0 = caja más general; vacío = no contiene a otros), subcaja ({clave_caja: nombre}), " +
+      "propiedades y conexiones. Solo cambia lo que mandes. Mira listar_tipos para ver cómo están hoy.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        clave: { ...texto, description: "Sin tildes ni espacios, ej. 'viaje'" },
+        nombre: texto, modulo: texto, orden: { type: "integer" }, color: { ...texto, description: "Ej. '#2563eb'" },
+        nivel: { type: ["integer", "null"] }, subcaja: { type: "object" },
+        propiedades: { type: "array", items: { type: "object" } },
+        conexiones: { type: "array", items: { type: "object" } },
+      },
+      required: ["clave"],
+    },
+    ejecutar: (repo, a) => repo.guardarTipo(a),
   },
 ];
 

@@ -47,5 +47,5 @@ Deno.serve(async (req) => {
   const { data, error } = await db.auth.getUser(token);
   if (error || !data.user) return noAutorizado(req);
 
-  return atenderPost(req, crearRepositorio(db));
+  return atenderPost(req, crearRepositorio(db, data.user.id));
 });
