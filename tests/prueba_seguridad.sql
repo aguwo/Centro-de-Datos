@@ -1,4 +1,4 @@
--- Prueba de los pasos 1 a 5 y 16: cada usuario ve solo lo suyo, las plantillas son de todos y vecinos() funciona.
+-- Prueba de los pasos 1 a 5, 16 y 19: cada usuario ve solo lo suyo, las plantillas son de todos y vecinos() funciona.
 -- Se corre con tests/probar_bd.sh
 grant select, insert, update, delete on all tables in schema public to authenticated;
 insert into auth.users values ('11111111-1111-1111-1111-111111111111'), ('22222222-2222-2222-2222-222222222222');
@@ -21,6 +21,16 @@ do $$ declare n int; begin
   assert n = 2, 'vecinos a profundidad 2 debería dar 2, dio ' || n;
   select count(*) into n from nodos where busqueda @@ plainto_tsquery('spanish', 'migraciones');
   assert n = 1, 'búsqueda en español debería encontrar 1, encontró ' || n;
+end $$;
+
+-- Paso 19: el árbol arma la ruta completa y los registros muestran nombres.
+do $$ declare r text; begin
+  select ruta into r from arbol where titulo = 'Escribir migración';
+  assert r = 'Personal / Centro de datos / Escribir migración', 'ruta inesperada: ' || coalesce(r, '(nada)');
+  select nodo into r from registros_legibles where clase = 'habito';
+  assert r = 'Meditar', 'registros_legibles debería mostrar el nombre del hábito, muestra ' || coalesce(r, '(nada)');
+  select subcaja->>'topico' into r from tipos where clave = 'evento';
+  assert r = 'Evaluaciones', 'evento debería agruparse en Evaluaciones dentro de un tópico';
 end $$;
 
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';

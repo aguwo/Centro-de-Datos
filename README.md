@@ -17,12 +17,26 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 10 | Clic en un nodo: panel con sus datos y vecinos, y el mapa ilumina su vecindario | `docs/index.html` |
 | 11 | Crear, editar y archivar nodos desde la web | `docs/index.html` |
 | 12 | Importador de Notion: traduce tus bases a nodos y conexiones y genera un SQL para pegar en Supabase | `importador-notion/` |
-| 13 | Mapa ordenado: esconde lo hecho, filtros por tipo en la leyenda, nombres según el zoom y caja "Sin conectar" | `docs/index.html` |
+| 13 | Mapa ordenado: esconde lo hecho, filtros por tipo en la leyenda, nombres según el zoom y caja "Sin conectar" (desde el paso 20, cajas por módulo) | `docs/index.html` |
 | 14 | Cajas dentro de cajas: cada materia, proyecto y área es un espacio propio con todo lo suyo adentro | `docs/index.html` |
 | 15 | Inicio: menú, captura rápida, Hoy, próximos 7 días, Inbox y proyectos en curso | `docs/index.html` |
 | 16 | Tipos nuevos (cuenta, hábito, planta, alimento, receta, libro...) y tabla `registros` para lo que pasa con fecha (gastos, hábitos cumplidos, comidas, riegos) | `supabase/migrations/0006_vida_y_registros.sql` |
 | 17 | Importador del resto de Notion: finanzas, hábitos, plantas, dieta, biblioteca y rutinas | `importador-notion/traducir-resto.mjs` |
-| 18 | Dentro de cada ramo, las evaluaciones van en su propia caja "Evaluaciones" | `docs/index.html` |
+| 18 | Dentro de cada ramo, las evaluaciones van en su propia caja "Evaluaciones" | `docs/js/mapa.js` |
+| 19 | La jerarquía vive en la base: cada tipo tiene módulo, orden, color, nivel y subcajas. Vistas `arbol` (ruta completa de cada nodo) y `registros_legibles`. El agente gana `ver_arbol` y la ruta en cada búsqueda | `supabase/migrations/0007_jerarquia.sql` |
+| 20 | Web ordenada en archivos: lee la jerarquía de la base, agrupa la leyenda por módulo y junta lo suelto en la caja de su módulo | `docs/js/` |
+
+## Cómo está ordenada la web
+
+```
+docs/index.html    solo la estructura de la página
+docs/estilos.css   cómo se ve
+docs/js/main.js    punto de partida: sesión, menú y qué se dibuja al llegar los datos
+docs/js/base.js    conexión a Supabase, atajos y los datos cargados
+docs/js/mapa.js    el mapa de cajas, la leyenda y los filtros
+docs/js/panel.js   el panel de un nodo y el formulario para crear o editar
+docs/js/inicio.js  el panel de control
+```
 
 ## Pruebas
 

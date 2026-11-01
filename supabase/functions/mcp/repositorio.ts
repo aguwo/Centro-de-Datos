@@ -2,7 +2,7 @@
 // El cliente se crea con el token del usuario, así que Row Level Security filtra todo:
 // el agente nunca puede leer ni escribir datos de otra persona.
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import type { Nodo, Repositorio, Vecino } from "./servidor.ts";
+import type { FilaArbol, Nodo, Repositorio, Vecino } from "./servidor.ts";
 
 const COLUMNAS = "id, titulo, contenido, estado, fecha, props, tipos!inner(clave)";
 
@@ -26,9 +26,23 @@ export function crearRepositorio(db: SupabaseClient): Repositorio {
     return filas[0].id;
   }
 
+  // Le agrega a cada nodo su ruta en el árbol (paso 19), para que el agente sepa dónde está cada cosa.
+  async function conRuta(nodos: Nodo[]): Promise<Nodo[]> {
+    if (!nodos.length) return nodos;
+    const filas = revisar(await db.from("arbol").select("id, ruta").in("id", nodos.map((n) => n.id))) ?? [];
+    const rutas = new Map(filas.map((f: any) => [f.id, f.ruta]));
+    return nodos.map((n) => ({ ...n, ruta: rutas.get(n.id) }));
+  }
+
   return {
     async listarTipos() {
-      return revisar(await db.from("tipos").select("clave, nombre, propiedades, conexiones").order("nombre"));
+      return revisar(await db.from("tipos").select("clave, nombre, modulo, propiedades, conexiones").order("orden"));
+    },
+
+    async arbol(desde) {
+      let q = db.from("arbol").select("id, titulo, tipo, modulo, orden, estado, padre_id");
+      if (desde) q = q.contains("camino", [desde]); // el nodo y todo lo que tiene adentro
+      return (revisar(await q) ?? []) as FilaArbol[];
     },
 
     async buscarNodos({ texto, tipo, estado, limite }) {
@@ -37,7 +51,7 @@ export function crearRepositorio(db: SupabaseClient): Repositorio {
       if (tipo) q = q.eq("tipos.clave", tipo);
       if (estado) q = q.eq("estado", estado);
       const filas = revisar(await q.order("actualizado_en", { ascending: false }).limit(limite));
-      return (filas ?? []).map(aNodo);
+      return conRuta((filas ?? []).map(aNodo));
     },
 
     async verNodo(id, profundidad) {
@@ -48,7 +62,7 @@ export function crearRepositorio(db: SupabaseClient): Repositorio {
       const nodos = ids.length ? revisar(await db.from("nodos").select(COLUMNAS).in("id", ids)) : [];
       const porId = new Map((nodos ?? []).map((n: any) => [n.id, aNodo(n)]));
       return {
-        nodo: aNodo(fila),
+        nodo: (await conRuta([aNodo(fila)]))[0],
         vecinos: (vecinos ?? [])
           .filter((v) => porId.has(v.nodo_id))
           .map((v): Vecino => ({ nodo: porId.get(v.nodo_id)!, relacion: v.relacion, direccion: v.direccion, profundidad: v.profundidad })),

@@ -2,7 +2,7 @@
 // Ejecutar: node --test tests/servidor.test.ts   (Node 22.18 o superior)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { atenderPost, type Nodo, type Repositorio } from "../supabase/functions/mcp/servidor.ts";
+import { atenderPost, dibujarArbol, type Nodo, type Repositorio } from "../supabase/functions/mcp/servidor.ts";
 
 function repoFalso(): Repositorio & { nodos: Nodo[]; conexiones: string[] } {
   const nodos: Nodo[] = [];
@@ -11,7 +11,10 @@ function repoFalso(): Repositorio & { nodos: Nodo[]; conexiones: string[] } {
     nodos,
     conexiones,
     async listarTipos() {
-      return [{ clave: "tarea", nombre: "Tarea", propiedades: [], conexiones: [] }];
+      return [{ clave: "tarea", nombre: "Tarea", modulo: "Productividad", propiedades: [], conexiones: [] }];
+    },
+    async arbol() {
+      return [];
     },
     async buscarNodos({ texto, tipo }) {
       return nodos.filter((n) => (!texto || n.titulo.includes(texto)) && (!tipo || n.tipo === tipo));
@@ -60,11 +63,11 @@ test("las notificaciones responden 202 sin cuerpo", async () => {
   assert.equal(status, 202);
 });
 
-test("tools/list incluye las 7 herramientas", async () => {
+test("tools/list incluye las 8 herramientas", async () => {
   const { json } = await llamar(repoFalso(), { jsonrpc: "2.0", id: 2, method: "tools/list" });
   assert.deepEqual(
     json.result.tools.map((t: any) => t.name).sort(),
-    ["actualizar_nodo", "agenda_de_hoy", "buscar_nodos", "conectar_nodos", "crear_nodo", "listar_tipos", "ver_nodo"],
+    ["actualizar_nodo", "agenda_de_hoy", "buscar_nodos", "conectar_nodos", "crear_nodo", "listar_tipos", "ver_arbol", "ver_nodo"],
   );
 });
 
@@ -97,4 +100,27 @@ test("método y herramienta desconocidos dan error JSON-RPC", async () => {
 test("JSON inválido da 400", async () => {
   const res = await atenderPost(new Request("http://x/mcp", { method: "POST", body: "{" }), repoFalso());
   assert.equal(res.status, 400);
+});
+
+test("dibujarArbol agrupa por módulo, ordena, sangra y salta lo Hecho", () => {
+  const fila = (id: string, titulo: string, tipo: string, modulo: string, orden: number, padre_id: string | null, estado?: string) =>
+    ({ id, titulo, tipo, modulo, orden, padre_id, estado });
+  const filas = [
+    fila("t2", "Tarea hecha", "tarea", "Productividad", 14, "p1", "Hecho"),
+    fila("a1", "Universidad", "area", "General", 1, null),
+    fila("x1", "Arroz", "alimento", "Dieta", 41, null),
+    fila("p1", "Proyecto BD", "proyecto", "Productividad", 13, "a1", "En curso"),
+    fila("t1", "Diseñar MER", "tarea", "Productividad", 14, "p1", "Por hacer"),
+  ];
+  assert.deepEqual(dibujarArbol(filas), [
+    "# General",
+    "Universidad [area] a1",
+    "  Proyecto BD [proyecto, En curso] p1",
+    "    Diseñar MER [tarea, Por hacer] t1",
+    "# Dieta",
+    "Arroz [alimento] x1",
+  ]);
+  assert.equal(dibujarArbol(filas, true).length, 7);
+  // Si el padre no vino (ej. se pidió "desde" un nodo), ese nodo es la raíz.
+  assert.deepEqual(dibujarArbol(filas.filter((f) => f.id !== "a1")).slice(0, 2), ["# Productividad", "Proyecto BD [proyecto, En curso] p1"]);
 });

@@ -10,12 +10,25 @@ export type Nodo = {
   estado?: string | null;
   fecha?: string | null;
   props?: Record<string, unknown>;
+  ruta?: string; // dónde está, ej. "Universidad / Base de Datos / Proyecto BD"
+};
+
+/** Una fila de la vista `arbol` (paso 19): el nodo y la caja donde está. */
+export type FilaArbol = {
+  id: string;
+  titulo: string;
+  tipo: string;
+  modulo: string;
+  orden: number;
+  estado?: string | null;
+  padre_id: string | null;
 };
 
 export type Vecino = { nodo: Nodo; relacion: string; direccion: string; profundidad: number };
 
 export interface Repositorio {
-  listarTipos(): Promise<{ clave: string; nombre: string; propiedades: unknown; conexiones: unknown }[]>;
+  listarTipos(): Promise<{ clave: string; nombre: string; modulo: string; propiedades: unknown; conexiones: unknown }[]>;
+  arbol(desde?: string): Promise<FilaArbol[]>;
   buscarNodos(f: { texto?: string; tipo?: string; estado?: string; limite: number }): Promise<Nodo[]>;
   verNodo(id: string, profundidad: number): Promise<{ nodo: Nodo; vecinos: Vecino[] } | null>;
   crearNodo(n: Omit<Nodo, "id">): Promise<Nodo>;
@@ -35,12 +48,56 @@ type Herramienta = {
 
 const texto = { type: "string" };
 
+/**
+ * Convierte las filas del árbol en líneas con sangría, agrupadas por módulo:
+ *   # General
+ *   Universidad [area] <id>
+ *     Base de Datos [topico] <id>
+ * Lo Hecho se salta (con todo lo que tiene adentro) salvo que se pida verlo.
+ */
+export function dibujarArbol(filas: FilaArbol[], conHechos = false): string[] {
+  const ids = new Set(filas.map((f) => f.id));
+  const hijos = new Map<string | null, FilaArbol[]>();
+  for (const f of filas) {
+    const p = f.padre_id && ids.has(f.padre_id) ? f.padre_id : null; // si el padre quedó fuera, es raíz
+    hijos.set(p, [...(hijos.get(p) ?? []), f]);
+  }
+  const enOrden = (a: FilaArbol, b: FilaArbol) => a.orden - b.orden || a.titulo.localeCompare(b.titulo, "es");
+  const lineas: string[] = [];
+  const bajar = (f: FilaArbol, sangria: number) => {
+    if (!conHechos && f.estado === "Hecho") return;
+    const detalle = [f.tipo, f.estado].filter(Boolean).join(", ");
+    lineas.push(`${"  ".repeat(sangria)}${f.titulo} [${detalle}] ${f.id}`);
+    for (const h of (hijos.get(f.id) ?? []).sort(enOrden)) bajar(h, sangria + 1);
+  };
+  let modulo = "";
+  for (const r of (hijos.get(null) ?? []).sort(enOrden)) {
+    if (r.modulo !== modulo) lineas.push(`# ${(modulo = r.modulo)}`);
+    bajar(r, 0);
+  }
+  return lineas;
+}
+
 export const HERRAMIENTAS: Herramienta[] = [
   {
     name: "listar_tipos",
-    description: "Lista los tipos de nodo disponibles (tarea, proyecto, área, etc.) con sus propiedades y conexiones esperadas.",
+    description: "Lista los tipos de nodo disponibles, ordenados por módulo (General, Productividad, Finanzas...), con sus propiedades y conexiones esperadas.",
     inputSchema: { type: "object", properties: {} },
     ejecutar: (repo) => repo.listarTipos(),
+  },
+  {
+    name: "ver_arbol",
+    description:
+      "Muestra todo como un árbol (área > tópico > proyecto > tarea), agrupado por módulo y con el id de cada nodo. " +
+      "Úsala primero para orientarte. Con 'desde' muestra solo lo que está dentro de ese nodo.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        desde: { ...texto, description: "id de un nodo, ej. un área" },
+        con_hechos: { type: "boolean", default: false, description: "Incluir lo que ya está Hecho" },
+      },
+    },
+    ejecutar: async (repo, a) => dibujarArbol(await repo.arbol(a.desde), a.con_hechos ?? false),
   },
   {
     name: "buscar_nodos",
@@ -162,8 +219,8 @@ export async function procesar(msg: Peticion, repo: Repositorio): Promise<object
         capabilities: { tools: { listChanged: false } },
         serverInfo: { name: "centro-de-datos", version: "0.1.0" },
         instructions:
-          "Centro de datos personal en forma de grafo. Busca antes de crear para no duplicar, " +
-          "y conecta cada tarea a su proyecto o área.",
+          "Centro de datos personal en forma de grafo. Usa ver_arbol para orientarte, busca antes de crear " +
+          "para no duplicar, y conecta cada tarea a su proyecto o área.",
       });
     }
     case "ping":
