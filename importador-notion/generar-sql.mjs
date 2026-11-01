@@ -14,38 +14,32 @@ const q = (v) => (v === null || v === undefined ? "null" : `'${String(v).replace
 export function generarSql(notion, ahora) {
   const { nodos, conexiones, descartadas } = traducir(notion, ahora);
   const filasNodos = nodos.map((n) =>
-    `(${[n.notion_id, n.tipo, n.titulo, n.contenido, n.estado, n.fecha].map(q).join(", ")}, ${n.archivado}, ${q(JSON.stringify(n.props))}::jsonb)`);
+    `(${[n.notion_id, n.tipo, n.titulo, n.contenido, n.estado, n.fecha].map(q).join(", ")}, ${n.archivado}, ${q(JSON.stringify(n.props))})`);
   const filasCon = conexiones.map((c) => `(${[c.origen, c.relacion, c.destino].map(q).join(", ")})`);
 
+  // Sin tablas temporales: el SQL Editor de Supabase no siempre las conserva entre sentencias.
+  // Cada INSERT lleva sus datos adentro como una lista VALUES.
+  const dueno = "(select id from auth.users order by created_at limit 1)";
   return `-- Importación desde Notion: ${nodos.length} nodos y ${conexiones.length} conexiones (${descartadas} descartadas).
 -- Pégalo completo en Supabase > SQL Editor y presiona Run.
+-- El dueño es tu usuario (el único registrado): el SQL Editor no tiene sesión, por eso se busca en auth.users.
 begin;
 
--- 1. Dueño: tu usuario (el único registrado). El SQL Editor no tiene sesión, por eso se busca así.
-create temp table _dueno on commit drop as select id from auth.users order by created_at limit 1;
-
--- 2. Los nodos traducidos, en una tabla temporal que desaparece al terminar.
-create temp table _nodos (notion_id text, tipo text, titulo text, contenido text, estado text,
-                          fecha timestamptz, archivado boolean, props jsonb) on commit drop;
-insert into _nodos values
-${filasNodos.join(",\n")};
-
+-- 1. Los nodos. Se salta cualquiera que ya exista (mismo notion_id), así se puede correr dos veces.
 insert into public.nodos (owner_id, tipo_id, titulo, contenido, estado, fecha, archivado, props)
-select d.id, t.id, i.titulo, i.contenido, i.estado, i.fecha, i.archivado, i.props
-  from _nodos i
-  cross join _dueno d
+select ${dueno}, t.id, i.titulo, i.contenido, i.estado, i.fecha::timestamptz, i.archivado, i.props::jsonb
+  from (values
+${filasNodos.join(",\n")}
+  ) as i (notion_id, tipo, titulo, contenido, estado, fecha, archivado, props)
   join public.tipos t on t.clave = i.tipo and t.owner_id is null
  where not exists (select 1 from public.nodos n where n.props->>'notion_id' = i.notion_id);
 
--- 3. Las conexiones: se buscan los dos extremos por su notion_id.
-create temp table _conexiones (origen text, relacion text, destino text) on commit drop;
-insert into _conexiones values
-${filasCon.join(",\n")};
-
+-- 2. Las conexiones: se buscan los dos extremos por su notion_id.
 insert into public.conexiones (owner_id, origen_id, relacion, destino_id)
-select d.id, o.id, c.relacion, x.id
-  from _conexiones c
-  cross join _dueno d
+select ${dueno}, o.id, c.relacion, x.id
+  from (values
+${filasCon.join(",\n")}
+  ) as c (origen, relacion, destino)
   join public.nodos o on o.props->>'notion_id' = c.origen
   join public.nodos x on x.props->>'notion_id' = c.destino
 on conflict (origen_id, relacion, destino_id) do nothing;
@@ -56,6 +50,7 @@ commit;
 select t.nombre, count(*) from public.nodos n join public.tipos t on t.id = n.tipo_id group by 1 order by 2 desc;
 `;
 }
+
 
 if (process.argv[1] === new URL(import.meta.url).pathname) {
   const archivo = process.argv[2];
