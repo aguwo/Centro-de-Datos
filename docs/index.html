@@ -18,6 +18,9 @@
     7. Tocar un tipo en la leyenda lo esconde o lo vuelve a mostrar.
     8. Los nombres aparecen solo cuando hay zoom suficiente, al pasar el mouse o al enfocar un nodo.
     9. Los nodos sin ninguna conexión se juntan en una caja "Sin conectar".
+    Paso 14: cajas dentro de cajas, para que nada se tape.
+    10. Cada nodo se dibuja DENTRO de lo que lo contiene: la tarea dentro de su proyecto o materia,
+        la materia dentro de su área. Así cada materia es un espacio propio con todo lo suyo.
   -->
   <style>
     :root { --fondo:#fafaf9; --texto:#1c1917; --suave:#78716c; --borde:#e7e5e4; --acento:#ea580c; }
@@ -135,18 +138,95 @@
   let verHechos = false;          // ¿mostrar lo que ya está Hecho?
   const tiposOcultos = new Set(); // tipos escondidos desde la leyenda
   const SUELTOS = "_sueltos";     // id de la caja "Sin conectar"
-  const ACOMODO = { name: "cose", animate: false, nodeRepulsion: 12000, idealEdgeLength: 80, nestingFactor: 0.6 };
+  // Paso 14: acomodo propio por cajas (en vez de un acomodo "de fuerzas", que con cajas las superpone).
+  // Cada caja se mide de adentro hacia afuera: primero sus cajas hijas, después sus puntos sueltos en grilla.
+  // Luego se colocan de afuera hacia adentro. Como cada caja reserva su propio rectángulo, nada se tapa.
+  const CELDA = { w: 130, h: 80 };  // espacio para cada punto con su nombre
+  const ESPACIO = 50;               // separación entre cajas hermanas
+  const CABECERA = 40;              // lugar para el nombre de la caja, arriba del borde
+
+  // Recibe los nodos que van juntos en un mismo nivel y devuelve su tamaño
+  // y una función colocar(x, y) que los ubica con la esquina superior izquierda en (x, y).
+  function medir(hermanos) {
+    const hojas = hermanos.filter((n) => n.isChildless());
+    const cajas = hermanos.filter((n) => n.isParent()).map(medirCaja)
+      .sort((a, b) => (a.nodo.id() === SUELTOS) - (b.nodo.id() === SUELTOS) || b.w * b.h - a.w * a.h); // grandes primero, "Sin conectar" al final
+
+    // Los puntos van en una grilla más ancha que alta.
+    const columnas = Math.max(1, Math.ceil(Math.sqrt(hojas.length * 2)));
+    const grilla = { w: hojas.length ? columnas * CELDA.w : 0, h: Math.ceil(hojas.length / columnas) * CELDA.h };
+
+    // Las cajas se reparten en filas, como libros en un estante, sin pasarse de un ancho razonable.
+    const superficie = cajas.reduce((s, c) => s + (c.w + ESPACIO) * (c.h + ESPACIO), 0);
+    const tope = Math.max(grilla.w, ...cajas.map((c) => c.w), Math.sqrt(superficie) * 1.5);
+    let x = 0, y = 0, altoFila = 0, ancho = grilla.w;
+    const ubicadas = [];
+    for (const c of cajas) {
+      if (x > 0 && x + c.w > tope) { x = 0; y += altoFila + ESPACIO; altoFila = 0; }
+      ubicadas.push({ c, x, y });
+      x += c.w + ESPACIO;
+      altoFila = Math.max(altoFila, c.h);
+      ancho = Math.max(ancho, x - ESPACIO);
+    }
+    const altoCajas = cajas.length ? y + altoFila : 0;
+    const arribaGrilla = altoCajas + (cajas.length && hojas.length ? ESPACIO : 0);
+
+    return {
+      w: ancho, h: arribaGrilla + grilla.h,
+      colocar(x0, y0) {
+        for (const u of ubicadas) u.c.colocar(x0 + u.x, y0 + u.y);
+        hojas.forEach((n, i) => n.position({
+          x: x0 + (i % columnas) * CELDA.w + CELDA.w / 2,
+          y: y0 + arribaGrilla + Math.floor(i / columnas) * CELDA.h + CELDA.h / 3,
+        }));
+      },
+    };
+  }
+
+  // Una caja mide lo que miden sus hijos, más su borde interior y el lugar para su nombre.
+  function medirCaja(caja) {
+    const relleno = caja.data("tipo") === "area" ? 28 : 18;
+    const adentro = medir(caja.children().not(".escondido"));
+    return {
+      nodo: caja, w: adentro.w + 2 * relleno, h: adentro.h + 2 * relleno + CABECERA,
+      colocar: (x, y) => adentro.colocar(x + relleno, y + CABECERA + relleno),
+    };
+  }
+
+  // Paso 14: ¿dentro de qué caja se dibuja cada nodo?
+  // Solo estos tipos pueden contener a otros. El número es el nivel: un nodo solo puede quedar
+  // dentro de algo de nivel MENOR (más general), así nunca hay una caja dentro de sí misma.
+  const NIVEL = { area: 0, topico: 1, proyecto: 2, objetivo: 2 };
+  const nivel = (tipo) => NIVEL[tipo] ?? 3;
+
+  // De todo lo que un nodo "pertenece a" o "trata sobre", se elige lo más específico.
+  // Ej: "Transformar MER" pertenece a "Proyecto Base de Datos" y trata sobre la materia "Base de Datos":
+  // queda dentro del proyecto, y el proyecto queda dentro de la materia, y la materia dentro de Universidad.
+  function elegirPadres(nodos, conexiones) {
+    const tipoDe = new Map(nodos.map((n) => [n.id, n.tipos.clave]));
+    const padres = new Map();
+    for (const c of conexiones) {
+      if (c.relacion !== "pertenece_a" && c.relacion !== "trata_sobre") continue;
+      const tipoDestino = tipoDe.get(c.destino_id);
+      if (!(tipoDestino in NIVEL) || NIVEL[tipoDestino] >= nivel(tipoDe.get(c.origen_id))) continue;
+      const actual = padres.get(c.origen_id);
+      if (!actual || NIVEL[tipoDestino] > NIVEL[tipoDe.get(actual)]) padres.set(c.origen_id, c.destino_id);
+    }
+    return padres;
+  }
 
   function dibujar(nodos, conexiones) {
     nodosPorId = new Map(nodos.map((n) => [n.id, n]));
     const ids = new Set(nodos.map((n) => n.id));
     const validas = conexiones.filter((c) => ids.has(c.origen_id) && ids.has(c.destino_id)); // por si alguna apunta a un nodo archivado
+    const padres = elegirPadres(nodos, validas);
     const elementos = [
       // La caja "Sin conectar" es un nodo "padre": Cytoscape dibuja a sus hijos adentro.
       // Quién entra a la caja se decide en aplicarFiltros(), según lo que esté a la vista.
       { data: { id: SUELTOS, label: "Sin conectar", caja: true } },
       ...nodos.map((n) => ({
-        data: { id: n.id, label: n.titulo, tipo: n.tipos.clave, color: COLORES[n.tipos.clave] ?? "#78716c", hecho: n.estado === "Hecho" },
+        data: { id: n.id, label: n.titulo, tipo: n.tipos.clave, color: COLORES[n.tipos.clave] ?? "#78716c", hecho: n.estado === "Hecho",
+                padre: padres.get(n.id) },  // "padre" es la caja que le corresponde; aplicarFiltros() lo mete ahí
       })),
       ...validas.map((c) => ({ data: { id: c.id, source: c.origen_id, target: c.destino_id, label: c.relacion.replaceAll("_", " ") } })),
     ];
@@ -173,13 +253,20 @@
         { selector: "node[tipo = 'area'], node[tipo = 'objetivo']", style: { width: 40, height: 40, "font-size": 18, "font-weight": "bold" } },
         { selector: "node[tipo = 'proyecto']", style: { width: 30, height: 30, "font-size": 14 } },
         { selector: "node[?hecho]", style: { opacity: 0.45 } },
+        // Un nodo con hijos (":parent") se dibuja como caja del color de su tipo, con el nombre arriba.
+        { selector: "node:parent", style: {
+            shape: "round-rectangle", "background-color": "data(color)", "background-opacity": 0.07,
+            "border-width": 1.5, "border-color": "data(color)", "border-opacity": 0.6, padding: 18,
+            "text-valign": "top", "text-margin-y": -4, "font-size": 18, "font-weight": "bold", "min-zoomed-font-size": 0,
+        } },
+        { selector: "node[tipo = 'area']:parent", style: { "font-size": 26, padding: 28, "background-opacity": 0.04 } },
         // La caja "Sin conectar".
         { selector: "node[?caja]", style: {
             "background-color": suave, "background-opacity": 0.08, "border-width": 1, "border-color": suave,
             "border-style": "dashed", shape: "round-rectangle", label: "data(label)", "text-valign": "top",
             "font-size": 20, color: suave, "min-zoomed-font-size": 0, padding: 16,
         } },
-        { selector: "node[?caja] > node", style: { "text-max-width": 100 } },
+        { selector: "node:childless", style: { "text-max-width": 120 } }, // el nombre cabe en su celda
         // Filtros: display none saca el nodo del mapa (y sus flechas con él).
         { selector: ".escondido", style: { display: "none" } },
         // Con el mouse encima, o al enfocar, el nombre se ve siempre.
@@ -187,6 +274,8 @@
         // Clases para el modo "enfoque": lo que no es vecino del nodo elegido se apaga.
         { selector: ".apagado", style: { opacity: 0.12 } },
         { selector: "node.elegido", style: { "border-width": 3, "border-color": texto } },
+        // Flechas hacia la caja que ya te contiene: sobran (estar adentro ya lo dice), así que no se dibujan.
+        { selector: "edge.dentro", style: { display: "none" } },
         { selector: "edge", style: {
             width: 1.2, "line-color": suave, "target-arrow-color": suave, "target-arrow-shape": "triangle",
             "curve-style": "bezier", opacity: 0.6,
@@ -237,27 +326,29 @@
     const nodos = cy.nodes().not(caja);
     cy.batch(() => {
       nodos.forEach((n) => {
-        n.toggleClass("escondido", tiposOcultos.has(n.data("tipo")) || (!verHechos && n.data("hecho")));
+        const oculto = tiposOcultos.has(n.data("tipo")) || (!verHechos && n.data("hecho"));
+        n.toggleClass("escondido", oculto);
+        // Lo escondido sale de su caja: así una caja cuyos hijos están todos escondidos vuelve a ser un punto.
+        if (oculto && n.parent().nonempty()) n.move({ parent: null });
       });
-      // Un nodo va a la caja si no le queda ninguna flecha hacia algo visible
+      // Cada nodo visible entra a su caja. Si su caja está escondida, sube a la caja de la caja.
+      // Si no tiene caja y no le queda ninguna flecha hacia algo visible, va a "Sin conectar"
       // (por ejemplo, un área cuyas tareas están todas Hechas y escondidas).
       nodos.not(".escondido").forEach((n) => {
-        const suelto = n.connectedEdges().every((e) => e.source().hasClass("escondido") || e.target().hasClass("escondido"));
-        if (suelto !== (n.parent().id() === SUELTOS)) n.move({ parent: suelto ? SUELTOS : null });
+        let p = n.data("padre");
+        while (p && cy.getElementById(p).hasClass("escondido")) p = cy.getElementById(p).data("padre");
+        if (!p) {
+          const suelto = n.connectedEdges().every((e) => e.source().hasClass("escondido") || e.target().hasClass("escondido"));
+          p = suelto ? SUELTOS : null;
+        }
+        if ((n.parent().id() ?? null) !== p) n.move({ parent: p });
       });
+      cy.edges().forEach((e) => e.toggleClass("dentro", e.source().ancestors().contains(e.target())));
       caja.toggleClass("escondido", caja.children().not(".escondido").empty());
     });
-    // Primero se acomoda el grafo conectado; después los sueltos van en una grilla ordenada debajo.
+    // Se acomoda desde el nivel de más afuera: los nodos que no están dentro de ninguna caja.
     const visibles = cy.nodes().not(".escondido");
-    const sueltos = caja.children().not(".escondido");
-    const resto = visibles.not(caja).not(sueltos);
-    if (resto.nonempty()) resto.union(resto.edgesWith(resto)).layout(ACOMODO).run();
-    if (sueltos.nonempty()) {
-      const bb = resto.nonempty() ? resto.boundingBox() : { x1: 0, y2: 0, w: 0 };
-      const columnas = Math.max(4, Math.ceil(Math.sqrt(sueltos.length * 4)));
-      sueltos.layout({ name: "grid", cols: columnas, boundingBox: {
-        x1: bb.x1, y1: bb.y2 + 100, w: Math.max(bb.w, columnas * 120), h: Math.ceil(sueltos.length / columnas) * 80 } }).run();
-    }
+    cy.batch(() => medir(visibles.orphans()).colocar(0, 0));
     cy.fit(visibles, 30);
   }
 
