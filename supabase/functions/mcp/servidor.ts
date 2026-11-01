@@ -44,6 +44,9 @@ export type RegistroLegible = Registro & { nodo?: string | null; otro?: string |
 
 export type FiltroRegistros = { clase?: string; nodo_id?: string; desde?: string; hasta?: string };
 
+/** Una propiedad de un tipo (paso 23). Si la clave es "estado" o "fecha" vive en esa columna; si no, en props. */
+export type Propiedad = { clave: string; nombre: string; tipo: string; opciones?: string[] };
+
 /** Un tipo (molde de nodo) con su lugar en la jerarquía (paso 19). */
 export type Tipo = {
   clave: string;
@@ -53,16 +56,19 @@ export type Tipo = {
   color?: string;
   nivel?: number | null;
   subcaja?: Record<string, string>;
-  propiedades?: unknown[];
+  propiedades?: Propiedad[];
   conexiones?: unknown[];
 };
 
 export interface Repositorio {
-  listarTipos(): Promise<{ clave: string; nombre: string; modulo: string; propiedades: unknown; conexiones: unknown }[]>;
+  /** Un tipo por clave: si tienes tu propia versión, esa en vez de la plantilla. */
+  listarTipos(): Promise<Tipo[]>;
+  tipoDeNodo(id: string): Promise<string | null>;
   arbol(desde?: string): Promise<FilaArbol[]>;
   buscarNodos(f: { texto?: string; tipo?: string; estado?: string; archivados?: boolean; limite: number }): Promise<Nodo[]>;
   verNodo(id: string, profundidad: number): Promise<{ nodo: Nodo; vecinos: Vecino[] } | null>;
   crearNodo(n: Omit<Nodo, "id">): Promise<Nodo>;
+  /** Las props que vengan se mezclan con las que ya tiene; una prop en null se borra. */
   actualizarNodo(id: string, cambios: Partial<Omit<Nodo, "id">>): Promise<Nodo>;
   /** Borra de verdad, pero solo si el nodo ya está archivado. Devuelve false si no borró nada. */
   borrarNodo(id: string): Promise<boolean>;
@@ -100,6 +106,42 @@ type Herramienta = {
 };
 
 const texto = { type: "string" };
+
+const EN_COLUMNA = ["estado", "fecha"]; // estas propiedades se guardan en su columna, no en props
+const INTERNAS = ["notion_id"];         // props que pone el sistema, no el usuario
+
+/**
+ * Paso 23: revisa que las props calcen con las propiedades del tipo (clave conocida, número donde va número,
+ * una de las opciones donde hay opciones). Devuelve la lista de problemas; vacía si está todo bien.
+ */
+export function revisarProps(tipo: Tipo, props: Record<string, unknown> = {}): string[] {
+  const propias = (tipo.propiedades ?? []).filter((p) => !EN_COLUMNA.includes(p.clave));
+  const problemas: string[] = [];
+  for (const [clave, valor] of Object.entries(props)) {
+    if (valor === null || INTERNAS.includes(clave)) continue; // null = borrar esa propiedad
+    const p = propias.find((x) => x.clave === clave);
+    const esperado = !p ? null
+      : p.tipo === "numero" ? typeof valor === "number"
+      : p.tipo === "booleano" ? typeof valor === "boolean"
+      : p.tipo === "seleccion" ? (p.opciones ?? []).includes(valor as string)
+      : typeof valor === "string";
+    if (!p) problemas.push(`'${clave}' no es una propiedad de ${tipo.clave}`);
+    else if (!esperado) problemas.push(`'${clave}' debe ser ${p.tipo === "seleccion" ? "una de: " + p.opciones?.join(", ") : p.tipo}`);
+  }
+  if (problemas.length) {
+    const lista = propias.map((p) => `${p.clave} (${p.tipo}${p.opciones ? ": " + p.opciones.join("/") : ""})`).join(", ");
+    problemas.push(`Propiedades de ${tipo.clave}: ${lista || "ninguna"}. Estado y fecha van como campos aparte.`);
+  }
+  return problemas;
+}
+
+// Busca el tipo y revisa las props; si algo no calza, el agente recibe el error con la lista correcta.
+async function validar(repo: Repositorio, clave: string, props?: Record<string, unknown>) {
+  const tipo = (await repo.listarTipos()).find((t) => t.clave === clave);
+  if (!tipo) throw new ErrorHerramienta(`No existe el tipo '${clave}'. Usa listar_tipos para ver los disponibles.`);
+  const problemas = revisarProps(tipo, props);
+  if (problemas.length) throw new ErrorHerramienta(problemas.join("\n"));
+}
 
 /**
  * Convierte las filas del árbol en líneas con sangría, agrupadas por módulo:
@@ -214,7 +256,9 @@ export const HERRAMIENTAS: Herramienta[] = [
   },
   {
     name: "crear_nodo",
-    description: "Crea un nodo nuevo (tarea, nota, proyecto...) y opcionalmente lo conecta con otros.",
+    description:
+      "Crea un nodo nuevo (tarea, nota, proyecto...) y opcionalmente lo conecta con otros. " +
+      "En props usa solo las claves de las propiedades de su tipo (listar_tipos); estado y fecha van aparte.",
     inputSchema: {
       type: "object",
       properties: {
@@ -236,6 +280,7 @@ export const HERRAMIENTAS: Herramienta[] = [
       required: ["tipo", "titulo"],
     },
     ejecutar: async (repo, a) => {
+      await validar(repo, a.tipo, a.props);
       const nodo = await repo.crearNodo({
         tipo: a.tipo, titulo: a.titulo, contenido: a.contenido, estado: a.estado, fecha: a.fecha, props: a.props ?? {},
       });
@@ -247,7 +292,8 @@ export const HERRAMIENTAS: Herramienta[] = [
     name: "actualizar_nodo",
     description:
       "Cambia lo que quieras de un nodo: título, contenido, estado, fecha, propiedades o tipo. " +
-      "archivado: true lo saca de la vista (se puede recuperar con false); es la forma normal de 'borrar'.",
+      "archivado: true lo saca de la vista (se puede recuperar con false); es la forma normal de 'borrar'. " +
+      "Las props se suman a las que ya tiene (una en null se borra) y deben ser propiedades de su tipo.",
     inputSchema: {
       type: "object",
       properties: {
@@ -257,8 +303,11 @@ export const HERRAMIENTAS: Herramienta[] = [
       },
       required: ["id"],
     },
-    ejecutar: (repo, a) => {
+    ejecutar: async (repo, a) => {
       const { id, ...cambios } = a;
+      const tipo = cambios.tipo ?? (await repo.tipoDeNodo(id));
+      if (!tipo) throw new ErrorHerramienta(`No existe el nodo ${id}`);
+      await validar(repo, tipo, cambios.props);
       return repo.actualizarNodo(id, cambios);
     },
   },

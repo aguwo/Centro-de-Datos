@@ -2,7 +2,7 @@
 // Ejecutar: node --test tests/servidor.test.ts   (Node 22.18 o superior)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { atenderPost, dibujarArbol, resumirRegistros, type Nodo, type Registro, type Repositorio } from "../supabase/functions/mcp/servidor.ts";
+import { atenderPost, dibujarArbol, resumirRegistros, revisarProps, type Nodo, type Registro, type Repositorio } from "../supabase/functions/mcp/servidor.ts";
 
 function repoFalso(): Repositorio & { nodos: Nodo[]; conexiones: string[]; anotados: Registro[] } {
   const nodos: Nodo[] = [];
@@ -40,7 +40,17 @@ function repoFalso(): Repositorio & { nodos: Nodo[]; conexiones: string[]; anota
       return t;
     },
     async listarTipos() {
-      return [{ clave: "tarea", nombre: "Tarea", modulo: "Productividad", propiedades: [], conexiones: [] }];
+      return [{
+        clave: "tarea", nombre: "Tarea", modulo: "Productividad", conexiones: [],
+        propiedades: [
+          { clave: "estado", nombre: "Estado", tipo: "estado" },
+          { clave: "repeticion", nombre: "Repetición", tipo: "seleccion", opciones: ["Ninguna", "Semanal"] },
+          { clave: "minutos", nombre: "Minutos", tipo: "numero" },
+        ],
+      }];
+    },
+    async tipoDeNodo(id) {
+      return nodos.find((n) => n.id === id)?.tipo ?? null;
     },
     async arbol() {
       return [];
@@ -201,4 +211,31 @@ test("mover_nodos quita la caja anterior y pone la nueva", async () => {
   });
   assert.equal(json.result.structuredContent.resultado.movidos, 2);
   assert.deepEqual(repo.conexiones.sort(), ["t1-pertenece_a->nuevo", "t1-trata_sobre->ramo", "t2-pertenece_a->nuevo"]);
+});
+
+test("revisarProps acepta lo del tipo y explica lo que no calza", () => {
+  const tipo = {
+    clave: "tarea",
+    propiedades: [
+      { clave: "estado", nombre: "Estado", tipo: "estado" },
+      { clave: "repeticion", nombre: "Repetición", tipo: "seleccion", opciones: ["Ninguna", "Semanal"] },
+      { clave: "minutos", nombre: "Minutos", tipo: "numero" },
+    ],
+  };
+  assert.deepEqual(revisarProps(tipo, { repeticion: "Semanal", minutos: 30, notion_id: "x", vieja: null }), []);
+  const mal = revisarProps(tipo, { Prioridad: "Alta", repeticion: "A veces", minutos: "30", estado: "Hecho" });
+  assert.equal(mal.length, 5); // 4 problemas + la lista de propiedades correctas
+  assert.match(mal[0], /'Prioridad' no es una propiedad/);
+  assert.match(mal[1], /una de: Ninguna, Semanal/);
+  assert.match(mal.at(-1)!, /repeticion \(seleccion: Ninguna\/Semanal\)/);
+});
+
+test("crear_nodo rechaza props que no son del tipo", async () => {
+  const repo = repoFalso();
+  const { json } = await llamar(repo, {
+    jsonrpc: "2.0", id: 12, method: "tools/call",
+    params: { name: "crear_nodo", arguments: { tipo: "tarea", titulo: "X", props: { prioridad: "Alta" } } },
+  });
+  assert.equal(json.result.isError, true);
+  assert.equal(repo.nodos.length, 0);
 });

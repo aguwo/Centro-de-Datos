@@ -27,6 +27,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 20 | Web ordenada en archivos: lee la jerarquía de la base, agrupa la leyenda por módulo y junta lo suelto en la caja de su módulo | `docs/js/` |
 | 21 | El agente anota y consulta registros: `anotar_registro` ("gasté 5.000 en comida") y `consultar_registros` (cuenta, suma y agrupa por día, mes, nodo u otro) | `supabase/functions/mcp/servidor.ts` |
 | 22 | Control total del agente: archivar, recuperar, cambiar de tipo y borrar (solo lo archivado) nodos; desconectar (queda la historia) y mover varios nodos de caja; editar y borrar registros; crear o personalizar tipos | `supabase/functions/mcp/` |
+| 23 | Cada propiedad de un tipo tiene su clave exacta: el agente solo puede usar las del tipo (con valores válidos) y la web las muestra con su nombre y deja editarlas | `supabase/migrations/0008_propiedades.sql` |
 
 ## Cómo está ordenada la web
 

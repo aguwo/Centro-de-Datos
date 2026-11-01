@@ -39,7 +39,15 @@ export function crearRepositorio(db: SupabaseClient, usuario: string): Repositor
 
   return {
     async listarTipos() {
-      return revisar(await db.from("tipos").select(COLUMNAS_TIPO).order("orden"));
+      const filas = revisar(await db.from("tipos").select("owner_id, " + COLUMNAS_TIPO).order("orden")) ?? [];
+      const porClave = new Map<string, any>();
+      for (const { owner_id, ...t } of filas as any[]) if (!porClave.has(t.clave) || owner_id) porClave.set(t.clave, t);
+      return [...porClave.values()] as Tipo[];
+    },
+
+    async tipoDeNodo(id) {
+      const fila = revisar(await db.from("nodos").select("tipos!inner(clave)").eq("id", id).maybeSingle()) as any;
+      return fila?.tipos?.clave ?? null;
     },
 
     async arbol(desde) {
@@ -77,8 +85,15 @@ export function crearRepositorio(db: SupabaseClient, usuario: string): Repositor
       return aNodo(revisar(await db.from("nodos").insert({ ...datos, tipo_id }).select(COLUMNAS).single()));
     },
 
-    async actualizarNodo(id, { tipo, ...cambios }) {
-      const fila = tipo ? { ...cambios, tipo_id: await idDeTipo(tipo) } : cambios;
+    async actualizarNodo(id, { tipo, props, ...cambios }) {
+      const fila: Record<string, unknown> = tipo ? { ...cambios, tipo_id: await idDeTipo(tipo) } : { ...cambios };
+      if (props) {
+        // Se parte de las props que ya tiene, para no perder las que no se mencionan.
+        const actual = revisar(await db.from("nodos").select("props").eq("id", id).single()) as any;
+        const juntas: Record<string, unknown> = { ...(actual?.props ?? {}), ...props };
+        for (const k of Object.keys(juntas)) if (juntas[k] === null) delete juntas[k];
+        fila.props = juntas;
+      }
       return aNodo(revisar(await db.from("nodos").update(fila).eq("id", id).select(COLUMNAS).single()));
     },
 

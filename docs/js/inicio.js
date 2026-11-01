@@ -1,20 +1,7 @@
 // El Inicio (paso 15): tu panel de control con lo de hoy, lo que viene, el Inbox y los proyectos en curso.
-import { db, $, el, avisar, datos, colorDe, recargar } from "./base.js";
+import { db, $, el, avisar, datos, colorDe, recargar, dia, hora } from "./base.js";
 import { mostrarPanel } from "./panel.js";
 
-// El día de una fecha, como texto "2026-11-01".
-// Las fechas sin hora (las de Notion, guardadas a medianoche UTC) se leen tal cual, sin zona horaria,
-// para que no se corran un día. Las que tienen hora se pasan a tu hora local.
-const sinHora = (d) => d.getUTCHours() === 0 && d.getUTCMinutes() === 0;
-function dia(fecha) {
-  if (!fecha) return null;
-  const d = new Date(fecha);
-  return sinHora(d) ? fecha.slice(0, 10) : d.toLocaleDateString("sv-SE"); // "sv-SE" escribe AAAA-MM-DD
-}
-const hora = (fecha) => {
-  const d = new Date(fecha);
-  return sinHora(d) ? "" : d.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
-};
 const sumarDias = (texto, n) => { const d = new Date(texto + "T12:00:00"); d.setDate(d.getDate() + n); return d.toLocaleDateString("sv-SE"); };
 
 export function dibujarInicio() {

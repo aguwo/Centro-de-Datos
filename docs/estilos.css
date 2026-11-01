@@ -57,3 +57,4 @@ nav button.activo { background:var(--borde); }
 .tarjeta .vacio { color:var(--suave); font-size:.85rem; }
 #mensaje { color:var(--suave); text-align:center; padding:8px; margin:0; }
 .leyenda .modulo { font-weight:600; color:var(--texto); margin-left:6px; }
+form.nodo input.check { width:auto; }

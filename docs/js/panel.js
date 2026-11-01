@@ -1,9 +1,52 @@
 // El panel lateral: los datos de un nodo con sus conexiones, y el formulario para crear o editar.
 // Lee de los datos cargados (no del mapa), así funciona igual desde el Inicio.
-import { db, $, el, avisar, datos, colorDe, recargar } from "./base.js";
+import { db, $, el, avisar, datos, colorDe, recargar, dia, hora } from "./base.js";
 import { enfocar, desenfocar, ajustarMapa } from "./mapa.js";
 
 const ESTADOS = ["Inbox", "Por hacer", "En curso", "Esperando", "Hecho"]; // los mismos del paso 3
+
+// ---------- Propiedades (paso 23) ----------
+// Cada tipo dice qué propiedades tiene. "estado" y "fecha" viven en su columna del nodo; el resto, en props.
+const EN_COLUMNA = ["estado", "fecha"];
+const OCULTAS = ["notion_id"]; // las pone el sistema; no se muestran
+const propiedadesDe = (clave) => datos.tipo.get(clave)?.propiedades ?? [];
+const valorDe = (n, p) => (EN_COLUMNA.includes(p.clave) ? n[p.clave] : n.props?.[p.clave]);
+
+// Cómo se lee un valor: fechas como 22-10-2026 (con hora si tiene), Sí/No, números y textos tal cual.
+function legible(p, v) {
+  if (v === null || v === undefined || v === "") return null;
+  if (p.tipo === "fecha" || p.tipo === "fecha_hora") return [dia(v)?.split("-").reverse().join("-"), hora(v)].filter(Boolean).join(" ");
+  if (p.tipo === "booleano") return v ? "Sí" : "No";
+  return typeof v === "object" ? JSON.stringify(v) : String(v);
+}
+
+// El control del formulario para una propiedad, según su tipo, ya con el valor actual.
+function control(p, v) {
+  const lista = (opciones) => {
+    const s = el("select", {}, el("option", { value: "", textContent: "—" }), ...opciones.map((o) => el("option", { value: o, textContent: o })));
+    s.value = v ?? "";
+    return s;
+  };
+  switch (p.tipo) {
+    case "estado": return lista(ESTADOS);
+    case "seleccion": return lista(p.opciones ?? []);
+    case "booleano": return el("input", { type: "checkbox", checked: !!v, className: "check" });
+    case "numero": return el("input", { type: "number", step: "any", value: v ?? "" });
+    case "fecha": return el("input", { type: "date", value: dia(v) ?? "" });
+    case "fecha_hora": return el("input", { type: "datetime-local", value: v ? `${dia(v)}T${hora(v) || "00:00"}` : "" });
+    case "enlace": return el("input", { type: "url", value: v ?? "", placeholder: "https://…" });
+    default: return el("input", { value: v ?? "" });
+  }
+}
+
+// Lo contrario: del control al valor que se guarda (vacío = null, que borra la propiedad).
+function leer(p, c) {
+  if (p.tipo === "booleano") return c.checked;
+  if (!c.value) return null;
+  if (p.tipo === "numero") return Number(c.value);
+  if (p.tipo === "fecha_hora") return new Date(c.value).toISOString();
+  return c.value;
+}
 
 function abrir(...contenido) {
   $("panel").replaceChildren(...contenido);
@@ -34,10 +77,11 @@ export function mostrarPanel(id) {
   const lista = el("dl");
   const fila = (k, v) => { if (v !== null && v !== undefined && v !== "") lista.append(el("dt", { textContent: k }), el("dd", { textContent: String(v) })); };
   fila("Dentro de", ruta(id));
-  fila("Estado", n.estado);
-  // La fecha se muestra tal como está guardada (sin convertir de zona horaria, que la correría un día).
-  fila("Fecha", n.fecha && n.fecha.slice(0, 10).split("-").reverse().join("-"));
-  for (const [k, v] of Object.entries(n.props ?? {})) fila(k, typeof v === "object" ? JSON.stringify(v) : v);
+  const propiedades = propiedadesDe(n.tipos.clave);
+  for (const p of propiedades) fila(p.nombre, legible(p, valorDe(n, p)));
+  // Lo que el nodo tenga y su tipo no declare (por ejemplo, de antes de cambiarlo de tipo) igual se muestra.
+  const declaradas = new Set([...propiedades.map((p) => p.clave), ...OCULTAS]);
+  for (const [k, v] of Object.entries(n.props ?? {})) if (!declaradas.has(k)) fila(k, legible({}, v));
 
   const conexiones = datos.conexiones.filter((c) => c.origen_id === id || c.destino_id === id);
   const vecinos = el("ul", {}, ...conexiones.map((c) => {
@@ -92,23 +136,20 @@ export function formulario(n) {
   tipo.value = n?.tipos.clave ?? "tarea";
 
   const titulo = el("input", { required: true, value: n?.titulo ?? "", placeholder: "Ej: Estudiar cálculo" });
-  const estado = el("select");
-  estado.append(el("option", { value: "", textContent: "—" }), ...ESTADOS.map((e) => el("option", { value: e, textContent: e })));
-  estado.value = n?.estado ?? (editando ? "" : "Inbox");
-  const fecha = el("input", { type: "date", value: n?.fecha ? n.fecha.slice(0, 10) : "" });
   const contenido = el("textarea", { value: n?.contenido ?? "", placeholder: "Notas, detalles…" });
 
+  // Un campo por cada propiedad del tipo elegido. Al cambiar el tipo se vuelven a armar.
+  const bloquePropiedades = el("div");
+  let campos = [];   // [{ p, c }]: la propiedad y su control
   // Primera conexión (solo al crear): relación + nodo de destino, según lo que permite el tipo.
   const relacion = el("select");
   const destino = el("select");
   const tipoElegido = () => datos.tipo.get(tipo.value);
   function ajustarCampos() {
-    const t = tipoElegido();
-    const usa = (...clases) => (t?.propiedades ?? []).some((p) => clases.includes(p.tipo));
-    bloqueEstado.classList.toggle("oculto", !usa("estado"));
-    bloqueFecha.classList.toggle("oculto", !usa("fecha", "fecha_hora"));
+    campos = propiedadesDe(tipo.value).map((p) => ({ p, c: control(p, n ? valorDe(n, p) : p.tipo === "estado" ? "Inbox" : null) }));
+    bloquePropiedades.replaceChildren(...campos.flatMap(({ p, c }) => campo(p.nombre, c)));
     relacion.replaceChildren(el("option", { value: "", textContent: "(sin conexión)" }),
-      ...(t?.conexiones ?? []).map((c) => el("option", { value: c.relacion, textContent: c.relacion.replaceAll("_", " ") })));
+      ...(tipoElegido()?.conexiones ?? []).map((c) => el("option", { value: c.relacion, textContent: c.relacion.replaceAll("_", " ") })));
     ajustarDestinos();
   }
   function ajustarDestinos() {
@@ -117,8 +158,6 @@ export function formulario(n) {
     destino.replaceChildren(...candidatos.map((x) => el("option", { value: x.id, textContent: `${x.titulo} (${x.tipos.nombre})` })));
     destino.disabled = !candidatos.length;
   }
-  const bloqueEstado = el("div", {}, ...campo("Estado", estado));
-  const bloqueFecha = el("div", {}, ...campo("Fecha", fecha));
   const bloqueConexion = el("div", {}, ...campo("Conectar a", relacion), destino);
   destino.style.marginTop = "6px";
   tipo.onchange = ajustarCampos;
@@ -130,19 +169,23 @@ export function formulario(n) {
 
   const form = el("form", { className: "nodo" },
     el("h2", { textContent: editando ? "Editar nodo" : "Nuevo nodo" }),
-    ...campo("Tipo", tipo), ...campo("Título", titulo), bloqueEstado, bloqueFecha,
+    ...campo("Tipo", tipo), ...campo("Título", titulo), bloquePropiedades,
     ...campo("Contenido", contenido),
     ...(editando ? [] : [bloqueConexion]),
     el("div", { className: "acciones" }, guardar, cancelar));
 
   form.onsubmit = async (e) => {
     e.preventDefault();
-    const cambios = {
-      titulo: titulo.value.trim(),
-      contenido: contenido.value.trim() || null,
-      estado: bloqueEstado.classList.contains("oculto") ? null : (estado.value || null),
-      fecha: bloqueFecha.classList.contains("oculto") || !fecha.value ? null : fecha.value,
-    };
+    // Cada propiedad va a su columna o a props. Se parte de las props que ya tenía, para no perder ninguna.
+    const cambios = { titulo: titulo.value.trim(), contenido: contenido.value.trim() || null };
+    const props = { ...(n?.props ?? {}) };
+    for (const { p, c } of campos) {
+      const v = leer(p, c);
+      if (EN_COLUMNA.includes(p.clave)) cambios[p.clave] = v;
+      else if (v === null) delete props[p.clave];
+      else props[p.clave] = v;
+    }
+    cambios.props = props;
     let id = n?.id;
     if (editando) {
       const { error } = await db.from("nodos").update(cambios).eq("id", id);

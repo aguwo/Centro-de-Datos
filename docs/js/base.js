@@ -24,6 +24,20 @@ export const datos = {
   padre: new Map(),       // id -> id de la caja donde está (lo calcula la vista "arbol" de la base, paso 19)
 };
 
+// El día de una fecha, como texto "2026-11-01".
+// Las fechas sin hora (las de Notion, guardadas a medianoche UTC) se leen tal cual, sin zona horaria,
+// para que no se corran un día. Las que tienen hora se pasan a tu hora local.
+export const sinHora = (d) => d.getUTCHours() === 0 && d.getUTCMinutes() === 0;
+export function dia(fecha) {
+  if (!fecha) return null;
+  const d = new Date(fecha);
+  return sinHora(d) ? fecha.slice(0, 10) : d.toLocaleDateString("sv-SE"); // "sv-SE" escribe AAAA-MM-DD
+}
+export const hora = (fecha) => {
+  const d = new Date(fecha);
+  return sinHora(d) ? "" : d.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+};
+
 export const colorDe = (clave) => datos.tipo.get(clave)?.color ?? "#78716c";
 
 // Lee todo de Supabase. No hace falta filtrar por dueño: RLS ya lo hace.
