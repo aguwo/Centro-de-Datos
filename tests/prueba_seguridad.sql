@@ -1,4 +1,4 @@
--- Prueba de los pasos 1 a 5: cada usuario ve solo lo suyo, las plantillas son de todos y vecinos() funciona.
+-- Prueba de los pasos 1 a 5 y 16: cada usuario ve solo lo suyo, las plantillas son de todos y vecinos() funciona.
 -- Se corre con tests/probar_bd.sh
 grant select, insert, update, delete on all tables in schema public to authenticated;
 insert into auth.users values ('11111111-1111-1111-1111-111111111111'), ('22222222-2222-2222-2222-222222222222');
@@ -12,9 +12,11 @@ insert into conexiones (origen_id, relacion, destino_id)
   select t.id, 'pertenece_a', p.id from nodos t, nodos p where t.titulo = 'Escribir migración' and p.titulo = 'Centro de datos';
 insert into conexiones (origen_id, relacion, destino_id)
   select p.id, 'pertenece_a', a.id from nodos p, nodos a where p.titulo = 'Centro de datos' and a.titulo = 'Personal';
+insert into nodos (tipo_id, titulo) select id, 'Meditar' from tipos where clave = 'habito';
+insert into registros (clase, valor, nodo_id) select 'habito', 1, id from nodos where titulo = 'Meditar';
 
 do $$ declare n int; begin
-  select count(*) into n from tipos; assert n = 8, 'usuario 1 debería ver 8 plantillas, ve ' || n;
+  select count(*) into n from tipos; assert n = 17, 'usuario 1 debería ver 17 plantillas, ve ' || n;
   select count(*) into n from vecinos((select id from nodos where titulo = 'Escribir migración'), 2);
   assert n = 2, 'vecinos a profundidad 2 debería dar 2, dio ' || n;
   select count(*) into n from nodos where busqueda @@ plainto_tsquery('spanish', 'migraciones');
@@ -25,7 +27,8 @@ set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
 do $$ declare n int; begin
   select count(*) into n from nodos; assert n = 0, 'usuario 2 no debería ver nodos ajenos, ve ' || n;
   select count(*) into n from conexiones; assert n = 0, 'usuario 2 no debería ver conexiones ajenas';
-  select count(*) into n from tipos; assert n = 8, 'usuario 2 debería ver las 8 plantillas';
+  select count(*) into n from tipos; assert n = 17, 'usuario 2 debería ver las 17 plantillas';
+  select count(*) into n from registros; assert n = 0, 'usuario 2 no debería ver registros ajenos';
 end $$;
 
 do $$ begin
