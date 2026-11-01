@@ -130,6 +130,10 @@
   const COLORES = {
     area: "#2563eb", objetivo: "#7c3aed", hito: "#db2777", proyecto: "#ea580c",
     tarea: "#16a34a", evento: "#0891b2", nota: "#ca8a04", topico: "#64748b",
+    // Paso 17: los tipos del resto de tu Notion.
+    cuenta: "#0d9488", categoria: "#14b8a6", suscripcion: "#5eead4",
+    habito: "#65a30d", rutina: "#4d7c0f", planta: "#22c55e",
+    recurso: "#9333ea", alimento: "#f59e0b", receta: "#d97706",
   };
 
   function mostrarApp(conSesion) {
@@ -230,7 +234,7 @@
   // Paso 14: ¿dentro de qué caja se dibuja cada nodo?
   // Solo estos tipos pueden contener a otros. El número es el nivel: un nodo solo puede quedar
   // dentro de algo de nivel MENOR (más general), así nunca hay una caja dentro de sí misma.
-  const NIVEL = { area: 0, topico: 1, proyecto: 2, objetivo: 2 };
+  const NIVEL = { area: 0, topico: 1, proyecto: 2, objetivo: 2, rutina: 2, categoria: 2 };
   const nivel = (tipo) => NIVEL[tipo] ?? 3;
 
   // De todo lo que un nodo "pertenece a" o "trata sobre", se elige lo más específico.
