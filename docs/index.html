@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Centro de datos</title>
   <!--
-    Pasos 9 y 10: la web con el mapa de tu grafo.
+    Pasos 9 a 11: la web con el mapa de tu grafo.
     1. Inicias sesión con tu correo (Supabase Auth).
     2. La página lee tus nodos y conexiones directo de Supabase. RLS (paso 5) asegura que solo lleguen los tuyos.
     3. Cytoscape, una librería de grafos, los dibuja: cada nodo es un punto con el color de su tipo
        y cada conexión es una flecha.
     4. Al hacer clic en un nodo se abre un panel con sus datos y sus vecinos, y el mapa ilumina
        solo ese nodo y lo que está conectado a él. Clic en el fondo para volver a ver todo.
+    5. "+ Nuevo" crea un nodo (y su primera conexión); "Editar" y "Archivar" lo modifican.
   -->
   <style>
     :root { --fondo:#fafaf9; --texto:#1c1917; --suave:#78716c; --borde:#e7e5e4; --acento:#ea580c; }
@@ -39,6 +40,11 @@
     #panel li button { width:100%; text-align:left; border:0; border-radius:6px; padding:6px 8px; display:flex; gap:8px; align-items:center; }
     #panel li button:hover { background:var(--borde); }
     .rel { color:var(--suave); font-size:.8rem; margin-left:auto; white-space:nowrap; }
+    form.nodo label { display:block; font-size:.8rem; color:var(--suave); margin:10px 0 4px; }
+    form.nodo input, form.nodo select, form.nodo textarea { width:100%; padding:8px 10px; border:1px solid var(--borde); border-radius:8px; background:transparent; color:inherit; font:inherit; }
+    form.nodo textarea { min-height:90px; resize:vertical; }
+    form.nodo select option { background:var(--fondo); }
+    .acciones { display:flex; gap:8px; margin:16px 0; }
     @media (max-width: 700px) { main { flex-direction:column; } #panel { width:auto; max-height:45%; border-left:0; border-top:1px solid var(--borde); } }
     .centro { max-width:400px; margin:64px auto; padding:0 16px; }
     .centro input { width:100%; padding:10px 12px; border:1px solid var(--borde); border-radius:8px; background:transparent; color:inherit; font:inherit; margin:8px 0 12px; }
@@ -59,6 +65,7 @@
   <header id="barra" class="oculto">
     <h1>Centro de datos</h1>
     <div class="leyenda" id="leyenda"></div>
+    <button id="nuevo" class="principal">+ Nuevo</button>
     <button id="salir">Salir</button>
   </header>
   <main id="app" class="oculto">
@@ -88,17 +95,27 @@
     $("app").classList.toggle("oculto", !conSesion);
   }
 
+  const ESTADOS = ["Inbox", "Por hacer", "En curso", "Esperando", "Hecho"]; // los mismos del paso 3
+  let tipos = [];    // los tipos disponibles (tus propios tipos ganan sobre las plantillas)
+
   // Lee tus nodos y conexiones. No hace falta filtrar por dueño: RLS ya lo hace.
-  async function cargarGrafo() {
+  // enfocarId: si viene, después de dibujar se enfoca ese nodo (útil tras crear o editar).
+  async function cargarGrafo(enfocarId) {
     avisar("Cargando tu grafo…");
-    const [nodos, conexiones] = await Promise.all([
+    const [nodos, conexiones, listaTipos] = await Promise.all([
       db.from("nodos").select("id, titulo, contenido, estado, fecha, props, tipos!inner(clave, nombre)").eq("archivado", false),
       db.from("conexiones").select("id, origen_id, relacion, destino_id").is("valido_hasta", null),
+      db.from("tipos").select("id, owner_id, clave, nombre, propiedades, conexiones").order("nombre"),
     ]);
-    if (nodos.error || conexiones.error) return avisar((nodos.error || conexiones.error).message);
-    if (!nodos.data.length) return avisar("Todavía no tienes nodos. Pídele a Claude que cree algunos.");
-    avisar("");
+    const error = nodos.error || conexiones.error || listaTipos.error;
+    if (error) return avisar(error.message);
+    // Si tienes tu propia versión de un tipo, se usa esa en vez de la plantilla.
+    const porClave = new Map();
+    for (const t of listaTipos.data) if (!porClave.has(t.clave) || t.owner_id) porClave.set(t.clave, t);
+    tipos = [...porClave.values()];
+    avisar(nodos.data.length ? "" : "Todavía no tienes nodos. Crea el primero con «+ Nuevo».");
     dibujar(nodos.data, conexiones.data);
+    if (enfocarId && cy.getElementById(enfocarId).length) enfocar(enfocarId);
   }
 
   // Convierte las filas de Supabase en los "elementos" que entiende Cytoscape y los dibuja.
@@ -122,6 +139,7 @@
     const suave = estilo.getPropertyValue("--suave").trim();
     const fondo = estilo.getPropertyValue("--fondo").trim();
 
+    if (cy) cy.destroy(); // al recargar, se reemplaza el mapa anterior
     cy = cytoscape({
       container: $("grafo"),
       elements: elementos,
@@ -189,7 +207,8 @@
     const datos = el("dl");
     const fila = (k, v) => { if (v !== null && v !== undefined && v !== "") datos.append(el("dt", { textContent: k }), el("dd", { textContent: String(v) })); };
     fila("Estado", n.estado);
-    fila("Fecha", n.fecha && new Date(n.fecha).toLocaleDateString("es-CL"));
+    // La fecha se muestra tal como está guardada (sin convertir de zona horaria, que la correría un día).
+    fila("Fecha", n.fecha && n.fecha.slice(0, 10).split("-").reverse().join("-"));
     for (const [k, v] of Object.entries(n.props ?? {})) fila(k, typeof v === "object" ? JSON.stringify(v) : v);
 
     const lista = el("ul");
@@ -203,9 +222,21 @@
       lista.append(el("li", {}, boton));
     });
 
+    const editar = el("button", { textContent: "Editar" });
+    editar.onclick = () => formulario(n);
+    const archivar = el("button", { textContent: "Archivar" });
+    archivar.onclick = async () => {
+      if (!confirm(`¿Archivar "${n.titulo}"? Desaparece del mapa, pero no se borra.`)) return;
+      const { error } = await db.from("nodos").update({ archivado: true }).eq("id", n.id);
+      if (error) return avisar(error.message);
+      $("panel").classList.add("oculto");
+      cargarGrafo();
+    };
+
     $("panel").replaceChildren(
       chip,
       el("h2", { textContent: n.titulo }),
+      el("div", { className: "acciones" }, editar, archivar),
       datos,
       ...(n.contenido ? [el("div", { className: "contenido", textContent: n.contenido })] : []),
       el("h3", { textContent: `Conectado con (${nodo.connectedEdges().length})` }),
@@ -214,6 +245,96 @@
     $("panel").classList.remove("oculto");
     cy.resize(); // el mapa se ajusta al espacio que deja el panel
   }
+
+  // Formulario para crear (sin nodo) o editar (con nodo). Se muestra en el mismo panel.
+  function formulario(n) {
+    const editando = !!n;
+    const campo = (etiqueta, control) => [el("label", { textContent: etiqueta }), control];
+
+    const tipo = el("select", { required: true, disabled: editando });
+    for (const t of tipos) tipo.append(el("option", { value: t.clave, textContent: t.nombre, selected: n?.tipos.clave === t.clave }));
+    if (!editando) tipo.value = "tarea";
+
+    const titulo = el("input", { required: true, value: n?.titulo ?? "", placeholder: "Ej: Estudiar cálculo" });
+    const estado = el("select");
+    estado.append(el("option", { value: "", textContent: "—" }), ...ESTADOS.map((e) => el("option", { value: e, textContent: e })));
+    estado.value = n?.estado ?? (editando ? "" : "Inbox");
+    const fecha = el("input", { type: "date", value: n?.fecha ? n.fecha.slice(0, 10) : "" });
+    const contenido = el("textarea", { value: n?.contenido ?? "", placeholder: "Notas, detalles…" });
+
+    // Primera conexión (solo al crear): relación + nodo de destino, según lo que permite el tipo.
+    const relacion = el("select");
+    const destino = el("select");
+    const bloqueConexion = el("div");
+
+    const tipoElegido = () => tipos.find((t) => t.clave === tipo.value);
+    function ajustarCampos() {
+      const t = tipoElegido();
+      const props = t?.propiedades ?? [];
+      const usa = (...clases) => props.some((p) => clases.includes(p.tipo));
+      bloqueEstado.classList.toggle("oculto", !usa("estado"));
+      bloqueFecha.classList.toggle("oculto", !usa("fecha", "fecha_hora"));
+      relacion.replaceChildren(el("option", { value: "", textContent: "(sin conexión)" }),
+        ...(t?.conexiones ?? []).map((c) => el("option", { value: c.relacion, textContent: c.relacion.replaceAll("_", " ") })));
+      ajustarDestinos();
+    }
+    function ajustarDestinos() {
+      const regla = (tipoElegido()?.conexiones ?? []).find((c) => c.relacion === relacion.value);
+      const candidatos = regla ? [...nodosPorId.values()].filter((x) => regla.hacia.includes(x.tipos.clave)) : [];
+      destino.replaceChildren(...candidatos.map((x) => el("option", { value: x.id, textContent: `${x.titulo} (${x.tipos.nombre})` })));
+      destino.disabled = !candidatos.length;
+    }
+    const bloqueEstado = el("div", {}, ...campo("Estado", estado));
+    const bloqueFecha = el("div", {}, ...campo("Fecha", fecha));
+    bloqueConexion.append(...campo("Conectar a", relacion), destino);
+    destino.style.marginTop = "6px";
+    tipo.onchange = ajustarCampos;
+    relacion.onchange = ajustarDestinos;
+
+    const guardar = el("button", { className: "principal", textContent: editando ? "Guardar" : "Crear", type: "submit" });
+    const cancelar = el("button", { textContent: "Cancelar", type: "button" });
+    cancelar.onclick = () => (editando ? enfocar(n.id) : desenfocar());
+
+    const form = el("form", { className: "nodo" },
+      el("h2", { textContent: editando ? "Editar nodo" : "Nuevo nodo" }),
+      ...campo("Tipo", tipo), ...campo("Título", titulo), bloqueEstado, bloqueFecha,
+      ...campo("Contenido", contenido),
+      ...(editando ? [] : [bloqueConexion]),
+      el("div", { className: "acciones" }, guardar, cancelar));
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const t = tipoElegido();
+      const datos = {
+        titulo: titulo.value.trim(),
+        contenido: contenido.value.trim() || null,
+        estado: bloqueEstado.classList.contains("oculto") ? null : (estado.value || null),
+        fecha: bloqueFecha.classList.contains("oculto") || !fecha.value ? null : fecha.value,
+      };
+      let id = n?.id;
+      if (editando) {
+        const { error } = await db.from("nodos").update(datos).eq("id", id);
+        if (error) return avisar(error.message);
+      } else {
+        const { data, error } = await db.from("nodos").insert({ ...datos, tipo_id: t.id }).select("id").single();
+        if (error) return avisar(error.message);
+        id = data.id;
+        if (relacion.value && destino.value) {
+          const r = await db.from("conexiones").insert({ origen_id: id, relacion: relacion.value, destino_id: destino.value });
+          if (r.error) avisar("El nodo se creó, pero la conexión falló: " + r.error.message);
+        }
+      }
+      await cargarGrafo(id);
+    };
+
+    $("panel").replaceChildren(form);
+    $("panel").classList.remove("oculto");
+    ajustarCampos();
+    if (cy) cy.resize();
+    titulo.focus();
+  }
+
+  $("nuevo").onclick = () => formulario();
 
   $("form-login").onsubmit = async (e) => {
     e.preventDefault();
