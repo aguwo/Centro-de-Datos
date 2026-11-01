@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Centro de datos</title>
   <!--
-    Paso 9: la web con el mapa de tu grafo.
+    Pasos 9 y 10: la web con el mapa de tu grafo.
     1. Inicias sesión con tu correo (Supabase Auth).
     2. La página lee tus nodos y conexiones directo de Supabase. RLS (paso 5) asegura que solo lleguen los tuyos.
     3. Cytoscape, una librería de grafos, los dibuja: cada nodo es un punto con el color de su tipo
        y cada conexión es una flecha.
+    4. Al hacer clic en un nodo se abre un panel con sus datos y sus vecinos, y el mapa ilumina
+       solo ese nodo y lo que está conectado a él. Clic en el fondo para volver a ver todo.
   -->
   <style>
     :root { --fondo:#fafaf9; --texto:#1c1917; --suave:#78716c; --borde:#e7e5e4; --acento:#ea580c; }
@@ -23,7 +25,21 @@
     .leyenda span::before { content:""; display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; background:var(--c); vertical-align:-1px; }
     button { padding:6px 12px; border-radius:8px; font:inherit; cursor:pointer; border:1px solid var(--borde); background:transparent; color:inherit; }
     button.principal { background:var(--acento); border-color:var(--acento); color:#fff; }
-    #grafo { flex:1; min-height:0; }
+    main { flex:1; min-height:0; display:flex; }
+    #grafo { flex:1; min-width:0; }
+    #panel { width:320px; border-left:1px solid var(--borde); padding:16px; overflow-y:auto; }
+    #panel h2 { font-size:1.15rem; margin:4px 0 12px; }
+    .chip { display:inline-block; font-size:.75rem; padding:2px 8px; border-radius:999px; color:#fff; background:var(--c); }
+    dl { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; margin:0 0 16px; font-size:.9rem; }
+    dt { color:var(--suave); }
+    dd { margin:0; }
+    .contenido { white-space:pre-wrap; font-size:.9rem; border-top:1px solid var(--borde); padding-top:12px; margin-bottom:16px; }
+    #panel h3 { font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; color:var(--suave); margin:0 0 8px; }
+    #panel ul { list-style:none; padding:0; margin:0; }
+    #panel li button { width:100%; text-align:left; border:0; border-radius:6px; padding:6px 8px; display:flex; gap:8px; align-items:center; }
+    #panel li button:hover { background:var(--borde); }
+    .rel { color:var(--suave); font-size:.8rem; margin-left:auto; white-space:nowrap; }
+    @media (max-width: 700px) { main { flex-direction:column; } #panel { width:auto; max-height:45%; border-left:0; border-top:1px solid var(--borde); } }
     .centro { max-width:400px; margin:64px auto; padding:0 16px; }
     .centro input { width:100%; padding:10px 12px; border:1px solid var(--borde); border-radius:8px; background:transparent; color:inherit; font:inherit; margin:8px 0 12px; }
     .oculto { display:none !important; }
@@ -45,7 +61,10 @@
     <div class="leyenda" id="leyenda"></div>
     <button id="salir">Salir</button>
   </header>
-  <div id="grafo" class="oculto"></div>
+  <main id="app" class="oculto">
+    <div id="grafo"></div>
+    <aside id="panel" class="oculto"></aside>
+  </main>
   <p id="mensaje"></p>
 
 <script type="module">
@@ -66,14 +85,14 @@
   function mostrarApp(conSesion) {
     $("login").classList.toggle("oculto", conSesion);
     $("barra").classList.toggle("oculto", !conSesion);
-    $("grafo").classList.toggle("oculto", !conSesion);
+    $("app").classList.toggle("oculto", !conSesion);
   }
 
   // Lee tus nodos y conexiones. No hace falta filtrar por dueño: RLS ya lo hace.
   async function cargarGrafo() {
     avisar("Cargando tu grafo…");
     const [nodos, conexiones] = await Promise.all([
-      db.from("nodos").select("id, titulo, estado, tipos!inner(clave, nombre)").eq("archivado", false),
+      db.from("nodos").select("id, titulo, contenido, estado, fecha, props, tipos!inner(clave, nombre)").eq("archivado", false),
       db.from("conexiones").select("id, origen_id, relacion, destino_id").is("valido_hasta", null),
     ]);
     if (nodos.error || conexiones.error) return avisar((nodos.error || conexiones.error).message);
@@ -83,7 +102,11 @@
   }
 
   // Convierte las filas de Supabase en los "elementos" que entiende Cytoscape y los dibuja.
+  let cy;            // el grafo dibujado
+  let nodosPorId;    // para encontrar rápido los datos completos de cada nodo
+
   function dibujar(nodos, conexiones) {
+    nodosPorId = new Map(nodos.map((n) => [n.id, n]));
     const ids = new Set(nodos.map((n) => n.id));
     const elementos = [
       ...nodos.map((n) => ({
@@ -99,7 +122,7 @@
     const suave = estilo.getPropertyValue("--suave").trim();
     const fondo = estilo.getPropertyValue("--fondo").trim();
 
-    cytoscape({
+    cy = cytoscape({
       container: $("grafo"),
       elements: elementos,
       layout: { name: "cose", animate: false, nodeRepulsion: 9000, idealEdgeLength: 90 },
@@ -110,6 +133,9 @@
         } },
         { selector: "node[tipo = 'area'], node[tipo = 'objetivo']", style: { width: 40, height: 40, "font-weight": "bold" } },
         { selector: "node[?hecho]", style: { opacity: 0.45 } },
+        // Clases para el modo "enfoque": lo que no es vecino del nodo elegido se apaga.
+        { selector: ".apagado", style: { opacity: 0.12 } },
+        { selector: "node.elegido", style: { "border-width": 3, "border-color": texto } },
         { selector: "edge", style: {
             width: 1.5, "line-color": suave, "target-arrow-color": suave, "target-arrow-shape": "triangle",
             "curve-style": "bezier", label: "data(label)", "font-size": 9, color: suave, "text-rotation": "autorotate",
@@ -118,12 +144,75 @@
       ],
     });
 
+    cy.on("tap", "node", (e) => enfocar(e.target.id()));
+    cy.on("tap", (e) => { if (e.target === cy) desenfocar(); });
+
     $("leyenda").replaceChildren(...[...new Set(nodos.map((n) => n.tipos.clave))].map((clave) => {
       const s = document.createElement("span");
       s.style.setProperty("--c", COLORES[clave] ?? "#78716c");
       s.textContent = nodos.find((n) => n.tipos.clave === clave).tipos.nombre;
       return s;
     }));
+  }
+
+  // Atajo para crear elementos HTML: el("span", { textContent: "hola" }, ...hijos)
+  function el(tag, props = {}, ...hijos) {
+    const x = Object.assign(document.createElement(tag), props);
+    x.append(...hijos);
+    return x;
+  }
+
+  // Ilumina el nodo y sus vecinos directos, y muestra el panel.
+  function enfocar(id) {
+    const nodo = cy.getElementById(id);
+    const vecindario = nodo.closedNeighborhood(); // el nodo + sus conexiones + los nodos al otro lado
+    cy.elements().removeClass("elegido").addClass("apagado");
+    vecindario.removeClass("apagado");
+    nodo.addClass("elegido");
+    cy.animate({ center: { eles: nodo } }, { duration: 300 });
+    mostrarPanel(id, nodo);
+  }
+
+  function desenfocar() {
+    cy.elements().removeClass("apagado elegido");
+    $("panel").classList.add("oculto");
+    cy.resize(); // el mapa recupera el ancho que usaba el panel
+  }
+
+  // Arma el panel con los datos del nodo y la lista de vecinos (clic en uno para saltar a él).
+  function mostrarPanel(id, nodo) {
+    const n = nodosPorId.get(id);
+
+    const chip = el("span", { className: "chip", textContent: n.tipos.nombre });
+    chip.style.setProperty("--c", COLORES[n.tipos.clave] ?? "#78716c");
+
+    const datos = el("dl");
+    const fila = (k, v) => { if (v !== null && v !== undefined && v !== "") datos.append(el("dt", { textContent: k }), el("dd", { textContent: String(v) })); };
+    fila("Estado", n.estado);
+    fila("Fecha", n.fecha && new Date(n.fecha).toLocaleDateString("es-CL"));
+    for (const [k, v] of Object.entries(n.props ?? {})) fila(k, typeof v === "object" ? JSON.stringify(v) : v);
+
+    const lista = el("ul");
+    nodo.connectedEdges().forEach((arista) => {
+      const sale = arista.source().id() === id;              // ¿la flecha sale de este nodo o llega a él?
+      const otro = sale ? arista.target() : arista.source();
+      const relacion = arista.data("label");
+      const boton = el("button", {}, el("span", { textContent: otro.data("label") }),
+        el("span", { className: "rel", textContent: sale ? `${relacion} →` : `← ${relacion}` }));
+      boton.onclick = () => enfocar(otro.id());
+      lista.append(el("li", {}, boton));
+    });
+
+    $("panel").replaceChildren(
+      chip,
+      el("h2", { textContent: n.titulo }),
+      datos,
+      ...(n.contenido ? [el("div", { className: "contenido", textContent: n.contenido })] : []),
+      el("h3", { textContent: `Conectado con (${nodo.connectedEdges().length})` }),
+      nodo.connectedEdges().length ? lista : el("p", { className: "rel", textContent: "Sin conexiones todavía." }),
+    );
+    $("panel").classList.remove("oculto");
+    cy.resize(); // el mapa se ajusta al espacio que deja el panel
   }
 
   $("form-login").onsubmit = async (e) => {

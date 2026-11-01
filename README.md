@@ -14,6 +14,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 6 | Servidor MCP: la puerta por donde Claude y la web entran a tus datos | `supabase/functions/mcp/` |
 | 7 | Pantalla de permiso OAuth para conectar Claude (publicada con GitHub Pages) | `docs/oauth/consent/index.html` |
 | 9 | Web con el mapa de tu grafo: https://aguwo.github.io/Centro-de-Datos/ | `docs/index.html` |
+| 10 | Clic en un nodo: panel con sus datos y vecinos, y el mapa ilumina su vecindario | `docs/index.html` |
 
 ## Pruebas
 
