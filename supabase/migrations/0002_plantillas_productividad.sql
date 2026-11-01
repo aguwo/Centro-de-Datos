@@ -1,7 +1,8 @@
 -- Paso 2: los tipos de productividad, cargados como plantillas.
 -- Vienen de tu Notion, simplificados para no repetir nada:
 --   * Bloque de notas se fusionó con Tópico (los dos agrupaban notas).
---   * Todo lo que se puede "hacer" usa los mismos estados: Inbox, Por hacer, En curso, Esperando, Hecho.
+--   * Todo lo que se puede "hacer" usa los mismos estados: Inbox, Por hacer, En curso, Esperando, Hecho
+--     (la tabla nodos del paso 3 obliga a usar solo esos).
 --   * "Sin fecha" no es un estado: basta con dejar la fecha vacía.
 --   * "Repetitiva" es una propiedad (Repetición), no un estado.
 --   * El evento no tiene estado: ocurre en una fecha. Lo que hay que hacer antes es una tarea conectada.
@@ -59,6 +60,3 @@ insert into public.tipos (owner_id, clave, nombre, propiedades, conexiones) valu
    {"nombre":"Semestre","tipo":"texto"}]',
  '[{"relacion":"pertenece_a","hacia":["area"]}]');
 
--- Los estados comunes, en un solo lugar. Cualquier propiedad de tipo "estado" usa esta lista.
-comment on table public.tipos is
-  'Estados comunes para propiedades de tipo "estado": Inbox, Por hacer, En curso, Esperando, Hecho';
