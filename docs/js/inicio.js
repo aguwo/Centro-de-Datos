@@ -19,7 +19,7 @@ export function dibujarInicio() {
 }
 
 function tarjeta({ t, filas, resumen, vacio }) {
-  return el("section", { className: "tarjeta" },
+  return el("section", { className: "tarjeta ventana vidrio" },
     el("h3", {}, el("span", { textContent: t.titulo }), el("small", { textContent: resumen ?? String(filas.length) })),
     filas.length ? el("ul", {}, ...filas.map(fila)) : el("p", { className: "vacio", textContent: vacio }));
 }

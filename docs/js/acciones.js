@@ -1,0 +1,32 @@
+// Lo que la web le cambia a tus datos. Todas escriben en la base y el tiempo real redibuja todo solo.
+// Así cada vista solo dice QUÉ hacer (completar, posponer...) y nunca cómo se escribe.
+import { db, escribir } from "./base.js";
+import { conHoraISO } from "./fechas.js";
+
+const nodos = () => db.from("nodos");
+export const cambiar = (n, cambios) => escribir(nodos().update(cambios).eq("id", n.id));
+
+// Cambia solo algunas propiedades (props) y deja las demás. Un valor null borra esa propiedad.
+export function cambiarProps(n, cambios) {
+  const props = { ...n.props, ...cambios };
+  for (const k in props) if (props[k] === null) delete props[k];
+  return cambiar(n, { props });
+}
+
+// Una tarea repetitiva no se cierra: su fecha salta a la próxima vez que toca.
+const SALTO = { Diaria: 1, Semanal: 7, Mensual: 30 };
+export function completar(n) {
+  const salto = SALTO[n.props?.repeticion];
+  return cambiar(n, salto && n.fecha ? { fecha: new Date(new Date(n.fecha).getTime() + salto * 864e5).toISOString() } : { estado: "Hecho" });
+}
+// Reservarle una hora a algo: el día d desde la hora h (14.5 = 14:30), por "horas" horas.
+export const agendar = (n, d, h, horas = 1) =>
+  cambiar(n, { fecha: conHoraISO(d, h), props: { ...n.props, fecha_fin: conHoraISO(d, h + horas) } });
+export const reabrir = (n) => cambiar(n, { estado: "Por hacer" });
+// Soltar = archivar: deja de aparecer, pero se puede recuperar (el agente sabe hacerlo).
+export const archivar = (n) => cambiar(n, { archivado: true });
+
+// Anotar que algo pasó hoy (un hábito cumplido, una planta regada), o borrar esa anotación si ya estaba.
+export const alternarRegistro = (clase, nodo, deHoy) => deHoy
+  ? escribir(db.from("registros").delete().eq("id", deHoy.id))
+  : escribir(db.from("registros").insert({ clase, nodo_id: nodo.id }));

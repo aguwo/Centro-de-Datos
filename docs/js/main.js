@@ -5,7 +5,8 @@
 //   apartados.js la lista de apartados: agregar uno = agregarlo ahí
 //   mapa.js      el mapa de cajas, la leyenda y los filtros
 //   panel.js     el panel de un nodo y el formulario para crear o editar
-//   inicio.js    el Inicio: dibuja las señales y las tarjetas (qué muestra cada una: tarjetas.js)
+//   hoy.js       el apartado Hoy (usa agenda.js, clima.js y acciones.js)
+//   inicio.js    el Resumen: dibuja las señales y las tarjetas (qué muestra cada una: tarjetas.js)
 import { db, $, avisar, recargar, escucharCambios, dejarDeEscuchar } from "./base.js";
 import { APARTADOS } from "./apartados.js";
 import { iniciarCarcasa, apartadoActual } from "./carcasa.js";
