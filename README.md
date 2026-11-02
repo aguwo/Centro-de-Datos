@@ -30,17 +30,21 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 23 | Cada propiedad de un tipo tiene su clave exacta: el agente solo puede usar las del tipo (con valores válidos) y la web las muestra con su nombre y deja editarlas | `supabase/migrations/0008_propiedades.sql` |
 | 24 | Publicación automática: al subir cambios del agente a GitHub, se corren las pruebas y se publica en Supabase | `.github/workflows/publicar-agente.yml` |
 | 25 | Inicio por tarjetas (Hacer · Cuidarme · Mi vida) con señales arriba, y la web en tiempo real: se actualiza sola cuando algo cambia (tú, otra pestaña o el agente) | `supabase/migrations/0009_tiempo_real.sql`, `docs/js/tarjetas.js` |
+| 26 | La carcasa del escritorio: tu foto de fondo, paneles de vidrio, barra arriba y un dock escondido que aparece al acercarte abajo. Cada sección es un apartado anotado en una lista: agregar uno no obliga a tocar la carcasa | `docs/js/carcasa.js`, `docs/js/apartados.js` |
 
 ## Cómo está ordenada la web
 
 ```
-docs/index.html    solo la estructura de la página
-docs/estilos.css   cómo se ve
-docs/js/main.js    punto de partida: sesión, menú y qué se dibuja al llegar los datos
-docs/js/base.js    conexión a Supabase, atajos, los datos cargados y el tiempo real
-docs/js/mapa.js    el mapa de cajas, la leyenda y los filtros
-docs/js/panel.js   el panel de un nodo y el formulario para crear o editar
-docs/js/inicio.js  el Inicio: dibuja las señales y las tarjetas
+docs/index.html      solo la estructura de la página (una <section> por apartado)
+docs/estilos.css     cómo se ve; los colores están arriba, en un solo lugar
+docs/fondo.jpg       la foto de fondo
+docs/js/main.js      punto de partida: la sesión y qué se dibuja al llegar los datos
+docs/js/carcasa.js   la barra, el dock escondido y el cambio de apartado (no sabe de ningún apartado en particular)
+docs/js/apartados.js la lista de apartados: agregar uno = sumarlo ahí y poner su <section>
+docs/js/base.js      conexión a Supabase, atajos, los datos cargados y el tiempo real
+docs/js/mapa.js      el mapa de cajas, la leyenda y los filtros
+docs/js/panel.js     el panel de un nodo y el formulario para crear o editar
+docs/js/inicio.js    el Inicio: dibuja las señales y las tarjetas
 docs/js/tarjetas.js  qué muestra cada tarjeta (agregar una = agregar un objeto a TARJETAS)
 ```
 
