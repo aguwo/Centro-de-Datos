@@ -13,7 +13,7 @@ import { formulario } from "./panel.js";
 
 const TAMANO = { ancho: 184, alto: 150 }; // el mismo de estilos.css
 const CERCA = 120;                         // un lugar a menos de esto de otro post-it ya está ocupado
-const EN_CELULAR = "hoy-fecha";            // sin escritorio, la fila va justo después de este elemento
+const EN_CELULAR = "hoy-titulo";            // sin escritorio, la fila va justo después de este elemento
 
 const capa = () => $("postits");
 const enInbox = () => datos.nodos.filter((n) => n.estado === "Inbox").sort((a, b) => a.id.localeCompare(b.id));
