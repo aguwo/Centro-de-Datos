@@ -1,5 +1,6 @@
-// Los widgets de Productividad (paso 32): tus proyectos y sus tareas. Comparten ctx.filtro (widgets.js):
-// lo que eliges en "proyectos" es lo que muestra "tareas".
+// Los widgets de Productividad (paso 32): tus proyectos y sus tareas. Comparten ctx (widgets.js):
+// ctx.area es el chip elegido y ctx.filtro, el chip o uno de sus proyectos: lo que muestra "tareas".
+// Viven en ctx y no dentro del widget para que no se pierdan si la ventana se vuelve a armar.
 //   proyectos  una fila de chips (Todas, Proyectos, Universidad... y Sin proyecto). Elegir uno filtra las tareas
 //              y muestra debajo solo sus proyectos, cada uno con su color, su avance, cuántas tareas van
 //              atrasadas y la próxima. Tocar un proyecto lo filtra (tocarlo de nuevo vuelve al área).
@@ -75,16 +76,16 @@ export function tareasDelFiltro(v, ctx) {
 
 // ---------- proyectos ----------
 export function areasYProyectos(v, ctx) {
-  let area = TODAS; // el chip elegido; ctx.filtro es el chip o uno de sus proyectos
   const chips = el("div", { className: "pildoras", role: "group", ariaLabel: "Áreas" });
   const lista = el("ul", { className: "desliza proyectos" });
   v.append(chips, lista);
-  const elegir = (filtro) => ctx.cambiar({ filtro });
+  const areaElegida = () => ctx.area ?? TODAS;
+  const elegir = (filtro, area = areaElegida()) => ctx.cambiar({ filtro, area });
 
   // Un chip: elige el área (y con eso, qué proyectos se ven y qué tareas).
   const chip = (c) => {
-    const b = el("button", { textContent: c.nombre, title: cuenta(c), ariaPressed: String(c.id === area),
-      onclick: () => { area = c.id; elegir(c.id); } });
+    const b = el("button", { textContent: c.nombre, title: cuenta(c), ariaPressed: String(c.id === areaElegida()),
+      onclick: () => elegir(c.id, c.id) });
     if (c.atrasadas) b.classList.add("con-atrasadas");
     if (c.nodo) recibir(b, c);
     return b;
@@ -92,7 +93,7 @@ export function areasYProyectos(v, ctx) {
   // Un proyecto: su color, su avance y la próxima tarea. Si no le queda nada pendiente, "Cerrar proyecto".
   const proyecto = (p) => {
     const b = el("button", { className: "filtro", ariaPressed: String(p.id === filtroDe(ctx)),
-      onclick: () => elegir(filtroDe(ctx) === p.id ? area : p.id) },
+      onclick: () => elegir(filtroDe(ctx) === p.id ? areaElegida() : p.id) },
       el("span", { className: "nombre" }, el("i", { className: "punto" }), p.nombre),
       el("span", { className: "meta" + (p.atrasadas ? " atrasada" : ""), textContent: cuenta(p) }),
       el("span", { className: "barra-p" }, el("span", { style: `width: ${p.total ? (p.hechas / p.total) * 100 : 0}%` })));
@@ -116,9 +117,10 @@ export function areasYProyectos(v, ctx) {
     const todos = [TODAS, SIN].map((id) => ({ id, nombre: NOMBRE[id], ...resumen(id) }));
     const filas = [todos[0], ...areas, todos[1]];
 
-    if (!filas.some((c) => c.id === area)) area = TODAS; // el área se quedó sin nada activo
+    const area = filas.some((c) => c.id === areaElegida()) ? areaElegida() : TODAS; // el área pudo quedarse sin nada activo
     const visibles = area === TODAS ? proyectos : proyectos.filter((p) => areaDe(p.id) === area);
-    if (filtroDe(ctx) !== area && !visibles.some((p) => p.id === filtroDe(ctx))) return elegir(area); // lo elegido se cerró o se borró
+    if (area !== areaElegida() || (filtroDe(ctx) !== area && !visibles.some((p) => p.id === filtroDe(ctx))))
+      return elegir(area, area); // lo elegido se cerró o se borró
 
     chips.replaceChildren(...filas.map(chip));
     lista.replaceChildren(...visibles.map(proyecto));

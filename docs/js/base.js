@@ -23,6 +23,7 @@ export const datos = {
   conexiones: [],
   padre: new Map(),       // id -> id de la caja donde está (lo calcula la vista "arbol" de la base, paso 19)
   registros: [],          // lo que pasó en los últimos DIAS_REGISTROS días (gastos, hábitos, riegos...), del más viejo al más nuevo
+  disposiciones: new Map(), // id del apartado -> sus columnas de widgets, si las cambiaste (paso 34b)
 };
 
 // Cuántos días de registros se traen. Alcanza para rachas, el gasto del mes y las plantas.
@@ -81,12 +82,13 @@ export function colorDeProyecto(id) {
 export async function recargar(enfocarId) {
   if (!datos.nodos.length) avisar("Cargando tu grafo…"); // solo la primera vez; después se actualiza sin parpadear
   const desde = new Date(Date.now() - DIAS_REGISTROS * 864e5).toISOString();
-  const [nodos, conexiones, tipos, arbol, registros] = await Promise.all([
+  const [nodos, conexiones, tipos, arbol, registros, disposiciones] = await Promise.all([
     db.from("nodos").select("id, titulo, contenido, estado, fecha, props, tipos!inner(clave, nombre)").eq("archivado", false),
     db.from("conexiones").select("id, origen_id, relacion, destino_id").is("valido_hasta", null),
     db.from("tipos").select("id, owner_id, clave, nombre, modulo, orden, color, nivel, subcaja, propiedades, conexiones").order("orden"),
     db.from("arbol").select("id, padre_id"),
     db.from("registros").select("id, fecha, clase, valor, nodo_id, otro_id").gte("fecha", desde).order("fecha"),
+    db.from("disposiciones").select("apartado, columnas"),
   ]);
   const error = nodos.error || conexiones.error || tipos.error || arbol.error || registros.error;
   if (error) return avisar(error.message);
@@ -99,6 +101,8 @@ export async function recargar(enfocarId) {
   datos.conexiones = conexiones.data.filter((c) => datos.nodo.has(c.origen_id) && datos.nodo.has(c.destino_id)); // por si alguna apunta a un archivado
   datos.padre = new Map(arbol.data.filter((f) => f.padre_id).map((f) => [f.id, f.padre_id]));
   datos.registros = registros.data;
+  // Si la tabla todavía no existe (falta pegar el SQL 8), no pasa nada: se usa la disposición de siempre.
+  datos.disposiciones = new Map((disposiciones.data ?? []).map((d) => [d.apartado, d.columnas]));
 
   avisar(nodos.data.length ? "" : "Todavía no tienes nodos. Crea el primero con «+ Nuevo».");
   document.dispatchEvent(new CustomEvent("datos", { detail: { enfocarId } }));
