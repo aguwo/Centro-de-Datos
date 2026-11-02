@@ -1,8 +1,9 @@
 // Productividad (paso 32): tus proyectos y sus tareas.
-//   Proyectos  agrupados en su área (Kulpem › Crear Pagina Web...), cada uno con su color, su avance,
-//              cuántas tareas van atrasadas y la próxima. El área muestra el avance de todo lo que tiene.
-//              Tocar uno filtra las tareas; arrastrar una tarea encima la mueve ahí.
-//              Un proyecto sin nada pendiente se puede cerrar desde aquí.
+//   Áreas      una fila de chips (Todas, Proyectos, Universidad... y Sin proyecto). Elegir una filtra las tareas
+//              y muestra debajo solo sus proyectos.
+//   Proyectos  cada uno con su color, su avance, cuántas tareas van atrasadas y la próxima.
+//              Tocar uno filtra las tareas (tocarlo de nuevo vuelve al área); arrastrar una tarea encima
+//              de un proyecto o de un chip la mueve ahí. Un proyecto sin nada pendiente se puede cerrar desde aquí.
 //   Tareas     las del filtro, por grupo (atrasadas, hoy, próximas, sin fecha; las hechas, plegadas).
 //              "Agregar tarea" entiende fechas escritas ("dentista mañana 10:00") y deja la tarea en lo elegido.
 // Lo del Inbox no aparece aquí: son los post-its (postits.js).
@@ -12,7 +13,8 @@ import { crear, cambiar, mover } from "./acciones.js";
 import { listaDeTareas, seccion, porFecha } from "./tareas.js";
 
 const TODAS = "todas", SIN = "sin"; // los filtros que no son un proyecto ni un área
-let elegido = TODAS;
+let area = TODAS;    // el chip elegido
+let elegido = TODAS; // lo que filtra las tareas: el chip, o uno de sus proyectos
 
 const deTipo = (clave) => datos.nodos.filter((n) => n.tipos.clave === clave && n.estado !== "Inbox");
 const tareas = () => deTipo("tarea");
@@ -27,29 +29,32 @@ function resumen(id) {
     atrasadas: abiertas.filter((n) => dia(n.fecha) && dia(n.fecha) < hoy).length, proxima: abiertas.find((n) => n.fecha) ?? abiertas[0] };
 }
 
-// La lista de la derecha: Todas, cada área con sus proyectos, los proyectos sin área y Sin proyecto.
+// Lo de la derecha: los chips (Todas, las áreas con algo activo, Sin proyecto) y los proyectos activos.
 function filtros() {
   const fila = (n, clase) => ({ id: n.id, nombre: n.titulo, clase, nodo: n, ...resumen(n.id) });
   const proyectos = deTipo("proyecto").filter((p) => p.estado !== "Hecho").map((p) => fila(p, "proyecto"))
     .sort((a, b) => (a.proxima?.fecha ?? "9").localeCompare(b.proxima?.fecha ?? "9") || a.nombre.localeCompare(b.nombre, "es"));
-  // Las áreas que tienen proyectos activos o tareas pendientes, en orden alfabético.
   const areas = datos.nodos.filter((n) => n.tipos.clave === "area").map((a) => fila(a, "area"))
     .filter((a) => a.abiertas || proyectos.some((p) => areaDe(p.id) === a.id))
     .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-  return [
-    { id: TODAS, nombre: "Todas las tareas", clase: "todas", ...resumen(TODAS) },
-    ...areas.flatMap((a) => [a, ...proyectos.filter((p) => areaDe(p.id) === a.id)]),
-    ...proyectos.filter((p) => !areaDe(p.id)),
-    { id: SIN, nombre: "Sin proyecto", clase: "sin", ...resumen(SIN) },
-  ];
+  const chips = [{ id: TODAS, nombre: "Todas", ...resumen(TODAS) }, ...areas, { id: SIN, nombre: "Sin proyecto", ...resumen(SIN) }];
+  return { chips, proyectos };
 }
 
+const cuenta = (f) => [f.atrasadas && `${f.atrasadas} atrasada${f.atrasadas > 1 ? "s" : ""}`, `${f.hechas} de ${f.total}`].filter(Boolean).join(" · ");
+
 export function dibujarProductividad() {
-  const lista = filtros();
-  if (!lista.some((f) => f.id === elegido)) elegido = TODAS; // lo elegido se cerró o se borró
-  const actual = lista.find((f) => f.id === elegido), enCaja = actual.clase === "proyecto" || actual.clase === "area";
-  $("prod-proyectos").replaceChildren(...lista.map(filtro));
-  $("prod-filtro").textContent = actual.nombre;
+  const { chips, proyectos } = filtros();
+  if (!chips.some((c) => c.id === area)) area = TODAS; // el área se quedó sin nada activo
+  const visibles = area === TODAS ? proyectos : proyectos.filter((p) => areaDe(p.id) === area);
+  if (elegido !== area && !visibles.some((p) => p.id === elegido)) elegido = area; // el proyecto se cerró o se borró
+  const actual = [...chips, ...visibles].find((f) => f.id === elegido), enCaja = actual.nodo !== undefined;
+
+  $("prod-areas").replaceChildren(...chips.map(chip));
+  $("prod-proyectos").replaceChildren(...visibles.map(filtro));
+  if (!visibles.length) $("prod-proyectos").append(el("li", { className: "vacio", textContent: area === SIN
+    ? "Aquí están las tareas que no son de ningún proyecto." : "Esta área no tiene proyectos activos." }));
+  $("prod-filtro").textContent = `${actual.nombre} · ${cuenta(actual)}`;
   $("prod-agregar").elements.titulo.placeholder = enCaja ? `Agregar tarea a ${actual.nombre}…` : "Agregar tarea…";
 
   const hoy = hoyTexto(), ts = de(elegido), abiertas = ts.filter((n) => n.estado !== "Hecho").sort(porFecha);
@@ -66,32 +71,40 @@ export function dibujarProductividad() {
     abiertas.length || hechas.length ? "" : el("p", { className: "vacio", textContent: "No hay tareas aquí. Agrega la primera arriba." }));
 }
 
-// Una fila de la lista: se toca para filtrar. Las áreas y los proyectos reciben tareas arrastradas;
-// los proyectos muestran además su color, su avance, la próxima tarea, y "Cerrar" si no les queda nada.
+// Un chip: elige el área (y con eso, qué proyectos se ven y qué tareas).
+function chip(c) {
+  const b = el("button", { textContent: c.nombre, title: cuenta(c), ariaPressed: String(c.id === area),
+    onclick: () => { area = elegido = c.id; dibujarProductividad(); } });
+  if (c.atrasadas) b.classList.add("con-atrasadas");
+  if (c.nodo) recibir(b, c);
+  return b;
+}
+
+// Un proyecto: su color, su avance y la próxima tarea. Tocarlo filtra; tocarlo otra vez vuelve al área.
+// Si no le queda nada pendiente, "Cerrar proyecto".
 function filtro(f) {
-  const cuenta = [f.atrasadas && `${f.atrasadas} atrasada${f.atrasadas > 1 ? "s" : ""}`, `${f.hechas} de ${f.total}`].filter(Boolean).join(" · ");
-  const esProyecto = f.clase === "proyecto";
-  const b = el("button", { className: "filtro", ariaPressed: String(f.id === elegido), onclick: () => { elegido = f.id; dibujarProductividad(); } },
-    el("span", { className: "nombre" }, esProyecto ? el("i", { className: "punto" }) : "", f.nombre),
-    el("span", { className: "meta" + (f.atrasadas ? " atrasada" : ""), textContent: cuenta }));
-  if (f.clase === "proyecto" || f.clase === "area") b.append(el("span", { className: "barra-p" }, el("span", { style: `width: ${f.total ? (f.hechas / f.total) * 100 : 0}%` })));
-  if (esProyecto && f.proxima) b.append(el("span", { className: "proxima", textContent: `Próxima: ${f.proxima.titulo}${f.proxima.fecha ? " · " + corto(dia(f.proxima.fecha)) : ""}` }));
-  const li = el("li", { className: f.clase + (esProyecto && areaDe(f.id) ? " dentro" : "") }, b);
-  if (esProyecto) li.style.setProperty("--c", colorDeProyecto(f.id));
-  if (esProyecto && !f.abiertas) li.append(el("button", { className: "cerrar", textContent: "✓ Cerrar proyecto",
+  const b = el("button", { className: "filtro", ariaPressed: String(f.id === elegido),
+    onclick: () => { elegido = elegido === f.id ? area : f.id; dibujarProductividad(); } },
+    el("span", { className: "nombre" }, el("i", { className: "punto" }), f.nombre),
+    el("span", { className: "meta" + (f.atrasadas ? " atrasada" : ""), textContent: cuenta(f) }),
+    el("span", { className: "barra-p" }, el("span", { style: `width: ${f.total ? (f.hechas / f.total) * 100 : 0}%` })));
+  if (f.proxima) b.append(el("span", { className: "proxima", textContent: `Próxima: ${f.proxima.titulo}${f.proxima.fecha ? " · " + corto(dia(f.proxima.fecha)) : ""}` }));
+  const li = el("li", { className: "proyecto" }, b);
+  li.style.setProperty("--c", colorDeProyecto(f.id));
+  if (!f.abiertas) li.append(el("button", { className: "cerrar", textContent: "✓ Cerrar proyecto",
     title: "No le queda nada pendiente: marcarlo como hecho", onclick: () => cambiar(f.nodo, { estado: "Hecho" }) }));
-  if (f.nodo) recibir(li, f);
+  recibir(li, f);
   return li;
 }
 
 // Soltar una tarea encima de un área o proyecto la mueve ahí.
-function recibir(li, f) {
+function recibir(destino, f) {
   const tarea = (e) => datos.nodo.get(e.dataTransfer.getData("text/plain"));
-  li.ondragover = (e) => { e.preventDefault(); li.classList.add("soltar"); };
-  li.ondragleave = () => li.classList.remove("soltar");
-  li.ondrop = (e) => {
+  destino.ondragover = (e) => { e.preventDefault(); destino.classList.add("soltar"); };
+  destino.ondragleave = () => destino.classList.remove("soltar");
+  destino.ondrop = (e) => {
     e.preventDefault();
-    li.classList.remove("soltar");
+    destino.classList.remove("soltar");
     const n = tarea(e);
     if (n?.tipos.clave === "tarea" && datos.padre.get(n.id) !== f.id) mover(n, f.id);
   };
