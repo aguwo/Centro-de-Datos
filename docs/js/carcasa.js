@@ -82,6 +82,7 @@ function reloj() {
 
 export function iniciarCarcasa() {
   armarDock();
+  for (const a of APARTADOS) a.iniciar?.();
   cajones();
   dockEscondido();
   reloj();

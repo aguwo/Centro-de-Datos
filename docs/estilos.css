@@ -70,7 +70,8 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 .con-escritorio .escritorio.arrastrando * { user-select: none; }
 .con-escritorio #mundo { display: block; position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .con-escritorio #mundo.animar { transition: transform .45s cubic-bezier(.2,.7,.2,1); }
-.con-escritorio #mundo > .apartado { inset: auto; left: var(--x); top: var(--y); width: var(--ancho); height: var(--alto); overflow: hidden; cursor: auto; }
+.con-escritorio #mundo > .apartado { inset: auto; left: var(--x); top: var(--y); width: var(--ancho); height: var(--alto); overflow: hidden; cursor: auto;
+  padding-inline: 24px; } /* el margen que en pantalla completa centra el contenido aquí se calcularía sobre todo el mundo */
 .con-escritorio #mundo > .apartado .sobre-foto { cursor: grab; user-select: none; }
 /* Minimapa: abajo a la derecha. Cada sección es un botón; el marco es lo que estás viendo. */
 .con-escritorio .minimapa { display: block; position: absolute; right: 16px; bottom: 24px; z-index: 5; width: 132px; height: 84px; border-radius: 12px; overflow: hidden; }
@@ -149,8 +150,8 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 #hoy .ventana { display: flex; flex-direction: column; min-height: 0; }
 .hoy-tareas { grid-area: tareas; } .hoy-clima { grid-area: clima; } .hoy-dia { grid-area: dia; }
 #hoy-tareas, #hoy-agenda { flex: 1; min-height: 0; overflow-y: auto; }
-#hoy-tareas h4 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); margin: 20px 0 2px; }
-#hoy-tareas h4.alerta { color: var(--alerta); }
+#hoy-tareas h4, #prod-tareas h4, .hechas summary { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); margin: 20px 0 2px; }
+#hoy-tareas h4.alerta, #prod-tareas h4.alerta { color: var(--alerta); }
 /* Las 3 prioridades: destacadas con el color de acento */
 .prioridades { padding: 12px 14px 6px; border-radius: 12px; background: color-mix(in srgb, var(--acento) 10%, transparent);
                border: 1px solid color-mix(in srgb, var(--acento) 28%, transparent); }
@@ -337,6 +338,25 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .acciones { display: flex; gap: 8px; margin: 16px 0; }
 
 /* Teléfono: el panel ocupa el ancho y el mapa no se corre */
+/* Productividad (productividad.js): las tareas a la izquierda; los proyectos, que las filtran, a la derecha. */
+#productividad { display: grid; gap: 20px; padding: 24px max(24px, calc((100% - 1240px) / 2)) 32px; overflow-y: auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "titulo titulo" "tareas proyectos"; }
+#productividad > h2 { grid-area: titulo; margin: 0; font-size: 28px; letter-spacing: -.02em; }
+#productividad .ventana { display: flex; flex-direction: column; min-height: 0; }
+.prod-tareas { grid-area: tareas; } .prod-proyectos { grid-area: proyectos; }
+#prod-tareas, #prod-proyectos { flex: 1; min-height: 0; overflow-y: auto; }
+.agregar { display: flex; gap: 8px; margin: 2px 0 4px; }
+.agregar input { flex: 1; min-width: 0; padding: 8px 12px; border: 1px solid var(--linea); border-radius: 10px; background: var(--vidrio); color: inherit; font: inherit; }
+.hechas summary { cursor: pointer; }
+.proyectos { list-style: none; margin: 0 -12px; padding: 0; display: grid; gap: 2px; align-content: start; }
+.filtro { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding: 10px 12px; border: 0; border-radius: 12px; text-align: left; }
+.filtro:hover { background: color-mix(in srgb, var(--texto) 6%, transparent); }
+.filtro[aria-pressed="true"] { background: color-mix(in srgb, var(--acento) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acento) 35%, transparent); }
+.filtro .nombre, .filtro .proxima { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filtro .nombre { font-weight: 600; }
+.filtro .barra-p, .filtro .proxima { grid-column: 1 / -1; }
+.filtro .proxima { font-size: 12.5px; color: var(--suave); }
+
 /* Post-its (postits.js): lo del Inbox. Sin escritorio, una fila que se desliza arriba de Hoy;
    en el escritorio, cada uno pegado en su lugar del mundo, alrededor de las secciones. */
 .postits { grid-area: postits; display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 8px; }
@@ -369,7 +389,10 @@ form.nodo .conexion select + select { margin-top: 6px; }
         grid-auto-rows: max-content; padding: 20px 16px 48px; } /* cada ventana mide lo que su contenido; se desplaza la página */
   #hoy:has(> .postits:not(:empty)) { grid-template-rows: none; grid-template-areas: "fecha" "postits" "tareas" "clima" "dia"; }
   .postits { margin: 0 -16px; padding: 2px 16px 8px; } /* la fila llega al borde de la pantalla */
-  #hoy-fecha { font-size: 24px; }
+  #hoy-fecha, #productividad > h2 { font-size: 24px; }
+  /* Productividad en una columna: primero los proyectos (para elegir), después sus tareas */
+  #productividad { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "titulo" "proyectos" "tareas";
+                   grid-auto-rows: max-content; padding: 20px 16px 48px; }
   #hoy-agenda { max-height: 480px; }
   /* El calendario ocupa el ancho; el costado se esconde */
   #calendario { top: 46px; right: 6px; left: 6px; width: auto; grid-template-columns: minmax(0, 1fr); }
