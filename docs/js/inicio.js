@@ -38,7 +38,7 @@ function fila(f) {
     ...f.puntos.map((si) => el("i", { className: si ? "si" : "" }))));
   if (f.meta) li.append(el("span", { className: "meta" + (f.alerta ? " atrasada" : ""), textContent: f.meta }));
   if (f.barra !== undefined && f.barra !== null) {
-    const barra = el("span", { className: "barra" + (f.barra > 1 ? " pasada" : "") }, el("span"));
+    const barra = el("span", { className: "barra-p" + (f.barra > 1 ? " pasada" : "") }, el("span"));
     barra.firstChild.style.width = Math.max(0, Math.min(1, f.barra)) * 100 + "%";
     li.classList.add("con-barra");
     li.append(barra);

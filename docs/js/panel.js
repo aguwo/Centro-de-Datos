@@ -55,12 +55,14 @@ function abrir(...contenido) {
   mostrando = null;
   $("panel").replaceChildren(...contenido);
   $("panel").classList.remove("oculto");
-  ajustarMapa(); // el mapa se achica para dejarle espacio al panel
+  document.body.classList.add("con-panel"); // el mapa se corre para dejarle espacio al panel
+  ajustarMapa();
 }
 
 export function cerrarPanel() {
   mostrando = null;
   $("panel").classList.add("oculto");
+  document.body.classList.remove("con-panel");
   ajustarMapa();
 }
 

@@ -3,18 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Centro de datos</title>
+  <title>Martita</title>
   <!--
     La web de tu centro de datos. Este archivo tiene solo la estructura de la página;
     el estilo está en estilos.css y el comportamiento en js/ (empieza por js/main.js).
-    Pasos: 9-11 mapa y panel · 13 filtros · 14 cajas dentro de cajas · 15 Inicio · 18 subcajas
-    · 19 la jerarquía (colores, cajas y módulos) se lee de la base · 25 Inicio por tarjetas y en tiempo real.
+    Paso 26: la carcasa del escritorio. Barra arriba, dock escondido abajo y un apartado por sección.
+    Los apartados se anotan en js/apartados.js; cada uno tiene aquí su <section> con el mismo id.
   -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-  <section id="login" class="centro oculto">
-    <h1>Centro de datos</h1>
+  <div class="fondo" aria-hidden="true"></div>
+
+  <section id="login" class="centro vidrio oculto">
+    <h1>Martita</h1>
     <p>Entra con tu correo. Te llega un enlace para iniciar sesión.</p>
     <form id="form-login">
       <input id="correo" type="email" placeholder="tu@correo.cl" required>
@@ -22,18 +26,16 @@
     </form>
   </section>
 
-  <header id="barra" class="oculto">
-    <h1>Centro de datos</h1>
-    <nav id="menu">
-      <button data-vista="inicio" class="activo">Inicio</button>
-      <button data-vista="mapa">Mapa</button>
-    </nav>
-    <div class="leyenda oculto" id="leyenda"></div>
+  <header id="barra" class="barra vidrio oculto">
+    <b class="marca">Martita</b>
+    <span class="app-actual" id="app-actual"></span>
+    <span class="reloj" id="reloj"></span>
     <button id="nuevo" class="principal">+ Nuevo</button>
     <button id="salir">Salir</button>
   </header>
+
   <main id="app" class="oculto">
-    <section id="inicio">
+    <section id="inicio" class="apartado">
       <div class="saludo">
         <h2 id="fecha-hoy"></h2>
         <form id="form-captura"><input id="captura" placeholder="Captura rápida: escribe una tarea y presiona Enter…" autocomplete="off"></form>
@@ -41,10 +43,18 @@
       <div id="senales"></div>
       <div class="tablero" id="tablero"></div>
     </section>
-    <div id="grafo" class="oculto"></div>
-    <aside id="panel" class="oculto"></aside>
+
+    <section id="mapa" class="apartado oculto">
+      <div class="leyenda vidrio" id="leyenda"></div>
+      <div class="lienzo-mapa vidrio"><div id="grafo"></div></div>
+    </section>
+
+    <aside id="panel" class="vidrio oculto"></aside>
   </main>
-  <p id="mensaje"></p>
+
+  <nav id="dock" class="dock vidrio oculto" aria-label="Apartados"></nav>
+  <button id="asa" class="asa oculto" aria-label="Mostrar los apartados"></button>
+  <p id="mensaje" role="status"></p>
 
 <script type="module" src="js/main.js"></script>
 </body>
