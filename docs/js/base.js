@@ -16,6 +16,10 @@ export function el(tag, props = {}, ...hijos) {
 
 // Un texto que se escribe encima (un título, un post-it). Enter o salir guarda; Escape deshace.
 // alTerminar(texto) recibe lo escrito, ya sin espacios sobrantes.
+// ¿Estás escribiendo dentro de este elemento? (un campo o un texto editable con el cursor adentro).
+// Mientras escribes no se redibuja, para no pisarte; un botón apretado no cuenta.
+export const escribiendoEn = (caja) => caja.contains(document.activeElement) && document.activeElement.matches("input, textarea, [contenteditable]");
+
 export function escribible(tag, inicial, alTerminar, className = "") {
   const t = el(tag, { className, textContent: inicial, contentEditable: "plaintext-only", spellcheck: false });
   t.onkeydown = (e) => {

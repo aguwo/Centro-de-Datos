@@ -43,6 +43,8 @@ do $$ declare r text; begin
   assert r = 'Meditar', 'registros_legibles debería mostrar el nombre del hábito, muestra ' || coalesce(r, '(nada)');
   select subcaja->>'topico' into r from tipos where clave = 'evento';
   assert r = 'Evaluaciones', 'evento debería agruparse en Evaluaciones dentro de un tópico';
+  assert (select propiedades @> '[{"clave":"estado"},{"clave":"resultado"}]'::jsonb from tipos where clave = 'topico'),
+    'tópico debería tener estado y resultado (paso 36)';
 end $$;
 
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
