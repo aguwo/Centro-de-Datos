@@ -148,8 +148,8 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 .con-widgets > h2::first-letter { text-transform: uppercase; }
 .columnas { flex: 1; min-height: 0; display: grid; grid-template-columns: var(--columnas); gap: 20px; }
 .columnas > .columna { display: flex; flex-direction: column; gap: 20px; min-width: 0; min-height: 0; }
-.columna > .ventana { display: flex; flex-direction: column; min-height: 0; }
-.columna > .crece { flex: 1; }
+.columna > .ventana { display: flex; flex-direction: column; flex: none; }
+.columna > .crece { flex: 1; min-height: 240px; } /* las demás miden su contenido; si no cabe todo, el apartado se desliza */
 .desliza { flex: 1; min-height: 0; overflow-y: auto; }
 .grupos h4, .hechas summary { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); margin: 20px 0 2px; }
 .grupos h4.alerta { color: var(--alerta); }
@@ -368,6 +368,70 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .punto { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: var(--c); vertical-align: 1px; }
 .cuando { display: block; min-height: 18px; color: var(--acento); font-size: 12.5px; }
 
+/* Proyectos (proyectos.js, paso 35): una caja completa. Índice a la izquierda; cabecera, tareas y lo demás a la derecha. */
+.suave { color: var(--suave); }
+.alerta { color: var(--alerta); }
+.rotulo { font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
+.ventana > h3 > small { margin-left: auto; }
+.ventana > h3 .abrir { padding: 1px 8px; font-size: 12px; }
+.punto.anillo { background: none; box-shadow: inset 0 0 0 2px var(--c); }
+/* El índice: un árbol con sangría por nivel */
+.w-indice input[type="search"] { width: 100%; padding: 7px 11px; border: 1px solid var(--linea); border-radius: 10px; background: transparent; color: inherit; font: inherit; margin-bottom: 6px; }
+.arbol { display: grid; gap: 1px; align-content: start; margin: 0 -8px; }
+.arbol .item { display: flex; align-items: center; gap: 0; width: 100%; padding: 6px 8px 6px calc(8px + var(--sangria, 0) * 16px); border: 0; border-radius: 9px; text-align: left; }
+.arbol .item:hover { background: color-mix(in srgb, var(--texto) 6%, transparent); }
+.arbol .item[aria-current="page"] { background: color-mix(in srgb, var(--acento) 14%, transparent); font-weight: 600; }
+.arbol .item .nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arbol .item .n { margin-left: 8px; font-size: 12px; color: var(--suave); font-variant-numeric: tabular-nums; }
+.arbol .raiz { margin-top: 10px; font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
+.arbol .raiz:first-child { margin-top: 0; }
+.arbol .raiz .punto { display: none; }
+.arbol .terminadas { margin-top: 12px; padding: 0 8px; }
+.arbol .terminadas summary { cursor: pointer; font-size: 12.5px; color: var(--suave); padding: 4px 0; }
+.w-indice .nueva { margin-top: 10px; }
+/* La cabecera */
+.columna > .w-caja { display: grid; gap: 12px; }
+.w-caja .arriba { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+.acciones-caja { margin-left: auto; display: flex; gap: 8px; }
+.nombre-caja { display: flex; align-items: center; gap: 4px; }
+.nombre-caja .punto { width: 12px; height: 12px; }
+.titulo-caja { margin: 0; font-size: 26px; letter-spacing: -.02em; outline: none; border-radius: 6px; cursor: text; }
+.titulo-caja:hover, .titulo-caja:focus { box-shadow: 0 0 0 6px color-mix(in srgb, var(--texto) 6%, transparent); }
+.fichas { display: flex; flex-wrap: wrap; gap: 6px; }
+.ficha { display: inline-flex; gap: 6px; padding: 4px 11px; border-radius: 999px; font-size: 13px; border-color: var(--linea); }
+.ficha span { color: var(--suave); }
+.ficha.vacia { border-style: dashed; color: var(--suave); }
+.descripcion { width: 100%; resize: vertical; padding: 8px 10px; margin: 0 -10px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: inherit; font: inherit; }
+.descripcion:hover, .descripcion:focus { border-color: var(--linea); }
+.avance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.dato { display: grid; gap: 6px; align-content: start; padding: 10px 14px; border: 1px solid var(--linea); border-radius: 12px; }
+.dato b { font-size: 20px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.dato small { font-size: 12.5px; }
+.dato .barra-p span { background: var(--c, var(--acento-fondo)); }
+/* Las tareas: tablero por estado o lista */
+.barra-tareas { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.barra-tareas .agregar { flex: 1; min-width: min(100%, 260px); margin: 0; }
+.tablero { display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 10px; align-items: start; overflow-x: auto; padding: 6px 0 4px; }
+.columna-estado { display: grid; gap: 6px; align-content: start; min-height: 120px; padding: 8px; border-radius: 12px; background: color-mix(in srgb, var(--texto) 4%, transparent); }
+.columna-estado header { display: flex; justify-content: space-between; padding: 2px 4px 4px; }
+.columna-estado.soltar { outline: 2px dashed var(--acento); outline-offset: -2px; }
+.tarjeta { display: grid; gap: 4px; width: 100%; padding: 9px 11px; border-color: var(--linea); border-radius: 10px; background: var(--vidrio-fuerte); text-align: left; cursor: grab; }
+.tarjeta .t { font-weight: 500; overflow-wrap: anywhere; }
+.tarjeta .m { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 12px; color: var(--suave); }
+.tarjeta .m:empty { display: none; }
+.tarjeta .alta { color: var(--alerta); }
+.tarjeta.hecha .t { color: var(--suave); text-decoration: line-through; }
+.columna-estado .mas { border: 0; font-size: 12.5px; color: var(--suave); padding: 4px; }
+/* Lo demás: otras cajas, notas y eventos */
+.columna > .w-dentro { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pieza h4 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 6px; font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
+.pieza button.redondo { width: 26px; height: 26px; font-size: 17px; }
+.pieza ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.pieza li button { display: flex; align-items: center; gap: 0; width: 100%; padding: 5px 6px; border: 0; border-radius: 8px; text-align: left; font-size: 13.5px; }
+.pieza li button:hover { background: color-mix(in srgb, var(--texto) 6%, transparent); }
+.pieza li .nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pieza li small { margin-left: 8px; color: var(--suave); white-space: nowrap; }
+
 /* Post-its (postits.js): lo del Inbox. Sin escritorio, una fila que se desliza arriba de Hoy;
    en el escritorio, cada uno pegado en su lugar del mundo, alrededor de las secciones. */
 .postits { flex: none; display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 8px; }
@@ -403,6 +467,9 @@ form.nodo .conexion select + select { margin-top: 6px; }
   .postits { margin: 0 -16px; padding: 2px 16px 8px; } /* la fila llega al borde de la pantalla */
   .con-widgets > h2 { font-size: 24px; }
   .w-tu-dia .agenda { max-height: 480px; }
+  .w-indice .arbol { max-height: 40vh; }
+  .avance, .columna > .w-dentro { grid-template-columns: minmax(0, 1fr); }
+  .tablero { grid-template-columns: repeat(4, minmax(220px, 80%)); }
   /* El calendario ocupa el ancho; el costado se esconde */
   #calendario { top: 46px; right: 6px; left: 6px; width: auto; grid-template-columns: minmax(0, 1fr); }
   .cal-lado { display: none; }

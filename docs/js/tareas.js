@@ -4,8 +4,8 @@
 //   a las atrasadas: Hoy / Mañana / Soltar
 // Cada fila se puede arrastrar a una agenda ("Tu día") para reservarle una hora.
 import { el, avisar, datos, dia, hora, dentroDe, proyectoDe, colorDeProyecto } from "./base.js";
-import { hoyTexto, sumarDias, corto, sinHoraISO } from "./fechas.js";
-import { cambiar, cambiarProps, completar, reabrir, archivar } from "./acciones.js";
+import { hoyTexto, sumarDias, corto, sinHoraISO, hhmm, leerFecha, fechaLeida } from "./fechas.js";
+import { cambiar, cambiarProps, completar, reabrir, archivar, crear, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel } from "./panel.js";
 
 export const MAX_PRIORIDADES = 3;
@@ -47,4 +47,28 @@ function fila(n, { prioridad, atrasada, conFecha, sinCaja, lleno }) {
   li.ondragstart = (e) => e.dataTransfer.setData("text/plain", n.id);
   return li;
 }
+// "Agregar tarea" (Productividad, Proyectos): entiende fechas escritas ("dentista mañana 10:00"), muestra abajo
+// la fecha que entendió y deja la tarea "Por hacer" dentro de la caja que diga destino() (un id, o nada).
+// Devuelve el formulario, la línea de la fecha y el campo (para cambiarle el texto de ayuda).
+export function agregarTarea(destino) {
+  const campo = el("input", { name: "titulo", ariaLabel: "Nueva tarea", placeholder: "Agregar tarea…" });
+  const form = el("form", { className: "agregar", autocomplete: "off" }, campo, el("button", { className: "principal", textContent: "Agregar" }));
+  const cuando = el("small", { className: "cuando", ariaLive: "polite" });
+  campo.oninput = () => {
+    const l = leerFecha(campo.value);
+    cuando.textContent = l.dia ? "Fecha: " + new Date(l.dia + "T12:00").toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" })
+      + (l.hora === null ? "" : " · " + hhmm(l.hora)) : "";
+  };
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const l = leerFecha(campo.value.trim()), titulo = l.titulo || campo.value.trim();
+    if (!titulo) return;
+    if (await crear("tarea", { titulo, estado: "Por hacer", fecha: fechaLeida(l) }, { conexion: dentroDeCaja("tarea", destino()), enfocar: false })) {
+      campo.value = "";
+      campo.oninput();
+    }
+  };
+  return { form, cuando, campo };
+}
+
 const boton = (texto, accion, title = "") => el("button", { textContent: texto, title, onclick: accion });

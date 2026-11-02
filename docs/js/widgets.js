@@ -14,6 +14,7 @@
 import { el, datos } from "./base.js";
 import { tareasDeHoy, elTiempo, tuDia } from "./hoy.js";
 import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
+import { indice, cabecera, tablero, dentro } from "./proyectos.js";
 
 export const WIDGETS = {
   "tareas-de-hoy": { titulo: "Tareas de hoy", crece: true, crear: tareasDeHoy },
@@ -21,6 +22,10 @@ export const WIDGETS = {
   "tu-dia":        { titulo: "Tu día", crece: true, crear: tuDia },
   "tareas":        { titulo: "Tareas", crece: true, crear: tareasDelFiltro },
   "proyectos":     { crece: true, filtra: true, crear: areasYProyectos },
+  "indice":        { crece: true, filtra: true, crear: indice },
+  "caja":          { crear: cabecera },
+  "tablero":       { titulo: "Tareas", crece: true, crear: tablero },
+  "dentro":        { crear: dentro },
 };
 
 // Las columnas de un apartado: las tuyas, si las guardaste, o las de siempre.
@@ -66,5 +71,5 @@ export function montar(a) {
     titulo.textContent = a.titulo?.() ?? a.nombre;
     for (const r of armada.redibujar) r();
   }
-  return { seccion, dibujar };
+  return { seccion, dibujar, ctx };
 }

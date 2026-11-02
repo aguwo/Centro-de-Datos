@@ -26,12 +26,19 @@ export function ir(id) {
 
 // Los apartados con widgets se arman aquí (widgets.js) y se ponen en la página.
 const redibujar = new Map(); // id del apartado -> cómo se redibuja
+const contextos = new Map(); // id del apartado -> lo que comparten sus ventanas (ctx)
 function montarApartados() {
   for (const a of APARTADOS.filter((a) => a.columnas)) {
-    const { seccion, dibujar } = montar(a);
+    const { seccion, dibujar, ctx } = montar(a);
     $("panel").before(seccion);
     redibujar.set(a.id, dibujar);
+    contextos.set(a.id, ctx);
   }
+  // irA("proyectos", { caja }) desde cualquier parte: cambia lo que muestra ese apartado y va a él.
+  document.addEventListener("ir", ({ detail: { apartado, ctx } }) => {
+    if (ctx) contextos.get(apartado)?.cambiar(ctx);
+    ir(apartado);
+  });
 }
 // Cuando llegan datos se dibuja todo (así cambiar de apartado es instantáneo); los cajones cerrados no hacen nada.
 export function dibujarTodo() {

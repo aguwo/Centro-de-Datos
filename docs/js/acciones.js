@@ -21,6 +21,13 @@ export async function conectar(origen_id, conexion) {
   const { error } = await db.from("conexiones").insert({ origen_id, ...conexion });
   if (error) avisar("La conexión falló: " + error.message);
 }
+// Con qué conexión algo de tipo "clave" queda dentro de una caja, según lo que permite su tipo:
+// una tarea pertenece_a un proyecto, pero trata_sobre un tópico. Devuelve { relacion, destino_id } o nada.
+export function dentroDeCaja(clave, destino_id) {
+  const caja = datos.nodo.get(destino_id);
+  const regla = caja && datos.tipo.get(clave)?.conexiones?.find((c) => c.hacia.includes(caja.tipos.clave));
+  return regla ? { relacion: regla.relacion, destino_id } : undefined;
+}
 // Mover algo a otra caja (como mover_nodos del agente): deja de pertenecer a lo de antes y pasa a pertenecer al destino.
 // Las conexiones viejas no se borran: se cierran (valido_hasta), así queda la historia.
 export async function mover(n, destino_id, relacion = "pertenece_a") {

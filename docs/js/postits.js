@@ -6,7 +6,7 @@
 //   Pasar a…    el formulario de siempre, con el estado en "Por hacer": al guardar sale del Inbox y deja de ser post-it
 // Los que no tienen lugar guardado se reparten solos en los bordes libres.
 // En pantallas angostas no hay escritorio: se ven en una fila arriba de Hoy.
-import { $, el, datos, colorDe } from "./base.js";
+import { $, el, datos, colorDe, escribible } from "./base.js";
 import { cambiar, cambiarProps, completar, archivar, crear } from "./acciones.js";
 import { escritorioActivo, alCambiarDeModo, alrededor, centro, zoom } from "./escritorio.js";
 import { formulario } from "./panel.js";
@@ -56,17 +56,6 @@ function papel(n, l, ...hijos) {
   return p;
 }
 
-// El texto se escribe encima. Enter o salir guarda; Escape deshace.
-function escribible(inicial, alTerminar) {
-  const t = el("p", { className: "texto", textContent: inicial, contentEditable: "plaintext-only", spellcheck: false });
-  t.onkeydown = (e) => {
-    if (e.key === "Escape") t.textContent = inicial;
-    if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); e.stopPropagation(); t.blur(); }
-  };
-  t.onblur = () => alTerminar(t.textContent.trim());
-  return t;
-}
-
 function postit(n, l) {
   const boton = (texto, title, accion, className) => el("button", { className, textContent: texto, title, ariaLabel: title, onclick: accion });
   const sale = (accion) => () => { p.classList.add("sale"); accion(n); };
@@ -75,7 +64,7 @@ function postit(n, l) {
       el("span", { className: "tipo", textContent: n.tipos.nombre }),
       boton("✓", "Listo", sale(completar)),
       boton("×", "Soltar (se archiva)", sale(archivar))),
-    escribible(n.titulo, (t) => (t && t !== n.titulo ? cambiar(n, { titulo: t }) : dibujarPostits())),
+    escribible("p", n.titulo, (t) => (t && t !== n.titulo ? cambiar(n, { titulo: t }) : dibujarPostits()), "texto"),
     boton(`Pasar a ${n.tipos.nombre.toLowerCase()} →`, "Ponerle fecha, proyecto y lo demás", () =>
       formulario(n, { tipos: ordenables(), valores: { estado: "Por hacer" } }), "pasar"));
   return p;
@@ -85,7 +74,7 @@ function postit(n, l) {
 export function nuevoPostit() {
   const { x, y } = centro(), l = { x: Math.round(x - TAMANO.ancho / 2), y: Math.round(y - TAMANO.alto / 2) };
   const p = papel(null, l, el("header", {}, el("span", { className: "tipo", textContent: "Post-it" })),
-    escribible("", (titulo) => (titulo ? crear("tarea", { titulo, estado: "Inbox", props: { postit: l } }, { enfocar: false }) : p.remove())));
+    escribible("p", "", (titulo) => (titulo ? crear("tarea", { titulo, estado: "Inbox", props: { postit: l } }, { enfocar: false }) : p.remove()), "texto"));
   capa().append(p);
   p.querySelector(".texto").focus();
 }

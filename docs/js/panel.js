@@ -23,6 +23,12 @@ function legible(p, v) {
   return typeof v === "object" ? JSON.stringify(v) : String(v);
 }
 
+// Los datos de un nodo que tienen valor, ya legibles: [{ nombre: "Prioridad", valor: "Alta" }, ...]
+export const camposDe = (n) => propiedadesDe(n.tipos.clave)
+  .map((p) => ({ clave: p.clave, nombre: p.nombre, valor: legible(p, valorDe(n, p)) })).filter((x) => x.valor !== null);
+// ¿Su tipo tiene esta propiedad? (ej. "estado": se puede terminar)
+export const tienePropiedad = (n, clave) => todasDe(n.tipos.clave).some((p) => p.clave === clave);
+
 // El control del formulario para una propiedad, según su tipo, ya con el valor actual.
 function control(p, v) {
   const lista = (opciones) => {
@@ -140,8 +146,9 @@ export function refrescarPanel() {
 // y tipo = cuál viene elegido. Lo arma "+ Nuevo" (nuevo.js) según el apartado donde estás.
 // Al editar con tipos, también se puede cambiar el tipo (un post-it que pasa a proyecto).
 // valores = con qué empiezan algunos campos, ej. { estado: "Por hacer" } al ordenar un post-it.
+// conexion = con qué conexión empieza "Conectar a", ej. { relacion: "pertenece_a", destino_id } al crear dentro de un proyecto.
 const PRINCIPALES = 3; // cuántas propiedades se ven de entrada; el resto va en "Más detalles"
-export function formulario(n, { tipos, tipo: elegido, valores = {} } = {}) {
+export function formulario(n, { tipos, tipo: elegido, valores = {}, conexion: inicial } = {}) {
   const editando = !!n;
   const campo = (etiqueta, control) => [el("label", { textContent: etiqueta }), control];
   let tipo = n?.tipos.clave ?? elegido ?? tipos?.[0] ?? "tarea";
@@ -183,14 +190,16 @@ export function formulario(n, { tipos, tipo: elegido, valores = {} } = {}) {
   const destino = el("select");
   function ajustarCampos() {
     for (const b of selector.querySelectorAll("button")) b.setAttribute("aria-pressed", b.dataset.clave === tipo);
-    const inicial = (p) => (p.clave in valores ? valores[p.clave] : n ? valorDe(n, p) : p.tipo === "estado" ? "Por hacer" : null);
-    campos = propiedadesDe(tipo).map((p) => ({ p, c: control(p, inicial(p)) }));
+    const valorInicial = (p) => (p.clave in valores ? valores[p.clave] : n ? valorDe(n, p) : p.tipo === "estado" ? "Por hacer" : null);
+    campos = propiedadesDe(tipo).map((p) => ({ p, c: control(p, valorInicial(p)) }));
     const aLaVista = (x, i) => i < PRINCIPALES || (n && legible(x.p, valorDe(n, x.p)) !== null);
     principales.replaceChildren(...campos.filter(aLaVista).flatMap(({ p, c }) => campo(p.nombre, c)));
     mas.replaceChildren(...campos.filter((x, i) => !aLaVista(x, i)).flatMap(({ p, c }) => campo(p.nombre, c)));
     detalles.open = !!n?.contenido;
     relacion.replaceChildren(el("option", { value: "", textContent: "(sin conexión)" }),
       ...(tipoElegido()?.conexiones ?? []).map((c) => el("option", { value: c.relacion, textContent: c.relacion.replaceAll("_", " ") })));
+    if (inicial) relacion.value = inicial.relacion;
+    if (relacion.selectedIndex < 0) relacion.value = ""; // este tipo no permite esa conexión
     ajustarDestinos();
   }
   function ajustarDestinos() {
@@ -198,6 +207,7 @@ export function formulario(n, { tipos, tipo: elegido, valores = {} } = {}) {
     const candidatos = regla ? datos.nodos.filter((x) => regla.hacia.includes(x.tipos.clave)).sort((a, b) => a.titulo.localeCompare(b.titulo, "es")) : [];
     destino.replaceChildren(...candidatos.map((x) => el("option", { value: x.id, textContent: `${x.titulo} (${x.tipos.nombre})` })));
     destino.hidden = !candidatos.length;
+    if (inicial?.relacion === relacion.value) destino.value = inicial.destino_id;
   }
 
   const guardar = el("button", { className: "principal", textContent: editando ? "Guardar" : "Crear", type: "submit" });
