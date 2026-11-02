@@ -45,6 +45,35 @@ export const hora = (fecha) => {
 export const colorDe = (clave) => datos.tipo.get(clave)?.color ?? "#78716c";
 // Dentro de qué proyecto, área o materia está un nodo (su caja), para mostrarlo al lado.
 export const dentroDe = (id) => datos.nodo.get(datos.padre.get(id))?.titulo;
+// Todas las cajas que contienen a un nodo, de la más cercana a la más general (tarea → proyecto → área).
+export function cajasDe(id) {
+  const cajas = [];
+  for (let p = datos.padre.get(id); p && !cajas.includes(p); p = datos.padre.get(p)) cajas.push(p);
+  return cajas;
+}
+// El proyecto donde está algo (el más cercano), o nada.
+export const proyectoDe = (id) => cajasDe(id).find((c) => datos.nodo.get(c)?.tipos.clave === "proyecto");
+
+// Colores para distinguir cosas del mismo tipo (proyectos, calendarios).
+export const PALETA = ["#3b82f6", "#22c55e", "#ec4899", "#f97316", "#8b5cf6", "#14b8a6", "#ef4444", "#a16207"];
+const suyo = (id) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0) % PALETA.length;
+// Un color por proyecto, distinto entre los activos mientras alcance la paleta. Cada uno parte de "su" color
+// (sale de su id) y, si ya lo tiene otro, toma el siguiente libre: así casi nunca cambian.
+let colores = { de: null, mapa: new Map() };
+export function colorDeProyecto(id) {
+  if (colores.de !== datos.nodos) { // se calcula una vez por cada carga de datos
+    const usados = new Set(), mapa = new Map();
+    const activos = datos.nodos.filter((n) => n.tipos.clave === "proyecto" && n.estado !== "Hecho").sort((a, b) => a.id.localeCompare(b.id));
+    for (const p of activos) {
+      let i = suyo(p.id);
+      for (let k = 0; k < PALETA.length && usados.has(i); k++) i = (i + 1) % PALETA.length;
+      usados.add(i);
+      mapa.set(p.id, PALETA[i]);
+    }
+    colores = { de: datos.nodos, mapa };
+  }
+  return colores.mapa.get(id) ?? PALETA[suyo(id)];
+}
 
 // Lee todo de Supabase. No hace falta filtrar por dueño: RLS ya lo hace.
 // Cuando termina avisa con el evento "datos", y cada vista (mapa, inicio, panel) se vuelve a dibujar.

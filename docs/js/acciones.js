@@ -21,6 +21,14 @@ export async function conectar(origen_id, conexion) {
   const { error } = await db.from("conexiones").insert({ origen_id, ...conexion });
   if (error) avisar("La conexión falló: " + error.message);
 }
+// Mover algo a otra caja (como mover_nodos del agente): deja de pertenecer a lo de antes y pasa a pertenecer al destino.
+// Las conexiones viejas no se borran: se cierran (valido_hasta), así queda la historia.
+export async function mover(n, destino_id, relacion = "pertenece_a") {
+  const { error } = await db.from("conexiones").update({ valido_hasta: new Date().toISOString() })
+    .eq("origen_id", n.id).eq("relacion", relacion).is("valido_hasta", null);
+  if (error) return avisar(error.message);
+  return escribir(db.from("conexiones").insert({ origen_id: n.id, relacion, destino_id }));
+}
 export const cambiar = (n, cambios) => escribir(nodos().update(cambios).eq("id", n.id));
 
 // Cambia solo algunas propiedades (props) y deja las demás. Un valor null borra esa propiedad.

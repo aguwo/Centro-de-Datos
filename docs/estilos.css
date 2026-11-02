@@ -356,6 +356,16 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .filtro .nombre { font-weight: 600; }
 .filtro .barra-p, .filtro .proxima { grid-column: 1 / -1; }
 .filtro .proxima { font-size: 12.5px; color: var(--suave); }
+.proyectos .area .nombre { font-weight: 700; }
+.proyectos .dentro .filtro { padding-left: 30px; } /* los proyectos de un área, debajo de ella */
+.proyectos li { position: relative; }
+.proyectos li.soltar .filtro { box-shadow: inset 0 0 0 2px var(--acento); background: color-mix(in srgb, var(--acento) 10%, transparent); }
+.proyectos .proyecto .barra-p span { background: var(--c); }
+.proyectos .cerrar { position: absolute; right: 12px; bottom: 6px; padding: 2px 8px; font-size: 12px; }
+.proyectos li:has(.cerrar) .filtro { padding-bottom: 34px; }
+/* Un punto con el color del proyecto (en la lista de proyectos y en cada tarea) */
+.punto { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: var(--c); vertical-align: 1px; }
+.cuando { display: block; min-height: 18px; color: var(--acento); font-size: 12.5px; }
 
 /* Post-its (postits.js): lo del Inbox. Sin escritorio, una fila que se desliza arriba de Hoy;
    en el escritorio, cada uno pegado en su lugar del mundo, alrededor de las secciones. */

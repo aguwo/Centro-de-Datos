@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/servidor.test.ts tests/importador.test.mjs tests/importador-resto.test.mjs",
+    "test": "node --test tests/servidor.test.ts tests/importador.test.mjs tests/importador-resto.test.mjs tests/fechas.test.mjs",
     "test:db": "bash tests/probar_bd.sh"
   },
   "engines": { "node": ">=22.18" }

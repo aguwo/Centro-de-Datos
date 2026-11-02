@@ -3,14 +3,13 @@
 //   Los eventos pueden repetirse (agenda.js sabe cuándo ocurren) y borrarse "solo este" o "todos".
 //   "Mis calendarios" son tus áreas (Universidad, Salud...): cada evento va en el del área donde está.
 // Más adelante (paso 33) se sincroniza con Google Calendar.
-import { $, el, datos, dia, sinHora } from "./base.js";
+import { $, el, datos, dia, sinHora, PALETA, proyectoDe, colorDeProyecto } from "./base.js";
 import { hoyTexto, sumarDias, lunes, sinHoraISO, conHoraISO, horaDecimal, hhmm, aHora } from "./fechas.js";
 import { delDia, dibujarAgenda } from "./agenda.js";
 import { crear, cambiar, cambiarProps, archivar } from "./acciones.js";
 import { mostrarPanel } from "./panel.js";
 
 const ALTO = 44; // píxeles por hora
-const PALETA = ["#3b82f6", "#22c55e", "#ec4899", "#f97316", "#8b5cf6", "#14b8a6", "#ef4444", "#a16207"];
 const MAX_EN_MES = 3; // cuántas cosas se ven por día en la vista de mes; el resto, "+2 más"
 const pantallaAngosta = matchMedia("(max-width: 700px)");
 let vista = pantallaAngosta.matches ? "dia" : "semana", foco = hoyTexto();
@@ -31,6 +30,8 @@ function calendarios() {
     { id: "", nombre: "Sin área", color: "#94a3b8", usado: usados.has("") }, { id: "tareas", nombre: "Tareas", color: "#eab308", usado: usados.has("tareas") }];
 }
 const colorDeCal = (id) => calendarios().find((c) => c.id === id)?.color;
+// El color con que se dibuja algo: el de su calendario; una tarea dentro de un proyecto, el de su proyecto.
+const colorDeCosa = (n) => (n.tipos.clave === "tarea" && proyectoDe(n.id) ? colorDeProyecto(proyectoDe(n.id)) : colorDeCal(calendarioDe(n)));
 
 // Los que escondiste quedan guardados en este navegador.
 const ESCONDIDOS = new Set(leer());
@@ -50,7 +51,7 @@ export function dibujarCalendario() {
   $("cal-titulo").textContent = textoFecha(foco, vista === "dia" ? { weekday: "long", day: "numeric", month: "long" } : { month: "long", year: "numeric" });
   const cuerpo = $("cal-cuerpo"), arriba = cuerpo.scrollTop;
   dibujarAgenda(cuerpo, dias, {
-    desde: 0, hasta: 24, alto: ALTO, filtro: seVe, color: (n) => colorDeCal(calendarioDe(n)),
+    desde: 0, hasta: 24, alto: ALTO, filtro: seVe, color: colorDeCosa,
     alTocar: tocar, alTocarHueco: (d, h) => editar(null, { d, h }),
   });
   cuerpo.scrollTop = arriba || 8 * ALTO; // la primera vez abre en las 8:00; después se queda donde estabas
@@ -70,7 +71,7 @@ function dibujarMes() {
       ...cosas.slice(0, sobran > 0 ? MAX_EN_MES - 1 : MAX_EN_MES).map((x) => {
         const c = el("button", { className: "chip-mes", title: x.n.titulo, onclick: () => tocar(x.n, d) },
           x.ini === null ? "" : el("small", { textContent: hhmm(x.ini) + " " }), x.n.titulo);
-        c.style.setProperty("--c", colorDeCal(calendarioDe(x.n)));
+        c.style.setProperty("--c", colorDeCosa(x.n));
         return c;
       }),
       sobran > 0 ? el("button", { className: "chip-mes mas", textContent: `+${sobran + 1} más`, onclick: verDia }) : "");

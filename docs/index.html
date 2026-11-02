@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <!-- ?v= cambia cuando cambian los estilos: así el navegador no usa los de antes que tenía guardados -->
-  <link rel="stylesheet" href="estilos.css?v=32">
+  <link rel="stylesheet" href="estilos.css?v=33">
 </head>
 <body>
   <div class="fondo" aria-hidden="true"></div>
@@ -75,10 +75,11 @@
           <input name="titulo" aria-label="Nueva tarea" placeholder="Agregar tarea…">
           <button class="principal">Agregar</button>
         </form>
+        <small id="prod-cuando" class="cuando" aria-live="polite"></small>
         <div id="prod-tareas"></div>
       </div>
       <div class="ventana vidrio prod-proyectos">
-        <h3>Proyectos <small>elige uno para ver sus tareas</small></h3>
+        <h3>Proyectos <small>toca para filtrar · arrastra tareas aquí</small></h3>
         <ul id="prod-proyectos" class="proyectos"></ul>
       </div>
     </section>
