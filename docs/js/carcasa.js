@@ -1,19 +1,24 @@
 // La carcasa del escritorio: el dock con un botón por apartado, el cambio de apartado,
 // el dock que se esconde solo y el reloj de la barra. No sabe nada de ningún apartado en particular:
-// todo lo lee de APARTADOS (apartados.js).
+// todo lo lee de APARTADOS (apartados.js). El lienzo movible está en escritorio.js.
 import { $, el } from "./base.js";
 import { APARTADOS } from "./apartados.js";
+import { iniciarEscritorio, enEscritorio, mirar } from "./escritorio.js";
 
 let actual = APARTADOS[0];
 export const apartadoActual = () => actual.id;
 
 // Muestra un apartado y esconde los demás. Queda en la dirección (#mapa) para volver con atrás o recargar.
+// Si está en el escritorio, se ven todos los del escritorio y la cámara va hasta él.
 export function ir(id) {
   actual = APARTADOS.find((a) => a.id === id) ?? APARTADOS[0];
-  for (const a of APARTADOS) $(a.id).classList.toggle("oculto", a !== actual);
+  const juntos = enEscritorio(actual);
+  for (const a of APARTADOS) $(a.id).classList.toggle("oculto", a !== actual && !(juntos && enEscritorio(a)));
+  $("escritorio").classList.toggle("oculto", !actual.lugar);
   for (const b of $("dock").children) b.setAttribute("aria-current", b.dataset.id === actual.id ? "page" : "false");
   $("app-actual").textContent = actual.nombre;
   if (location.hash.slice(1) !== actual.id) history.replaceState(null, "", "#" + actual.id);
+  if (juntos) mirar(actual.id);
   actual.alMostrar?.();
 }
 
@@ -56,6 +61,7 @@ export function iniciarCarcasa() {
   armarDock();
   dockEscondido();
   reloj();
+  iniciarEscritorio(ir, apartadoActual);
   addEventListener("hashchange", () => ir(location.hash.slice(1)));
   ir(location.hash.slice(1));
 }
