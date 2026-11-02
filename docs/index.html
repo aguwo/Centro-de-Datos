@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <!-- ?v= cambia cuando cambian los estilos: así el navegador no usa los de antes que tenía guardados -->
-  <link rel="stylesheet" href="estilos.css?v=31">
+  <link rel="stylesheet" href="estilos.css?v=32">
 </head>
 <body>
   <div class="fondo" aria-hidden="true"></div>
@@ -63,6 +63,23 @@
       <div class="ventana vidrio hoy-dia">
         <h3>Tu día</h3>
         <div id="hoy-agenda" class="agenda"></div>
+      </div>
+    </section>
+
+    <!-- Paso 32: Productividad (productividad.js). Las tareas a la izquierda; los proyectos, que las filtran, a la derecha. -->
+    <section id="productividad" class="apartado oculto">
+      <h2 class="sobre-foto">Productividad</h2>
+      <div class="ventana vidrio prod-tareas">
+        <h3>Tareas <small id="prod-filtro"></small></h3>
+        <form id="prod-agregar" class="agregar" autocomplete="off">
+          <input name="titulo" aria-label="Nueva tarea" placeholder="Agregar tarea…">
+          <button class="principal">Agregar</button>
+        </form>
+        <div id="prod-tareas"></div>
+      </div>
+      <div class="ventana vidrio prod-proyectos">
+        <h3>Proyectos <small>elige uno para ver sus tareas</small></h3>
+        <ul id="prod-proyectos" class="proyectos"></ul>
       </div>
     </section>
 

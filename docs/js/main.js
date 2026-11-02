@@ -10,6 +10,8 @@
 //   calendario.js el cajón del calendario (día, semana, mes) y su editor de eventos
 //   postits.js   lo del Inbox como post-its pegados alrededor de las secciones del escritorio
 //   hoy.js       el apartado Hoy (usa agenda.js, clima.js y acciones.js)
+//   productividad.js tus proyectos y sus tareas
+//   tareas.js    la lista de tareas que comparten Hoy y Productividad
 //   inicio.js    el Resumen: dibuja las señales y las tarjetas (qué muestra cada una: tarjetas.js)
 import { db, $, avisar, recargar, escucharCambios, dejarDeEscuchar } from "./base.js";
 import { APARTADOS, CAJONES } from "./apartados.js";
