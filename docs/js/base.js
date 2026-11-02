@@ -42,7 +42,7 @@ export const hora = (fecha) => {
   return sinHora(d) ? "" : d.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
 };
 
-export const colorDe = (clave) => datos.tipo.get(clave)?.color ?? "#78716c";
+export const colorDe = (clave) => datos.tipo.get(clave)?.color ?? "#6b7a6f";
 
 // Lee todo de Supabase. No hace falta filtrar por dueño: RLS ya lo hace.
 // Cuando termina avisa con el evento "datos", y cada vista (mapa, inicio, panel) se vuelve a dibujar.

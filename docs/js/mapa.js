@@ -84,7 +84,7 @@ function cajasVirtuales() {
       virtuales.set(id, { label: nombre, color: t.color, padre: caja });
     } else if (!caja && t?.nivel !== 0) {
       id = `_mod:${t?.modulo ?? "Otros"}`;
-      virtuales.set(id, { label: t?.modulo ?? "Otros", color: "#78716c", modulo: true });
+      virtuales.set(id, { label: t?.modulo ?? "Otros", color: "#6b7a6f", modulo: true });
     }
     if (id) padres.set(n.id, id);
   }

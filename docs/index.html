@@ -8,8 +8,12 @@
     La web de tu centro de datos. Este archivo tiene solo la estructura de la página;
     el estilo está en estilos.css y el comportamiento en js/ (empieza por js/main.js).
     Pasos: 9-11 mapa y panel · 13 filtros · 14 cajas dentro de cajas · 15 Inicio · 18 subcajas
-    · 19 la jerarquía (colores, cajas y módulos) se lee de la base · 25 Inicio por tarjetas y en tiempo real.
+    · 19 la jerarquía (colores, cajas y módulos) se lee de la base · 25 Inicio por tarjetas y en tiempo real
+    · 26 diseño limpio: fondo natural claro y paleta verde (todo en estilos.css).
   -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
@@ -17,13 +21,15 @@
     <h1>Centro de datos</h1>
     <p>Entra con tu correo. Te llega un enlace para iniciar sesión.</p>
     <form id="form-login">
+      <label for="correo">Correo</label>
       <input id="correo" type="email" placeholder="tu@correo.cl" required>
       <button class="principal">Enviar enlace</button>
     </form>
   </section>
 
   <header id="barra" class="oculto">
-    <h1>Centro de datos</h1>
+    <!-- La hoja es un dibujo SVG simple (no un emoji), toma el verde de la paleta con currentColor. -->
+    <h1><svg class="marca" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14"/><path d="M5 19l8-8"/></svg>Centro de datos</h1>
     <nav id="menu">
       <button data-vista="inicio" class="activo">Inicio</button>
       <button data-vista="mapa">Mapa</button>
@@ -36,7 +42,7 @@
     <section id="inicio">
       <div class="saludo">
         <h2 id="fecha-hoy"></h2>
-        <form id="form-captura"><input id="captura" placeholder="Captura rápida: escribe una tarea y presiona Enter…" autocomplete="off"></form>
+        <form id="form-captura"><input id="captura" aria-label="Captura rápida" placeholder="Captura rápida: escribe una tarea y presiona Enter…" autocomplete="off"></form>
       </div>
       <div id="senales"></div>
       <div class="tablero" id="tablero"></div>
