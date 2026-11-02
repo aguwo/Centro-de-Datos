@@ -2,16 +2,19 @@
 // Cada parte vive en su archivo:
 //   base.js      conexión a Supabase, atajos, los datos cargados y el tiempo real
 //   carcasa.js   la barra, el dock y el cambio de apartado (no sabe de ningún apartado en particular)
+//   escritorio.js el lienzo movible: junta los apartados que tienen "lugar"
 //   apartados.js la lista de apartados: agregar uno = agregarlo ahí
 //   mapa.js      el mapa de cajas, la leyenda y los filtros
 //   panel.js     el panel de un nodo y el formulario para crear o editar
+//   nuevo.js     el botón "+ Nuevo": qué se crea según el apartado donde estás
 //   hoy.js       el apartado Hoy (usa agenda.js, clima.js y acciones.js)
 //   inicio.js    el Resumen: dibuja las señales y las tarjetas (qué muestra cada una: tarjetas.js)
 import { db, $, avisar, recargar, escucharCambios, dejarDeEscuchar } from "./base.js";
 import { APARTADOS } from "./apartados.js";
 import { iniciarCarcasa, apartadoActual } from "./carcasa.js";
 import { enfocar } from "./mapa.js";
-import { mostrarPanel, formulario, refrescarPanel } from "./panel.js";
+import { mostrarPanel, refrescarPanel } from "./panel.js";
+import { iniciarNuevo } from "./nuevo.js";
 
 iniciarCarcasa();
 
@@ -23,7 +26,7 @@ document.addEventListener("datos", ({ detail }) => {
   else refrescarPanel();
 });
 
-$("nuevo").onclick = () => formulario();
+iniciarNuevo();
 
 // Sesión: un enlace al correo (Supabase Auth). Sin sesión se ve solo el formulario de entrada.
 const SOLO_CON_SESION = ["barra", "app", "dock", "asa"];

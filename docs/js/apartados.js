@@ -7,13 +7,19 @@
 //   icono     los trazos del ícono (SVG de 24 × 24, una sola línea)
 //   dibujar   se llama cada vez que llegan datos nuevos
 //   alMostrar (opcional) se llama al entrar al apartado
+//   nuevo     (opcional) qué tipos se crean desde aquí con "+ Nuevo" (claves, ej. ["tarea", "evento"]). Sin lista: todos
+//   lugar     (opcional) [columna, fila] en el escritorio movible (escritorio.js). Los que tienen lugar se ven
+//             juntos en el lienzo; los demás, a pantalla completa. El plan del escritorio:
+//                            [1,0] Esta semana
+//             [0,1] Productividad   [1,1] Hoy   [2,1] Salud
+//                            [1,2] Finanzas
 import { dibujarHoy } from "./hoy.js";
 import { dibujarInicio } from "./inicio.js";
 import { dibujar as dibujarMapa, ajustarMapa } from "./mapa.js";
 
 export const APARTADOS = [
   {
-    id: "hoy", nombre: "Hoy", dibujar: dibujarHoy,
+    id: "hoy", nombre: "Hoy", dibujar: dibujarHoy, lugar: [1, 1], nuevo: ["tarea", "evento"],
     icono: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   },
   // Las tarjetas de antes (hábitos, gastos, plantas...). Se quedan hasta que cada una tenga su apartado (paso 32).

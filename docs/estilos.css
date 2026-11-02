@@ -21,12 +21,13 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body { margin: 0; font: 14px/1.5 var(--sans); color: var(--texto); background: var(--cielo); overflow: hidden; }
-.oculto { display: none !important; }
+.oculto, [hidden] { display: none !important; }
 ::selection { background: color-mix(in srgb, var(--acento) 35%, transparent); }
 :focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
 
 /* Fondo y vidrio */
-.fondo { position: fixed; inset: 0; z-index: -1; background: var(--cielo) var(--foto) center / cover no-repeat; }
+.fondo { position: fixed; inset: -24px; z-index: -1; background: var(--cielo) var(--foto) center / cover no-repeat;
+         transform: translate(var(--px, 0), var(--py, 0)); transition: transform .6s cubic-bezier(.2,.7,.2,1); } /* --px/--py: parallax del escritorio */
 .fondo::after { content: ""; position: absolute; inset: 0; background: #000; opacity: var(--oscurecer); }
 /* Textos que van directo sobre la foto: blancos con una sombra suave para leerse sobre cualquier parte */
 .sobre-foto, #inicio .saludo h2, .columna > h2 { color: #fff; text-shadow: 0 1px 12px rgba(0,0,0,.45); }
@@ -58,6 +59,24 @@ input, select, textarea { font: inherit; color: inherit; }
 /* El contenido: entre la barra y el borde de abajo (el dock flota encima solo cuando lo llamas) */
 main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 .apartado { position: absolute; inset: 0; }
+
+/* Escritorio movible (escritorio.js). Sin la clase con-escritorio (pantalla angosta) no existe:
+   sus apartados se ven a pantalla completa como cualquier otro. */
+.escritorio, #mundo { display: contents; }
+.minimapa { display: none; }
+.con-escritorio .escritorio { display: block; position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none; }
+.con-escritorio .escritorio.arrastrando { cursor: grabbing; }
+.con-escritorio .escritorio.arrastrando * { user-select: none; }
+.con-escritorio #mundo { display: block; position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.con-escritorio #mundo.animar { transition: transform .45s cubic-bezier(.2,.7,.2,1); }
+.con-escritorio #mundo > .apartado { inset: auto; left: var(--x); top: var(--y); width: var(--ancho); height: var(--alto); overflow: hidden; cursor: auto; }
+.con-escritorio #mundo > .apartado .sobre-foto { cursor: grab; user-select: none; }
+/* Minimapa: abajo a la derecha. Cada sección es un botón; el marco es lo que estás viendo. */
+.con-escritorio .minimapa { display: block; position: absolute; right: 16px; bottom: 24px; z-index: 5; width: 132px; height: 84px; border-radius: 12px; overflow: hidden; }
+.minimapa button { position: absolute; padding: 0; border: 0; border-radius: 3px; background: color-mix(in srgb, var(--texto) 25%, transparent); }
+.minimapa button:hover { background: color-mix(in srgb, var(--acento) 60%, transparent); }
+.minimapa .vista { position: absolute; border: 1.5px solid var(--acento); border-radius: 3px; pointer-events: none; background: color-mix(in srgb, var(--acento) 10%, transparent); }
+@media (prefers-reduced-motion: reduce) { .fondo, .con-escritorio #mundo.animar { transition: none; } }
 
 /* Dock: escondido abajo; aparece al acercarse (carcasa.js) */
 .dock { position: fixed; bottom: 12px; left: 50%; z-index: 10; display: flex; gap: 4px; padding: 8px; border-radius: 20px;
@@ -149,6 +168,13 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 .estrella { border: 0; padding: 0 2px; font-size: 16px; line-height: 1; color: var(--suave); }
 .estrella.puesta { color: var(--aviso); }
 .acciones-fila { display: flex; gap: 4px; }
+/* Con mouse, Hoy / Mañana / Soltar aparecen al pasar por la fila (encima de la fecha) para no llenar la lista de botones */
+@media (hover: hover) {
+  .tareas li { position: relative; }
+  .tareas .acciones-fila { position: absolute; right: 0; padding-left: 12px; visibility: hidden;
+                           background: linear-gradient(to right, transparent, var(--vidrio-fuerte) 12px); }
+  .tareas li:hover .acciones-fila, .tareas li:focus-within .acciones-fila { visibility: visible; }
+}
 .acciones-fila button { padding: 2px 8px; font-size: 12px; }
 /* Casilla redonda para marcar algo como hecho */
 .caja { appearance: none; flex: none; width: 18px; height: 18px; margin: 0; border-radius: 50%; border: 1.5px solid var(--suave); cursor: pointer; display: grid; place-items: center; }
@@ -218,6 +244,19 @@ form.nodo input, form.nodo select, form.nodo textarea { width: 100%; padding: 8p
 form.nodo textarea { min-height: 90px; resize: vertical; }
 form.nodo select option { background: var(--fondo); }
 form.nodo input.check { width: auto; }
+/* Qué crear: un botón por tipo, con su color */
+.tipos { display: flex; flex-wrap: wrap; gap: 6px; }
+.tipos button { display: flex; align-items: center; gap: 6px; border-color: var(--linea); }
+.tipos button::before, .menu button::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c, transparent); }
+.tipos button[aria-pressed="true"] { border-color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); font-weight: 600; }
+form.nodo details { margin-top: 14px; }
+form.nodo summary { cursor: pointer; font-size: 12.5px; color: var(--suave); }
+form.nodo .conexion select + select { margin-top: 6px; }
+/* Menú de "+ Nuevo" en el escritorio */
+.menu { position: fixed; top: 46px; right: var(--derecha, 12px); z-index: 12; min-width: 180px; padding: 6px; border-radius: 14px; display: grid; background: var(--vidrio-fuerte); }
+.menu button { border: 0; border-radius: 8px; padding: 7px 10px; text-align: left; display: flex; align-items: center; gap: 8px; }
+.menu button:hover, .menu button:focus-visible { background: var(--linea); }
+.menu hr { width: 100%; border: 0; border-top: 1px solid var(--linea); margin: 4px 0; }
 .acciones { display: flex; gap: 8px; margin: 16px 0; }
 
 /* Teléfono: el panel ocupa el ancho y el mapa no se corre */
