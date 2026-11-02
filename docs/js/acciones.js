@@ -6,16 +6,20 @@ import { conHoraISO } from "./fechas.js";
 const nodos = () => db.from("nodos");
 
 // Crea un nodo del tipo dado ("evento", "tarea"...) y, si viene, su primera conexión { relacion, destino_id }.
-// Al terminar recarga y deja el nodo nuevo enfocado. Devuelve su id (o nada si falló).
-export async function crear(clave, campos, conexion) {
+// Al terminar recarga y abre el nodo nuevo en el panel (enfocar: false para no abrirlo, como un post-it).
+// Devuelve su id (o nada si falló).
+export async function crear(clave, campos, { conexion, enfocar = true } = {}) {
   const { data, error } = await nodos().insert({ ...campos, tipo_id: datos.tipo.get(clave).id }).select("id").single();
   if (error) return avisar(error.message);
-  if (conexion?.destino_id) {
-    const r = await db.from("conexiones").insert({ origen_id: data.id, ...conexion });
-    if (r.error) avisar("Se creó, pero la conexión falló: " + r.error.message);
-  }
-  await recargar(data.id);
+  await conectar(data.id, conexion);
+  await recargar(enfocar ? data.id : undefined);
   return data.id;
+}
+// Conecta un nodo con otro: conexion = { relacion, destino_id }. Sin destino no hace nada.
+export async function conectar(origen_id, conexion) {
+  if (!conexion?.destino_id) return;
+  const { error } = await db.from("conexiones").insert({ origen_id, ...conexion });
+  if (error) avisar("La conexión falló: " + error.message);
 }
 export const cambiar = (n, cambios) => escribir(nodos().update(cambios).eq("id", n.id));
 

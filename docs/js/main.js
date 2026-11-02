@@ -8,6 +8,7 @@
 //   panel.js     el panel de un nodo y el formulario para crear o editar
 //   nuevo.js     el botón "+ Nuevo": qué se crea según el apartado donde estás
 //   calendario.js el cajón del calendario (día, semana, mes) y su editor de eventos
+//   postits.js   lo del Inbox como post-its pegados alrededor de las secciones del escritorio
 //   hoy.js       el apartado Hoy (usa agenda.js, clima.js y acciones.js)
 //   inicio.js    el Resumen: dibuja las señales y las tarjetas (qué muestra cada una: tarjetas.js)
 import { db, $, avisar, recargar, escucharCambios, dejarDeEscuchar } from "./base.js";
@@ -16,6 +17,7 @@ import { iniciarCarcasa, apartadoActual } from "./carcasa.js";
 import { enfocar } from "./mapa.js";
 import { mostrarPanel, refrescarPanel } from "./panel.js";
 import { iniciarNuevo } from "./nuevo.js";
+import { dibujarPostits, iniciarPostits } from "./postits.js";
 
 iniciarCarcasa();
 
@@ -23,11 +25,13 @@ iniciarCarcasa();
 // es instantáneo y lo que cambió en otro lado aparece solo).
 document.addEventListener("datos", ({ detail }) => {
   for (const x of [...APARTADOS, ...CAJONES]) x.dibujar();
+  dibujarPostits();
   if (detail.enfocarId) (apartadoActual() === "mapa" ? enfocar : mostrarPanel)(detail.enfocarId);
   else refrescarPanel();
 });
 
 iniciarNuevo();
+iniciarPostits();
 
 // Sesión: un enlace al correo (Supabase Auth). Sin sesión se ve solo el formulario de entrada.
 const SOLO_CON_SESION = ["barra", "app", "dock", "asa"];

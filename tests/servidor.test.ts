@@ -222,7 +222,7 @@ test("revisarProps acepta lo del tipo y explica lo que no calza", () => {
       { clave: "minutos", nombre: "Minutos", tipo: "numero" },
     ],
   };
-  assert.deepEqual(revisarProps(tipo, { repeticion: "Semanal", minutos: 30, notion_id: "x", vieja: null }), []);
+  assert.deepEqual(revisarProps(tipo, { repeticion: "Semanal", minutos: 30, notion_id: "x", postit: { x: 1, y: 2 }, vieja: null }), []);
   const mal = revisarProps(tipo, { Prioridad: "Alta", repeticion: "A veces", minutos: "30", estado: "Hecho" });
   assert.equal(mal.length, 5); // 4 problemas + la lista de propiedades correctas
   assert.match(mal[0], /'Prioridad' no es una propiedad/);
