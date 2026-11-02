@@ -2,6 +2,7 @@
 // Lee de los datos cargados (no del mapa), así funciona igual desde el Inicio.
 import { db, $, el, avisar, datos, colorDe, recargar, pedirRecarga, dia, hora } from "./base.js";
 import { enfocar, desenfocar, ajustarMapa } from "./mapa.js";
+import { crear } from "./acciones.js";
 
 const ESTADOS = ["Inbox", "Por hacer", "En curso", "Esperando", "Hecho"]; // los mismos del paso 3
 
@@ -9,7 +10,9 @@ const ESTADOS = ["Inbox", "Por hacer", "En curso", "Esperando", "Hecho"]; // los
 // Cada tipo dice qué propiedades tiene. "estado" y "fecha" viven en su columna del nodo; el resto, en props.
 const EN_COLUMNA = ["estado", "fecha"];
 const OCULTAS = ["notion_id"]; // las pone el sistema; no se muestran
-const propiedadesDe = (clave) => datos.tipo.get(clave)?.propiedades ?? [];
+// Las del tipo, menos las marcadas "oculta" (las maneja otra parte, como "excepto" el calendario).
+const todasDe = (clave) => datos.tipo.get(clave)?.propiedades ?? [];
+const propiedadesDe = (clave) => todasDe(clave).filter((p) => !p.oculta);
 const valorDe = (n, p) => (EN_COLUMNA.includes(p.clave) ? n[p.clave] : n.props?.[p.clave]);
 
 // Cómo se lee un valor: fechas como 22-10-2026 (con hora si tiene), Sí/No, números y textos tal cual.
@@ -87,7 +90,7 @@ export function mostrarPanel(id) {
   const propiedades = propiedadesDe(n.tipos.clave);
   for (const p of propiedades) fila(p.nombre, legible(p, valorDe(n, p)));
   // Lo que el nodo tenga y su tipo no declare (por ejemplo, de antes de cambiarlo de tipo) igual se muestra.
-  const declaradas = new Set([...propiedades.map((p) => p.clave), ...OCULTAS]);
+  const declaradas = new Set([...todasDe(n.tipos.clave).map((p) => p.clave), ...OCULTAS]);
   for (const [k, v] of Object.entries(n.props ?? {})) if (!declaradas.has(k)) fila(k, legible({}, v));
 
   const conexiones = datos.conexiones.filter((c) => c.origen_id === id || c.destino_id === id);
@@ -216,20 +219,10 @@ export function formulario(n, { tipos, tipo: elegido } = {}) {
       else props[p.clave] = v;
     }
     cambios.props = props;
-    let id = n?.id;
-    if (editando) {
-      const { error } = await db.from("nodos").update(cambios).eq("id", id);
-      if (error) return avisar(error.message);
-    } else {
-      const { data, error } = await db.from("nodos").insert({ ...cambios, tipo_id: tipoElegido().id }).select("id").single();
-      if (error) return avisar(error.message);
-      id = data.id;
-      if (relacion.value && destino.value) {
-        const r = await db.from("conexiones").insert({ origen_id: id, relacion: relacion.value, destino_id: destino.value });
-        if (r.error) avisar("Se creó, pero la conexión falló: " + r.error.message);
-      }
-    }
-    await recargar(id);
+    if (!editando) return crear(tipo, cambios, relacion.value && { relacion: relacion.value, destino_id: destino.value });
+    const { error } = await db.from("nodos").update(cambios).eq("id", n.id);
+    if (error) return avisar(error.message);
+    await recargar(n.id);
   };
 
   abrir(form);

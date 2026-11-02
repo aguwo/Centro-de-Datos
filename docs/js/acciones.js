@@ -1,9 +1,22 @@
 // Lo que la web le cambia a tus datos. Todas escriben en la base y el tiempo real redibuja todo solo.
 // Así cada vista solo dice QUÉ hacer (completar, posponer...) y nunca cómo se escribe.
-import { db, escribir } from "./base.js";
+import { db, escribir, datos, avisar, recargar } from "./base.js";
 import { conHoraISO } from "./fechas.js";
 
 const nodos = () => db.from("nodos");
+
+// Crea un nodo del tipo dado ("evento", "tarea"...) y, si viene, su primera conexión { relacion, destino_id }.
+// Al terminar recarga y deja el nodo nuevo enfocado. Devuelve su id (o nada si falló).
+export async function crear(clave, campos, conexion) {
+  const { data, error } = await nodos().insert({ ...campos, tipo_id: datos.tipo.get(clave).id }).select("id").single();
+  if (error) return avisar(error.message);
+  if (conexion?.destino_id) {
+    const r = await db.from("conexiones").insert({ origen_id: data.id, ...conexion });
+    if (r.error) avisar("Se creó, pero la conexión falló: " + r.error.message);
+  }
+  await recargar(data.id);
+  return data.id;
+}
 export const cambiar = (n, cambios) => escribir(nodos().update(cambios).eq("id", n.id));
 
 // Cambia solo algunas propiedades (props) y deja las demás. Un valor null borra esa propiedad.

@@ -9,6 +9,7 @@
     el estilo está en estilos.css y el comportamiento en js/ (empieza por js/main.js).
     Paso 26: la carcasa del escritorio. Barra arriba, dock escondido abajo y un apartado por sección.
     Paso 27: Hoy (qué hacer a la izquierda; el tiempo y tu día a la derecha).
+    Paso 30: el calendario, un cajón que sale desde el dock (calendario.js).
     Paso 29: "+ Nuevo" crea según el apartado; el formulario sale de las propiedades de cada tipo (nuevo.js).
     Paso 28: el escritorio movible. Los apartados con "lugar" se mudan solos a #mundo (escritorio.js).
     Los apartados se anotan en js/apartados.js; cada uno tiene aquí su <section> con el mismo id.
@@ -76,6 +77,46 @@
 
     <aside id="panel" class="vidrio oculto"></aside>
   </main>
+
+  <!-- Calendario: un cajón que sale desde la derecha (lo abre su botón al final del dock) -->
+  <aside id="calendario" class="cajon vidrio" aria-label="Calendario">
+    <div class="cal-lado">
+      <button id="cal-crear" class="principal">+ Crear</button>
+      <div id="cal-mini" class="mini-mes"></div>
+      <h3>Mis calendarios</h3>
+      <ul id="cal-calendarios" class="calendarios"></ul>
+    </div>
+    <div class="cal-principal">
+      <div class="cal-barra">
+        <button id="cal-hoy">Hoy</button>
+        <button id="cal-ant" class="redondo" aria-label="Anterior">‹</button>
+        <button id="cal-sig" class="redondo" aria-label="Siguiente">›</button>
+        <b id="cal-titulo"></b>
+        <div id="cal-vistas" class="segmento"><button data-vista="dia">Día</button><button data-vista="semana">Semana</button><button data-vista="mes">Mes</button></div>
+        <button class="redondo" data-cerrar aria-label="Cerrar el calendario">×</button>
+      </div>
+      <div id="cal-cuerpo" class="agenda"></div>
+    </div>
+  </aside>
+
+  <!-- Editor de un evento (como el de Google Calendar) -->
+  <dialog id="editor-evento" class="dialogo vidrio">
+    <form>
+      <input name="titulo" class="titulo-grande" placeholder="Añade un título" required autocomplete="off">
+      <div class="fila"><input name="fecha" type="date" required><label><input name="todo" type="checkbox"> Todo el día</label></div>
+      <div class="fila horas"><input name="ini" type="time" step="900"><span>a</span><input name="fin" type="time" step="900"></div>
+      <div class="fila"><select name="repite"></select><label class="hasta">hasta <input name="hasta" type="date"></label></div>
+      <p class="aviso-repite">Se repite: los cambios valen para todas las veces.</p>
+      <label class="fila">Calendario <select name="calendario"></select></label>
+      <textarea name="notas" rows="2" placeholder="Añade una descripción"></textarea>
+      <div class="pie">
+        <button type="button" class="eliminar peligro">Eliminar</button>
+        <span class="eliminar-cual">Eliminar <button type="button" class="solo-este peligro">solo este</button><button type="button" class="todos peligro">todos</button></span>
+        <button type="button" class="cancelar">Cancelar</button>
+        <button class="principal">Guardar</button>
+      </div>
+    </form>
+  </dialog>
 
   <nav id="dock" class="dock vidrio oculto" aria-label="Apartados"></nav>
   <button id="asa" class="asa oculto" aria-label="Mostrar los apartados"></button>

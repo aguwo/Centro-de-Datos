@@ -2,7 +2,7 @@
 // el dock que se esconde solo y el reloj de la barra. No sabe nada de ningún apartado en particular:
 // todo lo lee de APARTADOS (apartados.js). El lienzo movible está en escritorio.js.
 import { $, el } from "./base.js";
-import { APARTADOS } from "./apartados.js";
+import { APARTADOS, CAJONES } from "./apartados.js";
 import { iniciarEscritorio, enEscritorio, mirar } from "./escritorio.js";
 
 let actual = APARTADOS[0];
@@ -15,7 +15,7 @@ export function ir(id) {
   const juntos = enEscritorio(actual);
   for (const a of APARTADOS) $(a.id).classList.toggle("oculto", a !== actual && !(juntos && enEscritorio(a)));
   $("escritorio").classList.toggle("oculto", !actual.lugar);
-  for (const b of $("dock").children) b.setAttribute("aria-current", b.dataset.id === actual.id ? "page" : "false");
+  for (const b of $("dock").querySelectorAll("[data-apartado]")) b.setAttribute("aria-current", b.dataset.apartado === actual.id ? "page" : "false");
   $("app-actual").textContent = actual.nombre;
   // La dirección no se toca si trae la respuesta del inicio de sesión (#access_token=...): la lee Supabase.
   if (location.hash.slice(1) !== actual.id && !location.hash.includes("=")) history.replaceState(null, "", "#" + actual.id);
@@ -23,15 +23,37 @@ export function ir(id) {
   actual.alMostrar?.();
 }
 
-// El dock: un botón por apartado, con su ícono y su nombre (que aparece al pasar el mouse).
+// El dock: un botón por apartado, con su ícono y su nombre (que aparece al pasar el mouse),
+// y al final, separados, los cajones.
 function armarDock() {
-  $("dock").replaceChildren(...APARTADOS.map((a) => {
-    const b = el("button", { title: a.nombre, onclick: () => ir(a.id) }, el("span", { className: "etiqueta", textContent: a.nombre }));
-    b.dataset.id = a.id;
-    b.insertAdjacentHTML("afterbegin", `<svg class="icono" viewBox="0 0 24 24" aria-hidden="true">${a.icono}</svg>`);
-    b.setAttribute("aria-label", a.nombre);
+  const boton = (x, clase, accion) => {
+    const b = el("button", { title: x.nombre, onclick: accion }, el("span", { className: "etiqueta", textContent: x.nombre }));
+    b.dataset[clase] = x.id;
+    b.insertAdjacentHTML("afterbegin", `<svg class="icono" viewBox="0 0 24 24" aria-hidden="true">${x.icono}</svg>`);
+    b.setAttribute("aria-label", x.nombre);
     return b;
-  }));
+  };
+  $("dock").replaceChildren(...APARTADOS.map((a) => boton(a, "apartado", () => ir(a.id))),
+    ...(CAJONES.length ? [el("i", { className: "separador" })] : []),
+    ...CAJONES.map((c) => boton(c, "cajon", () => cajon(c.id))));
+}
+
+// Abre o cierra un cajón (si = true / false; sin decir, lo alterna). Se ve uno a la vez.
+export function cajon(id, si) {
+  for (const c of CAJONES) {
+    const abrir = c.id === id && (si ?? !$(c.id).classList.contains("abierto"));
+    $(c.id).classList.toggle("abierto", abrir);
+    $("dock").querySelector(`[data-cajon="${c.id}"]`).setAttribute("aria-expanded", abrir);
+    if (abrir) c.dibujar?.();
+  }
+}
+function cajones() {
+  for (const c of CAJONES) {
+    c.iniciar?.();
+    for (const b of $(c.id).querySelectorAll("[data-cerrar]")) b.onclick = () => cajon(c.id, false);
+  }
+  // Escape cierra el cajón abierto (si no hay un diálogo encima, que se cierra primero).
+  addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.querySelector("dialog[open]")) cajon(null, false); });
 }
 
 // El dock vive escondido para dejarle la pantalla al contenido. Aparece al llevar el mouse
@@ -60,6 +82,7 @@ function reloj() {
 
 export function iniciarCarcasa() {
   armarDock();
+  cajones();
   dockEscondido();
   reloj();
   iniciarEscritorio(ir, apartadoActual);

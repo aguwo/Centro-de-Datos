@@ -16,6 +16,7 @@
 import { dibujarHoy } from "./hoy.js";
 import { dibujarInicio } from "./inicio.js";
 import { dibujar as dibujarMapa, ajustarMapa } from "./mapa.js";
+import { dibujarCalendario, iniciarCalendario } from "./calendario.js";
 
 export const APARTADOS = [
   {
@@ -30,5 +31,16 @@ export const APARTADOS = [
   {
     id: "mapa", nombre: "Mapa", dibujar: dibujarMapa, alMostrar: () => ajustarMapa(true),
     icono: '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.3 7l7.3.8M7 8.3l2.2 7.3M16.3 10l-4.6 6"/>',
+  },
+];
+
+// Los cajones: paneles que salen desde la derecha sin dejar el apartado donde estás (el calendario,
+// más adelante el chat). Van al final del dock, separados. Cada uno es un <aside id="..." class="cajon">.
+//   iniciar   se llama una vez, al empezar
+//   dibujar   se llama al abrirlo y cada vez que llegan datos nuevos (si está cerrado, no hace nada)
+export const CAJONES = [
+  {
+    id: "calendario", nombre: "Calendario", iniciar: iniciarCalendario, dibujar: dibujarCalendario,
+    icono: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
   },
 ];
