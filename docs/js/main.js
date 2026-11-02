@@ -4,18 +4,18 @@
 //   carcasa.js   la barra, el dock y el cambio de apartado (no sabe de ningún apartado en particular)
 //   escritorio.js el lienzo movible: junta los apartados que tienen "lugar"
 //   apartados.js la lista de apartados: agregar uno = agregarlo ahí
+//   widgets.js   las ventanas sueltas con que se arman los apartados (Hoy, Productividad...)
 //   mapa.js      el mapa de cajas, la leyenda y los filtros
 //   panel.js     el panel de un nodo y el formulario para crear o editar
 //   nuevo.js     el botón "+ Nuevo": qué se crea según el apartado donde estás
 //   calendario.js el cajón del calendario (día, semana, mes) y su editor de eventos
 //   postits.js   lo del Inbox como post-its pegados alrededor de las secciones del escritorio
-//   hoy.js       el apartado Hoy (usa agenda.js, clima.js y acciones.js)
-//   productividad.js tus proyectos y sus tareas
+//   hoy.js       los widgets de Hoy (usan agenda.js, clima.js y acciones.js)
+//   productividad.js los widgets de Productividad: tus proyectos y sus tareas
 //   tareas.js    la lista de tareas que comparten Hoy y Productividad
 //   inicio.js    el Resumen: dibuja las señales y las tarjetas (qué muestra cada una: tarjetas.js)
 import { db, $, avisar, recargar, escucharCambios, dejarDeEscuchar } from "./base.js";
-import { APARTADOS, CAJONES } from "./apartados.js";
-import { iniciarCarcasa, apartadoActual } from "./carcasa.js";
+import { iniciarCarcasa, apartadoActual, dibujarTodo } from "./carcasa.js";
 import { enfocar } from "./mapa.js";
 import { mostrarPanel, refrescarPanel } from "./panel.js";
 import { iniciarNuevo } from "./nuevo.js";
@@ -26,7 +26,7 @@ iniciarCarcasa();
 // Cada vez que se cargan los datos se dibujan todos los apartados (así cambiar de uno a otro
 // es instantáneo y lo que cambió en otro lado aparece solo).
 document.addEventListener("datos", ({ detail }) => {
-  for (const x of [...APARTADOS, ...CAJONES]) x.dibujar();
+  dibujarTodo();
   dibujarPostits();
   if (detail.enfocarId) (apartadoActual() === "mapa" ? enfocar : mostrarPanel)(detail.enfocarId);
   else refrescarPanel();

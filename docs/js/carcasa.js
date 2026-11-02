@@ -4,6 +4,7 @@
 import { $, el } from "./base.js";
 import { APARTADOS, CAJONES } from "./apartados.js";
 import { iniciarEscritorio, enEscritorio, mirar } from "./escritorio.js";
+import { montar } from "./widgets.js";
 
 let actual = APARTADOS[0];
 export const apartadoActual = () => actual.id;
@@ -21,6 +22,21 @@ export function ir(id) {
   if (location.hash.slice(1) !== actual.id && !location.hash.includes("=")) history.replaceState(null, "", "#" + actual.id);
   if (juntos) mirar(actual.id);
   actual.alMostrar?.();
+}
+
+// Los apartados con widgets se arman aquí (widgets.js) y se ponen en la página.
+const redibujar = new Map(); // id del apartado -> cómo se redibuja
+function montarApartados() {
+  for (const a of APARTADOS.filter((a) => a.columnas)) {
+    const { seccion, dibujar } = montar(a);
+    $("panel").before(seccion);
+    redibujar.set(a.id, dibujar);
+  }
+}
+// Cuando llegan datos se dibuja todo (así cambiar de apartado es instantáneo); los cajones cerrados no hacen nada.
+export function dibujarTodo() {
+  for (const a of APARTADOS) (redibujar.get(a.id) ?? a.dibujar)();
+  for (const c of CAJONES) c.dibujar();
 }
 
 // El dock: un botón por apartado, con su ícono y su nombre (que aparece al pasar el mouse),
@@ -81,6 +97,7 @@ function reloj() {
 }
 
 export function iniciarCarcasa() {
+  montarApartados();
   armarDock();
   for (const a of APARTADOS) a.iniciar?.();
   cajones();

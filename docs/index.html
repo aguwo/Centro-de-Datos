@@ -13,12 +13,13 @@
     Paso 30: el calendario, un cajón que sale desde el dock (calendario.js).
     Paso 29: "+ Nuevo" crea según el apartado; el formulario sale de las propiedades de cada tipo (nuevo.js).
     Paso 28: el escritorio movible. Los apartados con "lugar" se mudan solos a #mundo (escritorio.js).
-    Los apartados se anotan en js/apartados.js; cada uno tiene aquí su <section> con el mismo id.
+    Los apartados se anotan en js/apartados.js. Los que tienen widgets se arman solos (paso 34a);
+    los demás tienen aquí su <section> con el mismo id.
   -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <!-- ?v= cambia cuando cambian los estilos: así el navegador no usa los de antes que tenía guardados -->
-  <link rel="stylesheet" href="estilos.css?v=34">
+  <link rel="stylesheet" href="estilos.css?v=35">
 </head>
 <body>
   <div class="fondo" aria-hidden="true"></div>
@@ -50,39 +51,7 @@
       <nav id="minimapa" class="minimapa vidrio" aria-label="Minimapa del escritorio"></nav>
     </div>
 
-    <section id="hoy" class="apartado">
-      <h2 id="hoy-fecha" class="sobre-foto"></h2>
-      <div class="ventana vidrio hoy-tareas">
-        <h3>Tareas de hoy <small id="hoy-cuenta"></small></h3>
-        <div id="hoy-tareas"></div>
-      </div>
-      <div class="ventana vidrio hoy-clima">
-        <h3>El tiempo</h3>
-        <div id="hoy-clima"></div>
-      </div>
-      <div class="ventana vidrio hoy-dia">
-        <h3>Tu día</h3>
-        <div id="hoy-agenda" class="agenda"></div>
-      </div>
-    </section>
-
-    <!-- Paso 32: Productividad (productividad.js). Las tareas a la izquierda; los proyectos, que las filtran, a la derecha. -->
-    <section id="productividad" class="apartado oculto">
-      <h2 class="sobre-foto">Productividad</h2>
-      <div class="ventana vidrio prod-tareas">
-        <h3>Tareas <small id="prod-filtro"></small></h3>
-        <form id="prod-agregar" class="agregar" autocomplete="off">
-          <input name="titulo" aria-label="Nueva tarea" placeholder="Agregar tarea…">
-          <button class="principal">Agregar</button>
-        </form>
-        <small id="prod-cuando" class="cuando" aria-live="polite"></small>
-        <div id="prod-tareas"></div>
-      </div>
-      <div class="ventana vidrio prod-proyectos">
-        <div id="prod-areas" class="pildoras" role="group" aria-label="Áreas"></div>
-        <ul id="prod-proyectos" class="proyectos"></ul>
-      </div>
-    </section>
+    <!-- Hoy y Productividad no están aquí: se arman solos con sus widgets (js/apartados.js y js/widgets.js). -->
 
     <section id="inicio" class="apartado oculto">
       <div class="saludo">

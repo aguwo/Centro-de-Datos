@@ -1,11 +1,16 @@
 // Los apartados de la web: cada uno es una sección del escritorio con su botón en el dock.
-// Para agregar uno: escribir su <section id="..." class="apartado"> en index.html y sumarlo a esta lista.
+// Hay dos formas de armar uno:
+//   con widgets  se anota aquí con sus "columnas" y listo: la sección se arma sola (widgets.js).
+//   a mano       se escribe su <section id="..." class="apartado"> en index.html y se le da "dibujar".
 // La carcasa (carcasa.js) arma el dock y cambia de apartado sola; no hay que tocarla.
 //
 //   id        el id de su <section> (y lo que aparece en la dirección: ...#mapa)
 //   nombre    lo que dice la barra de arriba y la etiqueta del dock
 //   icono     los trazos del ícono (SVG de 24 × 24, una sola línea)
-//   dibujar   se llama cada vez que llegan datos nuevos
+//   columnas  (con widgets) [{ ancho, widgets: [...] }, ...]: las columnas de izquierda a derecha, cada una con
+//             los widgets de arriba abajo. ancho es la proporción (3 y 2 = la primera un poco más ancha)
+//   titulo    (con widgets, opcional) qué dice arriba de la sección; sin esto, su nombre
+//   dibujar   (a mano) se llama cada vez que llegan datos nuevos
 //   alMostrar (opcional) se llama al entrar al apartado
 //   iniciar   (opcional) se llama una vez, al empezar (para conectar sus botones y formularios)
 //   nuevo     (opcional) qué tipos se crean desde aquí con "+ Nuevo" (claves, ej. ["tarea", "evento"]). Sin lista: todos
@@ -14,20 +19,20 @@
 //                            [1,0] Esta semana
 //             [0,1] Productividad   [1,1] Hoy   [2,1] Salud
 //                            [1,2] Finanzas
-import { dibujarHoy } from "./hoy.js";
-import { dibujarProductividad, iniciarProductividad } from "./productividad.js";
 import { dibujarInicio } from "./inicio.js";
 import { dibujar as dibujarMapa, ajustarMapa } from "./mapa.js";
 import { dibujarCalendario, iniciarCalendario } from "./calendario.js";
 
 export const APARTADOS = [
   {
-    id: "hoy", nombre: "Hoy", dibujar: dibujarHoy, lugar: [1, 1], nuevo: ["tarea", "evento"],
+    id: "hoy", nombre: "Hoy", lugar: [1, 1], nuevo: ["tarea", "evento"],
+    titulo: () => new Date().toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" }),
+    columnas: [{ ancho: 3, widgets: ["tareas-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }],
     icono: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   },
   {
-    id: "productividad", nombre: "Productividad", dibujar: dibujarProductividad, iniciar: iniciarProductividad,
-    lugar: [0, 1], nuevo: ["tarea", "proyecto"],
+    id: "productividad", nombre: "Productividad", lugar: [0, 1], nuevo: ["tarea", "proyecto"],
+    columnas: [{ widgets: ["tareas"] }, { widgets: ["proyectos"] }],
     icono: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8.5 12.2l2.6 2.6 4.6-5.4"/>',
   },
   // Las tarjetas de antes (hábitos, gastos, plantas...). Se quedan hasta que cada una tenga su apartado (paso 32).
