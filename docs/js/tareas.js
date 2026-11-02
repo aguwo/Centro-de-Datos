@@ -3,7 +3,7 @@
 //   ☆  hacerla una de tus 3 prioridades de hoy
 //   a las atrasadas: Hoy / Mañana / Soltar
 // Cada fila se puede arrastrar a una agenda ("Tu día") para reservarle una hora.
-import { el, avisar, datos, dia, hora, dentroDe } from "./base.js";
+import { el, avisar, datos, dia, hora, dentroDe, proyectoDe, colorDeProyecto } from "./base.js";
 import { hoyTexto, sumarDias, corto, sinHoraISO } from "./fechas.js";
 import { cambiar, cambiarProps, completar, reabrir, archivar } from "./acciones.js";
 import { mostrarPanel } from "./panel.js";
@@ -33,10 +33,13 @@ function fila(n, { prioridad, atrasada, conFecha, sinCaja, lleno }) {
     cambiarProps(n, { prioridad_dia: destacada ? null : hoy });
   };
   const meta = [!sinCaja && dentroDe(n.id), (atrasada || conFecha) && d && corto(d), hora(n.fecha)].filter(Boolean).join(" · ");
+  // Si está en un proyecto, un punto con el color del proyecto (el mismo de Productividad y el calendario).
+  const proyecto = !sinCaja && proyectoDe(n.id), punto = proyecto ? el("i", { className: "punto" }) : "";
+  if (punto) punto.style.setProperty("--c", colorDeProyecto(proyecto));
   const li = el("li", { className: hecha ? "hecha" : "", draggable: !hecha },
     caja, estrella,
     el("a", { className: "nombre", textContent: n.titulo, title: n.titulo, onclick: () => mostrarPanel(n.id) }),
-    meta ? el("span", { className: "meta" + (atrasada ? " atrasada" : ""), textContent: meta }) : "",
+    meta ? el("span", { className: "meta" + (atrasada ? " atrasada" : "") }, punto, meta) : "",
     atrasada ? el("span", { className: "acciones-fila" },
       boton("Hoy", () => cambiar(n, { fecha: sinHoraISO(hoy) })),
       boton("Mañana", () => cambiar(n, { fecha: sinHoraISO(sumarDias(hoy, 1)) })),
