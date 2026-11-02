@@ -1,5 +1,5 @@
 // El botón "+ Nuevo" de la barra (paso 29). Qué ofrece depende de dónde estás:
-//   en el escritorio  un menú con lo que se crea en sus secciones; al elegir, se abre el formulario
+//   en el escritorio  un menú con un post-it y lo que se crea en sus secciones; al elegir, se abre el formulario
 //   en otro apartado  directo el formulario, con botones para lo que se crea en ese apartado
 // Cada apartado dice qué se crea en él con "nuevo" (apartados.js); sin lista, se puede crear cualquier tipo.
 // Los campos de cada formulario salen de las propiedades del tipo en la base: un tipo nuevo no pide código.
@@ -8,6 +8,7 @@ import { APARTADOS } from "./apartados.js";
 import { apartadoActual } from "./carcasa.js";
 import { enEscritorio } from "./escritorio.js";
 import { formulario } from "./panel.js";
+import { nuevoPostit } from "./postits.js";
 
 const menu = () => $("menu-nuevo");
 const cerrarMenu = () => { menu().hidden = true; $("nuevo").setAttribute("aria-expanded", "false"); };
@@ -19,6 +20,7 @@ function abrirMenu(tipos) {
     return b;
   };
   menu().replaceChildren(
+    opcion("Post-it", nuevoPostit, "var(--postit)"),
     ...tipos.map((c) => opcion(datos.tipo.get(c).nombre, () => formulario(null, { tipos, tipo: c }), colorDe(c))),
     el("hr"),
     opcion("Otra cosa…", () => formulario(null)));
@@ -35,7 +37,7 @@ export function iniciarNuevo() {
     if (!enEscritorio(actual)) return formulario(null, { tipos: actual.nuevo });
     // En el escritorio: lo de todas sus secciones, sin repetir, y que exista en la base.
     const tipos = [...new Set(APARTADOS.filter(enEscritorio).flatMap((a) => a.nuevo ?? []))].filter((c) => datos.tipo.has(c));
-    tipos.length ? abrirMenu(tipos) : formulario(null);
+    abrirMenu(tipos);
   };
   addEventListener("pointerdown", (e) => { if (!menu().hidden && !e.target.closest("#menu-nuevo, #nuevo")) cerrarMenu(); });
   addEventListener("keydown", (e) => { if (e.key === "Escape" && !menu().hidden) { cerrarMenu(); $("nuevo").focus(); } });

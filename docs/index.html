@@ -9,6 +9,7 @@
     el estilo está en estilos.css y el comportamiento en js/ (empieza por js/main.js).
     Paso 26: la carcasa del escritorio. Barra arriba, dock escondido abajo y un apartado por sección.
     Paso 27: Hoy (qué hacer a la izquierda; el tiempo y tu día a la derecha).
+    Paso 31: lo del Inbox como post-its pegados alrededor de las secciones (postits.js).
     Paso 30: el calendario, un cajón que sale desde el dock (calendario.js).
     Paso 29: "+ Nuevo" crea según el apartado; el formulario sale de las propiedades de cada tipo (nuevo.js).
     Paso 28: el escritorio movible. Los apartados con "lugar" se mudan solos a #mundo (escritorio.js).
@@ -16,7 +17,8 @@
   -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="estilos.css">
+  <!-- ?v= cambia cuando cambian los estilos: así el navegador no usa los de antes que tenía guardados -->
+  <link rel="stylesheet" href="estilos.css?v=31">
 </head>
 <body>
   <div class="fondo" aria-hidden="true"></div>
@@ -41,7 +43,10 @@
 
   <main id="app" class="oculto">
     <div id="escritorio" class="escritorio">
-      <div id="mundo"></div>
+      <div id="mundo">
+        <!-- Paso 31: lo del Inbox como post-its (postits.js). Sin escritorio, la capa se muda arriba de Hoy. -->
+        <div id="postits" class="postits" aria-label="Post-its del Inbox"></div>
+      </div>
       <nav id="minimapa" class="minimapa vidrio" aria-label="Minimapa del escritorio"></nav>
     </div>
 

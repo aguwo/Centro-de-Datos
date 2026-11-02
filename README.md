@@ -35,6 +35,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 28 | El escritorio movible: los apartados con lugar quedan juntos en un lienzo que se arrastra, se acerca con Ctrl + rueda y tiene un minimapa para saltar. La foto de fondo se mueve un poco (parallax). En el teléfono, cada apartado a pantalla completa | `docs/js/escritorio.js` |
 | 29 | "+ Nuevo" según dónde estás: en el escritorio, un menú con lo que se crea en sus secciones; en otro apartado, el formulario directo. Los campos salen de las propiedades de cada tipo en la base (las primeras a la vista, el resto en "Más detalles") | `docs/js/nuevo.js`, `docs/js/panel.js` |
 | 30 | El calendario: un cajón al final del dock con vista de día, semana y mes. Tocar un hueco crea un evento; los eventos se repiten (cada día, semana, días hábiles, mes o año, con fecha de término) y se borran "solo este" o "todos". "Mis calendarios" son tus áreas. "Tu día" también muestra las repeticiones | `supabase/migrations/0011_eventos_repetidos.sql`, `docs/js/calendario.js`, `docs/js/agenda.js` |
+| 31 | Los post-its: lo que está en el Inbox queda pegado alrededor de las secciones del escritorio. Se arrastran (el lugar se guarda), se escribe encima, ✓ lo marca hecho, × lo suelta y "Pasar a…" abre el formulario ya lleno para ponerle fecha, proyecto o cambiarlo de tipo. "+ Nuevo → Post-it" crea uno. En el celular van en una fila arriba de Hoy | `docs/js/postits.js` |
 
 ## Cómo está ordenada la web
 
@@ -51,6 +52,7 @@ docs/js/mapa.js      el mapa de cajas, la leyenda y los filtros
 docs/js/panel.js     el panel de un nodo y el formulario para crear o editar
 docs/js/nuevo.js     el botón "+ Nuevo": qué se crea según el apartado (lista "nuevo" de cada apartado)
 docs/js/calendario.js el cajón del calendario (día, semana, mes) y su editor de eventos
+docs/js/postits.js   lo del Inbox como post-its alrededor de las secciones del escritorio
 docs/js/hoy.js       el apartado Hoy: tareas, el tiempo y tu día
 docs/js/agenda.js    la agenda por horas (un día o varios); la usan Hoy y el calendario
 docs/js/clima.js     el tiempo de Open-Meteo y el consejo del día

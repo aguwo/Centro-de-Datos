@@ -162,7 +162,7 @@ async function guardarEvento(e) {
     fecha: x.todo.checked ? sinHoraISO(x.fecha.value) : conHoraISO(x.fecha.value, ini) };
   $("editor-evento").close();
   if (n) await cambiar(n, campos);
-  else await crear("evento", campos, x.calendario.value && { relacion: "pertenece_a", destino_id: x.calendario.value });
+  else await crear("evento", campos, { conexion: x.calendario.value && { relacion: "pertenece_a", destino_id: x.calendario.value } });
 }
 
 function iniciarEditor() {

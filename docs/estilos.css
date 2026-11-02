@@ -10,6 +10,7 @@
   --fondo: #f4f7f3; /* lo usa el mapa para el borde de las etiquetas */
   --sans: "Inter", system-ui, sans-serif;
   --radio: 16px;
+  --postit: #fbe38e; /* el papel de los post-its (se tiñe un poco con el color del tipo) */
 }
 @media (prefers-color-scheme: dark) { :root {
   --texto: #edf3ee; --suave: #a7b9ad; --linea: rgba(255,255,255,.09); --borde: rgba(255,255,255,.12);
@@ -336,12 +337,38 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .acciones { display: flex; gap: 8px; margin: 16px 0; }
 
 /* Teléfono: el panel ocupa el ancho y el mapa no se corre */
+/* Post-its (postits.js): lo del Inbox. Sin escritorio, una fila que se desliza arriba de Hoy;
+   en el escritorio, cada uno pegado en su lugar del mundo, alrededor de las secciones. */
+.postits { grid-area: postits; display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 8px; }
+.postits:empty { display: none; }
+#hoy:has(> .postits:not(:empty)) { grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-areas: "fecha fecha" "postits postits" "tareas clima" "tareas dia"; }
+.postit { flex: 0 0 auto; width: 184px; min-height: 150px; padding: 8px 10px 12px 14px; display: flex; flex-direction: column; gap: 6px;
+  color: #2b2410; background: color-mix(in srgb, var(--c) 10%, var(--postit)); border-radius: 3px 3px 14px 3px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.16), 0 10px 22px rgba(0,0,0,.2); transition: opacity .2s, transform .15s, box-shadow .15s; }
+.postit header { display: flex; align-items: center; gap: 2px; min-height: 26px; }
+.postit .tipo { margin-right: auto; font-size: 10.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; opacity: .6; }
+.postit header button { width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; font-size: 15px; opacity: .45; }
+.postit header button:hover, .postit header button:focus-visible { opacity: 1; background: rgba(0,0,0,.08); }
+.postit .texto { flex: 1; margin: 0; font-size: 14.5px; font-weight: 500; line-height: 1.4; outline: none; cursor: text; overflow-wrap: anywhere; }
+.postit .texto:empty::before { content: "Escribe aquí…"; opacity: .45; }
+.postit .pasar { align-self: flex-start; padding: 4px 9px; border: 0; border-radius: 7px; background: rgba(0,0,0,.08); font-size: 12px; font-weight: 600; }
+.postit .pasar:hover { background: rgba(0,0,0,.15); }
+.postit.sale { opacity: 0; }
+.con-escritorio .postits { position: absolute; inset: 0; z-index: 2; display: block; padding: 0; overflow: visible; pointer-events: none; }
+.con-escritorio .postit { position: absolute; pointer-events: auto; cursor: grab; touch-action: none; transform: rotate(var(--giro)); }
+.con-escritorio .postit:focus-within { transform: none; z-index: 1; }
+.con-escritorio .postit.moviendo { cursor: grabbing; z-index: 1; transform: scale(1.04); box-shadow: 0 2px 4px rgba(0,0,0,.18), 0 22px 40px rgba(0,0,0,.28); }
+@media (prefers-reduced-motion: reduce) { .postit { transition: none; } }
+
 @media (max-width: 700px) {
   .barra .app-actual { display: none; }
   #inicio { padding: 20px 16px 48px; }
   /* Hoy en una columna: tareas, el tiempo y tu día, una debajo de otra */
   #hoy { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "fecha" "tareas" "clima" "dia";
         grid-auto-rows: max-content; padding: 20px 16px 48px; } /* cada ventana mide lo que su contenido; se desplaza la página */
+  #hoy:has(> .postits:not(:empty)) { grid-template-rows: none; grid-template-areas: "fecha" "postits" "tareas" "clima" "dia"; }
+  .postits { margin: 0 -16px; padding: 2px 16px 8px; } /* la fila llega al borde de la pantalla */
   #hoy-fecha { font-size: 24px; }
   #hoy-agenda { max-height: 480px; }
   /* El calendario ocupa el ancho; el costado se esconde */

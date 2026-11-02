@@ -2,14 +2,14 @@
 // Lee de los datos cargados (no del mapa), así funciona igual desde el Inicio.
 import { db, $, el, avisar, datos, colorDe, recargar, pedirRecarga, dia, hora } from "./base.js";
 import { enfocar, desenfocar, ajustarMapa } from "./mapa.js";
-import { crear } from "./acciones.js";
+import { crear, conectar } from "./acciones.js";
 
 const ESTADOS = ["Inbox", "Por hacer", "En curso", "Esperando", "Hecho"]; // los mismos del paso 3
 
 // ---------- Propiedades (paso 23) ----------
 // Cada tipo dice qué propiedades tiene. "estado" y "fecha" viven en su columna del nodo; el resto, en props.
 const EN_COLUMNA = ["estado", "fecha"];
-const OCULTAS = ["notion_id"]; // las pone el sistema; no se muestran
+const OCULTAS = ["notion_id", "postit"]; // las pone el sistema (postit: dónde está pegado en el escritorio); no se muestran
 // Las del tipo, menos las marcadas "oculta" (las maneja otra parte, como "excepto" el calendario).
 const todasDe = (clave) => datos.tipo.get(clave)?.propiedades ?? [];
 const propiedadesDe = (clave) => todasDe(clave).filter((p) => !p.oculta);
@@ -138,8 +138,10 @@ export function refrescarPanel() {
 // Formulario para crear (sin nodo) o editar (con nodo). Se muestra en el mismo panel.
 // Al crear: tipos = lo que se puede crear desde aquí (["tarea", "evento"]; sin lista, todos los tipos)
 // y tipo = cuál viene elegido. Lo arma "+ Nuevo" (nuevo.js) según el apartado donde estás.
+// Al editar con tipos, también se puede cambiar el tipo (un post-it que pasa a proyecto).
+// valores = con qué empiezan algunos campos, ej. { estado: "Por hacer" } al ordenar un post-it.
 const PRINCIPALES = 3; // cuántas propiedades se ven de entrada; el resto va en "Más detalles"
-export function formulario(n, { tipos, tipo: elegido } = {}) {
+export function formulario(n, { tipos, tipo: elegido, valores = {} } = {}) {
   const editando = !!n;
   const campo = (etiqueta, control) => [el("label", { textContent: etiqueta }), control];
   let tipo = n?.tipos.clave ?? elegido ?? tipos?.[0] ?? "tarea";
@@ -147,7 +149,7 @@ export function formulario(n, { tipos, tipo: elegido } = {}) {
 
   // Qué crear: con pocos tipos, botones a la vista; con todos, una lista agrupada por módulo (como la leyenda).
   let selector;
-  if (editando) selector = el("span");
+  if (editando && !tipos) selector = el("span");
   else if (tipos) {
     selector = el("div", { className: "tipos" }, ...tipos.filter((c) => datos.tipo.has(c)).map((c) => {
       const b = el("button", { type: "button", textContent: datos.tipo.get(c).nombre, onclick: () => { tipo = c; ajustarCampos(); } });
@@ -176,12 +178,13 @@ export function formulario(n, { tipos, tipo: elegido } = {}) {
   const principales = el("div"), mas = el("div");
   const detalles = el("details", {}, el("summary", { textContent: "Más detalles" }), mas, ...campo("Notas", contenido));
   let campos = []; // [{ p, c }]: la propiedad y su control
-  // Primera conexión (solo al crear): relación + nodo de destino, según lo que permite el tipo.
+  // Una conexión nueva (al crear, la primera): relación + nodo de destino, según lo que permite el tipo.
   const relacion = el("select", { onchange: () => ajustarDestinos() });
   const destino = el("select");
   function ajustarCampos() {
     for (const b of selector.querySelectorAll("button")) b.setAttribute("aria-pressed", b.dataset.clave === tipo);
-    campos = propiedadesDe(tipo).map((p) => ({ p, c: control(p, n ? valorDe(n, p) : p.tipo === "estado" ? "Por hacer" : null) }));
+    const inicial = (p) => (p.clave in valores ? valores[p.clave] : n ? valorDe(n, p) : p.tipo === "estado" ? "Por hacer" : null);
+    campos = propiedadesDe(tipo).map((p) => ({ p, c: control(p, inicial(p)) }));
     const aLaVista = (x, i) => i < PRINCIPALES || (n && legible(x.p, valorDe(n, x.p)) !== null);
     principales.replaceChildren(...campos.filter(aLaVista).flatMap(({ p, c }) => campo(p.nombre, c)));
     mas.replaceChildren(...campos.filter((x, i) => !aLaVista(x, i)).flatMap(({ p, c }) => campo(p.nombre, c)));
@@ -203,7 +206,7 @@ export function formulario(n, { tipos, tipo: elegido } = {}) {
   const form = el("form", { className: "nodo" },
     el("h2", { textContent: editando ? "Editar " + n.tipos.nombre.toLowerCase() : "Nuevo" }),
     selector, ...campo("Título", titulo), principales,
-    ...(editando ? [] : [el("div", { className: "conexion" }, ...campo("Conectar a", relacion), destino)]),
+    el("div", { className: "conexion" }, ...campo("Conectar a", relacion), destino),
     detalles,
     el("div", { className: "acciones" }, guardar, cancelar));
 
@@ -219,9 +222,12 @@ export function formulario(n, { tipos, tipo: elegido } = {}) {
       else props[p.clave] = v;
     }
     cambios.props = props;
-    if (!editando) return crear(tipo, cambios, relacion.value && { relacion: relacion.value, destino_id: destino.value });
+    const conexion = relacion.value && { relacion: relacion.value, destino_id: destino.value };
+    if (!editando) return crear(tipo, cambios, { conexion });
+    if (tipo !== n.tipos.clave) cambios.tipo_id = tipoElegido().id;
     const { error } = await db.from("nodos").update(cambios).eq("id", n.id);
     if (error) return avisar(error.message);
+    await conectar(n.id, conexion);
     await recargar(n.id);
   };
 

@@ -13,9 +13,31 @@ const pantallaAncha = matchMedia("(min-width: 900px)");
 
 export const escritorioActivo = () => pantallaAncha.matches;
 export const enEscritorio = (a) => !!a.lugar && escritorioActivo();
+// Para lo que se dibuja distinto con y sin escritorio (los post-its): avisa cuando cambia.
+export const alCambiarDeModo = (fn) => pantallaAncha.addEventListener("change", fn);
 
 const enLienzo = APARTADOS.filter((a) => a.lugar);
+const esquina = new Map(); // id de la sección -> { x, y } de su esquina en el mundo
 let cam = { x: 0, y: 0, z: 1 }, mundo = { w: 0, h: 0 }, mirando = null;
+
+// Para pegar cosas en el mundo (los post-its): cuánto está acercado y qué punto queda al medio de la pantalla.
+export const zoom = () => cam.z;
+export function centro() {
+  const vista = $("escritorio");
+  return { x: (vista.clientWidth / 2 - cam.x) / cam.z, y: (vista.clientHeight / 2 - cam.y) / cam.z };
+}
+// Lugares alrededor de las secciones para una caja de ancho × alto, montada "monta" px sobre el borde:
+// primero a los costados de cada sección (derecha e izquierda, de arriba abajo) y después abajo.
+export function alrededor(ancho, alto, monta = 24, aire = 24) {
+  const lugares = [];
+  for (const { x, y } of esquina.values()) {
+    for (let yy = y + 48; yy + alto <= y + SECCION.alto; yy += alto + aire)
+      lugares.push({ x: x + SECCION.ancho - monta, y: yy }, { x: x - ancho + monta, y: yy });
+    for (let xx = x + 48; xx + ancho <= x + SECCION.ancho; xx += ancho + aire)
+      lugares.push({ x: xx, y: y + SECCION.alto - monta });
+  }
+  return lugares;
+}
 
 // La cámara: x, y = dónde queda la esquina del mundo en la pantalla; z = acercamiento.
 function aplicar(animar = false) {
@@ -57,8 +79,9 @@ function armarMundo() {
   for (const a of enLienzo) {
     const s = $(a.id);
     $("mundo").append(s);
-    s.style.setProperty("--x", paso(a.lugar[0] - col0, SECCION.ancho) + "px");
-    s.style.setProperty("--y", paso(a.lugar[1] - fila0, SECCION.alto) + "px");
+    esquina.set(a.id, { x: paso(a.lugar[0] - col0, SECCION.ancho), y: paso(a.lugar[1] - fila0, SECCION.alto) });
+    s.style.setProperty("--x", esquina.get(a.id).x + "px");
+    s.style.setProperty("--y", esquina.get(a.id).y + "px");
   }
   const cols = Math.max(...enLienzo.map((a) => a.lugar[0])) - col0 + 1, filas = Math.max(...enLienzo.map((a) => a.lugar[1])) - fila0 + 1;
   mundo = { w: paso(cols, SECCION.ancho), h: paso(filas, SECCION.alto) };
@@ -95,7 +118,7 @@ function desplazable(t) {
 // Moverse: arrastrar el fondo, los títulos o la barra de una ventana; rueda; Ctrl + rueda (o pellizco) acerca; flechas.
 function controles() {
   const vista = $("escritorio");
-  const seArrastra = (t) => !t.closest("#minimapa, button, a, input, select, textarea, [draggable='true']") && (!t.closest(".ventana") || t.closest(".ventana > h3"));
+  const seArrastra = (t) => !t.closest("#minimapa, .postit, button, a, input, select, textarea, [draggable='true']") && (!t.closest(".ventana") || t.closest(".ventana > h3"));
   let tomado = null;
   vista.addEventListener("pointerdown", (e) => {
     if (!escritorioActivo() || e.button !== 0 || !seArrastra(e.target)) return;
@@ -132,7 +155,7 @@ function controles() {
   });
 
   addEventListener("keydown", (e) => {
-    if (!escritorioActivo() || vista.classList.contains("oculto") || e.target.closest("input, textarea, select")) return;
+    if (!escritorioActivo() || vista.classList.contains("oculto") || e.target.closest("input, textarea, select, [contenteditable]")) return;
     const d = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
     if (!d) return;
     e.preventDefault();
