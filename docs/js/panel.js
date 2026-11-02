@@ -133,59 +133,75 @@ export function refrescarPanel() {
 }
 
 // Formulario para crear (sin nodo) o editar (con nodo). Se muestra en el mismo panel.
-export function formulario(n) {
+// Al crear: tipos = lo que se puede crear desde aquí (["tarea", "evento"]; sin lista, todos los tipos)
+// y tipo = cuál viene elegido. Lo arma "+ Nuevo" (nuevo.js) según el apartado donde estás.
+const PRINCIPALES = 3; // cuántas propiedades se ven de entrada; el resto va en "Más detalles"
+export function formulario(n, { tipos, tipo: elegido } = {}) {
   const editando = !!n;
   const campo = (etiqueta, control) => [el("label", { textContent: etiqueta }), control];
+  let tipo = n?.tipos.clave ?? elegido ?? tipos?.[0] ?? "tarea";
+  const tipoElegido = () => datos.tipo.get(tipo);
 
-  // Los tipos van agrupados por módulo, igual que en la leyenda.
-  const tipo = el("select", { required: true, disabled: editando });
-  const grupos = new Map();
-  for (const t of datos.tipos) {
-    if (!grupos.has(t.modulo)) {
-      grupos.set(t.modulo, el("optgroup", { label: t.modulo }));
-      tipo.append(grupos.get(t.modulo));
+  // Qué crear: con pocos tipos, botones a la vista; con todos, una lista agrupada por módulo (como la leyenda).
+  let selector;
+  if (editando) selector = el("span");
+  else if (tipos) {
+    selector = el("div", { className: "tipos" }, ...tipos.filter((c) => datos.tipo.has(c)).map((c) => {
+      const b = el("button", { type: "button", textContent: datos.tipo.get(c).nombre, onclick: () => { tipo = c; ajustarCampos(); } });
+      b.dataset.clave = c;
+      b.style.setProperty("--c", colorDe(c));
+      return b;
+    }));
+  } else {
+    selector = el("select", { required: true, onchange: () => { tipo = selector.value; ajustarCampos(); } });
+    const grupos = new Map();
+    for (const t of datos.tipos) {
+      if (!grupos.has(t.modulo)) {
+        grupos.set(t.modulo, el("optgroup", { label: t.modulo }));
+        selector.append(grupos.get(t.modulo));
+      }
+      grupos.get(t.modulo).append(el("option", { value: t.clave, textContent: t.nombre }));
     }
-    grupos.get(t.modulo).append(el("option", { value: t.clave, textContent: t.nombre }));
+    selector.value = tipo;
   }
-  tipo.value = n?.tipos.clave ?? "tarea";
 
-  const titulo = el("input", { required: true, value: n?.titulo ?? "", placeholder: "Ej: Estudiar cálculo" });
+  const titulo = el("input", { required: true, value: n?.titulo ?? "", placeholder: "¿Qué es?" });
   const contenido = el("textarea", { value: n?.contenido ?? "", placeholder: "Notas, detalles…" });
 
-  // Un campo por cada propiedad del tipo elegido. Al cambiar el tipo se vuelven a armar.
-  const bloquePropiedades = el("div");
-  let campos = [];   // [{ p, c }]: la propiedad y su control
+  // Un campo por cada propiedad del tipo elegido: las primeras a la vista, el resto en "Más detalles".
+  // Al editar, también queda a la vista lo que ya tiene un valor. Al cambiar el tipo se vuelven a armar.
+  const principales = el("div"), mas = el("div");
+  const detalles = el("details", {}, el("summary", { textContent: "Más detalles" }), mas, ...campo("Notas", contenido));
+  let campos = []; // [{ p, c }]: la propiedad y su control
   // Primera conexión (solo al crear): relación + nodo de destino, según lo que permite el tipo.
-  const relacion = el("select");
+  const relacion = el("select", { onchange: () => ajustarDestinos() });
   const destino = el("select");
-  const tipoElegido = () => datos.tipo.get(tipo.value);
   function ajustarCampos() {
-    campos = propiedadesDe(tipo.value).map((p) => ({ p, c: control(p, n ? valorDe(n, p) : p.tipo === "estado" ? "Inbox" : null) }));
-    bloquePropiedades.replaceChildren(...campos.flatMap(({ p, c }) => campo(p.nombre, c)));
+    for (const b of selector.querySelectorAll("button")) b.setAttribute("aria-pressed", b.dataset.clave === tipo);
+    campos = propiedadesDe(tipo).map((p) => ({ p, c: control(p, n ? valorDe(n, p) : p.tipo === "estado" ? "Por hacer" : null) }));
+    const aLaVista = (x, i) => i < PRINCIPALES || (n && legible(x.p, valorDe(n, x.p)) !== null);
+    principales.replaceChildren(...campos.filter(aLaVista).flatMap(({ p, c }) => campo(p.nombre, c)));
+    mas.replaceChildren(...campos.filter((x, i) => !aLaVista(x, i)).flatMap(({ p, c }) => campo(p.nombre, c)));
+    detalles.open = !!n?.contenido;
     relacion.replaceChildren(el("option", { value: "", textContent: "(sin conexión)" }),
       ...(tipoElegido()?.conexiones ?? []).map((c) => el("option", { value: c.relacion, textContent: c.relacion.replaceAll("_", " ") })));
     ajustarDestinos();
   }
   function ajustarDestinos() {
     const regla = (tipoElegido()?.conexiones ?? []).find((c) => c.relacion === relacion.value);
-    const candidatos = regla ? datos.nodos.filter((x) => regla.hacia.includes(x.tipos.clave)) : [];
+    const candidatos = regla ? datos.nodos.filter((x) => regla.hacia.includes(x.tipos.clave)).sort((a, b) => a.titulo.localeCompare(b.titulo, "es")) : [];
     destino.replaceChildren(...candidatos.map((x) => el("option", { value: x.id, textContent: `${x.titulo} (${x.tipos.nombre})` })));
-    destino.disabled = !candidatos.length;
+    destino.hidden = !candidatos.length;
   }
-  const bloqueConexion = el("div", {}, ...campo("Conectar a", relacion), destino);
-  destino.style.marginTop = "6px";
-  tipo.onchange = ajustarCampos;
-  relacion.onchange = ajustarDestinos;
 
   const guardar = el("button", { className: "principal", textContent: editando ? "Guardar" : "Crear", type: "submit" });
-  const cancelar = el("button", { textContent: "Cancelar", type: "button" });
-  cancelar.onclick = () => (editando ? enfocar(n.id) : desenfocar());
+  const cancelar = el("button", { textContent: "Cancelar", type: "button", onclick: () => (editando ? enfocar(n.id) : desenfocar()) });
 
   const form = el("form", { className: "nodo" },
-    el("h2", { textContent: editando ? "Editar nodo" : "Nuevo nodo" }),
-    ...campo("Tipo", tipo), ...campo("Título", titulo), bloquePropiedades,
-    ...campo("Contenido", contenido),
-    ...(editando ? [] : [bloqueConexion]),
+    el("h2", { textContent: editando ? "Editar " + n.tipos.nombre.toLowerCase() : "Nuevo" }),
+    selector, ...campo("Título", titulo), principales,
+    ...(editando ? [] : [el("div", { className: "conexion" }, ...campo("Conectar a", relacion), destino)]),
+    detalles,
     el("div", { className: "acciones" }, guardar, cancelar));
 
   form.onsubmit = async (e) => {
@@ -210,7 +226,7 @@ export function formulario(n) {
       id = data.id;
       if (relacion.value && destino.value) {
         const r = await db.from("conexiones").insert({ origen_id: id, relacion: relacion.value, destino_id: destino.value });
-        if (r.error) avisar("El nodo se creó, pero la conexión falló: " + r.error.message);
+        if (r.error) avisar("Se creó, pero la conexión falló: " + r.error.message);
       }
     }
     await recargar(id);

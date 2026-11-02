@@ -33,6 +33,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 26 | La carcasa del escritorio: tu foto de fondo, paneles de vidrio, barra arriba y un dock escondido que aparece al acercarte abajo. Cada sección es un apartado anotado en una lista: agregar uno no obliga a tocar la carcasa | `docs/js/carcasa.js`, `docs/js/apartados.js` |
 | 27 | Hoy: tus 3 prioridades destacadas, lo demás de hoy y lo atrasado (Hoy / Mañana / Soltar); el tiempo con un consejo; y "Tu día" por horas, donde arrastrar una tarea le reserva esa hora. Las tarjetas de antes quedan en "Resumen" | `supabase/migrations/0010_prioridad_del_dia.sql`, `docs/js/hoy.js`, `docs/js/agenda.js` |
 | 28 | El escritorio movible: los apartados con lugar quedan juntos en un lienzo que se arrastra, se acerca con Ctrl + rueda y tiene un minimapa para saltar. La foto de fondo se mueve un poco (parallax). En el teléfono, cada apartado a pantalla completa | `docs/js/escritorio.js` |
+| 29 | "+ Nuevo" según dónde estás: en el escritorio, un menú con lo que se crea en sus secciones; en otro apartado, el formulario directo. Los campos salen de las propiedades de cada tipo en la base (las primeras a la vista, el resto en "Más detalles") | `docs/js/nuevo.js`, `docs/js/panel.js` |
 
 ## Cómo está ordenada la web
 
@@ -47,6 +48,7 @@ docs/js/apartados.js la lista de apartados: agregar uno = sumarlo ahí y poner s
 docs/js/base.js      conexión a Supabase, atajos, los datos cargados y el tiempo real
 docs/js/mapa.js      el mapa de cajas, la leyenda y los filtros
 docs/js/panel.js     el panel de un nodo y el formulario para crear o editar
+docs/js/nuevo.js     el botón "+ Nuevo": qué se crea según el apartado (lista "nuevo" de cada apartado)
 docs/js/hoy.js       el apartado Hoy: tareas, el tiempo y tu día
 docs/js/agenda.js    la agenda por horas (un día o varios); la usan Hoy y el calendario
 docs/js/clima.js     el tiempo de Open-Meteo y el consejo del día

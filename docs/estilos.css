@@ -21,7 +21,7 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body { margin: 0; font: 14px/1.5 var(--sans); color: var(--texto); background: var(--cielo); overflow: hidden; }
-.oculto { display: none !important; }
+.oculto, [hidden] { display: none !important; }
 ::selection { background: color-mix(in srgb, var(--acento) 35%, transparent); }
 :focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
 
@@ -244,6 +244,19 @@ form.nodo input, form.nodo select, form.nodo textarea { width: 100%; padding: 8p
 form.nodo textarea { min-height: 90px; resize: vertical; }
 form.nodo select option { background: var(--fondo); }
 form.nodo input.check { width: auto; }
+/* Qué crear: un botón por tipo, con su color */
+.tipos { display: flex; flex-wrap: wrap; gap: 6px; }
+.tipos button { display: flex; align-items: center; gap: 6px; border-color: var(--linea); }
+.tipos button::before, .menu button::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c, transparent); }
+.tipos button[aria-pressed="true"] { border-color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); font-weight: 600; }
+form.nodo details { margin-top: 14px; }
+form.nodo summary { cursor: pointer; font-size: 12.5px; color: var(--suave); }
+form.nodo .conexion select + select { margin-top: 6px; }
+/* Menú de "+ Nuevo" en el escritorio */
+.menu { position: fixed; top: 46px; right: var(--derecha, 12px); z-index: 12; min-width: 180px; padding: 6px; border-radius: 14px; display: grid; background: var(--vidrio-fuerte); }
+.menu button { border: 0; border-radius: 8px; padding: 7px 10px; text-align: left; display: flex; align-items: center; gap: 8px; }
+.menu button:hover, .menu button:focus-visible { background: var(--linea); }
+.menu hr { width: 100%; border: 0; border-top: 1px solid var(--linea); margin: 4px 0; }
 .acciones { display: flex; gap: 8px; margin: 16px 0; }
 
 /* Teléfono: el panel ocupa el ancho y el mapa no se corre */
