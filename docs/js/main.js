@@ -7,10 +7,11 @@
 //   mapa.js      el mapa de cajas, la leyenda y los filtros
 //   panel.js     el panel de un nodo y el formulario para crear o editar
 //   nuevo.js     el botón "+ Nuevo": qué se crea según el apartado donde estás
+//   calendario.js el cajón del calendario (día, semana, mes) y su editor de eventos
 //   hoy.js       el apartado Hoy (usa agenda.js, clima.js y acciones.js)
 //   inicio.js    el Resumen: dibuja las señales y las tarjetas (qué muestra cada una: tarjetas.js)
 import { db, $, avisar, recargar, escucharCambios, dejarDeEscuchar } from "./base.js";
-import { APARTADOS } from "./apartados.js";
+import { APARTADOS, CAJONES } from "./apartados.js";
 import { iniciarCarcasa, apartadoActual } from "./carcasa.js";
 import { enfocar } from "./mapa.js";
 import { mostrarPanel, refrescarPanel } from "./panel.js";
@@ -21,7 +22,7 @@ iniciarCarcasa();
 // Cada vez que se cargan los datos se dibujan todos los apartados (así cambiar de uno a otro
 // es instantáneo y lo que cambió en otro lado aparece solo).
 document.addEventListener("datos", ({ detail }) => {
-  for (const a of APARTADOS) a.dibujar();
+  for (const x of [...APARTADOS, ...CAJONES]) x.dibujar();
   if (detail.enfocarId) (apartadoActual() === "mapa" ? enfocar : mostrarPanel)(detail.enfocarId);
   else refrescarPanel();
 });

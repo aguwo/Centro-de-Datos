@@ -11,5 +11,7 @@ export const sinHoraISO = (texto) => texto + "T00:00:00+00:00";
 export const conHoraISO = (texto, h) => { const d = new Date(texto + "T00:00:00"); d.setMinutes(Math.round(h * 60)); return d.toISOString(); };
 // 14.5 -> "14:30"
 export const hhmm = (h) => `${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
+// Al revés: "14:30" -> 14.5
+export const aHora = (t) => { const [h, m] = t.split(":"); return +h + m / 60; };
 // La hora local de una fecha completa como número (14:30 -> 14.5)
 export const horaDecimal = (fecha) => { const d = new Date(fecha); return d.getHours() + d.getMinutes() / 60; };
