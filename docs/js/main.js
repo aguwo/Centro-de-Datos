@@ -2,6 +2,7 @@
 // Cada parte vive en su archivo:
 //   base.js      conexión a Supabase, atajos, los datos cargados y el tiempo real
 //   carcasa.js   la barra, el dock y el cambio de apartado (no sabe de ningún apartado en particular)
+//   escritorio.js el lienzo movible: junta los apartados que tienen "lugar"
 //   apartados.js la lista de apartados: agregar uno = agregarlo ahí
 //   mapa.js      el mapa de cajas, la leyenda y los filtros
 //   panel.js     el panel de un nodo y el formulario para crear o editar

@@ -9,6 +9,7 @@
     el estilo está en estilos.css y el comportamiento en js/ (empieza por js/main.js).
     Paso 26: la carcasa del escritorio. Barra arriba, dock escondido abajo y un apartado por sección.
     Paso 27: Hoy (qué hacer a la izquierda; el tiempo y tu día a la derecha).
+    Paso 28: el escritorio movible. Los apartados con "lugar" se mudan solos a #mundo (escritorio.js).
     Los apartados se anotan en js/apartados.js; cada uno tiene aquí su <section> con el mismo id.
   -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,6 +37,11 @@
   </header>
 
   <main id="app" class="oculto">
+    <div id="escritorio" class="escritorio">
+      <div id="mundo"></div>
+      <nav id="minimapa" class="minimapa vidrio" aria-label="Minimapa del escritorio"></nav>
+    </div>
+
     <section id="hoy" class="apartado">
       <h2 id="hoy-fecha" class="sobre-foto"></h2>
       <div class="ventana vidrio hoy-tareas">
