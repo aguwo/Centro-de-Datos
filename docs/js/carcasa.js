@@ -13,7 +13,8 @@ export function ir(id) {
   for (const a of APARTADOS) $(a.id).classList.toggle("oculto", a !== actual);
   for (const b of $("dock").children) b.setAttribute("aria-current", b.dataset.id === actual.id ? "page" : "false");
   $("app-actual").textContent = actual.nombre;
-  if (location.hash.slice(1) !== actual.id) history.replaceState(null, "", "#" + actual.id);
+  // La dirección no se toca si trae la respuesta del inicio de sesión (#access_token=...): la lee Supabase.
+  if (location.hash.slice(1) !== actual.id && !location.hash.includes("=")) history.replaceState(null, "", "#" + actual.id);
   actual.alMostrar?.();
 }
 
