@@ -8,10 +8,10 @@
 //   tareas     las del filtro, por grupo (atrasadas, hoy, próximas, sin fecha; las hechas, plegadas).
 //              "Agregar tarea" entiende fechas escritas ("dentista mañana 10:00") y deja la tarea en lo elegido.
 // Lo del Inbox no aparece aquí: son los post-its (postits.js).
-import { el, datos, dia, cajasDe, proyectoDe, colorDeProyecto } from "./base.js";
-import { hoyTexto, corto, hhmm, leerFecha, fechaLeida } from "./fechas.js";
-import { crear, cambiar, mover } from "./acciones.js";
-import { listaDeTareas, seccion, porFecha } from "./tareas.js";
+import { el, datos, dia, cajasDe, proyectoDe, colorDeProyecto, irA } from "./base.js";
+import { hoyTexto, corto } from "./fechas.js";
+import { cambiar, mover } from "./acciones.js";
+import { listaDeTareas, seccion, porFecha, agregarTarea } from "./tareas.js";
 
 const TODAS = "todas", SIN = "sin"; // los filtros que no son un proyecto ni un área
 const NOMBRE = { [TODAS]: "Todas", [SIN]: "Sin proyecto" };
@@ -34,31 +34,19 @@ const cuenta = (r) => [r.atrasadas && `${r.atrasadas} atrasada${r.atrasadas > 1 
 
 // ---------- tareas ----------
 export function tareasDelFiltro(v, ctx) {
-  const campo = el("input", { name: "titulo", ariaLabel: "Nueva tarea", placeholder: "Agregar tarea…" });
-  const form = el("form", { className: "agregar", autocomplete: "off" }, campo, el("button", { className: "principal", textContent: "Agregar" }));
-  const vista = el("small", { className: "cuando", ariaLive: "polite" }); // la fecha que entendió, mientras escribes
+  // Agregar: queda por hacer, con la fecha que hayas escrito, y dentro de lo que tengas elegido.
+  const { form, cuando: vista, campo } = agregarTarea(() => (enCaja(filtroDe(ctx)) ? filtroDe(ctx) : undefined));
+  // Lo elegido se puede abrir completo en la página Proyectos.
+  const abrir = el("button", { className: "abrir", textContent: "Abrir ↗", title: "Ver y editar todo en Proyectos",
+    onclick: () => irA("proyectos", { caja: filtroDe(ctx) }) });
   const lista = el("div", { className: "desliza grupos" });
+  v.querySelector("h3").append(abrir);
   v.append(form, vista, lista);
-
-  campo.oninput = () => {
-    const l = leerFecha(campo.value);
-    vista.textContent = l.dia ? "Fecha: " + new Date(l.dia + "T12:00").toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" })
-      + (l.hora === null ? "" : " · " + hhmm(l.hora)) : "";
-  };
-  // Queda por hacer, con la fecha que hayas escrito, y dentro de lo que tengas elegido.
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    const l = leerFecha(campo.value.trim()), titulo = l.titulo || campo.value.trim(), f = filtroDe(ctx);
-    if (!titulo) return;
-    if (await crear("tarea", { titulo, estado: "Por hacer", fecha: fechaLeida(l) }, { conexion: enCaja(f) && { relacion: "pertenece_a", destino_id: f }, enfocar: false })) {
-      campo.value = "";
-      campo.oninput();
-    }
-  };
 
   return () => {
     const f = filtroDe(ctx), hoy = hoyTexto(), ts = de(f), abiertas = ts.filter((n) => n.estado !== "Hecho").sort(porFecha);
     v.sub.textContent = `${nombreDe(f)} · ${cuenta(resumen(f))}`;
+    abrir.hidden = !enCaja(f);
     campo.placeholder = enCaja(f) ? `Agregar tarea a ${nombreDe(f)}…` : "Agregar tarea…";
     const cuando = (n) => (dia(n.fecha) ? (dia(n.fecha) < hoy ? "atrasadas" : dia(n.fecha) === hoy ? "hoy" : "proximas") : "sinFecha");
     const grupo = (g) => abiertas.filter((n) => cuando(n) === g);

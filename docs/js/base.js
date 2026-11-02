@@ -14,6 +14,21 @@ export function el(tag, props = {}, ...hijos) {
   return x;
 }
 
+// Un texto que se escribe encima (un título, un post-it). Enter o salir guarda; Escape deshace.
+// alTerminar(texto) recibe lo escrito, ya sin espacios sobrantes.
+export function escribible(tag, inicial, alTerminar, className = "") {
+  const t = el(tag, { className, textContent: inicial, contentEditable: "plaintext-only", spellcheck: false });
+  t.onkeydown = (e) => {
+    if (e.key === "Escape") t.textContent = inicial;
+    if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); e.stopPropagation(); t.blur(); }
+  };
+  t.onblur = () => alTerminar(t.textContent.trim());
+  return t;
+}
+
+// Ir a otro apartado y, de paso, decirle qué mostrar (ej. irA("proyectos", { caja: id })). Lo atiende carcasa.js.
+export const irA = (apartado, ctx) => document.dispatchEvent(new CustomEvent("ir", { detail: { apartado, ctx } }));
+
 // Los datos cargados. Los llena recargar(); el resto de la web solo los lee.
 export const datos = {
   tipos: [],              // los tipos disponibles, en el orden de la leyenda (tus propios tipos ganan sobre las plantillas)
