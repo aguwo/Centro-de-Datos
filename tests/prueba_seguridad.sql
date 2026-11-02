@@ -14,6 +14,18 @@ insert into conexiones (origen_id, relacion, destino_id)
   select p.id, 'pertenece_a', a.id from nodos p, nodos a where p.titulo = 'Centro de datos' and a.titulo = 'Personal';
 insert into nodos (tipo_id, titulo) select id, 'Meditar' from tipos where clave = 'habito';
 insert into registros (clase, valor, nodo_id) select 'habito', 1, id from nodos where titulo = 'Meditar';
+-- Paso 34b: una disposición propia; la segunda vez reemplaza a la primera (upsert, como la web).
+insert into disposiciones (apartado, columnas) values ('hoy', '[{"widgets": ["tu-dia"]}]');
+insert into disposiciones (apartado, columnas) values ('hoy', '[{"widgets": ["el-tiempo"]}]')
+  on conflict (owner_id, apartado) do update set columnas = excluded.columnas, actualizado = now();
+do $$ begin
+  assert (select columnas->0->'widgets'->>0 from disposiciones where apartado = 'hoy') = 'el-tiempo', 'la disposición debería haberse reemplazado';
+  begin
+    insert into disposiciones (apartado, columnas) values ('mapa', '{"no": "es lista"}');
+    raise exception 'debería rechazar columnas que no son una lista';
+  exception when check_violation then null;
+  end;
+end $$;
 
 do $$ declare n int; begin
   select count(*) into n from tipos; assert n = 17, 'usuario 1 debería ver 17 plantillas, ve ' || n;
@@ -39,6 +51,7 @@ do $$ declare n int; begin
   select count(*) into n from conexiones; assert n = 0, 'usuario 2 no debería ver conexiones ajenas';
   select count(*) into n from tipos; assert n = 17, 'usuario 2 debería ver las 17 plantillas';
   select count(*) into n from registros; assert n = 0, 'usuario 2 no debería ver registros ajenos';
+  select count(*) into n from disposiciones; assert n = 0, 'usuario 2 no debería ver disposiciones ajenas';
 end $$;
 
 do $$ begin

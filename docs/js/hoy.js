@@ -50,6 +50,10 @@ export function tuDia(v) {
     alSoltar: (id, d, h) => datos.nodo.has(id) && agendar(datos.nodo.get(id), d, h),
   });
   // La línea de "ahora" avanza sola, y a medianoche "hoy" cambia de día.
-  setInterval(() => { if (!v.closest(".oculto") && datos.nodos.length) dibujar(); }, 60_000);
+  // Si esta ventana se quitó (cambió la disposición), su reloj se apaga.
+  const reloj = setInterval(() => {
+    if (!v.isConnected) return clearInterval(reloj);
+    if (!v.closest(".oculto") && datos.nodos.length) dibujar();
+  }, 60_000);
   return dibujar;
 }
