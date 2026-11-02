@@ -356,9 +356,15 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .filtro .nombre { font-weight: 600; }
 .filtro .barra-p, .filtro .proxima { grid-column: 1 / -1; }
 .filtro .proxima { font-size: 12.5px; color: var(--suave); }
-.proyectos .area .nombre { font-weight: 700; }
-.proyectos .dentro .filtro { padding-left: 30px; } /* los proyectos de un área, debajo de ella */
 .proyectos li { position: relative; }
+.proyectos .vacio { padding: 10px 12px; color: var(--suave); font-size: 13px; }
+/* Chips que se eligen de a uno (las áreas de Productividad). Se acomodan en varias líneas. */
+.pildoras { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 12px; margin-bottom: 8px; border-bottom: 1px solid var(--linea); }
+.pildoras button { padding: 5px 12px; border: 1px solid var(--linea); border-radius: 999px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.pildoras button:hover { border-color: var(--suave); }
+.pildoras button[aria-pressed="true"] { border-color: color-mix(in srgb, var(--acento) 45%, transparent); background: color-mix(in srgb, var(--acento) 14%, transparent); font-weight: 600; }
+.pildoras .con-atrasadas::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 7px; border-radius: 50%; background: var(--alerta); vertical-align: 2px; }
+.pildoras .soltar { outline: 2px dashed var(--acento); outline-offset: 1px; }
 .proyectos li.soltar .filtro { box-shadow: inset 0 0 0 2px var(--acento); background: color-mix(in srgb, var(--acento) 10%, transparent); }
 .proyectos .proyecto .barra-p span { background: var(--c); }
 .proyectos .cerrar { position: absolute; right: 12px; bottom: 6px; padding: 2px 8px; font-size: 12px; }
