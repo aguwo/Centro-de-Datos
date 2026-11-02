@@ -31,6 +31,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 24 | Publicación automática: al subir cambios del agente a GitHub, se corren las pruebas y se publica en Supabase | `.github/workflows/publicar-agente.yml` |
 | 25 | Inicio por tarjetas (Hacer · Cuidarme · Mi vida) con señales arriba, y la web en tiempo real: se actualiza sola cuando algo cambia (tú, otra pestaña o el agente) | `supabase/migrations/0009_tiempo_real.sql`, `docs/js/tarjetas.js` |
 | 26 | La carcasa del escritorio: tu foto de fondo, paneles de vidrio, barra arriba y un dock escondido que aparece al acercarte abajo. Cada sección es un apartado anotado en una lista: agregar uno no obliga a tocar la carcasa | `docs/js/carcasa.js`, `docs/js/apartados.js` |
+| 27 | Hoy: tus 3 prioridades destacadas, lo demás de hoy y lo atrasado (Hoy / Mañana / Soltar); el tiempo con un consejo; y "Tu día" por horas, donde arrastrar una tarea le reserva esa hora. Las tarjetas de antes quedan en "Resumen" | `supabase/migrations/0010_prioridad_del_dia.sql`, `docs/js/hoy.js`, `docs/js/agenda.js` |
 
 ## Cómo está ordenada la web
 
@@ -44,7 +45,12 @@ docs/js/apartados.js la lista de apartados: agregar uno = sumarlo ahí y poner s
 docs/js/base.js      conexión a Supabase, atajos, los datos cargados y el tiempo real
 docs/js/mapa.js      el mapa de cajas, la leyenda y los filtros
 docs/js/panel.js     el panel de un nodo y el formulario para crear o editar
-docs/js/inicio.js    el Inicio: dibuja las señales y las tarjetas
+docs/js/hoy.js       el apartado Hoy: tareas, el tiempo y tu día
+docs/js/agenda.js    la agenda por horas (un día o varios); la usan Hoy y el calendario
+docs/js/clima.js     el tiempo de Open-Meteo y el consejo del día
+docs/js/acciones.js  lo que la web le cambia a tus datos (completar, posponer, soltar, agendar...)
+docs/js/fechas.js    ayudas de fechas (hoy, sumar días, horas)
+docs/js/inicio.js    el Resumen: dibuja las señales y las tarjetas
 docs/js/tarjetas.js  qué muestra cada tarjeta (agregar una = agregar un objeto a TARJETAS)
 ```
 

@@ -12,16 +12,12 @@
 //   senal    { nivel: "alerta" | "aviso", texto }: aparece arriba de todo, para que no se te pase
 //
 // c es lo que todas comparten, ya calculado una vez: hoy, los nodos por tipo y los registros por nodo.
-import { db, datos, dia, hora, escribir } from "./base.js";
+import { datos, dia, hora, dentroDe } from "./base.js";
+import { hoyTexto, sumarDias, diasEntre, corto, lunes } from "./fechas.js";
+import { completar, alternarRegistro } from "./acciones.js";
 
 export const COLUMNAS = { hacer: "Hacer", cuidarme: "Cuidarme", vida: "Mi vida" };
 
-// --- Ayudas de fechas (todas con días como texto "2026-11-01", que se comparan y ordenan solos) ---
-export const hoyTexto = () => new Date().toLocaleDateString("sv-SE");
-export const sumarDias = (texto, n) => { const d = new Date(texto + "T12:00:00"); d.setDate(d.getDate() + n); return d.toLocaleDateString("sv-SE"); };
-const diasEntre = (a, b) => Math.round((new Date(b + "T12:00:00") - new Date(a + "T12:00:00")) / 864e5);
-const corto = (texto) => texto.split("-").reverse().slice(0, 2).join("/"); // "2026-11-01" -> "01/11"
-const lunes = (texto) => { const d = new Date(texto + "T12:00:00"); return sumarDias(texto, -((d.getDay() + 6) % 7)); };
 const plata = (n) => "$" + Math.round(n).toLocaleString("es-CL");
 
 // Lo que todas las tarjetas comparten. Se arma una vez por dibujo.
@@ -38,23 +34,8 @@ export function contexto() {
     }
   }
   const registrosDe = (id, clase) => indice.get(id + clase) ?? [];
-  // Dentro de qué proyecto o área está cada nodo (para mostrarlo al lado de una tarea).
-  const dentroDe = (id) => datos.nodo.get(datos.padre.get(id))?.titulo;
   return { hoy, deTipo, registrosDe, dentroDe };
 }
-
-// --- Acciones: lo que hace marcar una casilla. Todas escriben en la base; el tiempo real redibuja. ---
-const SALTO = { Diaria: 1, Semanal: 7, Mensual: 30 };
-// Una tarea repetitiva no se cierra: su fecha salta a la próxima vez que toca.
-const completar = (n) => {
-  const salto = SALTO[n.props?.repeticion];
-  const cambios = salto && n.fecha ? { fecha: new Date(new Date(n.fecha).getTime() + salto * 864e5).toISOString() } : { estado: "Hecho" };
-  return escribir(db.from("nodos").update(cambios).eq("id", n.id));
-};
-// Anotar que algo pasó hoy (un hábito cumplido, una planta regada), o borrar esa anotación si ya estaba.
-const alternarRegistro = (clase, nodo, deHoy) => deHoy
-  ? escribir(db.from("registros").delete().eq("id", deHoy.id))
-  : escribir(db.from("registros").insert({ clase, nodo_id: nodo.id }));
 
 // --- Filas que se repiten ---
 const abierta = (n) => n.estado !== "Hecho";

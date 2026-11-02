@@ -8,6 +8,7 @@
     La web de tu centro de datos. Este archivo tiene solo la estructura de la página;
     el estilo está en estilos.css y el comportamiento en js/ (empieza por js/main.js).
     Paso 26: la carcasa del escritorio. Barra arriba, dock escondido abajo y un apartado por sección.
+    Paso 27: Hoy (qué hacer a la izquierda; el tiempo y tu día a la derecha).
     Los apartados se anotan en js/apartados.js; cada uno tiene aquí su <section> con el mismo id.
   -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +36,23 @@
   </header>
 
   <main id="app" class="oculto">
-    <section id="inicio" class="apartado">
+    <section id="hoy" class="apartado">
+      <h2 id="hoy-fecha" class="sobre-foto"></h2>
+      <div class="ventana vidrio hoy-tareas">
+        <h3>Tareas de hoy <small id="hoy-cuenta"></small></h3>
+        <div id="hoy-tareas"></div>
+      </div>
+      <div class="ventana vidrio hoy-clima">
+        <h3>El tiempo</h3>
+        <div id="hoy-clima"></div>
+      </div>
+      <div class="ventana vidrio hoy-dia">
+        <h3>Tu día</h3>
+        <div id="hoy-agenda" class="agenda"></div>
+      </div>
+    </section>
+
+    <section id="inicio" class="apartado oculto">
       <div class="saludo">
         <h2 id="fecha-hoy"></h2>
         <form id="form-captura"><input id="captura" placeholder="Captura rápida: escribe una tarea y presiona Enter…" autocomplete="off"></form>

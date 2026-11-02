@@ -43,6 +43,8 @@ export const hora = (fecha) => {
 };
 
 export const colorDe = (clave) => datos.tipo.get(clave)?.color ?? "#78716c";
+// Dentro de qué proyecto, área o materia está un nodo (su caja), para mostrarlo al lado.
+export const dentroDe = (id) => datos.nodo.get(datos.padre.get(id))?.titulo;
 
 // Lee todo de Supabase. No hace falta filtrar por dueño: RLS ya lo hace.
 // Cuando termina avisa con el evento "datos", y cada vista (mapa, inicio, panel) se vuelve a dibujar.

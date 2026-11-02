@@ -29,7 +29,7 @@ body { margin: 0; font: 14px/1.5 var(--sans); color: var(--texto); background: v
 .fondo { position: fixed; inset: 0; z-index: -1; background: var(--cielo) var(--foto) center / cover no-repeat; }
 .fondo::after { content: ""; position: absolute; inset: 0; background: #000; opacity: var(--oscurecer); }
 /* Textos que van directo sobre la foto: blancos con una sombra suave para leerse sobre cualquier parte */
-#inicio .saludo h2, .columna > h2 { color: #fff; text-shadow: 0 1px 12px rgba(0,0,0,.45); }
+.sobre-foto, #inicio .saludo h2, .columna > h2 { color: #fff; text-shadow: 0 1px 12px rgba(0,0,0,.45); }
 .vidrio { background: var(--vidrio); backdrop-filter: blur(28px) saturate(170%); -webkit-backdrop-filter: blur(28px) saturate(170%);
           border: 1px solid var(--borde); box-shadow: var(--sombra); }
 
@@ -37,6 +37,15 @@ body { margin: 0; font: 14px/1.5 var(--sans); color: var(--texto); background: v
 button { padding: 6px 12px; border-radius: 9px; font: 500 13.5px var(--sans); cursor: pointer; border: 1px solid var(--borde); background: transparent; color: inherit; }
 button.principal { background: var(--acento-fondo); border-color: var(--acento-fondo); color: var(--sobre-acento); font-weight: 600; }
 input, select, textarea { font: inherit; color: inherit; }
+.icono { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Una ventana: el cuadro de vidrio donde va cada cosa (se usa junto con .vidrio) */
+.ventana { border-radius: var(--radio); padding: 16px 20px 14px; min-width: 0; }
+.ventana > h3 { font-size: 14.5px; font-weight: 600; margin: 0 0 8px; display: flex; justify-content: space-between; gap: 8px; }
+.ventana > h3 small { color: var(--suave); font-weight: 500; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.meta { color: var(--suave); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.meta.atrasada { color: var(--alerta); }
+.vacio { color: var(--suave); font-size: 13px; margin: 0; }
 
 /* Barra de arriba */
 .barra { position: fixed; top: 0; left: 0; right: 0; height: 40px; z-index: 10; display: flex; align-items: center; gap: 14px;
@@ -58,7 +67,7 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
                display: grid; place-items: center; transition: transform .15s; }
 .dock button:hover { transform: translateY(-4px) scale(1.06); }
 .dock button[aria-current="page"] { background: var(--acento-fondo); color: var(--sobre-acento); }
-.dock .icono { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.dock .icono { width: 24px; height: 24px; }
 .dock .etiqueta { position: absolute; bottom: 62px; padding: 3px 8px; border-radius: 7px; background: var(--vidrio-fuerte); color: var(--texto);
                   font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; }
 .dock button:hover .etiqueta { opacity: 1; }
@@ -97,26 +106,86 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 @media (max-width: 980px) { #inicio .tablero { grid-template-columns: 1fr; } }
 .columna { display: grid; gap: 24px; min-width: 0; }
 .columna > h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; margin: 0 0 -12px; }
-/* Una tarjeta es una ventana de vidrio */
-.tarjeta { border-radius: var(--radio); padding: 16px 20px 14px; min-width: 0; background: var(--vidrio); border: 1px solid var(--borde); box-shadow: var(--sombra);
-           backdrop-filter: blur(28px) saturate(170%); -webkit-backdrop-filter: blur(28px) saturate(170%); }
-.tarjeta h3 { font-size: 14.5px; font-weight: 600; margin: 0 0 6px; display: flex; justify-content: space-between; gap: 8px; }
-.tarjeta h3 small { color: var(--suave); font-weight: 500; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+/* Una tarjeta es una ventana (ver arriba) con una lista */
 .tarjeta ul { list-style: none; padding: 0; margin: 0; }
 .tarjeta li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--linea); flex-wrap: wrap; }
 .tarjeta li:first-child { border-top: 0; }
 .tarjeta li input { margin: 0; width: 16px; height: 16px; accent-color: var(--acento-fondo); }
 .tarjeta li a { color: inherit; text-decoration: none; cursor: pointer; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tarjeta li a:hover { text-decoration: underline; }
-.tarjeta .meta { color: var(--suave); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.tarjeta .atrasada { color: var(--alerta); }
-.tarjeta .vacio { color: var(--suave); font-size: 13px; margin: 0; }
 .puntos { display: flex; gap: 3px; }
 .puntos i { width: 8px; height: 8px; border-radius: 2px; background: var(--linea); }
 .puntos i.si { background: var(--bien); }
 .barra-p { flex-basis: 100%; height: 6px; border-radius: 99px; background: var(--linea); overflow: hidden; }
 .barra-p span { display: block; height: 100%; background: var(--acento-fondo); }
 .barra-p.pasada span { background: var(--alerta); }
+
+/* Hoy: a la izquierda qué hacer; a la derecha el tiempo y tu día. Cabe en la pantalla; cada ventana se desplaza por dentro. */
+#hoy { display: grid; gap: 20px; padding: 24px max(24px, calc((100% - 1240px) / 2)) 32px; overflow-y: auto;
+       grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr); grid-template-rows: auto auto minmax(0, 1fr);
+       grid-template-areas: "fecha fecha" "tareas clima" "tareas dia"; }
+#hoy-fecha { grid-area: fecha; margin: 0; font-size: 28px; letter-spacing: -.02em; }
+#hoy-fecha::first-letter { text-transform: uppercase; }
+#hoy .ventana { display: flex; flex-direction: column; min-height: 0; }
+.hoy-tareas { grid-area: tareas; } .hoy-clima { grid-area: clima; } .hoy-dia { grid-area: dia; }
+#hoy-tareas, #hoy-agenda { flex: 1; min-height: 0; overflow-y: auto; }
+#hoy-tareas h4 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); margin: 20px 0 2px; }
+#hoy-tareas h4.alerta { color: var(--alerta); }
+/* Las 3 prioridades: destacadas con el color de acento */
+.prioridades { padding: 12px 14px 6px; border-radius: 12px; background: color-mix(in srgb, var(--acento) 10%, transparent);
+               border: 1px solid color-mix(in srgb, var(--acento) 28%, transparent); }
+#hoy-tareas .prioridades h4 { margin: 0 0 2px; color: var(--acento); }
+.prioridades .tareas .nombre { font-weight: 600; font-size: 15px; white-space: normal; } /* las importantes se leen completas */
+.prioridades .vacio { padding: 6px 0 8px; }
+.pista { font-size: 12px; color: var(--suave); margin: 18px 0 0; }
+/* Una lista de tareas */
+.tareas { list-style: none; margin: 0; padding: 0; }
+.tareas li { display: flex; align-items: center; gap: 6px 10px; padding: 8px 0; border-top: 1px solid var(--linea); flex-wrap: wrap; }
+.tareas li:first-child { border-top: 0; }
+.tareas li[draggable="true"] { cursor: grab; }
+.tareas .nombre { flex: 1 1 160px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; } /* si no cabe todo, lo demás pasa abajo */
+.tareas .nombre:hover { text-decoration: underline; }
+.tareas li.hecha .nombre { text-decoration: line-through; color: var(--suave); }
+.estrella { border: 0; padding: 0 2px; font-size: 16px; line-height: 1; color: var(--suave); }
+.estrella.puesta { color: var(--aviso); }
+.acciones-fila { display: flex; gap: 4px; }
+.acciones-fila button { padding: 2px 8px; font-size: 12px; }
+/* Casilla redonda para marcar algo como hecho */
+.caja { appearance: none; flex: none; width: 18px; height: 18px; margin: 0; border-radius: 50%; border: 1.5px solid var(--suave); cursor: pointer; display: grid; place-items: center; }
+.caja:checked { background: var(--acento-fondo); border-color: var(--acento-fondo); }
+.caja:checked::after { content: ""; width: 4px; height: 8px; border: solid var(--sobre-acento); border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+/* El tiempo */
+.clima-ahora { display: flex; align-items: center; gap: 14px; }
+.clima-ahora .icono { width: 42px; height: 42px; stroke-width: 1.5; color: var(--aviso); }
+.clima-ahora b { display: block; font-size: 30px; font-weight: 600; line-height: 1.1; letter-spacing: -.02em; }
+.clima-ahora span { color: var(--suave); }
+.clima-ahora dl { margin: 0 0 0 auto; font-size: 12.5px; gap: 0 10px; }
+.clima-horas { list-style: none; margin: 12px 0 0; padding: 0; display: flex; justify-content: space-between; text-align: center; font-size: 12.5px; }
+.clima-horas span { display: block; color: var(--suave); }
+.consejo { margin: 12px 0 0; padding: 9px 12px; border-radius: 10px; font-size: 13px; background: color-mix(in srgb, var(--acento) 10%, transparent); }
+
+/* Agenda por horas (agenda.js): la usan Tu día y el calendario. Las columnas las fija agenda.js según cuántos días muestra. */
+.agenda-cab, .agenda-todo, .agenda-cuerpo { display: grid; }
+.agenda-cab { position: sticky; top: 0; z-index: 2; padding: 4px 0; text-align: center; font-size: 12px; color: var(--suave); background: var(--vidrio-fuerte); }
+.agenda-cab .hoy b { padding: 0 6px; border-radius: 99px; color: var(--sobre-acento); background: var(--acento-fondo); }
+.agenda .hora { font-size: 11px; color: var(--suave); font-variant-numeric: tabular-nums; }
+.agenda-todo { padding: 4px 0 6px; border-bottom: 1px solid var(--linea); }
+.agenda-todo > .hora { align-self: center; }
+.agenda-todo > div { display: grid; gap: 3px; padding: 0 2px; min-width: 0; }
+.agenda-cuerpo { position: relative; margin-top: 8px; }
+.horas { position: relative; }
+.horas .hora { position: absolute; right: 8px; transform: translateY(-50%); }
+.dia { position: relative; border-left: 1px solid var(--linea); background: repeating-linear-gradient(var(--linea) 0 1px, transparent 1px var(--alto)); }
+.dia.soltar { outline: 2px dashed var(--acento); outline-offset: -2px; background-color: color-mix(in srgb, var(--acento) 8%, transparent); }
+.bloque { position: absolute; display: flex; flex-direction: column; overflow: hidden; padding: 3px 8px; border: 0; border-radius: 7px; text-align: left;
+          font-size: 12px; line-height: 1.3; background: color-mix(in srgb, var(--c) 22%, var(--vidrio-fuerte)); box-shadow: inset 3px 0 var(--c); }
+.bloque b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bloque small { flex: none; color: var(--suave); font-variant-numeric: tabular-nums; }
+.bloque.tarea { background: color-mix(in srgb, var(--c) 8%, var(--vidrio-fuerte)); outline: 1px dashed var(--c); outline-offset: -1px; }
+.bloque.corto, .bloque.todo-el-dia { flex-direction: row; align-items: baseline; gap: 6px; }
+.bloque.todo-el-dia { position: static; }
+.ahora { position: absolute; left: 0; right: 0; z-index: 1; height: 2px; background: var(--alerta); pointer-events: none; }
+.ahora::before { content: ""; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--alerta); }
 
 /* Mapa: la leyenda arriba y el grafo en un panel de vidrio */
 #mapa { display: flex; flex-direction: column; gap: 12px; padding: 16px 16px 24px; transition: padding-right .25s; }
@@ -155,6 +224,11 @@ form.nodo input.check { width: auto; }
 @media (max-width: 700px) {
   .barra .app-actual { display: none; }
   #inicio { padding: 20px 16px 48px; }
+  /* Hoy en una columna: tareas, el tiempo y tu día, una debajo de otra */
+  #hoy { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "fecha" "tareas" "clima" "dia";
+        grid-auto-rows: max-content; padding: 20px 16px 48px; } /* cada ventana mide lo que su contenido; se desplaza la página */
+  #hoy-fecha { font-size: 24px; }
+  #hoy-agenda { max-height: 480px; }
   #panel { left: 12px; width: auto; top: auto; height: 60%; }
   .con-panel #mapa { padding-right: 16px; }
 }
