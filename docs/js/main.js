@@ -36,12 +36,18 @@ function mostrarApp(conSesion) {
 }
 $("form-login").onsubmit = async (e) => {
   e.preventDefault();
-  const { error } = await db.auth.signInWithOtp({ email: $("correo").value, options: { emailRedirectTo: location.href } });
+  // El enlace vuelve a la web sin el #apartado: Supabase usa la parte después del # para entregar la sesión.
+  const { error } = await db.auth.signInWithOtp({ email: $("correo").value, options: { emailRedirectTo: location.origin + location.pathname } });
   avisar(error ? error.message : "Revisa tu correo y abre el enlace desde este navegador.");
 };
 $("salir").onclick = () => db.auth.signOut();
+// Si el enlace del correo venció o ya se usó, Supabase vuelve con #error_description=...; se muestra en vez de nada.
+const errorDeEntrada = () => {
+  const e = new URLSearchParams(location.hash.slice(1)).get("error_description");
+  return e ? `No pude entrar: ${e}. Pide un enlace nuevo.` : "";
+};
 db.auth.onAuthStateChange((_evento, sesion) => {
   mostrarApp(!!sesion);
   if (sesion) { recargar(); escucharCambios(); }
-  else { dejarDeEscuchar(); avisar(""); }
+  else { dejarDeEscuchar(); avisar(errorDeEntrada()); }
 });
