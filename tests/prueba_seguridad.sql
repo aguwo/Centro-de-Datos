@@ -28,7 +28,7 @@ do $$ begin
 end $$;
 
 do $$ declare n int; begin
-  select count(*) into n from tipos; assert n = 17, 'usuario 1 debería ver 17 plantillas, ve ' || n;
+  select count(*) into n from tipos; assert n = 16, 'usuario 1 debería ver 16 plantillas, ve ' || n;
   select count(*) into n from vecinos((select id from nodos where titulo = 'Escribir migración'), 2);
   assert n = 2, 'vecinos a profundidad 2 debería dar 2, dio ' || n;
   select count(*) into n from nodos where busqueda @@ plainto_tsquery('spanish', 'migraciones');
@@ -45,13 +45,15 @@ do $$ declare r text; begin
   assert r = 'Evaluaciones', 'evento debería agruparse en Evaluaciones dentro de un tópico';
   assert (select propiedades @> '[{"clave":"estado"},{"clave":"resultado"}]'::jsonb from tipos where clave = 'topico'),
     'tópico debería tener estado y resultado (paso 36)';
+  assert (select propiedades->3->>'clave' = 'actual' from tipos where clave = 'objetivo'), 'objetivo debería tener "Va en" después de "Desde" (paso 37a)';
+  assert (select conexiones @> '[{"relacion":"aporta_a","hacia":["objetivo"]}]'::jsonb from tipos where clave = 'topico'), 'un ramo debería poder aportar a un objetivo (paso 37a)';
 end $$;
 
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
 do $$ declare n int; begin
   select count(*) into n from nodos; assert n = 0, 'usuario 2 no debería ver nodos ajenos, ve ' || n;
   select count(*) into n from conexiones; assert n = 0, 'usuario 2 no debería ver conexiones ajenas';
-  select count(*) into n from tipos; assert n = 17, 'usuario 2 debería ver las 17 plantillas';
+  select count(*) into n from tipos; assert n = 16, 'usuario 2 debería ver las 16 plantillas (paso 37a: sin hito)';
   select count(*) into n from registros; assert n = 0, 'usuario 2 no debería ver registros ajenos';
   select count(*) into n from disposiciones; assert n = 0, 'usuario 2 no debería ver disposiciones ajenas';
 end $$;

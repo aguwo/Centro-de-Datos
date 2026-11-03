@@ -110,7 +110,7 @@ export const TARJETAS = [
     titulo: "Objetivos", columna: "cuidarme",
     calcular(c) {
       // Todo lo que tenga una meta con número. "Actual" es la última medida anotada, o lo que diga el nodo.
-      const conMeta = datos.nodos.filter((n) => ["objetivo", "hito"].includes(n.tipos.clave) && abierta(n) && typeof n.props?.meta === "number");
+      const conMeta = datos.nodos.filter((n) => n.tipos.clave === "objetivo" && abierta(n) && typeof n.props?.meta === "number");
       const filas = conMeta.map((n) => {
         const { meta, inicio = 0, unidad = "" } = n.props;
         const actual = Number(c.registrosDe(n.id, "medida").at(-1)?.valor ?? n.props.actual ?? inicio);

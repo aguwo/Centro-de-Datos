@@ -91,7 +91,7 @@ export const CLASES: Record<string, string> = {
   ingreso: "nodo = cuenta donde entró, valor = monto, unidad = CLP",
   transferencia: "nodo = cuenta de origen, otro = cuenta destino, valor = monto, unidad = CLP",
   habito: "nodo = el hábito cumplido, valor = 1",
-  medida: "nodo = lo que se mide (ej. el hito Peso Objetivo), valor y unidad (ej. 52.2 kg)",
+  medida: "nodo = lo que se mide (ej. el objetivo de subir de peso), valor y unidad (ej. 52.2 kg)",
   comida: "nodo = alimento o receta, valor = gramos o porciones (ver unidad)",
   riego: "nodo = la planta",
 };
