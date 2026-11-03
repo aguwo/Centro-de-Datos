@@ -94,6 +94,7 @@ export const CLASES: Record<string, string> = {
   medida: "nodo = lo que se mide (ej. el objetivo de subir de peso), valor y unidad (ej. 52.2 kg)",
   comida: "nodo = alimento o receta, valor = gramos o porciones (ver unidad)",
   riego: "nodo = la planta",
+  asistencia: "nodo = el ramo (tópico), valor = 1 si fue a clases y 0 si faltó; fecha = el día de la clase",
 };
 
 const VERSIONES = ["2025-11-25", "2025-06-18", "2025-03-26"];

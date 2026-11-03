@@ -53,6 +53,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 37b | Los objetivos en el escritorio infinito: una franja arriba de Productividad con una tarjeta por objetivo (cuánto llevas, y una rayita en "hoy" para ver si vas atrasado contra la fecha tope). Tocar una filtra las tareas de lo que le aporta. Sirve para cualquier apartado: una columna con `arriba: true` | `docs/js/objetivos.js`, `docs/js/widgets.js` |
 | 38c | Cada proyecto puede llevar el enlace a su proyecto en Claude: en la página Proyectos aparece «Proyecto en Claude ↗». Cualquier propiedad de tipo enlace se muestra así, como botón | `supabase/migrations/0015_proyecto_en_claude.sql`, `docs/js/proyectos.js` |
 | 37c | Los objetivos pasan de la franja a la lista de Productividad, dentro de su área: cada uno (con su anillo, su avance y la rayita de hoy) agrupa los proyectos y ramos que le aportan; lo demás queda en "Sin objetivo". Se quita la franja | `docs/js/productividad.js`, `docs/js/objetivos.js` |
+| 46a | El apartado Universidad: una tarjeta por ramo del semestre (cómo va, tu nota, cuánto necesitas para el 4, tu asistencia y lo próximo) y, al tocarla, la página del ramo: evaluaciones con ponderación y nota (se escriben ahí), "¿y si me saco…?", asistencia con Fui / Falté y sus tareas. Al lado, "Lo que viene" de todos tus ramos. Los eventos ganan Ponderación y Nota, y hay un registro nuevo: asistencia | `supabase/migrations/0016_universidad.sql`, `docs/js/universidad.js`, `docs/js/notas.js`, `tests/notas.test.mjs` |
 
 ## Cómo está ordenada la web
 
@@ -80,6 +81,8 @@ docs/js/agenda.js    la agenda por horas (un día o varios); la usan Hoy y el ca
 docs/js/clima.js     el tiempo de Open-Meteo y el consejo del día
 docs/js/acciones.js  lo que la web le cambia a tus datos (completar, posponer, soltar, agendar...)
 docs/js/fechas.js    ayudas de fechas (hoy, sumar días, horas)
+docs/js/universidad.js  el apartado Universidad: tarjetas de ramos, la página de un ramo y lo que viene
+docs/js/notas.js     las cuentas de un ramo: nota hasta ahora, cuánto necesitas, cómo va, asistencia
 docs/js/inicio.js    el Resumen: dibuja las señales y las tarjetas
 docs/js/tarjetas.js  qué muestra cada tarjeta (agregar una = agregar un objeto a TARJETAS)
 ```

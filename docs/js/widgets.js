@@ -15,6 +15,7 @@ import { el, datos } from "./base.js";
 import { tareasDeHoy, elTiempo, tuDia } from "./hoy.js";
 import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
 import { indice, cabecera, tablero, dentro } from "./proyectos.js";
+import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 
 export const WIDGETS = {
   "tareas-de-hoy": { titulo: "Tareas de hoy", crece: true, crear: tareasDeHoy },
@@ -26,6 +27,9 @@ export const WIDGETS = {
   "caja":          { crear: cabecera },
   "tablero":       { titulo: "Tareas", crece: true, crear: tablero },
   "dentro":        { crear: dentro },
+  "ramos":         { crear: tarjetasDeRamos },
+  "ramo":          { crear: paginaDeRamo },
+  "lo-que-viene":  { titulo: "Lo que viene", crear: loQueViene },
 };
 
 // Las columnas de un apartado: las tuyas, si las guardaste, o las de siempre.

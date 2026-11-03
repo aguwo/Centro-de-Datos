@@ -22,6 +22,7 @@
 import { dibujarInicio } from "./inicio.js";
 import { dibujar as dibujarMapa, ajustarMapa } from "./mapa.js";
 import { dibujarCalendario, iniciarCalendario } from "./calendario.js";
+import { semestreActual } from "./universidad.js";
 
 export const APARTADOS = [
   {
@@ -40,6 +41,13 @@ export const APARTADOS = [
     id: "proyectos", nombre: "Proyectos", nuevo: ["proyecto", "tarea", "nota", "evento"],
     columnas: [{ costado: true, widgets: ["indice"] }, { widgets: ["caja", "tablero", "dentro"] }], // el índice, pegado al costado (paso 38b)
     icono: '<path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+  },
+  // Paso 46a: tus ramos del semestre (universidad.js). Las tarjetas; al tocar una, la página de ese ramo.
+  {
+    id: "universidad", nombre: "Universidad", nuevo: ["evento", "tarea", "nota"],
+    titulo: () => ["Universidad", semestreActual()].filter(Boolean).join(" · "),
+    columnas: [{ ancho: 3, widgets: ["ramos", "ramo"] }, { ancho: 1.1, widgets: ["lo-que-viene"] }],
+    icono: '<path d="M2.5 9L12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c0 1.4 2.5 3 5.5 3s5.5-1.6 5.5-3V11M21.5 9v5"/>',
   },
   // Las tarjetas de antes (hábitos, gastos, plantas...). Se quedan hasta que cada una tenga su apartado (paso 32).
   {
