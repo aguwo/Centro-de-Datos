@@ -1,16 +1,17 @@
 // Los widgets de Productividad (paso 32): tus proyectos y sus tareas. Comparten ctx (widgets.js):
 // ctx.area es el chip elegido y ctx.filtro, el chip o uno de sus proyectos: lo que muestra "tareas".
 // Viven en ctx y no dentro del widget para que no se pierdan si la ventana se vuelve a armar.
-//   proyectos  una fila de chips (Todas, Proyectos, Universidad... y Sin proyecto). Elegir uno filtra las tareas
+//   proyectos  una fila de chips: tus áreas (Proyectos, Universidad...) y al final Todas y Sin proyecto. Elegir uno filtra las tareas
 //              y muestra debajo solo sus proyectos y tópicos (los ramos), cada uno con su color, su avance, cuántas
 //              tareas van atrasadas y la próxima. Tocar uno lo filtra (tocarlo de nuevo vuelve al área).
 //              Soltar una tarea encima de un chip o un proyecto la mueve ahí. Un proyecto sin nada pendiente se puede cerrar.
+//              Las áreas se ordenan arrastrando un chip sobre otro; el orden queda en cada área (props.orden).
 //   tareas     las del filtro, por grupo (atrasadas, hoy, próximas, sin fecha; las hechas, plegadas).
 //              "Agregar tarea" entiende fechas escritas ("dentista mañana 10:00") y deja la tarea en lo elegido.
 // Lo del Inbox no aparece aquí: son los post-its (postits.js).
-import { el, datos, dia, cajasDe, areaDe, proyectoDe, colorDeProyecto, irA } from "./base.js";
+import { el, datos, dia, cajasDe, areaDe, areasEnOrden, proyectoDe, colorDeProyecto, irA } from "./base.js";
 import { hoyTexto, corto } from "./fechas.js";
-import { cambiar, mover } from "./acciones.js";
+import { cambiar, cambiarProps, mover } from "./acciones.js";
 import { listaDeTareas, seccion, porFecha, agregarTarea } from "./tareas.js";
 
 const LISTADOS = ["proyecto", "topico"]; // lo que aparece bajo cada área (paso 36b: los ramos también)
@@ -67,7 +68,8 @@ export function areasYProyectos(v, ctx) {
   const chips = el("div", { className: "pildoras", role: "group", ariaLabel: "Áreas" });
   const lista = el("ul", { className: "desliza proyectos" });
   v.append(chips, lista);
-  const areaElegida = () => ctx.area ?? TODAS;
+  let primera = TODAS; // el primer chip: lo que se ve si no has elegido nada
+  const areaElegida = () => ctx.area ?? primera;
   const elegir = (filtro, area = areaElegida()) => ctx.cambiar({ filtro, area });
 
   // Un chip: elige el área (y con eso, qué proyectos se ven y qué tareas).
@@ -75,7 +77,11 @@ export function areasYProyectos(v, ctx) {
     const b = el("button", { textContent: c.nombre, title: cuenta(c), ariaPressed: String(c.id === areaElegida()),
       onclick: () => elegir(c.id, c.id) });
     if (c.atrasadas) b.classList.add("con-atrasadas");
-    if (c.nodo) recibir(b, c);
+    if (c.nodo) {
+      b.draggable = true; // arrastrar un área sobre otra las reordena
+      b.ondragstart = (e) => e.dataTransfer.setData("text/plain", c.id);
+      recibir(b, c);
+    }
     return b;
   };
   // Un proyecto: su color, su avance y la próxima tarea. Si no le queda nada pendiente, "Cerrar proyecto".
@@ -99,12 +105,10 @@ export function areasYProyectos(v, ctx) {
     const fila = (n) => ({ id: n.id, nombre: n.titulo, nodo: n, ...resumen(n.id) });
     const proyectos = LISTADOS.flatMap(deTipo).filter((p) => p.estado !== "Hecho").map(fila)
       .sort((a, b) => (a.proxima?.fecha ?? "9").localeCompare(b.proxima?.fecha ?? "9") || a.nombre.localeCompare(b.nombre, "es"));
-    // Las áreas que tienen proyectos activos o tareas pendientes, en orden alfabético.
-    const areas = datos.nodos.filter((n) => n.tipos.clave === "area").map(fila)
-      .filter((a) => a.abiertas || proyectos.some((p) => areaDe(p.id) === a.id))
-      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-    const todos = [TODAS, SIN].map((id) => ({ id, nombre: NOMBRE[id], ...resumen(id) }));
-    const filas = [todos[0], ...areas, todos[1]];
+    // Las áreas que tienen proyectos activos o tareas pendientes, en tu orden; Todas y Sin proyecto, al final.
+    const areas = areasEnOrden().map(fila).filter((a) => a.abiertas || proyectos.some((p) => areaDe(p.id) === a.id));
+    const filas = [...areas, ...[TODAS, SIN].map((id) => ({ id, nombre: NOMBRE[id], ...resumen(id) }))];
+    primera = filas[0].id;
 
     const area = filas.some((c) => c.id === areaElegida()) ? areaElegida() : TODAS; // el área pudo quedarse sin nada activo
     const visibles = area === TODAS ? proyectos : proyectos.filter((p) => areaDe(p.id) === area);
@@ -118,7 +122,14 @@ export function areasYProyectos(v, ctx) {
   };
 }
 
-// Soltar una tarea encima de un área o proyecto la mueve ahí.
+// Deja el área "a" justo antes de "antesDe" y guarda el nuevo orden (solo en las que cambiaron de lugar).
+function reordenar(a, antesDe) {
+  const lista = areasEnOrden().filter((n) => n !== a);
+  lista.splice(lista.indexOf(antesDe), 0, a);
+  lista.forEach((n, i) => n.props?.orden !== i && cambiarProps(n, { orden: i }));
+}
+
+// Soltar una tarea encima de un área o proyecto la mueve ahí; soltar un área sobre otra las reordena.
 function recibir(destino, f) {
   const tarea = (e) => datos.nodo.get(e.dataTransfer.getData("text/plain"));
   destino.ondragover = (e) => { e.preventDefault(); destino.classList.add("soltar"); };
@@ -128,5 +139,6 @@ function recibir(destino, f) {
     destino.classList.remove("soltar");
     const n = tarea(e);
     if (n?.tipos.clave === "tarea" && datos.padre.get(n.id) !== f.id) mover(n, f.id);
+    if (n?.tipos.clave === "area" && f.nodo?.tipos.clave === "area" && n !== f.nodo) reordenar(n, f.nodo);
   };
 }

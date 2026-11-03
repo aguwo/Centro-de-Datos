@@ -7,7 +7,7 @@
 //   dentro   sus notas y próximos eventos
 // Solo muestra proyectos (paso 35b): los ramos y los objetivos tendrán su propia vista, con su propio diseño.
 // Los widgets no saben de proyectos más allá de MUESTRA: otra vista puede reusarlos con otro tipo.
-import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, areaDe, dentroDe, escribible, escribiendoEn } from "./base.js";
+import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, areaDe, areasEnOrden, dentroDe, escribible, escribiendoEn } from "./base.js";
 import { hoyTexto, corto } from "./fechas.js";
 import { cambiar, completar, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario, camposDe, tienePropiedad } from "./panel.js";
@@ -65,14 +65,14 @@ export function indice(v, ctx) {
       const hay = cajas.filter((n) => sinTildes(n.titulo).includes(texto)).sort(porNombre);
       return arbol.replaceChildren(...(hay.length ? hay.map((n) => item(n)) : [el("p", { className: "vacio", textContent: "Nada con ese nombre." })]));
     }
-    // Los activos, agrupados por área (por nombre; los sin área, al final). Los terminados, al final y plegados.
+    // Los activos, agrupados por área (en tu orden; los sin área, al final). Los terminados, al final y plegados.
     const grupos = new Map();
     for (const c of cajas.filter((c) => !terminada(c)).sort(porNombre)) {
       const a = areaDe(c.id) ?? "";
       grupos.set(a, [...(grupos.get(a) ?? []), c]);
     }
     const nombre = (area) => datos.nodo.get(area)?.titulo ?? "Sin área";
-    const areas = [...grupos.keys()].sort((a, b) => !a - !b || nombre(a).localeCompare(nombre(b), "es"));
+    const areas = [...areasEnOrden().map((a) => a.id), ""].filter((a) => grupos.has(a)); // en tu orden; "Sin área" al final
     const hechas = cajas.filter(terminada).sort(porNombre);
     arbol.replaceChildren(...areas.flatMap((a) => [el("h4", { className: "grupo", textContent: nombre(a) }), ...grupos.get(a).map((n) => item(n))]),
       hechas.length ? el("details", { className: "terminadas", open: hechas.some((h) => h.id === elegida) },
