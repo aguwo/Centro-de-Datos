@@ -113,16 +113,6 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 .con-escritorio .dock .en-lienzo { display: none; }
 .con-escritorio .dock [data-escritorio] { display: grid; }
 
-/* La barra de secciones del escritorio: arriba al centro, encima del lienzo. */
-.secciones { display: none; }
-.con-escritorio .secciones { display: flex; align-items: center; gap: 2px; position: absolute; z-index: 5; top: 12px; left: 50%; transform: translateX(-50%);
-  padding: 4px; border-radius: 999px; white-space: nowrap; }
-.secciones button { border: 0; background: none; padding: 5px 13px; border-radius: 999px; color: var(--suave); font-size: 13px; }
-.secciones button:hover { color: var(--texto); }
-.secciones button[aria-pressed="true"] { background: var(--vidrio-fuerte); color: var(--texto); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
-.secciones .separador { width: 1px; height: 18px; margin: 0 4px; background: var(--linea); }
-.secciones .ver-todo { display: flex; align-items: center; gap: 6px; }
-.secciones .icono { width: 15px; height: 15px; }
 .con-escritorio #mundo > .apartado { transition: outline-color .15s; outline: 4px solid transparent; outline-offset: 8px; }
 .escritorio.lejos #mundo > .apartado { cursor: zoom-in; }
 .escritorio.lejos #mundo > .apartado:hover { outline-color: var(--acento); }
