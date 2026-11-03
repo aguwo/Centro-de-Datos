@@ -1,5 +1,7 @@
 // La carcasa del escritorio: el dock con un botón por apartado, el cambio de apartado,
-// el dock que se esconde solo y el reloj de la barra. No sabe nada de ningún apartado en particular:
+// el dock que se esconde solo y el reloj de la barra.
+// Paso 35c: en el computador el dock es una barra lateral fija (estilos.css), y los apartados del
+// escritorio (los que tienen "lugar") van juntos en un solo botón, "Escritorio". No sabe nada de ningún apartado en particular:
 // todo lo lee de APARTADOS (apartados.js). El lienzo movible está en escritorio.js.
 import { $, el } from "./base.js";
 import { APARTADOS, CAJONES } from "./apartados.js";
@@ -7,6 +9,10 @@ import { iniciarEscritorio, enEscritorio, mirar } from "./escritorio.js";
 import { montar } from "./widgets.js";
 
 let actual = APARTADOS[0];
+let enElEscritorio = APARTADOS.find((a) => a.lugar); // la última sección del escritorio que viste: "Escritorio" vuelve ahí
+// El botón "Escritorio" de la barra lateral (en el teléfono no se ve: ahí cada sección tiene el suyo).
+const ESCRITORIO = { id: "escritorio", nombre: "Escritorio",
+  icono: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>' };
 export const apartadoActual = () => actual.id;
 
 // Muestra un apartado y esconde los demás. Queda en la dirección (#mapa) para volver con atrás o recargar.
@@ -16,7 +22,9 @@ export function ir(id) {
   const juntos = enEscritorio(actual);
   for (const a of APARTADOS) $(a.id).classList.toggle("oculto", a !== actual && !(juntos && enEscritorio(a)));
   $("escritorio").classList.toggle("oculto", !actual.lugar);
+  if (actual.lugar) enElEscritorio = actual;
   for (const b of $("dock").querySelectorAll("[data-apartado]")) b.setAttribute("aria-current", b.dataset.apartado === actual.id ? "page" : "false");
+  $("dock").querySelector("[data-escritorio]")?.setAttribute("aria-current", actual.lugar ? "page" : "false");
   $("app-actual").textContent = actual.nombre;
   // La dirección no se toca si trae la respuesta del inicio de sesión (#access_token=...): la lee Supabase.
   if (location.hash.slice(1) !== actual.id && !location.hash.includes("=")) history.replaceState(null, "", "#" + actual.id);
@@ -56,7 +64,14 @@ function armarDock() {
     b.setAttribute("aria-label", x.nombre);
     return b;
   };
-  $("dock").replaceChildren(...APARTADOS.map((a) => boton(a, "apartado", () => ir(a.id))),
+  const apartados = APARTADOS.map((a) => {
+    const b = boton(a, "apartado", () => ir(a.id));
+    if (a.lugar) b.classList.add("en-lienzo"); // en el computador se juntan en "Escritorio"
+    return b;
+  });
+  const conLugar = APARTADOS.findIndex((a) => a.lugar);
+  if (conLugar >= 0) apartados.splice(conLugar, 0, boton(ESCRITORIO, "escritorio", () => ir(enElEscritorio.id)));
+  $("dock").replaceChildren(...apartados,
     ...(CAJONES.length ? [el("i", { className: "separador" })] : []),
     ...CAJONES.map((c) => boton(c, "cajon", () => cajon(c.id))));
 }

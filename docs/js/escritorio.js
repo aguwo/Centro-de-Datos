@@ -1,6 +1,8 @@
 // El escritorio movible (paso 28): los apartados que tienen "lugar" (apartados.js) quedan juntos en un
 // lienzo más grande que la pantalla. Se arrastra para moverse, la rueda con Ctrl acerca o aleja,
 // y el minimapa de la esquina salta de una sección a otra.
+// Paso 35c: el escritorio tiene su propia barra de secciones arriba (con "Ver todo"), y las flechas ← →
+// pasan de una sección a otra; Esc aleja para ver todo (o vuelve). El dock ya no se usa para moverse aquí.
 // En pantallas angostas no hay lienzo: cada apartado se ve a pantalla completa, como los demás.
 import { $, el } from "./base.js";
 import { APARTADOS } from "./apartados.js";
@@ -18,7 +20,7 @@ export const alCambiarDeModo = (fn) => pantallaAncha.addEventListener("change", 
 
 const enLienzo = APARTADOS.filter((a) => a.lugar);
 const esquina = new Map(); // id de la sección -> { x, y } de su esquina en el mundo
-let cam = { x: 0, y: 0, z: 1 }, mundo = { w: 0, h: 0 }, mirando = null;
+let cam = { x: 0, y: 0, z: 1 }, mundo = { w: 0, h: 0 }, mirando = null, lejos = false;
 
 // Para pegar cosas en el mundo (los post-its): cuánto está acercado y qué punto queda al medio de la pantalla.
 export const zoom = () => cam.z;
@@ -50,12 +52,14 @@ function aplicar(animar = false) {
   document.body.style.setProperty("--px", (cam.x / mundo.w) * 24 + "px");
   document.body.style.setProperty("--py", (cam.y / mundo.h) * 24 + "px");
   dibujarMinimapa();
+  $("escritorio").classList.toggle("lejos", lejos);
+  for (const b of $("secciones").querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.dataset.id ? !lejos && b.dataset.id === mirando : lejos));
 }
 
 // Centra una sección y la acerca hasta que quepa entera.
 export function mirar(id, animar = true) {
   const s = $(id), vista = $("escritorio"), W = vista.clientWidth, H = vista.clientHeight;
-  mirando = id;
+  mirando = id; lejos = false;
   if (!W) return; // todavía no se ve (antes de entrar); se enfoca cuando aparezca
   cam.z = Math.min(1, (W - 2 * MARGEN) / SECCION.ancho, (H - 2 * MARGEN) / SECCION.alto);
   cam.x = W / 2 - (s.offsetLeft + SECCION.ancho / 2) * cam.z;
@@ -63,9 +67,10 @@ export function mirar(id, animar = true) {
   aplicar(animar);
 }
 
-// Todo el mundo a la vista (doble clic en el fondo).
+// Todo el mundo a la vista ("Ver todo", Esc o doble clic en el fondo). Tocar una sección te lleva a ella.
 function verTodo() {
   const vista = $("escritorio");
+  lejos = true;
   cam.z = Math.max(ZOOM.min, Math.min(1, (vista.clientWidth - 2 * MARGEN) / mundo.w, (vista.clientHeight - 2 * MARGEN) / mundo.h));
   cam.x = (vista.clientWidth - mundo.w * cam.z) / 2;
   cam.y = (vista.clientHeight - mundo.h * cam.z) / 2;
@@ -109,6 +114,17 @@ function dibujarMinimapa() {
   Object.assign(mini.querySelector(".vista").style, caja(-cam.x / cam.z, -cam.y / cam.z, vista.clientWidth / cam.z, vista.clientHeight / cam.z));
 }
 
+// La barra de secciones: un botón por sección del escritorio y "Ver todo".
+function armarSecciones(ir) {
+  const todo = el("button", { className: "ver-todo", textContent: "Ver todo", title: "Alejarse para ver todo el escritorio (Esc)", onclick: () => (lejos ? ir(mirando) : verTodo()) });
+  todo.insertAdjacentHTML("afterbegin", '<svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>');
+  $("secciones").replaceChildren(...enLienzo.map((a) => {
+    const b = el("button", { textContent: a.nombre, onclick: () => ir(a.id) });
+    b.dataset.id = a.id;
+    return b;
+  }), el("i", { className: "separador" }), todo);
+}
+
 // Lo que tiene su propio desplazamiento (una lista larga, la agenda) y todavía tiene para dónde moverse.
 function desplazable(t) {
   for (let n = t; n && n.id !== "mundo"; n = n.parentElement)
@@ -116,7 +132,7 @@ function desplazable(t) {
 }
 
 // Moverse: arrastrar el fondo, los títulos o la barra de una ventana; rueda; Ctrl + rueda (o pellizco) acerca; flechas.
-function controles() {
+function controles(ir) {
   const vista = $("escritorio");
   const seArrastra = (t) => !t.closest("#minimapa, .postit, button, a, input, select, textarea, [draggable='true']") && (!t.closest(".ventana") || t.closest(".ventana > h3"));
   let tomado = null;
@@ -151,17 +167,28 @@ function controles() {
   vista.addEventListener("dblclick", (e) => {
     if (!escritorioActivo() || !seArrastra(e.target)) return;
     const s = e.target.closest("#mundo > .apartado");
-    s ? mirar(s.id) : verTodo();
+    s ? ir(s.id) : verTodo();
   });
+  // De lejos, un clic en una sección te lleva a ella.
+  vista.addEventListener("click", (e) => {
+    const s = lejos && e.target.closest("#mundo > .apartado");
+    if (s) { e.preventDefault(); e.stopPropagation(); ir(s.id); }
+  }, true);
 
+  // Teclado: ← → la sección anterior o la siguiente; Esc ver todo (o volver).
+  // Va antes que los demás (captura) para saber si había algo abierto que Esc deba cerrar primero.
   addEventListener("keydown", (e) => {
     if (!escritorioActivo() || vista.classList.contains("oculto") || e.target.closest("input, textarea, select, [contenteditable]")) return;
-    const d = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
-    if (!d) return;
+    if (e.key === "Escape") {
+      if (document.querySelector(".cajon.abierto, dialog[open], #panel:not(.oculto), #menu-nuevo:not([hidden])")) return;
+      return lejos ? ir(mirando) : verTodo();
+    }
+    const paso = { ArrowLeft: -1, ArrowRight: 1 }[e.key];
+    if (!paso) return;
     e.preventDefault();
-    cam.x += d[0] * 300; cam.y += d[1] * 300;
-    aplicar(true);
-  });
+    const i = enLienzo.findIndex((a) => a.id === mirando);
+    ir(enLienzo[(i + paso + enLienzo.length) % enLienzo.length].id);
+  }, true);
 }
 
 // ir(id) es el de la carcasa: cambia de apartado (y la cámara viaja si está en el escritorio).
@@ -170,10 +197,11 @@ export function iniciarEscritorio(ir, actual) {
   if (!enLienzo.length) return;
   armarMundo();
   armarMinimapa(ir);
-  controles();
+  armarSecciones(ir);
+  controles(ir);
   const modo = () => document.body.classList.toggle("con-escritorio", escritorioActivo());
   modo();
   pantallaAncha.addEventListener("change", () => { modo(); ir(actual()); });
   // Cuando cambia el tamaño de la ventana (o el escritorio aparece por primera vez), se vuelve a enfocar.
-  new ResizeObserver(() => { if (escritorioActivo() && mirando) mirar(mirando, false); }).observe($("escritorio"));
+  new ResizeObserver(() => { if (escritorioActivo() && mirando) lejos ? verTodo() : mirar(mirando, false); }).observe($("escritorio"));
 }
