@@ -3,7 +3,7 @@
 //   Los eventos pueden repetirse (agenda.js sabe cuándo ocurren) y borrarse "solo este" o "todos".
 //   "Mis calendarios" son tus áreas (Universidad, Salud...): cada evento va en el del área donde está.
 // Más adelante (paso 33) se sincroniza con Google Calendar.
-import { $, el, datos, dia, sinHora, PALETA, proyectoDe, colorDeProyecto } from "./base.js";
+import { $, el, datos, dia, sinHora, PALETA, proyectoDe, areaDe, colorDeProyecto } from "./base.js";
 import { hoyTexto, sumarDias, lunes, sinHoraISO, conHoraISO, horaDecimal, hhmm, aHora } from "./fechas.js";
 import { delDia, dibujarAgenda } from "./agenda.js";
 import { crear, cambiar, cambiarProps, archivar } from "./acciones.js";
@@ -16,11 +16,7 @@ let vista = pantallaAngosta.matches ? "dia" : "semana", foco = hoyTexto();
 
 // ---------- Mis calendarios: uno por área, más "Tareas" ----------
 // El calendario de un nodo es el área a la que pertenece (subiendo de caja en caja).
-function areaDe(id) {
-  for (let p = id; p; p = datos.padre.get(p)) if (datos.nodo.get(p)?.tipos.clave === "area") return p;
-  return "";
-}
-const calendarioDe = (n) => (n.tipos.clave === "tarea" ? "tareas" : areaDe(n.id));
+const calendarioDe = (n) => (n.tipos.clave === "tarea" ? "tareas" : areaDe(n.id) ?? "");
 // Todas las áreas (para elegir al crear); las que tienen algo van primero y se reparten los colores.
 function calendarios() {
   const usados = new Set(datos.nodos.filter((n) => ["evento", "tarea"].includes(n.tipos.clave)).map(calendarioDe));
@@ -131,7 +127,7 @@ function editar(n, { d, h = 9 }) {
   x.hasta.value = n?.props?.repite_hasta ?? "";
   x.notas.value = n?.contenido ?? "";
   x.calendario.replaceChildren(...calendarios().filter((c) => c.id !== "tareas").map((c) => el("option", { value: c.id, textContent: c.nombre })));
-  x.calendario.value = n ? areaDe(n.id) : [...x.calendario.options].find((o) => o.value && !ESCONDIDOS.has(o.value))?.value ?? "";
+  x.calendario.value = n ? areaDe(n.id) ?? "" : [...x.calendario.options].find((o) => o.value && !ESCONDIDOS.has(o.value))?.value ?? "";
   x.calendario.disabled = !!n; // por ahora el área se elige al crear
   f.querySelector(".aviso-repite").hidden = !n?.props?.repite;
   f.querySelector(".eliminar").hidden = !n;

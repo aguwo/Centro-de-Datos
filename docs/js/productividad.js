@@ -8,7 +8,7 @@
 //   tareas     las del filtro, por grupo (atrasadas, hoy, próximas, sin fecha; las hechas, plegadas).
 //              "Agregar tarea" entiende fechas escritas ("dentista mañana 10:00") y deja la tarea en lo elegido.
 // Lo del Inbox no aparece aquí: son los post-its (postits.js).
-import { el, datos, dia, cajasDe, proyectoDe, colorDeProyecto, irA } from "./base.js";
+import { el, datos, dia, cajasDe, areaDe, proyectoDe, colorDeProyecto, irA } from "./base.js";
 import { hoyTexto, corto } from "./fechas.js";
 import { cambiar, mover } from "./acciones.js";
 import { listaDeTareas, seccion, porFecha, agregarTarea } from "./tareas.js";
@@ -22,7 +22,6 @@ const nombreDe = (id) => NOMBRE[id] ?? datos.nodo.get(id)?.titulo ?? "";
 const deTipo = (clave) => datos.nodos.filter((n) => n.tipos.clave === clave && n.estado !== "Inbox");
 // Las tareas de un filtro: todas, las que no están en ningún proyecto, o las que están dentro de esa caja (a cualquier profundidad).
 const de = (id) => deTipo("tarea").filter((n) => (id === TODAS ? true : id === SIN ? !proyectoDe(n.id) : cajasDe(n.id).includes(id)));
-const areaDe = (id) => cajasDe(id).findLast((c) => datos.nodo.get(c)?.tipos.clave === "area");
 
 // Cómo va un filtro: cuántas tareas tiene, cuántas hechas y atrasadas, y cuál es la próxima.
 function resumen(id) {
@@ -36,7 +35,7 @@ const cuenta = (r) => [r.atrasadas && `${r.atrasadas} atrasada${r.atrasadas > 1 
 export function tareasDelFiltro(v, ctx) {
   // Agregar: queda por hacer, con la fecha que hayas escrito, y dentro de lo que tengas elegido.
   const { form, cuando: vista, campo } = agregarTarea(() => (enCaja(filtroDe(ctx)) ? filtroDe(ctx) : undefined));
-  // Lo elegido se puede abrir completo en la página Proyectos.
+  // El proyecto elegido se puede abrir completo en la página Proyectos.
   const abrir = el("button", { className: "abrir", textContent: "Abrir ↗", title: "Ver y editar todo en Proyectos",
     onclick: () => irA("proyectos", { caja: filtroDe(ctx) }) });
   const lista = el("div", { className: "desliza grupos" });
@@ -46,7 +45,7 @@ export function tareasDelFiltro(v, ctx) {
   return () => {
     const f = filtroDe(ctx), hoy = hoyTexto(), ts = de(f), abiertas = ts.filter((n) => n.estado !== "Hecho").sort(porFecha);
     v.sub.textContent = `${nombreDe(f)} · ${cuenta(resumen(f))}`;
-    abrir.hidden = !enCaja(f);
+    abrir.hidden = datos.nodo.get(f)?.tipos.clave !== "proyecto"; // Proyectos muestra solo proyectos
     campo.placeholder = enCaja(f) ? `Agregar tarea a ${nombreDe(f)}…` : "Agregar tarea…";
     const cuando = (n) => (dia(n.fecha) ? (dia(n.fecha) < hoy ? "atrasadas" : dia(n.fecha) === hoy ? "hoy" : "proximas") : "sinFecha");
     const grupo = (g) => abiertas.filter((n) => cuando(n) === g);

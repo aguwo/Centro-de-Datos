@@ -71,6 +71,8 @@ export function cajasDe(id) {
   for (let p = datos.padre.get(id); p && !cajas.includes(p); p = datos.padre.get(p)) cajas.push(p);
   return cajas;
 }
+// El área donde está algo (o él mismo, si es un área), o nada.
+export const areaDe = (id) => [id, ...cajasDe(id)].find((c) => datos.nodo.get(c)?.tipos.clave === "area");
 // El proyecto donde está algo (el más cercano), o nada.
 export const proyectoDe = (id) => cajasDe(id).find((c) => datos.nodo.get(c)?.tipos.clave === "proyecto");
 
