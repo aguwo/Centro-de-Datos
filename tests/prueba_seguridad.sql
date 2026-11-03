@@ -47,6 +47,7 @@ do $$ declare r text; begin
     'tópico debería tener estado y resultado (paso 36)';
   assert (select propiedades->3->>'clave' = 'actual' from tipos where clave = 'objetivo'), 'objetivo debería tener "Va en" después de "Desde" (paso 37a)';
   assert (select conexiones @> '[{"relacion":"aporta_a","hacia":["objetivo"]}]'::jsonb from tipos where clave = 'topico'), 'un ramo debería poder aportar a un objetivo (paso 37a)';
+  assert (select propiedades @> '[{"clave":"claude","tipo":"enlace"}]'::jsonb from tipos where clave = 'proyecto'), 'proyecto debería tener su enlace a Claude (paso 38c)';
 end $$;
 
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
