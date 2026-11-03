@@ -1,12 +1,13 @@
-// El apartado Proyectos (paso 35): una caja (área, ramo, proyecto, objetivo...) completa en una página,
-// para verla entera y crear o cambiar lo que sea. El escritorio infinito queda para mirar y marcar avances.
-// Sus widgets comparten ctx.caja (widgets.js): la que elegiste en el índice.
-//   indice   todas tus cajas como árbol (área › ramo › proyecto), con buscador; las terminadas, plegadas
-//   caja     la cabecera: tipo, dónde está, el título (se escribe encima), sus datos, la descripción y el avance
+// El apartado Proyectos (paso 35): un proyecto completo en una página, para verlo entero y crear o cambiar
+// lo que sea. El escritorio infinito queda para mirar y marcar avances.
+// Sus widgets comparten ctx.caja (widgets.js): el proyecto que elegiste en el índice.
+//   indice   tus proyectos agrupados por área, con buscador; los terminados, plegados
+//   caja     la cabecera: dónde está, el título (se escribe encima), sus datos, la descripción y el avance
 //   tablero  sus tareas por estado (arrastrar una a otra columna le cambia el estado) o en lista
-//   dentro   lo demás que tiene adentro: otras cajas, notas y eventos
-// Una caja es cualquier nodo cuyo tipo tiene "nivel" (paso 19) y es de los MODULOS de aquí: no hay nada escrito solo para proyectos.
-import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, dentroDe, escribible, escribiendoEn } from "./base.js";
+//   dentro   sus notas y próximos eventos
+// Solo muestra proyectos (paso 35b): los ramos y los objetivos tendrán su propia vista, con su propio diseño.
+// Los widgets no saben de proyectos más allá de MUESTRA: otra vista puede reusarlos con otro tipo.
+import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, areaDe, dentroDe, escribible, escribiendoEn } from "./base.js";
 import { hoyTexto, corto } from "./fechas.js";
 import { cambiar, completar, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario, camposDe, tienePropiedad } from "./panel.js";
@@ -16,33 +17,27 @@ import { ocurre } from "./agenda.js";
 const ESTADOS = ["Por hacer", "En curso", "Esperando", "Hecho"]; // las columnas del tablero (el Inbox son los post-its)
 const HECHAS_A_LA_VISTA = 5;
 const DIA = 864e5;
-// Los módulos cuyas cajas se ven aquí. Las de otros módulos (las categorías de Finanzas, por ejemplo)
-// tendrán su propio apartado.
-const MODULOS = ["General", "Productividad"];
+const MUESTRA = "proyecto"; // el tipo de caja que muestra esta página
 
-// Una caja es un nodo cuyo tipo tiene nivel (área, tópico, proyecto, objetivo...).
-const esCaja = (n) => {
-  const t = n && datos.tipo.get(n.tipos.clave);
-  return t?.nivel != null && MODULOS.includes(t.modulo);
-};
+const esCaja = (n) => n?.tipos.clave === MUESTRA;
 const terminada = (n) => n.estado === "Hecho";
 const estadoDe = (t) => t.estado ?? "Por hacer";
 const sinTildes = (s) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 const porNombre = (a, b) => a.titulo.localeCompare(b.titulo, "es");
 const de = (clave, caja) => datos.nodos.filter((n) => n.tipos.clave === clave && n.estado !== "Inbox" && cajasDe(n.id).includes(caja));
 const punto = (n) => {
-  const i = el("i", { className: "punto" + (n.tipos.clave === "objetivo" ? " anillo" : "") });
+  const i = el("i", { className: "punto" });
   i.style.setProperty("--c", n.tipos.clave === "proyecto" ? colorDeProyecto(n.id) : colorDe(n.tipos.clave));
   return i;
 };
 const elegir = (ctx, caja) => ctx.cambiar({ caja });
 
-// La caja elegida; si no hay (o ya no existe), el primer proyecto activo, o la primera caja.
+// La caja elegida; si no hay (o ya no existe), la primera activa, o la primera.
 function cajaDe(ctx) {
   const n = datos.nodo.get(ctx.caja);
   if (esCaja(n)) return n;
   const cajas = datos.nodos.filter(esCaja).sort(porNombre);
-  return cajas.find((c) => c.tipos.clave === "proyecto" && !terminada(c)) ?? cajas[0];
+  return cajas.find((c) => !terminada(c)) ?? cajas[0];
 }
 
 // ---------- índice ----------
@@ -50,7 +45,7 @@ export function indice(v, ctx) {
   const buscar = el("input", { type: "search", placeholder: "Buscar…", ariaLabel: "Buscar un proyecto, ramo o área" });
   const arbol = el("nav", { className: "desliza arbol", ariaLabel: "Tus cajas" });
   const nueva = el("button", { className: "nueva", textContent: "+ Nuevo proyecto",
-    onclick: () => formulario(null, { tipos: ["proyecto", "objetivo", "topico", "area"].filter((c) => datos.tipo.has(c)) }) });
+    onclick: () => formulario(null, { tipos: [MUESTRA] }) });
   v.append(buscar, arbol, nueva);
 
   function dibujar() {
@@ -59,27 +54,29 @@ export function indice(v, ctx) {
     const pendientes = new Map();
     for (const t of datos.nodos) if (t.tipos.clave === "tarea" && t.estado !== "Hecho" && t.estado !== "Inbox")
       for (const c of cajasDe(t.id)) pendientes.set(c, (pendientes.get(c) ?? 0) + 1);
-    const item = (n, nivel = 0) => {
-      const b = el("button", { className: "item" + (nivel ? "" : " raiz"), ariaCurrent: n.id === elegida ? "page" : "false",
+    const item = (n) => {
+      const b = el("button", { className: "item", ariaCurrent: n.id === elegida ? "page" : "false",
         onclick: () => elegir(ctx, n.id) }, punto(n), el("span", { className: "nombre", textContent: n.titulo }),
         pendientes.get(n.id) ? el("span", { className: "n", textContent: pendientes.get(n.id) }) : "");
-      b.style.setProperty("--sangria", nivel);
       return b;
     };
     const texto = sinTildes(buscar.value.trim());
     if (texto) { // buscando: una lista simple con lo que coincide
       const hay = cajas.filter((n) => sinTildes(n.titulo).includes(texto)).sort(porNombre);
-      return arbol.replaceChildren(...(hay.length ? hay.map((n) => item(n, 1)) : [el("p", { className: "vacio", textContent: "Nada con ese nombre." })]));
+      return arbol.replaceChildren(...(hay.length ? hay.map((n) => item(n)) : [el("p", { className: "vacio", textContent: "Nada con ese nombre." })]));
     }
-    // El árbol: cada caja activa con las suyas debajo (por tipo y nombre). Las terminadas, al final y plegadas.
-    const orden = (n) => datos.tipo.get(n.tipos.clave)?.orden ?? 0;
-    const hijas = (id) => cajas.filter((c) => datos.padre.get(c.id) === id && !terminada(c)).sort((a, b) => orden(a) - orden(b) || porNombre(a, b));
-    const rama = (n, nivel) => [item(n, nivel), ...hijas(n.id).flatMap((h) => rama(h, nivel + 1))];
-    const raices = cajas.filter((c) => !esCaja(datos.nodo.get(datos.padre.get(c.id))) && !terminada(c)).sort((a, b) => orden(a) - orden(b) || porNombre(a, b));
+    // Los activos, agrupados por área (por nombre; los sin área, al final). Los terminados, al final y plegados.
+    const grupos = new Map();
+    for (const c of cajas.filter((c) => !terminada(c)).sort(porNombre)) {
+      const a = areaDe(c.id) ?? "";
+      grupos.set(a, [...(grupos.get(a) ?? []), c]);
+    }
+    const nombre = (area) => datos.nodo.get(area)?.titulo ?? "Sin área";
+    const areas = [...grupos.keys()].sort((a, b) => !a - !b || nombre(a).localeCompare(nombre(b), "es"));
     const hechas = cajas.filter(terminada).sort(porNombre);
-    arbol.replaceChildren(...raices.flatMap((r) => rama(r, 0)),
+    arbol.replaceChildren(...areas.flatMap((a) => [el("h4", { className: "grupo", textContent: nombre(a) }), ...grupos.get(a).map((n) => item(n))]),
       hechas.length ? el("details", { className: "terminadas", open: hechas.some((h) => h.id === elegida) },
-        el("summary", { textContent: `Terminadas (${hechas.length})` }), ...hechas.map((n) => item(n, 1))) : "");
+        el("summary", { textContent: `Terminadas (${hechas.length})` }), ...hechas.map((n) => item(n))) : "");
   }
   buscar.oninput = dibujar;
   return dibujar;
@@ -93,8 +90,6 @@ export function cabecera(v, ctx) {
     if (escribiendoEn(v) && v.dataset.id === n.id) return; // estás escribiendo aquí: no se pisa
     v.dataset.id = n.id;
 
-    const tipo = el("span", { className: "chip", textContent: n.tipos.nombre });
-    tipo.style.setProperty("--c", colorDe(n.tipos.clave));
     const titulo = escribible("h2", n.titulo, (t) => (t && t !== n.titulo ? cambiar(n, { titulo: t }) : (titulo.textContent = n.titulo)), "titulo-caja");
     const editar = () => formulario(n);
     const puedeTerminar = tienePropiedad(n, "estado");
@@ -102,18 +97,17 @@ export function cabecera(v, ctx) {
       el("button", { textContent: "Editar todo", onclick: editar }),
       puedeTerminar ? el("button", { textContent: terminada(n) ? "Reabrir" : "✓ Terminar",
         onclick: () => cambiar(n, { estado: terminada(n) ? "En curso" : "Hecho" }) }) : "");
-    // Sus datos como fichas; tocar cualquiera abre el formulario completo.
+    // Dónde está (área › ramo...) y sus datos como fichas; tocar una abre el formulario completo.
     const ruta = cajasDe(n.id).reverse().map((id) => datos.nodo.get(id)?.titulo).filter(Boolean).join(" › ");
     const ficha = (nombre, valor) => el("button", { className: "ficha", onclick: editar }, el("span", { textContent: nombre }), valor);
     const fichas = el("div", { className: "fichas" },
-      ...(ruta ? [ficha("Dentro de", ruta)] : []),
       ...camposDe(n).map((c) => ficha(c.nombre, c.valor)),
       el("button", { className: "ficha vacia", textContent: "+ Más datos", onclick: editar }));
     const descripcion = el("textarea", { className: "descripcion", value: n.contenido ?? "", rows: 2, ariaLabel: "Descripción",
       placeholder: `¿De qué se trata ${n.titulo}? La idea, con quién, links…` });
     descripcion.onchange = () => cambiar(n, { contenido: descripcion.value.trim() || null });
 
-    v.replaceChildren(el("div", { className: "arriba" }, tipo, el("span", { className: "suave" }, ruta ? "en " + ruta.split(" › ").at(-1) : ""), acciones),
+    v.replaceChildren(el("div", { className: "arriba" }, el("span", { className: "suave" }, ruta ? "en " + ruta : "Sin área"), acciones),
       el("div", { className: "nombre-caja" }, punto(n), titulo), fichas, descripcion, avance(n));
   };
 }
@@ -215,17 +209,15 @@ export function dentro(v, ctx) {
     const n = cajaDe(ctx);
     if (!n) return v.replaceChildren();
     const hoy = hoyTexto();
-    const hijas = datos.nodos.filter((c) => esCaja(c) && datos.padre.get(c.id) === n.id).sort(porNombre);
     const notas = de("nota", n.id).sort(porNombre);
     const eventos = de("evento", n.id).map((e) => ({ e, d: proximo(e, hoy) })).filter((x) => x.d).sort((a, b) => a.d.localeCompare(b.d)).slice(0, 5);
     const nuevo = (clave) => el("button", { className: "redondo", textContent: "+", title: `Nueva ${datos.tipo.get(clave)?.nombre.toLowerCase()} aquí`,
       onclick: () => formulario(null, { tipos: [clave], conexion: dentroDeCaja(clave, n.id) }) });
     const pieza = (titulo, boton, cosas, vacio) => el("div", { className: "pieza" },
-      el("h4", {}, el("span", { textContent: titulo }), boton || ""),
+      el("h4", {}, el("span", { textContent: titulo }), boton),
       cosas.length ? el("ul", {}, ...cosas) : el("p", { className: "vacio", textContent: vacio }));
     const fila = (x, extra, accion) => el("li", {}, el("button", { onclick: accion }, punto(x), el("span", { className: "nombre", textContent: x.titulo }), extra ? el("small", { textContent: extra }) : ""));
     v.replaceChildren(
-      pieza("Adentro", null, hijas.map((h) => fila(h, h.tipos.nombre, () => elegir(ctx, h.id))), "No tiene otras cajas adentro."),
       pieza("Notas y enlaces", nuevo("nota"), notas.map((x) => fila(x, "", () => mostrarPanel(x.id))), "Ideas, apuntes o links de esto."),
       pieza("Próximos eventos", nuevo("evento"), eventos.map(({ e, d }) => fila(e, d === hoy ? "hoy" : corto(d), () => mostrarPanel(e.id))), "Nada agendado."));
   };
