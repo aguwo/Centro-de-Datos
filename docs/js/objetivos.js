@@ -1,13 +1,12 @@
-// Los objetivos (paso 37b): una franja arriba de Productividad con una tarjeta por objetivo activo.
-// Cada tarjeta muestra cuánto llevas contra cuánto tiempo ha pasado: la barra es tu avance y la rayita, "hoy".
-// Si el avance va detrás del tiempo, la tarjeta se marca. Tocar una filtra las tareas de lo que le aporta.
+// Los objetivos (paso 37b, 37c): cómo va cada uno. Se muestran en Productividad, en su área, agrupando lo que les aporta;
+// la barra es tu avance y la rayita, "hoy" (cuánto tiempo pasó hasta su fecha tope).
 //
 // Un objetivo se mide solo, según lo que tenga (paso 37a; no hay que elegir):
 //   con registros       tiene medidas anotadas (ej. tu peso): va en la última
 //   a mano              tiene Meta: va en lo que escribiste en "Va en" (o en "Desde", si aún no escribes nada)
 //   por lo que aporta   no tiene Meta: el promedio de lo que le aporta (un proyecto o ramo terminado cuenta entero;
 //                       uno en curso, por sus tareas hechas). Así un semestre avanza con las tareas de cada ramo.
-import { el, datos, dia, cajasDe } from "./base.js";
+import { datos, dia, cajasDe } from "./base.js";
 import { hoyTexto } from "./fechas.js";
 
 const numero = (x) => Number(x).toLocaleString("es-CL", { maximumFractionDigits: 1 });
@@ -45,29 +44,9 @@ export function tiempo(n) {
   return total > 0 ? Math.min(1, Math.max(0, (Date.parse(hoy) - Date.parse(desde)) / total)) : 1;
 }
 
-// ---------- la franja ----------
-// ctx.filtro es lo que muestra "tareas" (productividad.js): elegir un objetivo lo pone ahí; tocarlo de nuevo vuelve al área.
-export function franjaDeObjetivos(v, ctx) {
-  const fila = el("div", { className: "franja", role: "group", ariaLabel: "Objetivos" });
-  v.append(fila);
-
-  const tarjeta = (n) => {
-    const { avance, texto } = medir(n), t = tiempo(n);
-    const atrasado = avance !== null && t !== null && avance < t - 0.1; // un poco de holgura antes de marcarlo
-    const b = el("button", { className: "objetivo" + (atrasado ? " atrasado" : ""), ariaPressed: String(ctx.filtro === n.id),
-      title: t === null ? texto : `${texto} · pasó el ${Math.round(t * 100)} % del tiempo`,
-      onclick: () => ctx.cambiar({ filtro: ctx.filtro === n.id ? ctx.area : n.id }) },
-      el("span", { className: "nombre", textContent: n.titulo }),
-      el("span", { className: "meta", textContent: texto }),
-      el("span", { className: "barra-p" }, el("span", { style: `width: ${Math.min(1, Math.max(0, avance ?? 0)) * 100}%` })));
-    if (t !== null) b.querySelector(".barra-p").append(el("i", { className: "hoy", style: `left: ${t * 100}%` }));
-    return b;
-  };
-
-  return () => {
-    // Primero los que vencen antes; los sin fecha tope, al final.
-    const activos = datos.nodos.filter(esObjetivo).sort((a, b) => (a.fecha ?? "9").localeCompare(b.fecha ?? "9") || a.titulo.localeCompare(b.titulo, "es"));
-    v.hidden = !activos.length; // sin objetivos, la franja no ocupa lugar
-    fila.replaceChildren(...activos.map(tarjeta));
-  };
+// Todo lo que se muestra de un objetivo: cuánto llevas, cuánto tiempo pasó y si vas atrasado
+// (el avance más de 10 puntos detrás del tiempo: un poco de holgura antes de marcarlo).
+export function comoVa(n) {
+  const { avance, texto } = medir(n), t = tiempo(n);
+  return { avance, texto, tiempo: t, atrasado: avance !== null && t !== null && avance < t - 0.1 };
 }

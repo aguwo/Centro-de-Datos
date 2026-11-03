@@ -187,21 +187,6 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 .con-escritorio .costado-cerrado > .costado { width: 264px; transform: translateX(-100%); }
 .con-escritorio .costado-cerrado > .costado .plegar { right: -28px; border-left: 1px solid var(--borde); border-radius: 0 10px 10px 0; }
 @media (prefers-reduced-motion: reduce) { .con-costado, .costado { transition: none !important; } }
-/* Paso 37b: la franja de objetivos, a todo el ancho arriba de las columnas. Cada objetivo es una tarjeta chica:
-   nombre, cuánto llevas y la barra de avance con una rayita en "hoy" (cuánto tiempo ha pasado). */
-.w-objetivos { padding: 0; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; flex: none; }
-.franja { display: flex; gap: 12px; overflow-x: auto; padding: 2px; scrollbar-width: thin; }
-.franja .objetivo { flex: 0 0 220px; display: grid; gap: 4px; padding: 10px 14px 12px; text-align: left; border-radius: 14px;
-  background: var(--vidrio); border: 1px solid var(--borde); backdrop-filter: blur(28px) saturate(170%); -webkit-backdrop-filter: blur(28px) saturate(170%); }
-.franja .objetivo:hover { border-color: var(--suave); }
-.franja .objetivo[aria-pressed="true"] { outline: 2px solid var(--acento); outline-offset: -1px; }
-.franja .nombre { font-weight: 600; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.franja .meta { font-size: 12px; }
-.franja .barra-p { position: relative; overflow: visible; margin-top: 4px; }
-.franja .barra-p > span { border-radius: 99px; }
-.franja .hoy { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--texto); opacity: .55; }
-.franja .atrasado .meta { color: var(--alerta); }
-.franja .atrasado .barra-p > span { background: var(--alerta); }
 .desliza { flex: 1; min-height: 0; overflow-y: auto; }
 .grupos h4, .hechas summary { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); margin: 20px 0 2px; }
 .grupos h4.alerta { color: var(--alerta); }
@@ -415,6 +400,19 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .proyectos li.soltar .filtro { box-shadow: inset 0 0 0 2px var(--acento); background: color-mix(in srgb, var(--acento) 10%, transparent); }
 .proyectos .proyecto .barra-p span { background: var(--c); }
 .proyectos .cerrar { position: absolute; right: 12px; bottom: 6px; padding: 2px 8px; font-size: 12px; }
+/* Paso 37c: un objetivo agrupa lo que le aporta. Se distingue por su anillo, su etiqueta y la línea que baja a sus proyectos.
+   Su barra lleva una rayita en "hoy" (cuánto tiempo pasó hasta su fecha tope); si vas atrasado, en rojo. */
+.proyectos .objetivo { margin: 4px 0; }
+.proyectos .objetivo > .filtro { --c: var(--objetivo); }
+.proyectos .objetivo .anillo { display: inline-block; width: 10px; height: 10px; margin-right: 7px; border: 2.5px solid var(--objetivo); border-radius: 50%; vertical-align: -1px; }
+.proyectos .objetivo > .filtro .barra-p { position: relative; overflow: visible; }
+.proyectos .objetivo > .filtro .barra-p > span { background: var(--objetivo); border-radius: 99px; }
+.proyectos .objetivo .hoy { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--texto); opacity: .5; }
+.proyectos .objetivo.atrasado > .filtro .meta { color: var(--alerta); }
+.proyectos .objetivo.atrasado > .filtro .barra-p > span { background: var(--alerta); }
+.proyectos .aportan { list-style: none; margin: 0 0 0 17px; padding: 0 0 0 8px; border-left: 2px solid color-mix(in srgb, var(--objetivo) 35%, transparent); display: grid; gap: 2px; }
+.proyectos .aportan .vacio { padding: 6px 12px; }
+.proyectos .sueltos { margin: 10px 12px 2px; font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
 .proyectos li:has(.cerrar) .filtro { padding-bottom: 34px; }
 /* Un punto con el color del proyecto (en la lista de proyectos y en cada tarea) */
 .punto { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: var(--c); vertical-align: 1px; }
