@@ -6,14 +6,16 @@
 //              tareas van atrasadas y la próxima. Tocar uno lo filtra (tocarlo de nuevo vuelve al área).
 //              Soltar una tarea encima de un chip o un proyecto la mueve ahí. Un proyecto sin nada pendiente se puede cerrar.
 //              Las áreas se ordenan arrastrando un chip sobre otro; el orden queda en cada área (props.orden).
+//              Paso 37c: los objetivos del área van primero y agrupan lo que les aporta (sus proyectos y ramos);
+//              lo que no aporta a ninguno queda abajo. Tocar un objetivo filtra las tareas de todo lo suyo.
 //   tareas     las del filtro, por grupo (atrasadas, hoy, próximas, sin fecha; las hechas, plegadas).
 //              "Agregar tarea" entiende fechas escritas ("dentista mañana 10:00") y deja la tarea en lo elegido.
 // Lo del Inbox no aparece aquí: son los post-its (postits.js).
-import { el, datos, dia, cajasDe, areaDe, areasEnOrden, proyectoDe, colorDeProyecto, irA } from "./base.js";
+import { el, datos, dia, cajasDe, areaDe, areasEnOrden, proyectoDe, colorDe, colorDeProyecto, irA } from "./base.js";
 import { hoyTexto, corto } from "./fechas.js";
 import { cambiar, cambiarProps, mover } from "./acciones.js";
 import { listaDeTareas, seccion, porFecha, agregarTarea } from "./tareas.js";
-import { esObjetivo, aportesDe } from "./objetivos.js";
+import { esObjetivo, aportesDe, comoVa } from "./objetivos.js";
 
 const LISTADOS = ["proyecto", "topico"]; // lo que aparece bajo cada área (paso 36b: los ramos también)
 const TODAS = "todas", SIN = "sin"; // los filtros que no son un proyecto ni un área
@@ -87,6 +89,22 @@ export function areasYProyectos(v, ctx) {
     }
     return b;
   };
+  // Un objetivo: anillo, "Objetivo · cuánto llevas", su barra con la rayita de hoy, y debajo lo que le aporta.
+  const objetivo = (o, suyos) => {
+    const va = comoVa(o);
+    const barra = el("span", { className: "barra-p" }, el("span", { style: `width: ${Math.min(1, Math.max(0, va.avance ?? 0)) * 100}%` }));
+    if (va.tiempo !== null) barra.append(el("i", { className: "hoy", style: `left: ${va.tiempo * 100}%` }));
+    const b = el("button", { className: "filtro", ariaPressed: String(o.id === filtroDe(ctx)),
+      title: va.tiempo === null ? va.texto : `${va.texto} · pasó el ${Math.round(va.tiempo * 100)} % del tiempo`,
+      onclick: () => elegir(filtroDe(ctx) === o.id ? areaElegida() : o.id) },
+      el("span", { className: "nombre" }, el("i", { className: "anillo" }), o.titulo),
+      el("span", { className: "meta", textContent: `Objetivo · ${va.texto}` }), barra);
+    const li = el("li", { className: "objetivo" + (va.atrasado ? " atrasado" : "") }, b,
+      el("ul", { className: "aportan" }, ...(suyos.length ? suyos.map(proyecto) : [el("li", { className: "vacio", textContent: "Nada le aporta todavía." })])));
+    li.style.setProperty("--objetivo", colorDe("objetivo"));
+    recibir(b, { id: o.id, nodo: o });
+    return li;
+  };
   // Un proyecto: su color, su avance y la próxima tarea. Si no le queda nada pendiente, "Cerrar proyecto".
   const proyecto = (p) => {
     const b = el("button", { className: "filtro", ariaPressed: String(p.id === filtroDe(ctx)),
@@ -108,20 +126,27 @@ export function areasYProyectos(v, ctx) {
     const fila = (n) => ({ id: n.id, nombre: n.titulo, nodo: n, ...resumen(n.id) });
     const proyectos = LISTADOS.flatMap(deTipo).filter((p) => p.estado !== "Hecho").map(fila)
       .sort((a, b) => (a.proxima?.fecha ?? "9").localeCompare(b.proxima?.fecha ?? "9") || a.nombre.localeCompare(b.nombre, "es"));
-    // Las áreas que tienen proyectos activos o tareas pendientes, en tu orden; Todas y Sin proyecto, al final.
-    const areas = areasEnOrden().map(fila).filter((a) => a.abiertas || proyectos.some((p) => areaDe(p.id) === a.id));
+    const objetivos = datos.nodos.filter(esObjetivo).sort((a, b) => (a.fecha ?? "9").localeCompare(b.fecha ?? "9") || a.titulo.localeCompare(b.titulo, "es"));
+    // Las áreas que tienen proyectos u objetivos activos, o tareas pendientes, en tu orden; Todas y Sin proyecto, al final.
+    const areas = areasEnOrden().map(fila).filter((a) => a.abiertas || [...proyectos, ...objetivos].some((p) => areaDe(p.id) === a.id));
     const filas = [...areas, ...[TODAS, SIN].map((id) => ({ id, nombre: NOMBRE[id], ...resumen(id) }))];
     primera = filas[0].id;
 
     const area = filas.some((c) => c.id === areaElegida()) ? areaElegida() : TODAS; // el área pudo quedarse sin nada activo
-    const visibles = area === TODAS ? proyectos : proyectos.filter((p) => areaDe(p.id) === area);
-    const sigue = (f) => f === area || visibles.some((p) => p.id === f) || esObjetivo(datos.nodo.get(f)); // un objetivo se elige en su franja
+    const enArea = (n) => area === TODAS || areaDe(n.id) === area;
+    const visibles = proyectos.filter(enArea), metas = area === SIN ? [] : objetivos.filter(enArea);
+    const sigue = (f) => f === area || visibles.some((p) => p.id === f) || metas.some((o) => o.id === f);
     if (area !== areaElegida() || !sigue(filtroDe(ctx)))
       return elegir(area, area); // lo elegido se cerró o se borró
 
     chips.replaceChildren(...filas.map(chip));
-    lista.replaceChildren(...visibles.map(proyecto));
-    if (!visibles.length) lista.append(el("li", { className: "vacio", textContent: area === SIN
+    // Cada objetivo con lo que le aporta (lo que aporta a dos objetivos sale en los dos); lo demás, abajo.
+    const aporta = (p, o) => aportesDe(o.id).includes(p.nodo);
+    const sueltos = visibles.filter((p) => !metas.some((o) => aporta(p, o)));
+    lista.replaceChildren(...metas.map((o) => objetivo(o, visibles.filter((p) => aporta(p, o)))),
+      ...(metas.length && sueltos.length ? [el("li", { className: "sueltos", textContent: "Sin objetivo" })] : []),
+      ...sueltos.map(proyecto));
+    if (!visibles.length && !metas.length) lista.append(el("li", { className: "vacio", textContent: area === SIN
       ? "Aquí están las tareas que no son de ningún proyecto." : "Esta área no tiene proyectos ni tópicos activos." }));
   };
 }

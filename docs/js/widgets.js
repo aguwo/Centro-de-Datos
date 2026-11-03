@@ -15,7 +15,6 @@ import { el, datos } from "./base.js";
 import { tareasDeHoy, elTiempo, tuDia } from "./hoy.js";
 import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
 import { indice, cabecera, tablero, dentro } from "./proyectos.js";
-import { franjaDeObjetivos } from "./objetivos.js";
 
 export const WIDGETS = {
   "tareas-de-hoy": { titulo: "Tareas de hoy", crece: true, crear: tareasDeHoy },
@@ -27,7 +26,6 @@ export const WIDGETS = {
   "caja":          { crear: cabecera },
   "tablero":       { titulo: "Tareas", crece: true, crear: tablero },
   "dentro":        { crear: dentro },
-  "objetivos":     { crear: franjaDeObjetivos },
 };
 
 // Las columnas de un apartado: las tuyas, si las guardaste, o las de siempre.
@@ -36,7 +34,7 @@ export const WIDGETS = {
 export function disposicionDe(a) {
   const lista = (x) => (Array.isArray(x) ? x : []);
   const tuya = lista(datos.disposiciones.get(a.id))
-    .map((c) => ({ ancho: Number(c?.ancho) > 0 ? Number(c.ancho) : 1, costado: c?.costado === true, arriba: c?.arriba === true, widgets: lista(c?.widgets).filter((id) => WIDGETS[id]) }))
+    .map((c) => ({ ancho: Number(c?.ancho) > 0 ? Number(c.ancho) : 1, costado: c?.costado === true, widgets: lista(c?.widgets).filter((id) => WIDGETS[id]) }))
     .filter((c) => c.widgets.length);
   return tuya.length ? tuya : a.columnas;
 }
@@ -44,7 +42,6 @@ export function disposicionDe(a) {
 // Arma la <section> de un apartado: su título y sus columnas de ventanas.
 // Una columna con costado: true (paso 38b) va pegada al borde izquierdo, a todo el alto, y se esconde con su botón;
 // queda escondida o no según la dejaste la última vez (en este navegador).
-// Una columna con arriba: true (paso 37b) va como franja a todo el ancho, sobre las demás columnas.
 // Devuelve la sección (para ponerla en la página) y la función que la redibuja entera.
 // Las ventanas se arman al primer dibujo y se vuelven a armar solo si cambió la disposición.
 export function montar(a) {
@@ -63,19 +60,16 @@ export function montar(a) {
       redibujar.push(w.crear(v, ctx));
       return v;
     };
-    const centro = columnas.filter((c) => !c.costado && !c.arriba), lado = columnas.filter((c) => c.costado);
-    const franja = columnas.filter((c) => c.arriba).flatMap((c) => c.widgets.map(ventana));
+    const centro = columnas.filter((c) => !c.costado), lado = columnas.filter((c) => c.costado);
     const grilla = el("div", { className: "columnas" }, ...centro.map((c) => el("div", { className: "columna" }, ...c.widgets.map(ventana))));
     grilla.style.setProperty("--columnas", centro.map((c) => `minmax(0, ${c.ancho ?? 1}fr)`).join(" "));
     const costado = lado.length ? el("aside", { className: "costado vidrio" }, botonCostado(), ...lado.flatMap((c) => c.widgets.map(ventana))) : "";
     armada.costado?.remove();
-    for (const f of armada.franja ?? []) f.remove();
     if (armada.grilla) armada.grilla.replaceWith(grilla);
     else seccion.append(grilla);
-    grilla.before(...franja);
     if (costado) titulo.after(costado);
     seccion.classList.toggle("con-costado", !!costado);
-    armada = { clave: JSON.stringify(columnas), grilla, costado, franja, redibujar };
+    armada = { clave: JSON.stringify(columnas), grilla, costado, redibujar };
   }
 
   const guardado = "costado-cerrado:" + a.id;

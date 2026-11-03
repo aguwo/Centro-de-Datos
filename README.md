@@ -52,6 +52,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 38b | El índice de Proyectos pegado al costado, a todo el alto, y escondible con su botón ‹ › (se acuerda de cómo lo dejaste). Sirve para cualquier apartado: una columna con `costado: true` | `docs/js/widgets.js`, `docs/js/apartados.js` |
 | 37b | Los objetivos en el escritorio infinito: una franja arriba de Productividad con una tarjeta por objetivo (cuánto llevas, y una rayita en "hoy" para ver si vas atrasado contra la fecha tope). Tocar una filtra las tareas de lo que le aporta. Sirve para cualquier apartado: una columna con `arriba: true` | `docs/js/objetivos.js`, `docs/js/widgets.js` |
 | 38c | Cada proyecto puede llevar el enlace a su proyecto en Claude: en la página Proyectos aparece «Proyecto en Claude ↗». Cualquier propiedad de tipo enlace se muestra así, como botón | `supabase/migrations/0015_proyecto_en_claude.sql`, `docs/js/proyectos.js` |
+| 37c | Los objetivos pasan de la franja a la lista de Productividad, dentro de su área: cada uno (con su anillo, su avance y la rayita de hoy) agrupa los proyectos y ramos que le aportan; lo demás queda en "Sin objetivo". Se quita la franja | `docs/js/productividad.js`, `docs/js/objetivos.js` |
 
 ## Cómo está ordenada la web
 
@@ -72,7 +73,7 @@ docs/js/postits.js   lo del Inbox como post-its alrededor de las secciones del e
 docs/js/widgets.js   las ventanas como piezas (widgets) y cómo se arma un apartado con sus columnas
 docs/js/productividad.js tus proyectos y sus tareas
 docs/js/proyectos.js la página Proyectos: índice, cabecera, tablero y lo de adentro
-docs/js/objetivos.js la franja de objetivos y cómo se mide cada uno
+docs/js/objetivos.js cómo se mide cada objetivo (cuánto llevas, cuánto tiempo pasó, si vas atrasado)
 docs/js/tareas.js    la lista de tareas (✓, ☆, Hoy/Mañana/Soltar) que comparten Hoy y Productividad
 docs/js/hoy.js       el apartado Hoy: tareas, el tiempo y tu día
 docs/js/agenda.js    la agenda por horas (un día o varios); la usan Hoy y el calendario
