@@ -6,7 +6,7 @@
 //   tablero  sus tareas por estado (arrastrar una a otra columna le cambia el estado) o en lista
 //   dentro   lo demás que tiene adentro: otras cajas, notas y eventos
 // Una caja es cualquier nodo cuyo tipo tiene "nivel" (paso 19) y es de los MODULOS de aquí: no hay nada escrito solo para proyectos.
-import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, dentroDe, escribible } from "./base.js";
+import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, dentroDe, escribible, escribiendoEn } from "./base.js";
 import { hoyTexto, corto } from "./fechas.js";
 import { cambiar, completar, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario, camposDe, tienePropiedad } from "./panel.js";
@@ -90,7 +90,7 @@ export function cabecera(v, ctx) {
   return () => {
     const n = cajaDe(ctx);
     if (!n) return v.replaceChildren(el("p", { className: "vacio", textContent: "Todavía no tienes proyectos. Crea el primero con «+ Nuevo proyecto»." }));
-    if (v.contains(document.activeElement) && v.dataset.id === n.id) return; // estás escribiendo aquí: no se pisa
+    if (escribiendoEn(v) && v.dataset.id === n.id) return; // estás escribiendo aquí: no se pisa
     v.dataset.id = n.id;
 
     const tipo = el("span", { className: "chip", textContent: n.tipos.nombre });

@@ -6,7 +6,7 @@
 //   Pasar a…    el formulario de siempre, con el estado en "Por hacer": al guardar sale del Inbox y deja de ser post-it
 // Los que no tienen lugar guardado se reparten solos en los bordes libres.
 // En pantallas angostas no hay escritorio: se ven en una fila arriba de Hoy.
-import { $, el, datos, colorDe, escribible } from "./base.js";
+import { $, el, datos, colorDe, escribible, escribiendoEn } from "./base.js";
 import { cambiar, cambiarProps, completar, archivar, crear } from "./acciones.js";
 import { escritorioActivo, alCambiarDeModo, alrededor, centro, zoom } from "./escritorio.js";
 import { formulario } from "./panel.js";
@@ -24,7 +24,7 @@ export function dibujarPostits() {
   const c = capa();
   if (escritorioActivo()) { if (c.parentElement.id !== "mundo") $("mundo").append(c); }
   else if (c.previousElementSibling?.id !== EN_CELULAR) $(EN_CELULAR).after(c);
-  if (c.contains(document.activeElement)) return; // estás escribiendo en uno: se redibuja cuando termines
+  if (escribiendoEn(c)) return; // estás escribiendo en uno: se redibuja cuando termines
   const lista = enInbox(), lugar = repartir(lista);
   c.replaceChildren(...lista.map((n) => postit(n, lugar.get(n.id))));
 }
