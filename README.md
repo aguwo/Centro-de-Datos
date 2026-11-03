@@ -53,6 +53,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 37b | Los objetivos en el escritorio infinito: una franja arriba de Productividad con una tarjeta por objetivo (cuánto llevas, y una rayita en "hoy" para ver si vas atrasado contra la fecha tope). Tocar una filtra las tareas de lo que le aporta. Sirve para cualquier apartado: una columna con `arriba: true` | `docs/js/objetivos.js`, `docs/js/widgets.js` |
 | 38c | Cada proyecto puede llevar el enlace a su proyecto en Claude: en la página Proyectos aparece «Proyecto en Claude ↗». Cualquier propiedad de tipo enlace se muestra así, como botón | `supabase/migrations/0015_proyecto_en_claude.sql`, `docs/js/proyectos.js` |
 | 37c | Los objetivos pasan de la franja a la lista de Productividad, dentro de su área: cada uno (con su anillo, su avance y la rayita de hoy) agrupa los proyectos y ramos que le aportan; lo demás queda en "Sin objetivo". Se quita la franja | `docs/js/productividad.js`, `docs/js/objetivos.js` |
+| 37d | Un objetivo sin meta (ej. aprobar el semestre) avanza solo con lo que le aporta y termina bien: cada ramo Aprobado o proyecto cerrado suma; las tareas no. Los hábitos ayudan pero no se cuentan, y solo los objetivos con números pueden marcarse atrasados | `docs/js/objetivos.js` |
 
 ## Cómo está ordenada la web
 
