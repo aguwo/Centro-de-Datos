@@ -14,6 +14,8 @@ insert into conexiones (origen_id, relacion, destino_id)
   select p.id, 'pertenece_a', a.id from nodos p, nodos a where p.titulo = 'Centro de datos' and a.titulo = 'Personal';
 insert into nodos (tipo_id, titulo) select id, 'Meditar' from tipos where clave = 'habito';
 insert into registros (clase, valor, nodo_id) select 'habito', 1, id from nodos where titulo = 'Meditar';
+-- Paso 46a: la asistencia a un ramo (1 = fui) es una clase de registro más.
+insert into registros (clase, valor, nodo_id) select 'asistencia', 1, id from nodos where titulo = 'Personal';
 -- Paso 34b: una disposición propia; la segunda vez reemplaza a la primera (upsert, como la web).
 insert into disposiciones (apartado, columnas) values ('hoy', '[{"widgets": ["tu-dia"]}]');
 insert into disposiciones (apartado, columnas) values ('hoy', '[{"widgets": ["el-tiempo"]}]')
@@ -48,6 +50,7 @@ do $$ declare r text; begin
   assert (select propiedades->3->>'clave' = 'actual' from tipos where clave = 'objetivo'), 'objetivo debería tener "Va en" después de "Desde" (paso 37a)';
   assert (select conexiones @> '[{"relacion":"aporta_a","hacia":["objetivo"]}]'::jsonb from tipos where clave = 'topico'), 'un ramo debería poder aportar a un objetivo (paso 37a)';
   assert (select propiedades @> '[{"clave":"claude","tipo":"enlace"}]'::jsonb from tipos where clave = 'proyecto'), 'proyecto debería tener su enlace a Claude (paso 38c)';
+  assert (select propiedades @> '[{"clave":"peso"},{"clave":"nota"}]'::jsonb from tipos where clave = 'evento'), 'evento debería tener ponderación y nota (paso 46a)';
 end $$;
 
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
