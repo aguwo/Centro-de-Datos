@@ -50,6 +50,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 37a | Los objetivos llevan sus números (Desde → Va en → Meta) y se miden solos (con registros, a mano o por lo que aporta); los hitos se funden en su objetivo y desaparecen; los ramos pueden aportar a un objetivo | `supabase/migrations/0014_objetivos_sin_hitos.sql` |
 | 38a | Tus áreas en tu orden: los chips de Productividad empiezan por tu primera área (Todas y Sin proyecto al final) y se reordenan arrastrando; Proyectos agrupa en ese mismo orden | `docs/js/productividad.js`, `docs/js/base.js` |
 | 38b | El índice de Proyectos pegado al costado, a todo el alto, y escondible con su botón ‹ › (se acuerda de cómo lo dejaste). Sirve para cualquier apartado: una columna con `costado: true` | `docs/js/widgets.js`, `docs/js/apartados.js` |
+| 37b | Los objetivos en el escritorio infinito: una franja arriba de Productividad con una tarjeta por objetivo (cuánto llevas, y una rayita en "hoy" para ver si vas atrasado contra la fecha tope). Tocar una filtra las tareas de lo que le aporta. Sirve para cualquier apartado: una columna con `arriba: true` | `docs/js/objetivos.js`, `docs/js/widgets.js` |
 
 ## Cómo está ordenada la web
 
@@ -70,6 +71,7 @@ docs/js/postits.js   lo del Inbox como post-its alrededor de las secciones del e
 docs/js/widgets.js   las ventanas como piezas (widgets) y cómo se arma un apartado con sus columnas
 docs/js/productividad.js tus proyectos y sus tareas
 docs/js/proyectos.js la página Proyectos: índice, cabecera, tablero y lo de adentro
+docs/js/objetivos.js la franja de objetivos y cómo se mide cada uno
 docs/js/tareas.js    la lista de tareas (✓, ☆, Hoy/Mañana/Soltar) que comparten Hoy y Productividad
 docs/js/hoy.js       el apartado Hoy: tareas, el tiempo y tu día
 docs/js/agenda.js    la agenda por horas (un día o varios); la usan Hoy y el calendario

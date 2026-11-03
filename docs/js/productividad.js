@@ -13,6 +13,7 @@ import { el, datos, dia, cajasDe, areaDe, areasEnOrden, proyectoDe, colorDeProye
 import { hoyTexto, corto } from "./fechas.js";
 import { cambiar, cambiarProps, mover } from "./acciones.js";
 import { listaDeTareas, seccion, porFecha, agregarTarea } from "./tareas.js";
+import { esObjetivo, aportesDe } from "./objetivos.js";
 
 const LISTADOS = ["proyecto", "topico"]; // lo que aparece bajo cada área (paso 36b: los ramos también)
 const TODAS = "todas", SIN = "sin"; // los filtros que no son un proyecto ni un área
@@ -23,7 +24,9 @@ const nombreDe = (id) => NOMBRE[id] ?? datos.nodo.get(id)?.titulo ?? "";
 
 const deTipo = (clave) => datos.nodos.filter((n) => n.tipos.clave === clave && n.estado !== "Inbox");
 // Las tareas de un filtro: todas, las que no están en ningún proyecto, o las que están dentro de esa caja (a cualquier profundidad).
-const de = (id) => deTipo("tarea").filter((n) => (id === TODAS ? true : id === SIN ? !proyectoDe(n.id) : cajasDe(n.id).includes(id)));
+// Un objetivo (paso 37b) cuenta como caja junto con lo que le aporta: sus tareas son las de esos proyectos y ramos.
+const cajas = (id) => [id, ...(esObjetivo(datos.nodo.get(id)) ? aportesDe(id).map((a) => a.id) : [])];
+const de = (id) => deTipo("tarea").filter((n) => (id === TODAS ? true : id === SIN ? !proyectoDe(n.id) : cajas(id).some((c) => cajasDe(n.id).includes(c))));
 
 // Cómo va un filtro: cuántas tareas tiene, cuántas hechas y atrasadas, y cuál es la próxima.
 function resumen(id) {
@@ -112,7 +115,8 @@ export function areasYProyectos(v, ctx) {
 
     const area = filas.some((c) => c.id === areaElegida()) ? areaElegida() : TODAS; // el área pudo quedarse sin nada activo
     const visibles = area === TODAS ? proyectos : proyectos.filter((p) => areaDe(p.id) === area);
-    if (area !== areaElegida() || (filtroDe(ctx) !== area && !visibles.some((p) => p.id === filtroDe(ctx))))
+    const sigue = (f) => f === area || visibles.some((p) => p.id === f) || esObjetivo(datos.nodo.get(f)); // un objetivo se elige en su franja
+    if (area !== areaElegida() || !sigue(filtroDe(ctx)))
       return elegir(area, area); // lo elegido se cerró o se borró
 
     chips.replaceChildren(...filas.map(chip));
