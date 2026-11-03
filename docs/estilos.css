@@ -170,6 +170,23 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 .columnas > .columna { display: flex; flex-direction: column; gap: 20px; min-width: 0; min-height: 0; }
 .columna > .ventana { display: flex; flex-direction: column; flex: none; }
 .columna > .crece { flex: 1; min-height: 240px; } /* las demás miden su contenido; si no cabe todo, el apartado se desliza */
+
+/* Paso 38b: una columna "costado" va pegada al borde, junto a la barra lateral, a todo el alto, como la barra.
+   Su botón ‹ la esconde (queda solo una pestaña › para volver a abrirla). En el celular es una ventana más. */
+.costado { display: flex; flex-direction: column; gap: 8px; padding: 16px 20px 14px; border-radius: var(--radio); }
+.costado > .ventana { display: flex; flex-direction: column; flex: 1; min-height: 0; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; }
+.costado .plegar { display: none; }
+.con-escritorio .con-costado { padding-left: calc(var(--costado) + 32px); transition: padding-left .25s cubic-bezier(.2,.7,.2,1); }
+.con-escritorio .con-costado > .costado { --costado: 264px; position: fixed; top: 40px; bottom: 0; left: 80px; z-index: 5; width: var(--costado);
+  padding: 18px 16px 16px; border-radius: 0; border-width: 0 1px 0 0; box-shadow: none; transition: transform .25s cubic-bezier(.2,.7,.2,1); }
+.con-escritorio .con-costado { --costado: 264px; }
+.con-escritorio .costado .plegar { display: grid; place-items: center; position: absolute; top: 50%; right: -15px; width: 28px; height: 44px; padding: 0;
+  border: 1px solid var(--borde); border-radius: 0 10px 10px 0; border-left: 0; background: var(--vidrio-fuerte); color: var(--suave); font-size: 18px; line-height: 1; transform: translateY(-50%); }
+.con-escritorio .costado .plegar:hover { color: var(--texto); }
+.con-escritorio .costado-cerrado { --costado: 0px; }
+.con-escritorio .costado-cerrado > .costado { width: 264px; transform: translateX(-100%); }
+.con-escritorio .costado-cerrado > .costado .plegar { right: -28px; border-left: 1px solid var(--borde); border-radius: 0 10px 10px 0; }
+@media (prefers-reduced-motion: reduce) { .con-costado, .costado { transition: none !important; } }
 .desliza { flex: 1; min-height: 0; overflow-y: auto; }
 .grupos h4, .hechas summary { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); margin: 20px 0 2px; }
 .grupos h4.alerta { color: var(--alerta); }
