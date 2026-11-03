@@ -9,7 +9,7 @@ const ESTADOS = ["Inbox", "Por hacer", "En curso", "Esperando", "Hecho"]; // los
 // ---------- Propiedades (paso 23) ----------
 // Cada tipo dice qué propiedades tiene. "estado" y "fecha" viven en su columna del nodo; el resto, en props.
 const EN_COLUMNA = ["estado", "fecha"];
-const OCULTAS = ["notion_id", "postit"]; // las pone el sistema (postit: dónde está pegado en el escritorio); no se muestran
+const OCULTAS = ["notion_id", "postit", "orden"]; // las pone el sistema (postit: dónde está pegado en el escritorio; orden: el de tus áreas); no se muestran
 // Las del tipo, menos las marcadas "oculta" (las maneja otra parte, como "excepto" el calendario).
 const todasDe = (clave) => datos.tipo.get(clave)?.propiedades ?? [];
 const propiedadesDe = (clave) => todasDe(clave).filter((p) => !p.oculta);
