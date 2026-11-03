@@ -38,7 +38,7 @@ export const APARTADOS = [
   // Paso 35: una caja (área, ramo, proyecto...) completa, para verla entera y editarla. Va a pantalla completa.
   {
     id: "proyectos", nombre: "Proyectos", nuevo: ["proyecto", "tarea", "nota", "evento"],
-    columnas: [{ ancho: 1, widgets: ["indice"] }, { ancho: 3, widgets: ["caja", "tablero", "dentro"] }],
+    columnas: [{ costado: true, widgets: ["indice"] }, { widgets: ["caja", "tablero", "dentro"] }], // el índice, pegado al costado (paso 38b)
     icono: '<path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
   },
   // Las tarjetas de antes (hábitos, gastos, plantas...). Se quedan hasta que cada una tenga su apartado (paso 32).

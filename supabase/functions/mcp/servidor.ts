@@ -91,7 +91,7 @@ export const CLASES: Record<string, string> = {
   ingreso: "nodo = cuenta donde entró, valor = monto, unidad = CLP",
   transferencia: "nodo = cuenta de origen, otro = cuenta destino, valor = monto, unidad = CLP",
   habito: "nodo = el hábito cumplido, valor = 1",
-  medida: "nodo = lo que se mide (ej. el hito Peso Objetivo), valor y unidad (ej. 52.2 kg)",
+  medida: "nodo = lo que se mide (ej. el objetivo de subir de peso), valor y unidad (ej. 52.2 kg)",
   comida: "nodo = alimento o receta, valor = gramos o porciones (ver unidad)",
   riego: "nodo = la planta",
 };
@@ -108,7 +108,7 @@ type Herramienta = {
 const texto = { type: "string" };
 
 const EN_COLUMNA = ["estado", "fecha"]; // estas propiedades se guardan en su columna, no en props
-const INTERNAS = ["notion_id", "postit"]; // props que pone el sistema, no el usuario (postit: dónde está pegado en el escritorio)
+const INTERNAS = ["notion_id", "postit", "orden"]; // props que pone el sistema, no el usuario (postit: dónde está pegado en el escritorio; orden: el de tus áreas)
 
 /**
  * Paso 23: revisa que las props calcen con las propiedades del tipo (clave conocida, número donde va número,

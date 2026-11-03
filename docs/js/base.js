@@ -72,6 +72,9 @@ export function cajasDe(id) {
   return cajas;
 }
 // El área donde está algo (o él mismo, si es un área), o nada.
+// Tus áreas en el orden que elegiste (props.orden, se arrastra en Productividad); las que no tienen, al final y por nombre.
+export const areasEnOrden = () => datos.nodos.filter((n) => n.tipos.clave === "area")
+  .sort((a, b) => (a.props?.orden ?? Infinity) - (b.props?.orden ?? Infinity) || a.titulo.localeCompare(b.titulo, "es"));
 export const areaDe = (id) => [id, ...cajasDe(id)].find((c) => datos.nodo.get(c)?.tipos.clave === "area");
 // El proyecto donde está algo (el más cercano), o nada.
 export const proyectoDe = (id) => cajasDe(id).find((c) => datos.nodo.get(c)?.tipos.clave === "proyecto");

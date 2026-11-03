@@ -36,12 +36,14 @@ export const WIDGETS = {
 export function disposicionDe(a) {
   const lista = (x) => (Array.isArray(x) ? x : []);
   const tuya = lista(datos.disposiciones.get(a.id))
-    .map((c) => ({ ancho: Number(c?.ancho) > 0 ? Number(c.ancho) : 1, arriba: c?.arriba === true, widgets: lista(c?.widgets).filter((id) => WIDGETS[id]) }))
+    .map((c) => ({ ancho: Number(c?.ancho) > 0 ? Number(c.ancho) : 1, costado: c?.costado === true, arriba: c?.arriba === true, widgets: lista(c?.widgets).filter((id) => WIDGETS[id]) }))
     .filter((c) => c.widgets.length);
   return tuya.length ? tuya : a.columnas;
 }
 
 // Arma la <section> de un apartado: su título y sus columnas de ventanas.
+// Una columna con costado: true (paso 38b) va pegada al borde izquierdo, a todo el alto, y se esconde con su botón;
+// queda escondida o no según la dejaste la última vez (en este navegador).
 // Una columna con arriba: true (paso 37b) va como franja a todo el ancho, sobre las demás columnas.
 // Devuelve la sección (para ponerla en la página) y la función que la redibuja entera.
 // Las ventanas se arman al primer dibujo y se vuelven a armar solo si cambió la disposición.
@@ -61,15 +63,34 @@ export function montar(a) {
       redibujar.push(w.crear(v, ctx));
       return v;
     };
-    const centro = columnas.filter((c) => !c.arriba);
+    const centro = columnas.filter((c) => !c.costado && !c.arriba), lado = columnas.filter((c) => c.costado);
     const franja = columnas.filter((c) => c.arriba).flatMap((c) => c.widgets.map(ventana));
     const grilla = el("div", { className: "columnas" }, ...centro.map((c) => el("div", { className: "columna" }, ...c.widgets.map(ventana))));
     grilla.style.setProperty("--columnas", centro.map((c) => `minmax(0, ${c.ancho ?? 1}fr)`).join(" "));
+    const costado = lado.length ? el("aside", { className: "costado vidrio" }, botonCostado(), ...lado.flatMap((c) => c.widgets.map(ventana))) : "";
+    armada.costado?.remove();
     for (const f of armada.franja ?? []) f.remove();
     if (armada.grilla) armada.grilla.replaceWith(grilla);
     else seccion.append(grilla);
     grilla.before(...franja);
-    armada = { clave: JSON.stringify(columnas), grilla, franja, redibujar };
+    if (costado) titulo.after(costado);
+    seccion.classList.toggle("con-costado", !!costado);
+    armada = { clave: JSON.stringify(columnas), grilla, costado, franja, redibujar };
+  }
+
+  const guardado = "costado-cerrado:" + a.id;
+  const leer = () => { try { return localStorage.getItem(guardado) === "1"; } catch { return false; } };
+  seccion.classList.toggle("costado-cerrado", leer());
+  function botonCostado() {
+    const b = el("button", { className: "plegar", onclick: () => {
+      const cerrado = seccion.classList.toggle("costado-cerrado");
+      try { localStorage.setItem(guardado, cerrado ? "1" : "0"); } catch {}
+      poner();
+    } });
+    const poner = () => { const c = seccion.classList.contains("costado-cerrado");
+      b.textContent = c ? "›" : "‹"; b.title = c ? "Mostrar el costado" : "Esconder el costado"; b.ariaExpanded = String(!c); };
+    poner();
+    return b;
   }
 
   function dibujar() {

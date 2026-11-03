@@ -38,6 +38,18 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 31 | Los post-its: lo que está en el Inbox queda pegado alrededor de las secciones del escritorio. Se arrastran (el lugar se guarda), se escribe encima, ✓ lo marca hecho, × lo suelta y "Pasar a…" abre el formulario ya lleno para ponerle fecha, proyecto o cambiarlo de tipo. "+ Nuevo → Post-it" crea uno. En el celular van en una fila arriba de Hoy | `docs/js/postits.js` |
 | 32a | Productividad, a la izquierda de Hoy en el escritorio: tus proyectos activos con su avance, cuántas tareas van atrasadas y la próxima; elegir uno filtra las tareas (atrasadas, hoy, próximas, sin fecha y hechas plegadas), y "Agregar tarea" la deja en ese proyecto. La lista de tareas ahora es una sola pieza que comparten Hoy y Productividad | `docs/js/productividad.js`, `docs/js/tareas.js` |
 | 32b | Mejoras de Productividad: los proyectos se agrupan en su área (Kulpem › Crear Pagina Web), cada proyecto tiene su color (también en las tareas y el calendario), arrastrar una tarea encima de un área o proyecto la mueve ahí, "Agregar tarea" entiende fechas escritas ("dentista mañana 10:00", "informe el viernes 18h", "15/11") y un proyecto sin pendientes se cierra desde la lista | `docs/js/productividad.js`, `docs/js/fechas.js`, `tests/fechas.test.mjs` |
+| 32c | Las áreas como chips arriba de Productividad: elegir una muestra solo sus proyectos y filtra las tareas | `docs/js/productividad.js` |
+| 34a | Las ventanas como widgets: cada una es una pieza registrada (título, si crece, si filtra, cómo se dibuja) y cada apartado dice en qué columnas van. Las ventanas de un apartado comparten lo elegido (`ctx`) | `docs/js/widgets.js` |
+| 34b | La disposición de cada apartado se guarda por persona (tabla `disposiciones`); si lo guardado no sirve, vuelve a la de siempre | `supabase/migrations/0012_disposiciones.sql`, `docs/js/widgets.js` |
+| 35 | La página Proyectos: el índice por área con buscador, la cabecera editable (título, datos, descripción, avance vs plazo), el tablero o lista de tareas por estado, y sus notas y próximos eventos. «Abrir ↗» desde Productividad | `docs/js/proyectos.js` |
+| 35b | Proyectos muestra solo proyectos (los ramos y objetivos tendrán su propia vista) | `docs/js/proyectos.js` |
+| 35c | En el computador, el dock es una barra lateral pegada al borde; el escritorio infinito se recorre con ← →, Esc (ver todo) y clic en una sección | `docs/js/carcasa.js`, `docs/js/escritorio.js` |
+| 35d | El escritorio infinito sin barra de secciones: solo el minimapa, flechas, Esc, arrastrar y doble clic | `docs/js/escritorio.js` |
+| 36 | Los tópicos (ramos) se terminan: estado (En curso / Hecho) y resultado (Aprobado / Reprobado) | `supabase/migrations/0013_estado_de_topicos.sql` |
+| 36b | Los ramos vuelven a Productividad, bajo su área y con su color, junto a los proyectos | `docs/js/productividad.js` |
+| 37a | Los objetivos llevan sus números (Desde → Va en → Meta) y se miden solos (con registros, a mano o por lo que aporta); los hitos se funden en su objetivo y desaparecen; los ramos pueden aportar a un objetivo | `supabase/migrations/0014_objetivos_sin_hitos.sql` |
+| 38a | Tus áreas en tu orden: los chips de Productividad empiezan por tu primera área (Todas y Sin proyecto al final) y se reordenan arrastrando; Proyectos agrupa en ese mismo orden | `docs/js/productividad.js`, `docs/js/base.js` |
+| 38b | El índice de Proyectos pegado al costado, a todo el alto, y escondible con su botón ‹ › (se acuerda de cómo lo dejaste). Sirve para cualquier apartado: una columna con `costado: true` | `docs/js/widgets.js`, `docs/js/apartados.js` |
 | 37b | Los objetivos en el escritorio infinito: una franja arriba de Productividad con una tarjeta por objetivo (cuánto llevas, y una rayita en "hoy" para ver si vas atrasado contra la fecha tope). Tocar una filtra las tareas de lo que le aporta. Sirve para cualquier apartado: una columna con `arriba: true` | `docs/js/objetivos.js`, `docs/js/widgets.js` |
 
 ## Cómo está ordenada la web
@@ -56,7 +68,9 @@ docs/js/panel.js     el panel de un nodo y el formulario para crear o editar
 docs/js/nuevo.js     el botón "+ Nuevo": qué se crea según el apartado (lista "nuevo" de cada apartado)
 docs/js/calendario.js el cajón del calendario (día, semana, mes) y su editor de eventos
 docs/js/postits.js   lo del Inbox como post-its alrededor de las secciones del escritorio
+docs/js/widgets.js   las ventanas como piezas (widgets) y cómo se arma un apartado con sus columnas
 docs/js/productividad.js tus proyectos y sus tareas
+docs/js/proyectos.js la página Proyectos: índice, cabecera, tablero y lo de adentro
 docs/js/objetivos.js la franja de objetivos y cómo se mide cada uno
 docs/js/tareas.js    la lista de tareas (✓, ☆, Hoy/Mañana/Soltar) que comparten Hoy y Productividad
 docs/js/hoy.js       el apartado Hoy: tareas, el tiempo y tu día
