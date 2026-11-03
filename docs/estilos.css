@@ -36,7 +36,8 @@ body { margin: 0; font: 14px/1.5 var(--sans); color: var(--texto); background: v
           border: 1px solid var(--borde); box-shadow: var(--sombra); }
 
 /* Botones y campos */
-button { padding: 6px 12px; border-radius: 9px; font: 500 13.5px var(--sans); cursor: pointer; border: 1px solid var(--borde); background: transparent; color: inherit; }
+button, a.boton { padding: 6px 12px; border-radius: 9px; font: 500 13.5px var(--sans); cursor: pointer; border: 1px solid var(--borde); background: transparent; color: inherit; }
+a.boton { display: inline-flex; align-items: center; text-decoration: none; }
 button.principal { background: var(--acento-fondo); border-color: var(--acento-fondo); color: var(--sobre-acento); font-weight: 600; }
 input, select, textarea { font: inherit; color: inherit; }
 .icono { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
