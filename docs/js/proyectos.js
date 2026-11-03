@@ -93,7 +93,11 @@ export function cabecera(v, ctx) {
     const titulo = escribible("h2", n.titulo, (t) => (t && t !== n.titulo ? cambiar(n, { titulo: t }) : (titulo.textContent = n.titulo)), "titulo-caja");
     const editar = () => formulario(n);
     const puedeTerminar = tienePropiedad(n, "estado");
-    const acciones = el("div", { className: "acciones-caja" },
+    // Sus enlaces (ej. «Proyecto en Claude», paso 38c) como botones que abren en otra pestaña.
+    const conEnlace = (datos.tipo.get(n.tipos.clave)?.propiedades ?? [])
+      .filter((p) => p.tipo === "enlace" && /^https?:\/\//.test(n.props?.[p.clave] ?? ""));
+    const enlaces = conEnlace.map((p) => el("a", { className: "boton", href: n.props[p.clave], target: "_blank", rel: "noopener", textContent: p.nombre + " ↗" }));
+    const acciones = el("div", { className: "acciones-caja" }, ...enlaces,
       el("button", { textContent: "Editar todo", onclick: editar }),
       puedeTerminar ? el("button", { textContent: terminada(n) ? "Reabrir" : "✓ Terminar",
         onclick: () => cambiar(n, { estado: terminada(n) ? "En curso" : "Hecho" }) }) : "");
@@ -101,7 +105,7 @@ export function cabecera(v, ctx) {
     const ruta = cajasDe(n.id).reverse().map((id) => datos.nodo.get(id)?.titulo).filter(Boolean).join(" › ");
     const ficha = (nombre, valor) => el("button", { className: "ficha", onclick: editar }, el("span", { textContent: nombre }), valor);
     const fichas = el("div", { className: "fichas" },
-      ...camposDe(n).map((c) => ficha(c.nombre, c.valor)),
+      ...camposDe(n).filter((c) => !conEnlace.some((p) => p.clave === c.clave)).map((c) => ficha(c.nombre, c.valor)), // los enlaces ya van como botón
       el("button", { className: "ficha vacia", textContent: "+ Más datos", onclick: editar }));
     const descripcion = el("textarea", { className: "descripcion", value: n.contenido ?? "", rows: 2, ariaLabel: "Descripción",
       placeholder: `¿De qué se trata ${n.titulo}? La idea, con quién, links…` });

@@ -45,6 +45,7 @@ do $$ declare r text; begin
   assert r = 'Evaluaciones', 'evento debería agruparse en Evaluaciones dentro de un tópico';
   assert (select propiedades @> '[{"clave":"estado"},{"clave":"resultado"}]'::jsonb from tipos where clave = 'topico'),
     'tópico debería tener estado y resultado (paso 36)';
+  assert (select propiedades @> '[{"clave":"claude","tipo":"enlace"}]'::jsonb from tipos where clave = 'proyecto'), 'proyecto debería tener su enlace a Claude (paso 38c)';
 end $$;
 
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
