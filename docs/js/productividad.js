@@ -2,8 +2,8 @@
 // ctx.area es el chip elegido y ctx.filtro, el chip o uno de sus proyectos: lo que muestra "tareas".
 // Viven en ctx y no dentro del widget para que no se pierdan si la ventana se vuelve a armar.
 //   proyectos  una fila de chips (Todas, Proyectos, Universidad... y Sin proyecto). Elegir uno filtra las tareas
-//              y muestra debajo solo sus proyectos, cada uno con su color, su avance, cuántas tareas van
-//              atrasadas y la próxima. Tocar un proyecto lo filtra (tocarlo de nuevo vuelve al área).
+//              y muestra debajo solo sus proyectos y tópicos (los ramos), cada uno con su color, su avance, cuántas
+//              tareas van atrasadas y la próxima. Tocar uno lo filtra (tocarlo de nuevo vuelve al área).
 //              Soltar una tarea encima de un chip o un proyecto la mueve ahí. Un proyecto sin nada pendiente se puede cerrar.
 //   tareas     las del filtro, por grupo (atrasadas, hoy, próximas, sin fecha; las hechas, plegadas).
 //              "Agregar tarea" entiende fechas escritas ("dentista mañana 10:00") y deja la tarea en lo elegido.
@@ -13,6 +13,7 @@ import { hoyTexto, corto } from "./fechas.js";
 import { cambiar, mover } from "./acciones.js";
 import { listaDeTareas, seccion, porFecha, agregarTarea } from "./tareas.js";
 
+const LISTADOS = ["proyecto", "topico"]; // lo que aparece bajo cada área (paso 36b: los ramos también)
 const TODAS = "todas", SIN = "sin"; // los filtros que no son un proyecto ni un área
 const NOMBRE = { [TODAS]: "Todas", [SIN]: "Sin proyecto" };
 const filtroDe = (ctx) => ctx.filtro ?? TODAS;
@@ -82,12 +83,13 @@ export function areasYProyectos(v, ctx) {
     const b = el("button", { className: "filtro", ariaPressed: String(p.id === filtroDe(ctx)),
       onclick: () => elegir(filtroDe(ctx) === p.id ? areaElegida() : p.id) },
       el("span", { className: "nombre" }, el("i", { className: "punto" }), p.nombre),
-      el("span", { className: "meta" + (p.atrasadas ? " atrasada" : ""), textContent: cuenta(p) }),
+      el("span", { className: "meta" + (p.atrasadas ? " atrasada" : ""), textContent: [p.nodo.tipos.clave !== "proyecto" && p.nodo.tipos.nombre, cuenta(p)].filter(Boolean).join(" · ") }),
       el("span", { className: "barra-p" }, el("span", { style: `width: ${p.total ? (p.hechas / p.total) * 100 : 0}%` })));
     if (p.proxima) b.append(el("span", { className: "proxima", textContent: `Próxima: ${p.proxima.titulo}${p.proxima.fecha ? " · " + corto(dia(p.proxima.fecha)) : ""}` }));
     const li = el("li", { className: "proyecto" }, b);
     li.style.setProperty("--c", colorDeProyecto(p.id));
-    if (!p.abiertas) li.append(el("button", { className: "cerrar", textContent: "✓ Cerrar proyecto",
+    // Un ramo no termina por quedarse sin tareas (termina con el semestre): cerrar es solo para proyectos.
+    if (!p.abiertas && p.nodo.tipos.clave === "proyecto") li.append(el("button", { className: "cerrar", textContent: "✓ Cerrar proyecto",
       title: "No le queda nada pendiente: marcarlo como hecho", onclick: () => cambiar(p.nodo, { estado: "Hecho" }) }));
     recibir(li, p);
     return li;
@@ -95,7 +97,7 @@ export function areasYProyectos(v, ctx) {
 
   return () => {
     const fila = (n) => ({ id: n.id, nombre: n.titulo, nodo: n, ...resumen(n.id) });
-    const proyectos = deTipo("proyecto").filter((p) => p.estado !== "Hecho").map(fila)
+    const proyectos = LISTADOS.flatMap(deTipo).filter((p) => p.estado !== "Hecho").map(fila)
       .sort((a, b) => (a.proxima?.fecha ?? "9").localeCompare(b.proxima?.fecha ?? "9") || a.nombre.localeCompare(b.nombre, "es"));
     // Las áreas que tienen proyectos activos o tareas pendientes, en orden alfabético.
     const areas = datos.nodos.filter((n) => n.tipos.clave === "area").map(fila)
@@ -112,7 +114,7 @@ export function areasYProyectos(v, ctx) {
     chips.replaceChildren(...filas.map(chip));
     lista.replaceChildren(...visibles.map(proyecto));
     if (!visibles.length) lista.append(el("li", { className: "vacio", textContent: area === SIN
-      ? "Aquí están las tareas que no son de ningún proyecto." : "Esta área no tiene proyectos activos." }));
+      ? "Aquí están las tareas que no son de ningún proyecto." : "Esta área no tiene proyectos ni tópicos activos." }));
   };
 }
 
