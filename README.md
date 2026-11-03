@@ -38,6 +38,7 @@ Se construye paso a paso. Cada paso es un commit con su explicación.
 | 31 | Los post-its: lo que está en el Inbox queda pegado alrededor de las secciones del escritorio. Se arrastran (el lugar se guarda), se escribe encima, ✓ lo marca hecho, × lo suelta y "Pasar a…" abre el formulario ya lleno para ponerle fecha, proyecto o cambiarlo de tipo. "+ Nuevo → Post-it" crea uno. En el celular van en una fila arriba de Hoy | `docs/js/postits.js` |
 | 32a | Productividad, a la izquierda de Hoy en el escritorio: tus proyectos activos con su avance, cuántas tareas van atrasadas y la próxima; elegir uno filtra las tareas (atrasadas, hoy, próximas, sin fecha y hechas plegadas), y "Agregar tarea" la deja en ese proyecto. La lista de tareas ahora es una sola pieza que comparten Hoy y Productividad | `docs/js/productividad.js`, `docs/js/tareas.js` |
 | 32b | Mejoras de Productividad: los proyectos se agrupan en su área (Kulpem › Crear Pagina Web), cada proyecto tiene su color (también en las tareas y el calendario), arrastrar una tarea encima de un área o proyecto la mueve ahí, "Agregar tarea" entiende fechas escritas ("dentista mañana 10:00", "informe el viernes 18h", "15/11") y un proyecto sin pendientes se cierra desde la lista | `docs/js/productividad.js`, `docs/js/fechas.js`, `tests/fechas.test.mjs` |
+| 37b | Los objetivos en el escritorio infinito: una franja arriba de Productividad con una tarjeta por objetivo (cuánto llevas, y una rayita en "hoy" para ver si vas atrasado contra la fecha tope). Tocar una filtra las tareas de lo que le aporta. Sirve para cualquier apartado: una columna con `arriba: true` | `docs/js/objetivos.js`, `docs/js/widgets.js` |
 
 ## Cómo está ordenada la web
 
@@ -56,6 +57,7 @@ docs/js/nuevo.js     el botón "+ Nuevo": qué se crea según el apartado (lista
 docs/js/calendario.js el cajón del calendario (día, semana, mes) y su editor de eventos
 docs/js/postits.js   lo del Inbox como post-its alrededor de las secciones del escritorio
 docs/js/productividad.js tus proyectos y sus tareas
+docs/js/objetivos.js la franja de objetivos y cómo se mide cada uno
 docs/js/tareas.js    la lista de tareas (✓, ☆, Hoy/Mañana/Soltar) que comparten Hoy y Productividad
 docs/js/hoy.js       el apartado Hoy: tareas, el tiempo y tu día
 docs/js/agenda.js    la agenda por horas (un día o varios); la usan Hoy y el calendario

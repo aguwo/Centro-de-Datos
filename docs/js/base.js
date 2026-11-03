@@ -104,7 +104,7 @@ export async function recargar(enfocarId) {
   if (!datos.nodos.length) avisar("Cargando tu grafo…"); // solo la primera vez; después se actualiza sin parpadear
   const desde = new Date(Date.now() - DIAS_REGISTROS * 864e5).toISOString();
   const [nodos, conexiones, tipos, arbol, registros, disposiciones] = await Promise.all([
-    db.from("nodos").select("id, titulo, contenido, estado, fecha, props, tipos!inner(clave, nombre)").eq("archivado", false),
+    db.from("nodos").select("id, titulo, contenido, estado, fecha, props, creado_en, tipos!inner(clave, nombre)").eq("archivado", false),
     db.from("conexiones").select("id, origen_id, relacion, destino_id").is("valido_hasta", null),
     db.from("tipos").select("id, owner_id, clave, nombre, modulo, orden, color, nivel, subcaja, propiedades, conexiones").order("orden"),
     db.from("arbol").select("id, padre_id"),
