@@ -4,9 +4,11 @@
 // Un objetivo se mide solo, según lo que tenga (paso 37a; no hay que elegir):
 //   con registros       tiene medidas anotadas (ej. tu peso): va en la última
 //   a mano              tiene Meta: va en lo que escribiste en "Va en" (o en "Desde", si aún no escribes nada)
-//   por lo que aporta   no tiene Meta: el promedio de lo que le aporta (un proyecto o ramo terminado cuenta entero;
-//                       uno en curso, por sus tareas hechas). Así un semestre avanza con las tareas de cada ramo.
-import { datos, dia, cajasDe } from "./base.js";
+//   por lo que aporta   no tiene Meta: cuántos de los proyectos y ramos que le aportan ya terminaron bien
+//                       (un ramo Reprobado no cuenta). Las tareas no suman: el semestre avanza con cada ramo aprobado.
+//                       Lo que nunca termina (ej. un hábito) ayuda, pero no se cuenta.
+// Solo lo que se mide con números puede ir "atrasado": un semestre no se aprueba de a poco.
+import { datos, dia } from "./base.js";
 import { hoyTexto } from "./fechas.js";
 
 const numero = (x) => Number(x).toLocaleString("es-CL", { maximumFractionDigits: 1 });
@@ -14,26 +16,23 @@ export const esObjetivo = (n) => n?.tipos.clave === "objetivo" && n.estado !== "
 // Lo que le aporta a un objetivo: proyectos, ramos, hábitos, libros...
 export const aportesDe = (id) => datos.conexiones.filter((c) => c.relacion === "aporta_a" && c.destino_id === id).map((c) => datos.nodo.get(c.origen_id));
 
-// Cuánto lleva algo que aporta: terminado = 1; si no, la parte de sus tareas que está hecha.
-function avanceDe(a) {
-  if (a.estado === "Hecho") return 1;
-  const tareas = datos.nodos.filter((t) => t.tipos.clave === "tarea" && t.estado !== "Inbox" && cajasDe(t.id).includes(a.id));
-  return tareas.length ? tareas.filter((t) => t.estado === "Hecho").length / tareas.length : 0;
-}
+const terminable = (a) => datos.tipo.get(a.tipos.clave)?.propiedades?.some((p) => p.clave === "estado");
+const plural = (k, palabra) => `${k} ${palabra}${k === 1 ? "" : "s"}`;
 
-// Cuánto llevas: { avance: 0..1 (o null si no se puede medir), texto }.
+// Cuánto llevas: { avance: 0..1 (o null si no se puede medir), texto, continuo: si se mide con números }.
 export function medir(n) {
   const { inicio = 0, meta, unidad = "" } = n.props ?? {};
   const ultima = datos.registros.filter((r) => r.clase === "medida" && r.nodo_id === n.id).at(-1);
   if (typeof meta === "number") {
     const va = Number(ultima?.valor ?? n.props.actual ?? inicio);
-    return { avance: (va - inicio) / (meta - inicio || 1), texto: `${numero(va)} de ${numero(meta)} ${unidad}`.trim() };
+    return { avance: (va - inicio) / (meta - inicio || 1), texto: `${numero(va)} de ${numero(meta)} ${unidad}`.trim(), continuo: true };
   }
-  const aportes = aportesDe(n.id);
-  if (!aportes.length) return { avance: null, texto: "Conéctale lo que le aporta" };
-  const hechos = aportes.filter((a) => a.estado === "Hecho").length;
-  const avance = aportes.reduce((suma, a) => suma + avanceDe(a), 0) / aportes.length;
-  return { avance, texto: `${hechos} de ${aportes.length} listos · ${Math.round(avance * 100)} %` };
+  const cuentan = aportesDe(n.id).filter(terminable);
+  if (!cuentan.length) return { avance: null, texto: "Conéctale lo que le aporta" };
+  const hechos = cuentan.filter((a) => a.estado === "Hecho");
+  const malos = hechos.filter((a) => a.props?.resultado === "Reprobado").length, buenos = hechos.length - malos;
+  return { avance: buenos / cuentan.length, continuo: false,
+    texto: `${buenos} de ${cuentan.length} listos` + (malos ? ` · ${plural(malos, "reprobado")}` : "") };
 }
 
 // Cuánto tiempo ha pasado, de 0 a 1: desde que lo creaste hasta su fecha tope. Sin fecha tope, null.
@@ -45,8 +44,8 @@ export function tiempo(n) {
 }
 
 // Todo lo que se muestra de un objetivo: cuánto llevas, cuánto tiempo pasó y si vas atrasado
-// (el avance más de 10 puntos detrás del tiempo: un poco de holgura antes de marcarlo).
+// (solo si se mide con números y el avance va más de 10 puntos detrás del tiempo: un poco de holgura).
 export function comoVa(n) {
-  const { avance, texto } = medir(n), t = tiempo(n);
-  return { avance, texto, tiempo: t, atrasado: avance !== null && t !== null && avance < t - 0.1 };
+  const { avance, texto, continuo } = medir(n), t = tiempo(n);
+  return { avance, texto, tiempo: t, atrasado: continuo && t !== null && avance < t - 0.1 };
 }
