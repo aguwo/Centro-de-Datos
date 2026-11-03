@@ -32,7 +32,7 @@ export const APARTADOS = [
   },
   {
     id: "productividad", nombre: "Productividad", lugar: [0, 1], nuevo: ["tarea", "proyecto"],
-    columnas: [{ widgets: ["tareas"] }, { widgets: ["proyectos"] }],
+    columnas: [{ arriba: true, widgets: ["objetivos"] }, { widgets: ["tareas"] }, { widgets: ["proyectos"] }], // objetivos: franja arriba (paso 37b)
     icono: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8.5 12.2l2.6 2.6 4.6-5.4"/>',
   },
   // Paso 35: una caja (área, ramo, proyecto...) completa, para verla entera y editarla. Va a pantalla completa.
