@@ -79,13 +79,13 @@ export const proyectoDe = (id) => cajasDe(id).find((c) => datos.nodo.get(c)?.tip
 // Colores para distinguir cosas del mismo tipo (proyectos, calendarios).
 export const PALETA = ["#3b82f6", "#22c55e", "#ec4899", "#f97316", "#8b5cf6", "#14b8a6", "#ef4444", "#a16207"];
 const suyo = (id) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0) % PALETA.length;
-// Un color por proyecto, distinto entre los activos mientras alcance la paleta. Cada uno parte de "su" color
+// Un color por proyecto o tópico, distinto entre los activos mientras alcance la paleta. Cada uno parte de "su" color
 // (sale de su id) y, si ya lo tiene otro, toma el siguiente libre: así casi nunca cambian.
 let colores = { de: null, mapa: new Map() };
 export function colorDeProyecto(id) {
   if (colores.de !== datos.nodos) { // se calcula una vez por cada carga de datos
     const usados = new Set(), mapa = new Map();
-    const activos = datos.nodos.filter((n) => n.tipos.clave === "proyecto" && n.estado !== "Hecho").sort((a, b) => a.id.localeCompare(b.id));
+    const activos = datos.nodos.filter((n) => ["proyecto", "topico"].includes(n.tipos.clave) && n.estado !== "Hecho").sort((a, b) => a.id.localeCompare(b.id));
     for (const p of activos) {
       let i = suyo(p.id);
       for (let k = 0; k < PALETA.length && usados.has(i); k++) i = (i + 1) % PALETA.length;
