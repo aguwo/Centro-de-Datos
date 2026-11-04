@@ -37,6 +37,7 @@ function columnas(items) {
   return items;
 }
 const ESCALON = 22; // % que se corre cada bloque encima de otro
+const LINEA = 15.6; // alto de una línea de texto en un bloque (12px × 1.3, como en estilos.css)
 
 // cont: dónde dibujar. dias: ["2026-11-02", ...]. Opciones:
 //   desde, hasta  qué horas se ven (por defecto de 7 a 24)
@@ -78,7 +79,11 @@ export function dibujarAgenda(cont, dias, { desde = 7, hasta = 24, alto = 48, to
       const b = bloque(x);
       const ini = Math.max(x.ini, desde);
       const altoBloque = Math.max(22, (x.fin - ini) * alto - 2);
-      b.classList.toggle("corto", altoBloque < 40); // poco espacio: la hora va al lado del nombre
+      // La hora va debajo del nombre y el nombre usa las líneas que quedan (hasta 3). Si dos líneas no caben holgadas,
+      // se aprietan (menos relleno y menos interlineado); solo si ni así caben, la hora va al lado.
+      b.classList.toggle("apretado", altoBloque < 2 * LINEA + 6);
+      b.classList.toggle("corto", altoBloque < 28);
+      b.style.setProperty("--lineas", Math.min(3, Math.max(1, Math.floor((altoBloque - 6) / LINEA) - 1)));
       Object.assign(b.style, { top: (ini - desde) * alto + "px", height: altoBloque + "px",
         left: `calc(${x.col * ESCALON}% + 2px)`, width: `calc(${100 - x.col * ESCALON}% - 4px)`, zIndex: x.col + 1 });
       b.classList.toggle("encima", x.col > 0);
