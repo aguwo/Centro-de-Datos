@@ -17,6 +17,7 @@ const archivo = join(carpeta, "universidad.json");
 await writeFile(archivo, JSON.stringify({ leido: new Date().toISOString(), ramos }, null, 2));
 for (const r of ramos) {
   const conNota = r.evaluaciones.filter((e) => e.nota !== null).length;
-  console.log(`${r.nombre}: ${conNota}/${r.evaluaciones.length} notas, asistencia ${r.asistencia.porcentaje ?? "sin registro"}%`);
+  const asis = r.asistencia.porcentaje === null ? "sin registro" : r.asistencia.porcentaje + "%";
+  console.log(`${r.nombre}: ${conNota}/${r.evaluaciones.length} notas, asistencia ${asis}`);
 }
 console.log("Guardado en", archivo);
