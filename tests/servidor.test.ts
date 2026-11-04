@@ -16,8 +16,8 @@ function repoFalso(): Repositorio & { nodos: Nodo[]; conexiones: string[]; anota
       anotados.push(r);
       return { ...r, id: "r1" };
     },
-    async registros() {
-      return [];
+    async registros({ clase }) {
+      return anotados.filter((r) => !clase || r.clase === clase);
     },
     async editarRegistro(id, cambios) {
       return { id, clase: "gasto", ...cambios };
@@ -75,7 +75,7 @@ function repoFalso(): Repositorio & { nodos: Nodo[]; conexiones: string[]; anota
     async conectar(o, r, d) {
       conexiones.push(`${o}-${r}->${d}`);
     },
-    async agendaDelDia() {
+    async conFechaHasta() {
       return nodos;
     },
   };
@@ -102,11 +102,11 @@ test("las notificaciones responden 202 sin cuerpo", async () => {
   assert.equal(status, 202);
 });
 
-test("tools/list incluye las 16 herramientas", async () => {
+test("tools/list incluye las 17 herramientas", async () => {
   const { json } = await llamar(repoFalso(), { jsonrpc: "2.0", id: 2, method: "tools/list" });
   assert.deepEqual(
     json.result.tools.map((t: any) => t.name).sort(),
-    ["actualizar_nodo", "agenda_de_hoy", "anotar_registro", "borrar_nodo", "borrar_registro", "buscar_nodos",
+    ["actualizar_nodo", "agenda_de_hoy", "anotar_registro", "borrar_nodo", "borrar_registro", "buscar_nodos", "cierre_del_dia",
      "conectar_nodos", "consultar_registros", "crear_nodo", "desconectar_nodos", "editar_registro", "guardar_tipo",
      "listar_tipos", "mover_nodos", "ver_arbol", "ver_nodo"],
   );
@@ -238,4 +238,49 @@ test("crear_nodo rechaza props que no son del tipo", async () => {
   });
   assert.equal(json.result.isError, true);
   assert.equal(repo.nodos.length, 0);
+});
+
+// ---------- Paso 47: agenda con clases que se repiten y cierre del día ----------
+const RAMO = { id: "bd", titulo: "Base de Datos", tipo: "topico" };
+function semanaDePrueba() {
+  const repo = repoFalso();
+  repo.nodos.push(
+    // Clase los miércoles 08:10 (11:10 UTC) desde agosto, dentro del ramo.
+    { id: "c", tipo: "evento", titulo: "Clase BD", fecha: "2026-08-05T11:10:00+00:00", props: { repite: "Cada semana" }, caja: RAMO },
+    { id: "e1", tipo: "evento", titulo: "Certamen 1", fecha: "2026-10-28T11:10:00+00:00", props: {}, caja: RAMO }, // pasó, sin nota
+    { id: "e2", tipo: "evento", titulo: "Certamen 2", fecha: "2026-11-06T11:10:00+00:00", props: {}, caja: RAMO }, // viene
+    { id: "e3", tipo: "evento", titulo: "Test viejo", fecha: "2026-09-01T11:10:00+00:00", props: { nota: 6 }, caja: RAMO },
+    { id: "cumple", tipo: "evento", titulo: "Cumpleaños", fecha: "2026-10-01T00:00:00+00:00", props: {} }, // pasó y no se repite
+    { id: "t1", tipo: "tarea", titulo: "Atrasada", estado: "Por hacer", fecha: "2026-11-02T00:00:00+00:00" },
+    { id: "t2", tipo: "tarea", titulo: "Hoy en la noche", estado: "Por hacer", fecha: "2026-11-05T01:30:00+00:00" }, // 22:30 del 4 en Chile
+    { id: "t3", tipo: "tarea", titulo: "Mañana", estado: "Por hacer", fecha: "2026-11-05T00:00:00+00:00" },
+  );
+  return repo;
+}
+const herramienta = async (repo: Repositorio, name: string, args: unknown) =>
+  (await llamar(repo, { jsonrpc: "2.0", id: 47, method: "tools/call", params: { name, arguments: args } })).json.result.structuredContent.resultado;
+
+test("agenda_de_hoy pone las clases que se repiten y deja fuera los eventos que ya pasaron", async () => {
+  const r = await herramienta(semanaDePrueba(), "agenda_de_hoy", { fecha: "2026-11-04", dias: 3 });
+  assert.deepEqual(r.atrasadas.map((n: Nodo) => n.id), ["t1"]);
+  assert.deepEqual(r.dias.map((d: any) => [d.dia, d.eventos.map((n: Nodo) => n.id), d.tareas.map((n: Nodo) => n.id)]), [
+    ["2026-11-04", ["c"], ["t2"]], // miércoles: la clase, y la tarea de las 22:30 cuenta en Chile, no en UTC
+    ["2026-11-05", [], ["t3"]],
+    ["2026-11-06", ["e2"], []],
+  ]);
+});
+
+test("cierre_del_dia junta clases con su asistencia, notas pendientes y mañana", async () => {
+  const repo = semanaDePrueba();
+  let r = await herramienta(repo, "cierre_del_dia", { fecha: "2026-11-04" });
+  assert.deepEqual(r.clases, [{ clase: "Clase BD", ramo: "Base de Datos", ramo_id: "bd", fecha: "2026-08-05T11:10:00+00:00", asistencia: null }]);
+  assert.deepEqual(r.tareas_de_hoy.map((n: Nodo) => n.id), ["t2"]);
+  assert.deepEqual(r.evaluaciones_sin_nota.map((n: Nodo) => n.id), ["e1"]);
+  assert.deepEqual(r.manana.tareas.map((n: Nodo) => n.id), ["t3"]);
+  assert.deepEqual(r.proximas_evaluaciones.map((n: Nodo) => n.id), ["e2"]);
+  assert.ok(r.pasos.length > 3);
+
+  await herramienta(repo, "anotar_registro", { clase: "asistencia", nodo_id: "bd", valor: 1, fecha: "2026-11-04" });
+  r = await herramienta(repo, "cierre_del_dia", { fecha: "2026-11-04" });
+  assert.equal(r.clases[0].asistencia, 1);
 });

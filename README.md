@@ -27,6 +27,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 22 | Control total del agente: archivar, recuperar, cambiar de tipo y borrar (solo lo archivado) nodos; desconectar (queda la historia) y mover varios nodos de caja; editar y borrar registros; crear o personalizar tipos | — | — | `supabase/functions/mcp/` |
 | 23 | Cada propiedad de un tipo tiene su clave exacta: el agente solo puede usar las del tipo (con valores válidos) y la web las muestra con su nombre y deja editarlas | — | SQL 4 | `supabase/migrations/0008_propiedades.sql` |
 | 24 | Publicación automática: al subir cambios del agente a GitHub, se corren las pruebas y se publica en Supabase | — | — | `.github/workflows/publicar-agente.yml` |
+| 47 | Cierre del día con Martita: `cierre_del_dia` le da al agente las clases de hoy (y si marcaste asistencia), tus tareas de hoy y atrasadas, las evaluaciones sin nota y lo de mañana, con los pasos de la conversación. `agenda_de_hoy` ahora ve las clases que se repiten, cuenta los días en hora de Chile, ya no trae eventos pasados y puede mostrar varios días. La regla de repetición queda en un solo lugar de la web (`fechas.js`) y una prueba revisa que el conector diga lo mismo | #PR | — | `supabase/functions/mcp/dias.ts`, `supabase/functions/mcp/servidor.ts`, `tests/dias.test.ts` |
 
 ### Mapa
 
@@ -95,11 +96,10 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 47, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 48, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
-| Ahora | Cierre del día con Martita: asistencia, notas de Ucampus y plan de mañana |
 | Ahora | EV@ automático: copia diaria (solo lectura) de fechas, notas, material y entregas |
 | Siguiente | Respaldos semanales de la base |
 | Siguiente | Esta semana: 7 días con horario y evaluaciones con cuenta regresiva |
