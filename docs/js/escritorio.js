@@ -23,11 +23,18 @@ const enLienzo = APARTADOS.filter((a) => a.lugar);
 const esquina = new Map(); // id de la sección -> { x, y } de su esquina en el mundo
 let cam = { x: 0, y: 0, z: 1 }, mundo = { w: 0, h: 0 }, mirando = null, lejos = false;
 
+// El escritorio pasa por debajo de la barra lateral (así nada se corta en seco junto a ella), pero lo que se mira
+// se centra en lo que queda libre a su derecha: izq = el ancho de la barra (--barra), W = el ancho libre.
+function libre() {
+  const vista = $("escritorio"), izq = parseFloat(getComputedStyle(vista).getPropertyValue("--barra")) || 0;
+  return { izq, W: vista.clientWidth - izq, H: vista.clientHeight };
+}
+
 // Para pegar cosas en el mundo (los post-its): cuánto está acercado y qué punto queda al medio de la pantalla.
 export const zoom = () => cam.z;
 export function centro() {
-  const vista = $("escritorio");
-  return { x: (vista.clientWidth / 2 - cam.x) / cam.z, y: (vista.clientHeight / 2 - cam.y) / cam.z };
+  const { izq, W, H } = libre();
+  return { x: (izq + W / 2 - cam.x) / cam.z, y: (H / 2 - cam.y) / cam.z };
 }
 // Lugares alrededor de las secciones para una caja de ancho × alto, montada "monta" px sobre el borde:
 // primero a los costados de cada sección (derecha e izquierda, de arriba abajo) y después abajo.
@@ -44,8 +51,8 @@ export function alrededor(ancho, alto, monta = 24, aire = 24) {
 
 // La cámara: x, y = dónde queda la esquina del mundo en la pantalla; z = acercamiento.
 function aplicar(animar = false) {
-  const vista = $("escritorio"), W = vista.clientWidth, H = vista.clientHeight, m = 200; // se sale un poco del borde, sin perderse
-  cam.x = Math.min(m, Math.max(W - mundo.w * cam.z - m, cam.x));
+  const { izq, W, H } = libre(), m = 200; // se sale un poco del borde, sin perderse
+  cam.x = Math.min(izq + m, Math.max(izq + W - mundo.w * cam.z - m, cam.x));
   cam.y = Math.min(m, Math.max(H - mundo.h * cam.z - m, cam.y));
   $("mundo").classList.toggle("animar", animar);
   $("mundo").style.transform = `translate(${cam.x}px, ${cam.y}px) scale(${cam.z})`;
@@ -58,22 +65,22 @@ function aplicar(animar = false) {
 
 // Centra una sección y la acerca hasta que quepa entera.
 export function mirar(id, animar = true) {
-  const s = $(id), vista = $("escritorio"), W = vista.clientWidth, H = vista.clientHeight;
+  const s = $(id), { izq, W, H } = libre();
   mirando = id; lejos = false;
-  if (!W) return; // todavía no se ve (antes de entrar); se enfoca cuando aparezca
+  if (!H) return; // todavía no se ve (antes de entrar); se enfoca cuando aparezca
   cam.z = Math.min(1, (W - 2 * MARGEN) / SECCION.ancho, (H - 2 * MARGEN) / SECCION.alto);
-  cam.x = W / 2 - (s.offsetLeft + SECCION.ancho / 2) * cam.z;
+  cam.x = izq + W / 2 - (s.offsetLeft + SECCION.ancho / 2) * cam.z;
   cam.y = H / 2 - (s.offsetTop + SECCION.alto / 2) * cam.z;
   aplicar(animar);
 }
 
 // Todo el mundo a la vista (Esc o doble clic en el fondo). Tocar una sección te lleva a ella.
 function verTodo() {
-  const vista = $("escritorio");
+  const { izq, W, H } = libre();
   lejos = true;
-  cam.z = Math.max(ZOOM.min, Math.min(1, (vista.clientWidth - 2 * MARGEN) / mundo.w, (vista.clientHeight - 2 * MARGEN) / mundo.h));
-  cam.x = (vista.clientWidth - mundo.w * cam.z) / 2;
-  cam.y = (vista.clientHeight - mundo.h * cam.z) / 2;
+  cam.z = Math.max(ZOOM.min, Math.min(1, (W - 2 * MARGEN) / mundo.w, (H - 2 * MARGEN) / mundo.h));
+  cam.x = izq + (W - mundo.w * cam.z) / 2;
+  cam.y = (H - mundo.h * cam.z) / 2;
   aplicar(true);
 }
 
@@ -110,8 +117,8 @@ function dibujarMinimapa() {
     const s = $(b.dataset.id);
     Object.assign(b.style, caja(s.offsetLeft, s.offsetTop, SECCION.ancho, SECCION.alto));
   }
-  const vista = $("escritorio");
-  Object.assign(mini.querySelector(".vista").style, caja(-cam.x / cam.z, -cam.y / cam.z, vista.clientWidth / cam.z, vista.clientHeight / cam.z));
+  const { izq, W, H } = libre();
+  Object.assign(mini.querySelector(".vista").style, caja((izq - cam.x) / cam.z, -cam.y / cam.z, W / cam.z, H / cam.z));
 }
 
 // Lo que tiene su propio desplazamiento (una lista larga, la agenda) y todavía tiene para dónde moverse.
@@ -191,5 +198,9 @@ export function iniciarEscritorio(ir, actual) {
   modo();
   pantallaAncha.addEventListener("change", () => { modo(); ir(actual()); });
   // Cuando cambia el tamaño de la ventana (o el escritorio aparece por primera vez), se vuelve a enfocar.
-  new ResizeObserver(() => { if (escritorioActivo() && mirando) lejos ? verTodo() : mirar(mirando, false); }).observe($("escritorio"));
+  const enfocar = (animar) => { if (escritorioActivo() && mirando) lejos ? verTodo() : mirar(mirando, animar); };
+  new ResizeObserver(() => enfocar(false)).observe($("escritorio"));
+  // Al retraer, sacar o cambiar la barra, lo que miras se corre con ella (suave) para seguir al centro de lo libre.
+  let antes = libre().izq;
+  document.addEventListener("barra", () => requestAnimationFrame(() => { const izq = libre().izq; if (izq !== antes) { antes = izq; enfocar(true); } }));
 }
