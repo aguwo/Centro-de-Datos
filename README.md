@@ -102,6 +102,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 54 | Cada ramo o proyecto puede tener su color fijo (propiedad «Color» en tópicos y proyectos, se elige en «Editar»); los que no tienen siguen con uno automático que no repite los elegidos | — | 14 | `docs/js/base.js` (`colorDeProyecto`), migración `0018` |
 | — | Arreglo: las tarjetas de los ramos ya no muestran el anillo de «evaluado» (el porcentaje sigue en la página del ramo) | — | — | `universidad.js`, `estilos.css` |
 | — | Arreglo: la asistencia de los ramos se ve con una barra delgada con la rayita del mínimo (en las tarjetas y en la página del ramo), en vez del anillo | — | — | `dibujos.js` (`progreso`), `universidad.js`, `estilos.css` |
+| — | Arreglo: Universidad sin el texto «mínimo X%» (queda solo la rayita en la barra); las pastillas de aviso pasan a una barra bajo el título del apartado (`ctx.barra`), así «Lo que viene» parte a la altura de las tarjetas | — | — | `widgets.js`, `universidad.js`, `estilos.css` |
 
 ## Hoja de ruta
 

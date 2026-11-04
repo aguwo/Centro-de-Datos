@@ -564,8 +564,8 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .progreso > b { position: absolute; top: -3px; width: 2px; height: 10px; margin-left: -1px; border-radius: 1px; background: var(--texto); opacity: .35; }
 
 /* Las tarjetas de los ramos */
-.resumen-ramos { display: flex; flex-wrap: wrap; gap: 8px; }
-.resumen-ramos:empty { display: none; }
+.barra-apartado { display: flex; flex-wrap: wrap; gap: 8px; }
+.barra-apartado:empty { display: none; }
 .tarjetas-ramos { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
 .tarjeta-ramo { display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: var(--radio); text-align: left; font: inherit; color: inherit;
                 background: var(--vidrio-fuerte); border: 1px solid var(--borde); box-shadow: var(--sombra); transition: transform .15s, box-shadow .15s; }

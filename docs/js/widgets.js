@@ -55,8 +55,10 @@ export function disposicionDe(a) {
 // Las ventanas se arman al primer dibujo y se vuelven a armar solo si cambió la disposición.
 export function montar(a) {
   const titulo = el("h2", { className: "sobre-foto", id: a.id + "-titulo" });
-  const seccion = el("section", { id: a.id, className: "apartado con-widgets oculto" }, titulo);
-  const ctx = { cambiar(campos) { Object.assign(ctx, campos); dibujar(); } };
+  // La barra: una fila bajo el título, a todo el ancho, para pastillas o avisos de un widget (vacía no se ve).
+  const barra = el("div", { className: "barra-apartado" });
+  const seccion = el("section", { id: a.id, className: "apartado con-widgets oculto" }, titulo, barra);
+  const ctx = { barra, cambiar(campos) { Object.assign(ctx, campos); dibujar(); } };
   let armada = { clave: null, grilla: null, redibujar: [] };
 
   function armar(columnas) {
