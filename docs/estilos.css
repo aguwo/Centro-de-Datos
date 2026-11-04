@@ -577,12 +577,9 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .tarjeta-ramo .cuerpo { display: flex; flex-direction: column; gap: 14px; padding: 30px 16px 14px; flex: 1; }
 .tarjeta-ramo .nombre { display: flex; flex-direction: column; }
 .tarjeta-ramo .nombre b { font-size: 15px; font-weight: 600; line-height: 1.3; }
-.tarjeta-ramo .nombre small, .tarjeta-ramo .nota small, .tarjeta-ramo .evaluado small { color: var(--suave); font-size: 12.5px; }
-.tarjeta-ramo .cifras { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tarjeta-ramo .nombre small, .tarjeta-ramo .nota small { color: var(--suave); font-size: 12.5px; }
 .tarjeta-ramo .nota { display: flex; flex-direction: column; min-width: 0; }
 .tarjeta-ramo .nota strong { font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.tarjeta-ramo .evaluado { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.tarjeta-ramo .evaluado small { font-size: 11px; }
 .tarjeta-ramo .asis { display: flex; align-items: center; gap: 7px; color: var(--suave); font-size: 12.5px; }
 .tarjeta-ramo .asis .icono { width: 15px; height: 15px; }
 .tarjeta-ramo .asis b { color: var(--texto); font-variant-numeric: tabular-nums; }

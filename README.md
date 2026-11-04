@@ -100,6 +100,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 51 | Las notas que sube el portal de la U quedan fijas (en verde y con candado): en la web no se pueden editar (ni en la tabla del ramo ni en «Editar») y Martita tampoco las cambia. Se actualizan solas con la próxima subida | #35, #36 | — | `docs/js/base.js` (`fijas`), `estilos.css`, `universidad.js`, `panel.js`, `universidad-pc/subir.mjs`, conector (redeploy) |
 | 52 | Rediseño del apartado Universidad: cada ramo tiene su portada ilustrada y su ícono (adivinados por el nombre, o `props.icono`), el profe y la asistencia mínima salen del syllabus, el anillo muestra cuánto del ramo ya está evaluado (no la nota), cada evaluación lleva un ícono según su tipo y la asistencia se ve en un anillo con la marca del mínimo y un ✓/✗ por clase | — | — | `docs/js/dibujos.js` (nuevo: íconos, portadas, anillo), `universidad.js`, `notas.js` (`evaluado`), `estilos.css` |
 | 54 | Cada ramo o proyecto puede tener su color fijo (propiedad «Color» en tópicos y proyectos, se elige en «Editar»); los que no tienen siguen con uno automático que no repite los elegidos | — | 14 | `docs/js/base.js` (`colorDeProyecto`), migración `0018` |
+| — | Arreglo: las tarjetas de los ramos ya no muestran el anillo de «evaluado» (el porcentaje sigue en la página del ramo) | — | — | `universidad.js`, `estilos.css` |
 
 ## Hoja de ruta
 
