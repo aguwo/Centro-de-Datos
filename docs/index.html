@@ -12,6 +12,7 @@
     Paso 31: lo del Inbox como post-its pegados alrededor de las secciones (postits.js).
     Paso 30: el calendario, un cajón que sale desde el dock (calendario.js).
     Paso 29: "+ Nuevo" crea según el apartado; el formulario sale de las propiedades de cada tipo (nuevo.js).
+    Paso 53: Ajustes (apariencia.js y ajustes.js): modo, color, fondo, vidrio, letra y la cuenta. Sin barra arriba.
     Paso 28: el escritorio movible. Los apartados con "lugar" se mudan solos a #mundo (escritorio.js).
     Los apartados se anotan en js/apartados.js. Los que tienen widgets se arman solos (paso 34a);
     los demás tienen aquí su <section> con el mismo id.
@@ -19,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <!-- ?v= cambia cuando cambian los estilos: así el navegador no usa los de antes que tenía guardados -->
-  <link rel="stylesheet" href="estilos.css?v=47">
+  <link rel="stylesheet" href="estilos.css?v=49">
 </head>
 <body>
   <div class="fondo" aria-hidden="true"></div>
@@ -33,13 +34,8 @@
     </form>
   </section>
 
-  <header id="barra" class="barra vidrio oculto">
-    <b class="marca">Martita</b>
-    <span class="app-actual" id="app-actual"></span>
-    <span class="reloj" id="reloj"></span>
-    <button id="nuevo" class="principal" aria-haspopup="menu" aria-expanded="false">+ Nuevo</button>
-    <button id="salir">Salir</button>
-  </header>
+  <!-- Paso 53: sin barra arriba. «Salir» está en Ajustes y «+ Nuevo» abajo a la izquierda -->
+  <button id="nuevo" class="nuevo principal oculto" aria-haspopup="menu" aria-expanded="false" title="Crear algo nuevo"><span class="mas" aria-hidden="true">+</span><span class="etiqueta">Nuevo</span></button>
   <div id="menu-nuevo" class="menu vidrio" role="menu" hidden></div>
 
   <main id="app" class="oculto">

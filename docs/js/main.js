@@ -13,7 +13,10 @@
 //   hoy.js       los widgets de Hoy (usan agenda.js, clima.js y acciones.js)
 //   productividad.js los widgets de Productividad: tus proyectos y sus tareas
 //   tareas.js    la lista de tareas que comparten Hoy y Productividad
+//   apariencia.js cómo se ve la web (modo, color, fondo, vidrio, letra): se aplica y se guarda
+//   ajustes.js   los widgets del apartado Ajustes, que la cambian
 //   inicio.js    el Resumen: dibuja las señales y las tarjetas (qué muestra cada una: tarjetas.js)
+import { traerDeLaBase } from "./apariencia.js"; // primero: así la web se pinta con tu estilo desde el comienzo
 import { db, $, avisar, recargar, escucharCambios, dejarDeEscuchar } from "./base.js";
 import { iniciarCarcasa, apartadoActual, dibujarTodo } from "./carcasa.js";
 import { enfocar } from "./mapa.js";
@@ -32,11 +35,14 @@ document.addEventListener("datos", ({ detail }) => {
   else refrescarPanel();
 });
 
+// Si cambió el modo (claro u oscuro) o llegaron tus ajustes de la base, se redibuja (el mapa lee los colores al dibujarse).
+document.addEventListener("apariencia", () => dibujarTodo());
+
 iniciarNuevo();
 iniciarPostits();
 
 // Sesión: un enlace al correo (Supabase Auth). Sin sesión se ve solo el formulario de entrada.
-const SOLO_CON_SESION = ["barra", "app", "dock", "asa"];
+const SOLO_CON_SESION = ["nuevo", "app", "dock", "asa"];
 function mostrarApp(conSesion) {
   $("login").classList.toggle("oculto", conSesion);
   for (const id of SOLO_CON_SESION) $(id).classList.toggle("oculto", !conSesion);
@@ -47,7 +53,6 @@ $("form-login").onsubmit = async (e) => {
   const { error } = await db.auth.signInWithOtp({ email: $("correo").value, options: { emailRedirectTo: location.origin + location.pathname } });
   avisar(error ? error.message : "Revisa tu correo y abre el enlace desde este navegador.");
 };
-$("salir").onclick = () => db.auth.signOut();
 // Si el enlace del correo venció o ya se usó, Supabase vuelve con #error_description=...; se muestra en vez de nada.
 const errorDeEntrada = () => {
   const e = new URLSearchParams(location.hash.slice(1)).get("error_description");
@@ -55,6 +60,6 @@ const errorDeEntrada = () => {
 };
 db.auth.onAuthStateChange((_evento, sesion) => {
   mostrarApp(!!sesion);
-  if (sesion) { recargar(); escucharCambios(); }
+  if (sesion) { recargar(); escucharCambios(); traerDeLaBase(); }
   else { dejarDeEscuchar(); avisar(errorDeEntrada()); }
 });

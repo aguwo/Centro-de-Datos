@@ -1,5 +1,5 @@
 // La carcasa del escritorio: el dock con un botón por apartado, el cambio de apartado,
-// el dock que se esconde solo y el reloj de la barra.
+// el dock que se esconde solo. (Paso 53: sin barra arriba; cada apartado dice su nombre en su título.)
 // Paso 35c: en el computador el dock es una barra lateral fija (estilos.css), y los apartados del
 // escritorio (los que tienen "lugar") van juntos en un solo botón, "Escritorio". No sabe nada de ningún apartado en particular:
 // todo lo lee de APARTADOS (apartados.js). El lienzo movible está en escritorio.js.
@@ -25,7 +25,7 @@ export function ir(id) {
   if (actual.lugar) enElEscritorio = actual;
   for (const b of $("dock").querySelectorAll("[data-apartado]")) b.setAttribute("aria-current", b.dataset.apartado === actual.id ? "page" : "false");
   $("dock").querySelector("[data-escritorio]")?.setAttribute("aria-current", actual.lugar ? "page" : "false");
-  $("app-actual").textContent = actual.nombre;
+  document.title = actual.nombre + " · Martita";
   // La dirección no se toca si trae la respuesta del inicio de sesión (#access_token=...): la lee Supabase.
   if (location.hash.slice(1) !== actual.id && !location.hash.includes("=")) history.replaceState(null, "", "#" + actual.id);
   if (juntos) mirar(actual.id);
@@ -111,20 +111,12 @@ function dockEscondido() {
   dock.addEventListener("click", () => { if (matchMedia("(hover: none)").matches) ver(false); }); // en el teléfono, se va al elegir
 }
 
-function reloj() {
-  const poner = () => ($("reloj").textContent = new Date().toLocaleString("es-CL",
-    { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }));
-  poner();
-  setInterval(poner, 30_000);
-}
-
 export function iniciarCarcasa() {
   montarApartados();
   armarDock();
   for (const a of APARTADOS) a.iniciar?.();
   cajones();
   dockEscondido();
-  reloj();
   iniciarEscritorio(ir, apartadoActual);
   addEventListener("hashchange", () => ir(location.hash.slice(1)));
   ir(location.hash.slice(1));
