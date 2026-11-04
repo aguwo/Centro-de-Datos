@@ -28,7 +28,7 @@ console.log("Guardado en", archivo);
 if (!CENTRO_TOKEN) console.log("No se subió al centro de datos: conecta este PC una vez con conectar.ps1.");
 else {
   const p = await subir(ramos, { url: SUPABASE_URL, llave: SUPABASE_KEY, token: CENTRO_TOKEN });
-  console.log(`Centro de datos: ${p.notas.length} notas nuevas, ${p.nuevas.length} clases nuevas, ${p.cambios.length} clases corregidas.`);
+  console.log(`Centro de datos: ${p.notas.length} notas nuevas, ${p.nuevas.length} clases nuevas, ${p.cambios.length} clases corregidas, ${p.borrar.length} borradas.`);
   for (const n of p.sinRamo) console.log(`  Sin pareja: el ramo «${n}» (¿cómo se llama en el centro de datos?)`);
   for (const e of p.sinEvaluacion) console.log(`  Sin pareja: «${e.nombre}» (${e.nota}) de ${e.ramo}. Cámbiale el nombre a su evento para que se parezca.`);
 }
