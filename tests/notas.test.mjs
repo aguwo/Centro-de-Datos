@@ -11,6 +11,7 @@ test("con ponderaciones: promedio ponderado y cuánto falta", () => {
   cerca(c.actual, 6.9);
   cerca(c.necesitas, (400 - 207) / 70);
   assert.equal(c.falta, 70);
+  cerca(c.evaluado, 0.3); // paso 52: el 30% del ramo ya tiene nota
   assert.equal(estado(c), "Va bien");
 });
 
@@ -28,6 +29,7 @@ test("sin todas las ponderaciones: promedio simple y no se sabe cuánto necesita
   cerca(c.actual, 5.5);
   assert.equal(c.necesitas, null);
   assert.equal(c.sinPeso, 2);
+  assert.equal(c.evaluado, null); // sin todas las ponderaciones no se sabe cuánto está evaluado
   assert.equal(estado(c), "Va bien");
   assert.equal(estado(calcular([{ nota: 3 }, {}])), "En riesgo");
 });

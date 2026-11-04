@@ -19,7 +19,7 @@ export function calcular(todas) {
   const sinPeso = evaluaciones.filter((e) => !(esNumero(e.peso) && e.peso > 0)).length;
   if (sinPeso) {
     const actual = conNota.length ? suma(conNota, (e) => e.nota) / conNota.length : null;
-    return { actual, necesitas: null, falta: null, sinPeso };
+    return { actual, necesitas: null, falta: null, evaluado: null, sinPeso };
   }
   const pesoConNota = suma(conNota, (e) => e.peso), total = suma(evaluaciones, (e) => e.peso);
   const puntos = suma(conNota, (e) => e.nota * e.peso), falta = total - pesoConNota;
@@ -27,6 +27,7 @@ export function calcular(todas) {
     actual: pesoConNota ? puntos / pesoConNota : null,
     necesitas: falta > 0 ? (APRUEBA * total - puntos) / falta : null,
     falta, // cuánto % del ramo queda por evaluar
+    evaluado: total ? pesoConNota / total : null, // qué parte del ramo ya tiene nota, de 0 a 1 (paso 52)
     sinPeso: 0,
   };
 }
