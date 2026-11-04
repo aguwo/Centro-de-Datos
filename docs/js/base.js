@@ -84,6 +84,19 @@ export const areaDe = (id) => [id, ...cajasDe(id)].find((c) => datos.nodo.get(c)
 // El proyecto donde está algo (el más cercano), o nada.
 export const proyectoDe = (id) => cajasDe(id).find((c) => datos.nodo.get(c)?.tipos.clave === "proyecto");
 
+// El color de la caja con color más cercana (un proyecto o un tópico, como un ramo), o nada.
+// Así lo que está dentro (clases, evaluaciones, tareas) se ve del color de su ramo o proyecto, donde sea que se dibuje.
+export function colorDeSuCaja(id) {
+  const caja = cajasDe(id).find((c) => ["proyecto", "topico"].includes(datos.nodo.get(c)?.tipos.clave));
+  return caja && colorDeProyecto(caja);
+}
+
+// Un texto sin los paréntesis que solo repiten lo que ya se ve donde se muestra. yaSeVe(palabra) dice si algo ya se ve.
+// Ej. en el calendario el día ya está arriba: sinLoQueYaSeVe("Clase Inglés II (jueves)", esDia) → "Clase Inglés II".
+// "(cátedra)" o "(martes y cátedra)" se quedan: algo de adentro no se ve en otra parte.
+export const sinLoQueYaSeVe = (texto, yaSeVe) => texto.replace(/\s*\(([^()]*)\)/g, (todo, dentro) =>
+  dentro.split(/,|\s+y\s+/).map((p) => p.trim()).filter(Boolean).every(yaSeVe) ? "" : todo).trim();
+
 // Colores para distinguir cosas del mismo tipo (proyectos, calendarios).
 export const PALETA = ["#3b82f6", "#22c55e", "#ec4899", "#f97316", "#8b5cf6", "#14b8a6", "#ef4444", "#a16207"];
 // Sus nombres, en el mismo orden: son las opciones de la propiedad "Color" de tópicos y proyectos (paso 54).

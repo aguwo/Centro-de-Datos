@@ -3,8 +3,8 @@
 //   Los eventos pueden repetirse (agenda.js sabe cuándo ocurren) y borrarse "solo este" o "todos".
 //   "Mis calendarios" son tus áreas (Universidad, Salud...): cada evento va en el del área donde está.
 // Más adelante (paso 33) se sincroniza con Google Calendar.
-import { $, el, datos, dia, sinHora, PALETA, proyectoDe, areaDe, colorDeProyecto } from "./base.js";
-import { hoyTexto, sumarDias, lunes, sinHoraISO, conHoraISO, horaDecimal, hhmm, aHora } from "./fechas.js";
+import { $, el, datos, dia, sinHora, PALETA, areaDe, colorDeSuCaja, sinLoQueYaSeVe } from "./base.js";
+import { hoyTexto, sumarDias, lunes, sinHoraISO, conHoraISO, horaDecimal, hhmm, aHora, esDia } from "./fechas.js";
 import { delDia, dibujarAgenda } from "./agenda.js";
 import { crear, cambiar, cambiarProps, archivar } from "./acciones.js";
 import { mostrarPanel } from "./panel.js";
@@ -26,8 +26,8 @@ function calendarios() {
     { id: "", nombre: "Sin área", color: "#94a3b8", usado: usados.has("") }, { id: "tareas", nombre: "Tareas", color: "#eab308", usado: usados.has("tareas") }];
 }
 const colorDeCal = (id) => calendarios().find((c) => c.id === id)?.color;
-// El color con que se dibuja algo: el de su calendario; una tarea dentro de un proyecto, el de su proyecto.
-const colorDeCosa = (n) => (n.tipos.clave === "tarea" && proyectoDe(n.id) ? colorDeProyecto(proyectoDe(n.id)) : colorDeCal(calendarioDe(n)));
+// El color con que se dibuja algo: el de su ramo o proyecto (ej. una clase, del color de su ramo); si no está en uno, el de su calendario.
+const colorDeCosa = (n) => colorDeSuCaja(n.id) ?? colorDeCal(calendarioDe(n));
 
 // Los que escondiste quedan guardados en este navegador.
 const ESCONDIDOS = new Set(leer());
@@ -66,7 +66,7 @@ function dibujarMes() {
     const celda = el("div", { className: "d" + (d.slice(0, 7) !== mes ? " fuera" : "") + (d === hoy ? " hoy" : "") }, numero,
       ...cosas.slice(0, sobran > 0 ? MAX_EN_MES - 1 : MAX_EN_MES).map((x) => {
         const c = el("button", { className: "chip-mes", title: x.n.titulo, onclick: () => tocar(x.n, d) },
-          x.ini === null ? "" : el("small", { textContent: hhmm(x.ini) + " " }), x.n.titulo);
+          x.ini === null ? "" : el("small", { textContent: hhmm(x.ini) + " " }), sinLoQueYaSeVe(x.n.titulo, esDia));
         c.style.setProperty("--c", colorDeCosa(x.n));
         return c;
       }),

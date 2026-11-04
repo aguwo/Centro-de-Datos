@@ -109,6 +109,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | — | Arreglo: animaciones suaves en la barra lateral: fundido al pasar el mouse, ícono que se levanta y se hunde al apretar, rayita del elegido que crece, barra y contenido que se deslizan al retraer, botones que aparecen uno tras otro, cambio de estilo gradual y globos que entran deslizándose (respeta «reducir movimiento» del equipo) | — | — | `estilos.css`, `carcasa.js` (`--i`) |
 | — | Arreglo: el escritorio infinito pasa por debajo de la barra (ya no se corta en seco a su lado) y centra lo que miras en el espacio libre; el calendario ya no tapa la barra; el botón para retraer queda al lado de Ajustes | — | — | `escritorio.js` (`libre`), `carcasa.js`, `estilos.css` |
 | — | Arreglo: con barra Flotante o Isla, el costado de Proyectos también flota como tarjeta; los nombres que salen al pasar el mouse (Solo íconos e Isla) se ven enteros | — | — | `estilos.css` |
+| — | Arreglo: en el calendario y en «Tu día», lo que está dentro de un ramo o proyecto toma su color (`colorDeSuCaja`), y los títulos no repiten el día que ya se ve (`sinLoQueYaSeVe`: «Clase Inglés II (jueves)» → «Clase Inglés II») | — | — | `base.js`, `fechas.js` (`esDia`), `agenda.js`, `calendario.js` |
 
 ## Hoja de ruta
 

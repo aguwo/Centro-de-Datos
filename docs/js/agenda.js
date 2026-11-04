@@ -1,8 +1,8 @@
 // La agenda por horas: una columna por día, cada evento o tarea con hora es un bloque.
 // La usan "Tu día" en Hoy (un día, desde ahora) y el calendario (un día o siete).
 // Solo sabe dibujar: qué pasa al tocar un bloque, un hueco o al soltar una tarea encima lo decide quien la usa.
-import { el, datos, dia, sinHora, colorDe } from "./base.js";
-import { hoyTexto, hhmm, horaDecimal, ocurreEl } from "./fechas.js";
+import { el, datos, dia, sinHora, colorDe, colorDeSuCaja, sinLoQueYaSeVe } from "./base.js";
+import { hoyTexto, hhmm, horaDecimal, ocurreEl, esDia } from "./fechas.js";
 
 const DURACION = 0.75; // si algo no dice cuándo termina, se dibuja de 45 minutos
 
@@ -45,13 +45,13 @@ function columnas(items) {
 //   alSoltar(id, d, hora)    al soltar encima algo arrastrado (con su id)
 //   (las horas de alTocarHueco y alSoltar vienen redondeadas a media hora)
 export function dibujarAgenda(cont, dias, { desde = 7, hasta = 24, alto = 48, todoElDia: conTodoElDia = true,
-  filtro = () => true, color = (n) => colorDe(n.tipos.clave), alTocar, alTocarHueco, alSoltar } = {}) {
+  filtro = () => true, color = (n) => colorDeSuCaja(n.id) ?? colorDe(n.tipos.clave), alTocar, alTocarHueco, alSoltar } = {}) {
   const hoy = hoyTexto(), ahora = new Date().getHours() + new Date().getMinutes() / 60;
   const plantilla = `52px repeat(${dias.length}, minmax(0, 1fr))`;
   const fila = (clase, ...hijos) => { const f = el("div", { className: clase }, ...hijos); f.style.gridTemplateColumns = plantilla; return f; };
   const bloque = (x, todoElDia) => {
     const b = el("button", { className: "bloque" + (x.tarea ? " tarea" : "") + (todoElDia ? " todo-el-dia" : ""), title: x.n.titulo, onclick: () => alTocar?.(x.n, x.d) },
-      el("b", { textContent: x.n.titulo }), todoElDia ? "" : el("small", { textContent: hhmm(x.ini) + (x.fin - x.ini !== DURACION ? "–" + hhmm(x.fin) : "") }));
+      el("b", { textContent: sinLoQueYaSeVe(x.n.titulo, esDia) }), todoElDia ? "" : el("small", { textContent: hhmm(x.ini) + (x.fin - x.ini !== DURACION ? "–" + hhmm(x.fin) : "") }));
     b.style.setProperty("--c", color(x.n));
     return b;
   };

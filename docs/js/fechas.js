@@ -43,6 +43,9 @@ export function ocurreEl(primero, p, d) {
 //   "pagar la luz 15/11", "comprar pan hoy", "examen 3 de diciembre a las 8:30"
 // Sin hora queda el día solo; con hora y sin día, hoy. Si no encuentra nada, dia y hora quedan en null.
 const DIAS = ["domingo", "lunes", "martes", "mi[eé]rcoles", "jueves", "viernes", "s[aá]bado"];
+// ¿Es el nombre de un día de la semana? (con o sin tilde, mayúscula o minúscula)
+const DIA = new RegExp(`^(${DIAS.join("|")})$`, "i");
+export const esDia = (texto) => DIA.test(texto);
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const ANTES = "(?:^|\\s)", DESPUES = "(?=\\s|$|[,.;])";
 const dosDigitos = (n) => String(n).padStart(2, "0");
