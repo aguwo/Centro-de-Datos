@@ -63,6 +63,19 @@ function aplicar(animar = false) {
   $("escritorio").classList.toggle("lejos", lejos);
 }
 
+// Hace lo mismo que arrastrar un poquito: mueve el mundo medio píxel y lo devuelve, para que el navegador vuelva a
+// dibujar el vidrio de las ventanas. Espera a que termine el viaje de la cámara (.45 s) y lo que se abre o se cierra.
+let pendiente;
+function redibujar() {
+  clearTimeout(pendiente);
+  pendiente = setTimeout(() => {
+    if (!escritorioActivo()) return;
+    $("mundo").classList.remove("animar");
+    $("mundo").style.transform = `translate(${cam.x + 0.5}px, ${cam.y}px) scale(${cam.z})`;
+    requestAnimationFrame(() => requestAnimationFrame(() => aplicar())); // un cuadro dibujado corrido y vuelve
+  }, 500);
+}
+
 // Centra una sección y la acerca hasta que quepa entera.
 export function mirar(id, animar = true) {
   const s = $(id), { izq, W, H } = libre();
@@ -72,6 +85,7 @@ export function mirar(id, animar = true) {
   cam.x = izq + W / 2 - (s.offsetLeft + SECCION.ancho / 2) * cam.z;
   cam.y = H / 2 - (s.offsetTop + SECCION.alto / 2) * cam.z;
   aplicar(animar);
+  redibujar();
 }
 
 // Todo el mundo a la vista (Esc o doble clic en el fondo). Tocar una sección te lleva a ella.
@@ -200,14 +214,9 @@ export function iniciarEscritorio(ir, actual) {
   // Cuando cambia el tamaño de la ventana (o el escritorio aparece por primera vez), se vuelve a enfocar.
   const enfocar = (animar) => { if (escritorioActivo() && mirando) lejos ? verTodo() : mirar(mirando, animar); };
   new ResizeObserver(() => enfocar(false)).observe($("escritorio"));
-  // Al terminar un viaje animado, Chromium (Chrome, Brave, Edge) a veces no redibuja el vidrio de las ventanas y deja
-  // una franja oscura hasta que mueves el escritorio. Moverlo medio píxel y volver (sin animar) lo obliga a redibujarlo.
-  $("mundo").addEventListener("transitionend", (e) => {
-    if (e.target !== e.currentTarget) return; // solo el viaje del mundo, no las transiciones de lo que hay dentro
-    e.target.classList.remove("animar");
-    e.target.style.transform = `translate(${cam.x + 0.5}px, ${cam.y}px) scale(${cam.z})`;
-    requestAnimationFrame(() => aplicar());
-  });
+  // Al tocar la barra, la carcasa esconde y vuelve a mostrar cosas: Chromium (Chrome, Brave, Edge) a veces no redibuja
+  // el vidrio de las ventanas y deja una franja oscura hasta que mueves el escritorio.
+  $("dock").addEventListener("click", () => redibujar());
   // Al retraer, sacar o cambiar la barra, lo que miras se corre con ella (suave) para seguir al centro de lo libre.
   let antes = libre().izq;
   document.addEventListener("barra", () => requestAnimationFrame(() => { const izq = libre().izq; if (izq !== antes) { antes = izq; enfocar(true); } }));
