@@ -16,7 +16,7 @@ import { tareasDeHoy, elTiempo, tuDia } from "./hoy.js";
 import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
 import { indice, cabecera, tablero, dentro } from "./proyectos.js";
 import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
-import { modo, fondo, ventanas, cuenta } from "./ajustes.js";
+import { modo, fondo, barra, ventanas, cuenta } from "./ajustes.js";
 
 export const WIDGETS = {
   "tareas-de-hoy": { titulo: "Tareas de hoy", crece: true, crear: tareasDeHoy },
@@ -33,6 +33,7 @@ export const WIDGETS = {
   "lo-que-viene":  { titulo: "Lo que viene", crear: loQueViene },
   "modo":          { titulo: "Modo y color", crear: modo },
   "fondo":         { titulo: "Fondo de pantalla", crear: fondo },
+  "barra":         { titulo: "Barra lateral", crear: barra },
   "ventanas":      { titulo: "Ventanas y letra", crear: ventanas },
   "cuenta":        { titulo: "Tu cuenta", crear: cuenta },
 };

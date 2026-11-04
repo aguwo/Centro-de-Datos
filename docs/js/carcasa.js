@@ -7,6 +7,7 @@ import { $, el } from "./base.js";
 import { APARTADOS, CAJONES } from "./apartados.js";
 import { iniciarEscritorio, enEscritorio, mirar } from "./escritorio.js";
 import { montar } from "./widgets.js";
+import { preferencia } from "./apariencia.js";
 
 let actual = APARTADOS[0];
 let enElEscritorio = APARTADOS.find((a) => a.lugar); // la última sección del escritorio que viste: "Escritorio" vuelve ahí
@@ -23,13 +24,19 @@ export function ir(id) {
   for (const a of APARTADOS) $(a.id).classList.toggle("oculto", a !== actual && !(juntos && enEscritorio(a)));
   $("escritorio").classList.toggle("oculto", !actual.lugar);
   if (actual.lugar) enElEscritorio = actual;
-  for (const b of $("dock").querySelectorAll("[data-apartado]")) b.setAttribute("aria-current", b.dataset.apartado === actual.id ? "page" : "false");
-  $("dock").querySelector("[data-escritorio]")?.setAttribute("aria-current", actual.lugar ? "page" : "false");
+  marcar();
   document.title = actual.nombre + " · Martita";
   // La dirección no se toca si trae la respuesta del inicio de sesión (#access_token=...): la lee Supabase.
   if (location.hash.slice(1) !== actual.id && !location.hash.includes("=")) history.replaceState(null, "", "#" + actual.id);
   if (juntos) mirar(actual.id);
   actual.alMostrar?.();
+}
+
+// En la barra: cuál es el apartado donde estás y qué cajón está abierto.
+function marcar() {
+  for (const b of $("dock").querySelectorAll("[data-apartado]")) b.setAttribute("aria-current", b.dataset.apartado === actual.id ? "page" : "false");
+  $("dock").querySelector("[data-escritorio]")?.setAttribute("aria-current", actual.lugar ? "page" : "false");
+  for (const b of $("dock").querySelectorAll("[data-cajon]")) b.setAttribute("aria-expanded", $(b.dataset.cajon).classList.contains("abierto"));
 }
 
 // Los apartados con widgets se arman aquí (widgets.js) y se ponen en la página.
@@ -54,26 +61,32 @@ export function dibujarTodo() {
   for (const c of CAJONES) c.dibujar();
 }
 
-// El dock: un botón por apartado, con su ícono y su nombre (que aparece al pasar el mouse),
-// y al final, separados, los cajones.
+// Lo que va en la barra: Escritorio, los apartados y los cajones, en tu orden (Ajustes) o el de siempre.
+// Lo nuevo que no está en tu orden va al final, y lo que va "abajo" (Ajustes), después de todo. Cada uno: { x (el apartado o cajón), clase, accion }.
+export function entradasDeLaBarra() {
+  const lista = APARTADOS.map((a) => ({ x: a, clase: "apartado", accion: () => ir(a.id) }));
+  const conLugar = APARTADOS.findIndex((a) => a.lugar);
+  if (conLugar >= 0) lista.splice(conLugar, 0, { x: ESCRITORIO, clase: "escritorio", accion: () => ir(enElEscritorio.id) });
+  lista.push(...CAJONES.map((c) => ({ x: c, clase: "cajon", accion: () => cajon(c.id) })));
+  const { orden } = preferencia(), puesto = (e, i) => (orden.includes(e.x.id) ? orden.indexOf(e.x.id) : orden.length + i);
+  return lista.map((e, i) => [puesto(e, i), e]).sort((a, b) => !!a[1].x.abajo - !!b[1].x.abajo || a[0] - b[0]).map(([, e]) => e);
+}
+
+// El dock: un botón por entrada, con su ícono y su nombre. Los que escondiste en Ajustes no salen;
+// el que tiene "abajo" (Ajustes) va pegado al fondo de la barra y no se puede esconder.
 function armarDock() {
-  const boton = (x, clase, accion) => {
+  const { ocultos } = preferencia();
+  $("dock").replaceChildren(...entradasDeLaBarra().map(({ x, clase, accion }) => {
     const b = el("button", { title: x.nombre, onclick: accion }, el("span", { className: "etiqueta", textContent: x.nombre }));
     b.dataset[clase] = x.id;
     b.insertAdjacentHTML("afterbegin", `<svg class="icono" viewBox="0 0 24 24" aria-hidden="true">${x.icono}</svg>`);
     b.setAttribute("aria-label", x.nombre);
+    if (x.lugar) b.classList.add("en-lienzo"); // en el computador se juntan en "Escritorio"
+    if (x.abajo) b.classList.add("al-fondo");
+    b.hidden = !x.abajo && ocultos.includes(x.id);
     return b;
-  };
-  const apartados = APARTADOS.map((a) => {
-    const b = boton(a, "apartado", () => ir(a.id));
-    if (a.lugar) b.classList.add("en-lienzo"); // en el computador se juntan en "Escritorio"
-    return b;
-  });
-  const conLugar = APARTADOS.findIndex((a) => a.lugar);
-  if (conLugar >= 0) apartados.splice(conLugar, 0, boton(ESCRITORIO, "escritorio", () => ir(enElEscritorio.id)));
-  $("dock").replaceChildren(...apartados,
-    ...(CAJONES.length ? [el("i", { className: "separador" })] : []),
-    ...CAJONES.map((c) => boton(c, "cajon", () => cajon(c.id))));
+  }));
+  marcar();
 }
 
 // Abre o cierra un cajón (si = true / false; sin decir, lo alterna). Se ve uno a la vez.
@@ -114,6 +127,7 @@ function dockEscondido() {
 export function iniciarCarcasa() {
   montarApartados();
   armarDock();
+  document.addEventListener("barra", armarDock); // cambiaste la barra en Ajustes (apariencia.js avisa)
   for (const a of APARTADOS) a.iniciar?.();
   cajones();
   dockEscondido();
