@@ -101,6 +101,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 52 | Rediseño del apartado Universidad: cada ramo tiene su portada ilustrada y su ícono (adivinados por el nombre, o `props.icono`), el profe y la asistencia mínima salen del syllabus, el anillo muestra cuánto del ramo ya está evaluado (no la nota), cada evaluación lleva un ícono según su tipo y la asistencia se ve en un anillo con la marca del mínimo y un ✓/✗ por clase | — | — | `docs/js/dibujos.js` (nuevo: íconos, portadas, anillo), `universidad.js`, `notas.js` (`evaluado`), `estilos.css` |
 | 54 | Cada ramo o proyecto puede tener su color fijo (propiedad «Color» en tópicos y proyectos, se elige en «Editar»); los que no tienen siguen con uno automático que no repite los elegidos | — | 14 | `docs/js/base.js` (`colorDeProyecto`), migración `0018` |
 | — | Arreglo: las tarjetas de los ramos ya no muestran el anillo de «evaluado» (el porcentaje sigue en la página del ramo) | — | — | `universidad.js`, `estilos.css` |
+| — | Arreglo: la asistencia de los ramos se ve con una barra delgada con la rayita del mínimo (en las tarjetas y en la página del ramo), en vez del anillo | — | — | `dibujos.js` (`progreso`), `universidad.js`, `estilos.css` |
 
 ## Hoja de ruta
 

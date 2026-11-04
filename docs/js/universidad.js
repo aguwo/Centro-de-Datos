@@ -14,7 +14,7 @@ import { mostrarPanel, formulario } from "./panel.js";
 import { listaDeTareas, agregarTarea, porFecha } from "./tareas.js";
 import { aportesDe, comoVa, esObjetivo } from "./objetivos.js";
 import { calcular, estado, asistencia, nota, formativa, MINIMA, MAXIMA } from "./notas.js";
-import { icono, insignia, portada, elegir, anillo } from "./dibujos.js";
+import { icono, insignia, portada, elegir, progreso } from "./dibujos.js";
 
 const PROXIMOS = 8; // cuántas cosas muestra "Lo que viene" (las atrasadas van siempre)
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
@@ -105,8 +105,9 @@ export function tarjetasDeRamos(v, ctx) {
         el("span", { className: "cuerpo" },
           el("span", { className: "nombre" }, el("b", { textContent: r.titulo }), el("small", { textContent: profeDe(r) ?? "" })),
           el("span", { className: "nota" }, el("strong", { textContent: nota(c.actual) }), el("small", { textContent: r.estado === "Hecho" ? como === "Seguro" ? "Aprobado" : "Reprobado" : necesitasTexto(c) })),
-          el("span", { className: "asis" + (bajo(a, r) ? " baja" : "") }, icono("persona"),
-            el("span", {}, "Asistencia ", el("b", { textContent: porcentaje(a) }), a.porcentaje === null ? "" : ` · mínimo ${Math.round(minimoDe(r) * 100)}%`)),
+          el("span", { className: "asis" + (bajo(a, r) ? " baja" : "") },
+            el("span", {}, icono("persona"), "Asistencia ", el("b", { textContent: porcentaje(a) }), a.porcentaje === null ? "" : ` · mínimo ${Math.round(minimoDe(r) * 100)}%`),
+            a.porcentaje === null ? "" : progreso(a.porcentaje, minimoDe(r))),
           el("span", { className: "prox" }, ...(prox
             ? [insignia(tipoDe(prox.n), color, "chica"), el("span", { textContent: prox.n.titulo }), el("span", { className: "cuenta", textContent: cuenta(prox.n) })]
             : [el("span", { className: "meta", textContent: "Nada pendiente con fecha" })]))));
@@ -190,10 +191,12 @@ export function paginaDeRamo(v, ctx) {
       : deHoy ? db.from("registros").update({ valor }).eq("id", deHoy.id)
       : db.from("registros").insert({ clase: "asistencia", nodo_id: ramo.id, valor }));
     const boton = (texto, valor) => el("button", { ariaPressed: String(deHoy?.valor === valor), onclick: () => anotar(valor) }, icono(valor ? "si" : "no"), texto);
-    // Un cuadrito por clase (✓ fuiste, ✗ faltaste) y un anillo con tu porcentaje; la rayita del anillo es el mínimo del ramo.
+    // Tu porcentaje con una barra (la rayita es el mínimo del ramo) y un cuadrito por clase (✓ fuiste, ✗ faltaste).
     const asis = el("section", { className: "ventana vidrio asistencia" + (bajo(a, ramo) ? " baja" : "") },
       el("h3", {}, "Asistencia", el("small", { textContent: a.total ? `${a.fui} de ${a.total} clases` : "" })),
-      regs.length ? el("div", { className: "resumen-asis" }, anillo(a.porcentaje, porcentaje(a), minimo),
+      regs.length ? el("div", { className: "resumen-asis" },
+        el("div", { className: "cifra-asis" }, el("strong", { textContent: porcentaje(a) }), el("small", { textContent: `mínimo ${Math.round(minimo * 100)}%` })),
+        progreso(a.porcentaje, minimo),
         el("div", { className: "puntos" }, ...regs.map((r) => el("i", { className: Number(r.valor) === 1 ? "fui" : "falte",
           title: `${corto(dia(r.fecha))}: ${Number(r.valor) === 1 ? "fuiste" : "faltaste"}` }, icono(Number(r.valor) === 1 ? "si" : "no")))))
         : el("p", { className: "vacio", textContent: "Todavía no anotas ninguna clase." }),
