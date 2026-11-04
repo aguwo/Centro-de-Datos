@@ -98,6 +98,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 49 | Tus notas y tu asistencia reales desde el sistema de la U (intranet7, que se abre desde «Ficha del curso» del portal). Corre en tu PC porque la U bloquea la nube: entra con tu RUT y clave guardados cifrados en Windows y deja todo en un archivo en tu PC. Todavía no los sube al centro de datos | #32 | — | `universidad-pc/`, `tests/universidad-pc.test.mjs` |
 | 50 | Lo que lee el paso 49 se sube solo al centro de datos cada vez que prendes el PC: notas nuevas y la asistencia de cada clase (sin duplicar; lo que no encuentra pareja se avisa). Tu PC se conecta una vez con el correo de siempre y guarda la sesión cifrada. La web ahora trae la asistencia de todo el semestre. Arreglo: no sube las clases de hoy en adelante (el portal ya las lista como faltas) y borra las que subió de más | #33, #34 | — | `universidad-pc/`, `docs/js/base.js` |
 | 51 | Las notas que sube el portal de la U quedan fijas (en verde y con candado): en la web no se pueden editar (ni en la tabla del ramo ni en «Editar») y Martita tampoco las cambia. Se actualizan solas con la próxima subida | #35, #36 | — | `docs/js/base.js` (`fijas`), `estilos.css`, `universidad.js`, `panel.js`, `universidad-pc/subir.mjs`, conector (redeploy) |
+| 52 | Rediseño del apartado Universidad: cada ramo tiene su portada ilustrada y su ícono (adivinados por el nombre, o `props.icono`), el profe y la asistencia mínima salen del syllabus, el anillo muestra cuánto del ramo ya está evaluado (no la nota), cada evaluación lleva un ícono según su tipo y la asistencia se ve en un anillo con la marca del mínimo y un ✓/✗ por clase | — | — | `docs/js/dibujos.js` (nuevo: íconos, portadas, anillo), `universidad.js`, `notas.js` (`evaluado`), `estilos.css` |
 
 ## Hoja de ruta
 
@@ -145,6 +146,7 @@ docs/js/apariencia.js cómo se ve la web (modo, color, fondo, vidrio, letra): se
 docs/js/ajustes.js   el apartado Ajustes: los controles que la cambian y tu cuenta
 docs/js/universidad.js  el apartado Universidad: tarjetas de ramos, la página de un ramo y lo que viene
 docs/js/notas.js     las cuentas de un ramo: nota hasta ahora, cuánto necesitas, cómo va, asistencia
+docs/js/dibujos.js   íconos y portadas ilustradas (trazos SVG propios, se tiñen con el color del ramo o proyecto)
 universidad-pc/      corre en tu PC: lee notas y asistencia del portal de la U y las sube (una vez: guardar-clave.ps1, conectar.ps1 e instalar.ps1)
 docs/js/inicio.js    el Resumen: dibuja las señales y las tarjetas
 docs/js/tarjetas.js  qué muestra cada tarjeta (agregar una = agregar un objeto a TARJETAS)
