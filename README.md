@@ -114,15 +114,16 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | — | Arreglo: en el calendario la hora va siempre debajo del nombre; en los bloques cortos el texto se aprieta, y solo si ni así cabe va al lado | — | — | `agenda.js`, `estilos.css` |
 | — | Arreglo: al tocar un ícono de la barra ya no queda una franja oscura sobre las ventanas del escritorio infinito (Chrome/Brave no redibujaban el vidrio al terminar el viaje) | — | — | `escritorio.js` |
 | — | Arreglo: la franja oscura volvía cuando la cámara no viajaba; ahora el escritorio infinito redibuja el vidrio después de cualquier toque en la barra | — | — | `escritorio.js` |
+| 56 | EV@ automático: dos veces al día (8:00 y 20:00) la base llama sola a la función `eva`, que copia tus entregas de EV@ como tareas dentro de cada ramo, mueve la fecha si la cambian y las marca «Hecho» cuando entregas. Solo lee EV@. Cada ramo dice su curso en la propiedad «Curso en EV@» | #53 | 15 | `supabase/functions/eva/`, `supabase/migrations/0019_eva.sql`, `tests/eva.test.ts` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 52, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 57, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
-| Ahora | EV@ automático: copia diaria (solo lectura) de fechas, notas, material y entregas |
-| Siguiente | Respaldos semanales de la base |
+| Ahora | Respaldos semanales de la base |
+| Siguiente | EV@: material de cada ramo (lista con enlaces) y cuestionarios con fecha |
 | Siguiente | Esta semana: 7 días con horario y evaluaciones con cuenta regresiva |
 | Siguiente | Salud con Dieta |
 | Siguiente | Finanzas |
