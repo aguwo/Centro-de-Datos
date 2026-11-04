@@ -86,23 +86,31 @@ export const proyectoDe = (id) => cajasDe(id).find((c) => datos.nodo.get(c)?.tip
 
 // Colores para distinguir cosas del mismo tipo (proyectos, calendarios).
 export const PALETA = ["#3b82f6", "#22c55e", "#ec4899", "#f97316", "#8b5cf6", "#14b8a6", "#ef4444", "#a16207"];
+// Sus nombres, en el mismo orden: son las opciones de la propiedad "Color" de tópicos y proyectos (paso 54).
+const NOMBRES = ["Azul", "Verde", "Rosado", "Naranjo", "Morado", "Turquesa", "Rojo", "Café"];
 const suyo = (id) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0) % PALETA.length;
-// Un color por proyecto o tópico, distinto entre los activos mientras alcance la paleta. Cada uno parte de "su" color
-// (sale de su id) y, si ya lo tiene otro, toma el siguiente libre: así casi nunca cambian.
+const elegido = (n) => NOMBRES.indexOf(n?.props?.color); // -1 si no eligió
+// Un color por proyecto o tópico. Si le elegiste uno (props.color), ese. Si no, parte de "su" color (sale de su id)
+// y, si ya lo tiene otro, toma el siguiente libre mientras alcance la paleta: así casi nunca cambian.
 let colores = { de: null, mapa: new Map() };
 export function colorDeProyecto(id) {
   if (colores.de !== datos.nodos) { // se calcula una vez por cada carga de datos
-    const usados = new Set(), mapa = new Map();
+    const mapa = new Map();
     const activos = datos.nodos.filter((n) => ["proyecto", "topico"].includes(n.tipos.clave) && n.estado !== "Hecho").sort((a, b) => a.id.localeCompare(b.id));
+    const usados = new Set(activos.map(elegido).filter((i) => i >= 0)); // los elegidos van primero: nadie más los toma
     for (const p of activos) {
-      let i = suyo(p.id);
-      for (let k = 0; k < PALETA.length && usados.has(i); k++) i = (i + 1) % PALETA.length;
-      usados.add(i);
+      let i = elegido(p);
+      if (i < 0) {
+        i = suyo(p.id);
+        for (let k = 0; k < PALETA.length && usados.has(i); k++) i = (i + 1) % PALETA.length;
+        usados.add(i);
+      }
       mapa.set(p.id, PALETA[i]);
     }
     colores = { de: datos.nodos, mapa };
   }
-  return colores.mapa.get(id) ?? PALETA[suyo(id)];
+  const n = datos.nodo.get(id);
+  return colores.mapa.get(id) ?? PALETA[elegido(n) >= 0 ? elegido(n) : suyo(id)];
 }
 
 // Lee todo de Supabase. No hace falta filtrar por dueño: RLS ya lo hace.
