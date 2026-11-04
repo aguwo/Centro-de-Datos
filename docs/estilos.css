@@ -127,7 +127,7 @@ main { position: fixed; inset: 0; }
 /* Solo íconos e Isla: el nombre sale como globo al pasar el mouse */
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock { overflow: visible; }
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock button { padding: 11px 0; }
-:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta { position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%);
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta { position: absolute; left: calc(100% + 12px); top: 50%; bottom: auto; white-space: nowrap; overflow: visible; transform: translateY(-50%);
   max-width: none; padding: 4px 10px; border-radius: 8px; background: var(--vidrio-fuerte); color: var(--texto); font-size: 12.5px; font-weight: 500;
   box-shadow: var(--sombra); opacity: 0; pointer-events: none; transition: opacity .12s; }
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock button:is(:hover, :focus-visible) .etiqueta { opacity: 1; }
@@ -150,6 +150,10 @@ main { position: fixed; inset: 0; }
 [data-barra="isla"] .con-escritorio .dock button { border-radius: 50%; aspect-ratio: 1; padding: 0; }
 [data-barra="isla"] .con-escritorio .dock button[aria-current="page"] { background: var(--acento-fondo); color: var(--sobre-acento); }
 [data-barra="isla"] .con-escritorio .dock button::before { display: none; }
+/* Con Flotante o Isla, el costado de Proyectos también flota: una tarjeta separada del borde y de la barra */
+:is([data-barra="flotante"], [data-barra="isla"]) .con-escritorio .con-costado > .costado { top: 12px; bottom: 12px; border-radius: 22px; border-width: 1px; box-shadow: var(--sombra); }
+:is([data-barra="flotante"], [data-barra="isla"]) .con-escritorio .con-costado { padding-left: calc(var(--costado) + 44px); }
+:is([data-barra="flotante"], [data-barra="isla"]) .con-escritorio .costado-cerrado { padding-left: calc(var(--costado) + 32px); }
 [data-barra="isla"] .con-escritorio .dock .pie { flex-direction: column; gap: 4px; margin-top: 2px; } /* en la Isla no caben lado a lado */
 
 /* Retraer la barra: su último botón (‹) la saca de la pantalla y el contenido toma todo el ancho;
