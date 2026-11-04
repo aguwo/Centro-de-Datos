@@ -95,14 +95,14 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 46a | El apartado Universidad: una tarjeta por ramo del semestre (cómo va, tu nota, cuánto necesitas para el 4, tu asistencia y lo próximo) y, al tocarla, la página del ramo: evaluaciones con ponderación y nota (se escriben ahí), "¿y si me saco…?", asistencia con Fui / Falté y sus tareas. Al lado, "Lo que viene" de todos tus ramos. Los eventos ganan Ponderación y Nota, y hay un registro nuevo: asistencia | #28 | SQL 12 | `supabase/migrations/0016_universidad.sql`, `docs/js/universidad.js`, `docs/js/notas.js`, `tests/notas.test.mjs` |
 | 48 | El syllabus de cada ramo (sacado de EV@) se ve en la página del ramo, en «Syllabus», que se abre al tocarlo. Una evaluación con ponderación 0 es formativa (un diagnóstico, una guía): aparece en la tabla pero no cuenta en la nota | #31 | — | `docs/js/universidad.js`, `docs/js/notas.js`, `tests/notas.test.mjs` |
 | 49 | Tus notas y tu asistencia reales desde el sistema de la U (intranet7, que se abre desde «Ficha del curso» del portal). Corre en tu PC porque la U bloquea la nube: entra con tu RUT y clave guardados cifrados en Windows y deja todo en un archivo en tu PC. Todavía no los sube al centro de datos | #32 | — | `universidad-pc/`, `tests/universidad-pc.test.mjs` |
+| 50 | Lo que lee el paso 49 se sube solo al centro de datos cada vez que prendes el PC: notas nuevas y la asistencia de cada clase (sin duplicar; lo que no encuentra pareja se avisa). Tu PC se conecta una vez con el correo de siempre y guarda la sesión cifrada. La web ahora trae la asistencia de todo el semestre | #33 | — | `universidad-pc/`, `docs/js/base.js` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 50, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 51, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
-| Ahora | Subir al centro de datos las notas y la asistencia que lee el paso 49, y correrlo solo cada vez que prendes el PC |
 | Ahora | EV@ automático: copia diaria (solo lectura) de fechas, notas, material y entregas |
 | Siguiente | Respaldos semanales de la base |
 | Siguiente | Esta semana: 7 días con horario y evaluaciones con cuenta regresiva |
@@ -141,7 +141,7 @@ docs/js/acciones.js  lo que la web le cambia a tus datos (completar, posponer, s
 docs/js/fechas.js    ayudas de fechas (hoy, sumar días, horas)
 docs/js/universidad.js  el apartado Universidad: tarjetas de ramos, la página de un ramo y lo que viene
 docs/js/notas.js     las cuentas de un ramo: nota hasta ahora, cuánto necesitas, cómo va, asistencia
-universidad-pc/      corre en tu PC: lee notas y asistencia del portal de la U (guardar-clave.ps1 una vez, después correr.ps1)
+universidad-pc/      corre en tu PC: lee notas y asistencia del portal de la U y las sube (una vez: guardar-clave.ps1, conectar.ps1 e instalar.ps1)
 docs/js/inicio.js    el Resumen: dibuja las señales y las tarjetas
 docs/js/tarjetas.js  qué muestra cada tarjeta (agregar una = agregar un objeto a TARJETAS)
 ```

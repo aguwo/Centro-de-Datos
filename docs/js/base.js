@@ -41,7 +41,7 @@ export const datos = {
   nodo: new Map(),        // id -> nodo
   conexiones: [],
   padre: new Map(),       // id -> id de la caja donde está (lo calcula la vista "arbol" de la base, paso 19)
-  registros: [],          // lo que pasó en los últimos DIAS_REGISTROS días (gastos, hábitos, riegos...), del más viejo al más nuevo
+  registros: [],          // lo que pasó en los últimos DIAS_REGISTROS días (gastos, hábitos, riegos...) y toda la asistencia, del más viejo al más nuevo
   disposiciones: new Map(), // id del apartado -> sus columnas de widgets, si las cambiaste (paso 34b)
 };
 
@@ -111,7 +111,7 @@ export async function recargar(enfocarId) {
     db.from("conexiones").select("id, origen_id, relacion, destino_id").is("valido_hasta", null),
     db.from("tipos").select("id, owner_id, clave, nombre, modulo, orden, color, nivel, subcaja, propiedades, conexiones").order("orden"),
     db.from("arbol").select("id, padre_id"),
-    db.from("registros").select("id, fecha, clase, valor, nodo_id, otro_id").gte("fecha", desde).order("fecha"),
+    db.from("registros").select("id, fecha, clase, valor, nodo_id, otro_id").or(`fecha.gte.${desde},clase.eq.asistencia`).order("fecha"), // la asistencia de todo el semestre
     db.from("disposiciones").select("apartado, columnas"),
   ]);
   const error = nodos.error || conexiones.error || tipos.error || arbol.error || registros.error;
