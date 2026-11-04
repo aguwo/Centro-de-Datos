@@ -1,7 +1,7 @@
 // Paso 32: leer fechas escritas en "Agregar tarea". Hoy es lunes 2 de noviembre de 2026.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { leerFecha } from "../docs/js/fechas.js";
+import { leerFecha, esDia } from "../docs/js/fechas.js";
 
 const HOY = "2026-11-02";
 const lee = (texto) => leerFecha(texto, HOY);
@@ -40,4 +40,9 @@ test("horas", () => {
 test("sin fecha, el texto queda igual", () => {
   assert.deepEqual(lee("leer 3 capítulos del libro"), { titulo: "leer 3 capítulos del libro", dia: null, hora: null });
   assert.deepEqual(lee("hoyo en la pared"), { titulo: "hoyo en la pared", dia: null, hora: null });
+});
+
+test("esDia reconoce los días de la semana, con o sin tilde", () => {
+  for (const d of ["lunes", "Miércoles", "miercoles", "SÁBADO", "sabado"]) assert.equal(esDia(d), true, d);
+  for (const d of ["cátedra", "lunes 3", "", "ayudantía"]) assert.equal(esDia(d), false, d);
 });
