@@ -5,3 +5,7 @@ project_id = "centro-de-datos"
 # El servidor MCP valida el token por su cuenta para poder responder 401 con los
 # metadatos OAuth que necesita Claude para iniciar sesión.
 verify_jwt = false
+
+[functions.eva]
+# La llama la base (pg_cron) con su propia clave, no una sesión: la función la revisa por su cuenta.
+verify_jwt = false
