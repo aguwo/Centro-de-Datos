@@ -93,10 +93,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | Paso | Qué agrega | PR | SQL | Archivo |
 | --- | --- | --- | --- | --- |
 | 46a | El apartado Universidad: una tarjeta por ramo del semestre (cómo va, tu nota, cuánto necesitas para el 4, tu asistencia y lo próximo) y, al tocarla, la página del ramo: evaluaciones con ponderación y nota (se escriben ahí), "¿y si me saco…?", asistencia con Fui / Falté y sus tareas. Al lado, "Lo que viene" de todos tus ramos. Los eventos ganan Ponderación y Nota, y hay un registro nuevo: asistencia | #28 | SQL 12 | `supabase/migrations/0016_universidad.sql`, `docs/js/universidad.js`, `docs/js/notas.js`, `tests/notas.test.mjs` |
+| 48 | El syllabus de cada ramo (sacado de EV@) se ve en la página del ramo, en «Syllabus», que se abre al tocarlo. Una evaluación con ponderación 0 es formativa (un diagnóstico, una guía): aparece en la tabla pero no cuenta en la nota | #31 | — | `docs/js/universidad.js`, `docs/js/notas.js`, `tests/notas.test.mjs` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 48, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 49, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
