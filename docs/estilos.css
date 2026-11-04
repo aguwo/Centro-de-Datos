@@ -109,11 +109,12 @@ main { position: fixed; inset: 0; }
 .con-escritorio .dock { top: 0; bottom: 0; left: 0; width: var(--barra); max-width: none; transform: translate(var(--fuera, 0), var(--medio, 0));
   transition: transform .25s cubic-bezier(.2,.7,.2,1); background: var(--vidrio-fuerte);
   flex-direction: column; gap: 2px; padding: 10px 8px; border-radius: 0; border-width: 0 1px 0 0; box-shadow: none; overflow-y: auto; }
-.con-escritorio .dock button { width: 100%; height: auto; flex: none; padding: 9px 0 7px; gap: 3px; border-radius: 12px; background: none; color: var(--suave); transition: none; }
-.con-escritorio .dock button:hover { transform: none; background: color-mix(in srgb, var(--texto) 7%, transparent); color: var(--texto); }
+.con-escritorio .dock button { width: 100%; height: auto; flex: none; padding: 9px 0 7px; gap: 3px; border-radius: 12px; background: none; color: var(--suave); }
+.con-escritorio .dock button:hover { background: color-mix(in srgb, var(--texto) 7%, transparent); color: var(--texto); }
 /* El elegido: un fondo suave del color de acento y una rayita al costado */
 .con-escritorio .dock button[aria-current="page"] { background: color-mix(in srgb, var(--acento) 15%, transparent); color: var(--acento); font-weight: 600; }
-.con-escritorio .dock button[aria-current="page"]::before { content: ""; position: absolute; left: -8px; top: 22%; bottom: 22%; width: 3px; border-radius: 0 3px 3px 0; background: var(--acento); }
+.con-escritorio .dock button::before { content: ""; position: absolute; left: -8px; top: 22%; bottom: 22%; width: 3px; border-radius: 0 3px 3px 0; background: var(--acento); transform: scaleY(0); }
+.con-escritorio .dock button[aria-current="page"]::before { transform: scaleY(1); }
 .con-escritorio .dock .icono { width: 22px; height: 22px; }
 .con-escritorio .dock .etiqueta { position: static; max-width: 100%; overflow: hidden; text-overflow: ellipsis; opacity: 1; padding: 0; background: none; color: inherit; font-size: 11px; }
 .con-escritorio .dock .al-fondo { margin-top: auto; } /* Ajustes, abajo del todo */
@@ -134,18 +135,18 @@ main { position: fixed; inset: 0; }
 [data-barra="ancha"] .con-escritorio .dock::before { content: "Martita"; padding: 2px 12px 14px; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--texto); }
 [data-barra="ancha"] .con-escritorio .dock button { grid-template-columns: 22px minmax(0, 1fr); justify-items: start; align-items: center; gap: 12px; padding: 9px 12px; }
 [data-barra="ancha"] .con-escritorio .dock .etiqueta { font-size: 14px; }
-[data-barra="ancha"] .con-escritorio .dock button[aria-current="page"]::before { left: -12px; }
+[data-barra="ancha"] .con-escritorio .dock button::before { left: -12px; }
 /* Flotante: una tarjeta de vidrio separada del borde */
 [data-barra="flotante"] .con-escritorio { --barra: 108px; }
 [data-barra="flotante"] .con-escritorio .dock { top: 12px; bottom: 12px; left: 12px; width: 84px; border-radius: 22px; border-width: 1px; box-shadow: var(--sombra); }
-[data-barra="flotante"] .con-escritorio .dock button[aria-current="page"]::before { display: none; }
+[data-barra="flotante"] .con-escritorio .dock button::before { display: none; }
 /* Isla: una píldora corta, al centro de la altura */
 [data-barra="isla"] .con-escritorio { --barra: 84px; }
 [data-barra="isla"] .con-escritorio .dock { --medio: -50%; top: 50%; bottom: auto; left: 14px; width: 58px; padding: 8px 6px; gap: 4px;
   border-radius: 29px; border-width: 1px; box-shadow: var(--sombra); }
 [data-barra="isla"] .con-escritorio .dock button { border-radius: 50%; aspect-ratio: 1; padding: 0; }
 [data-barra="isla"] .con-escritorio .dock button[aria-current="page"] { background: var(--acento-fondo); color: var(--sobre-acento); }
-[data-barra="isla"] .con-escritorio .dock button[aria-current="page"]::before { display: none; }
+[data-barra="isla"] .con-escritorio .dock button::before { display: none; }
 [data-barra="isla"] .con-escritorio .dock .al-fondo { margin-top: 6px; }
 
 /* Retraer la barra: su último botón (‹) la saca de la pantalla y el contenido toma todo el ancho;
@@ -154,12 +155,37 @@ main { position: fixed; inset: 0; }
 .con-escritorio .dock .retraer { display: grid; place-items: center; padding: 6px 0; color: var(--suave); font-size: 16px; }
 .con-escritorio .dock .al-fondo + .retraer, [data-barra="isla"] .con-escritorio .dock .retraer { margin-top: 0; }
 .sacar-barra { display: none; }
+.con-escritorio .sacar-barra { display: grid; place-items: center; position: fixed; top: 50%; left: 0; z-index: 10; width: 22px; height: 52px; padding: 0;
+  border: 1px solid var(--borde); border-left: 0; border-radius: 0 12px 12px 0; background: var(--vidrio-fuerte); color: var(--suave); font-size: 16px; box-shadow: var(--sombra);
+  transform: translate(-100%, -50%); opacity: 0; pointer-events: none; } /* escondida hasta que retraes la barra */
 .barra-retraida .con-escritorio { --barra: 0px; }
 .barra-retraida .con-escritorio .dock { --fuera: calc(-100% - 24px); }
-.barra-retraida .con-escritorio .sacar-barra { display: grid; place-items: center; position: fixed; top: 50%; left: 0; z-index: 10; width: 22px; height: 52px; padding: 0;
-  border: 1px solid var(--borde); border-left: 0; border-radius: 0 12px 12px 0; background: var(--vidrio-fuerte); color: var(--suave); font-size: 16px; transform: translateY(-50%); box-shadow: var(--sombra); }
+.barra-retraida .con-escritorio .sacar-barra { transform: translate(0, -50%); opacity: 1; pointer-events: auto; }
 .barra-retraida .con-escritorio .sacar-barra:hover { color: var(--texto); width: 28px; }
-@media (prefers-reduced-motion: reduce) { .con-escritorio .dock, .con-escritorio main { transition: none; } }
+
+/* Animaciones de la barra (todas con la misma curva suave, --suave-curva):
+   - pasar el mouse: el fondo y el color se funden, y el ícono se levanta apenas; al apretar, se hunde
+   - el elegido: su fondo se funde y la rayita crece desde el centro
+   - retraer y sacar: la barra se desliza, el contenido se corre con ella y los botones aparecen uno tras otro (--i)
+   - cambiar de estilo en Ajustes: ancho, bordes y lugar cambian de a poco
+   - los globos con el nombre (Solo íconos e Isla) entran deslizándose */
+:root { --suave-curva: cubic-bezier(.22,.8,.24,1); }
+.con-escritorio .dock { transition: transform .38s var(--suave-curva), width .32s var(--suave-curva), left .32s var(--suave-curva), top .32s var(--suave-curva),
+  bottom .32s var(--suave-curva), border-radius .32s var(--suave-curva), padding .32s var(--suave-curva); }
+.con-escritorio main { transition: left .38s var(--suave-curva); }
+.con-escritorio .dock button { transition: background-color .2s ease, color .2s ease, opacity .3s ease, transform .35s var(--suave-curva);
+  transition-delay: 0s, 0s, calc(var(--i, 0) * 28ms + 60ms), calc(var(--i, 0) * 28ms + 60ms); }
+.con-escritorio .dock button::before { transition: transform .3s var(--suave-curva); }
+.con-escritorio .dock .icono { transition: transform .25s var(--suave-curva); }
+.con-escritorio .dock button:hover .icono { transform: translateY(-1.5px) scale(1.06); }
+.con-escritorio .dock button:active .icono { transform: scale(.92); transition-duration: .08s; }
+.barra-retraida .con-escritorio .dock button { opacity: 0; transform: translateX(-10px); transition-delay: 0s; }
+.con-escritorio .sacar-barra { transition: transform .35s var(--suave-curva) .15s, opacity .25s ease .15s, width .2s var(--suave-curva), color .2s ease; }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta { transform: translate(-6px, -50%); transition: opacity .18s ease, transform .25s var(--suave-curva); }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock button:is(:hover, :focus-visible) .etiqueta { transform: translate(0, -50%); }
+@media (prefers-reduced-motion: reduce) {
+  .con-escritorio .dock, .con-escritorio main, .con-escritorio .dock *, .con-escritorio .dock *::before, .con-escritorio .sacar-barra { transition: none !important; }
+}
 
 /* «+ Nuevo» flota abajo a la derecha: redondo en el teléfono, una píldora «+ Nuevo» en el computador.
    Su menú sale hacia arriba, desde el botón (nuevo.js pone --derecha y --abajo). */
@@ -235,10 +261,10 @@ main { position: fixed; inset: 0; }
 .costado { display: flex; flex-direction: column; gap: 8px; padding: 16px 20px 14px; border-radius: var(--radio); }
 .costado > .ventana { display: flex; flex-direction: column; flex: 1; min-height: 0; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; }
 .costado .plegar { display: none; }
-.con-escritorio .con-costado { padding-left: calc(var(--costado) + 32px); transition: padding-left .25s cubic-bezier(.2,.7,.2,1); }
+.con-escritorio .con-costado { padding-left: calc(var(--costado) + 32px); transition: padding-left .3s var(--suave-curva); }
 .con-escritorio .con-costado > .costado { --costado: 264px; position: fixed; top: 0; bottom: 0; left: var(--barra); z-index: 5; width: var(--costado);
   padding: 18px 16px 16px; border-radius: 0; border-width: 0 1px 0 0; box-shadow: none; background: var(--vidrio-fuerte); /* casi sólido, como la barra */
-  transition: transform .25s cubic-bezier(.2,.7,.2,1); }
+  transition: transform .25s cubic-bezier(.2,.7,.2,1), left .38s var(--suave-curva); }
 .con-escritorio .con-costado { --costado: 264px; }
 .con-escritorio .costado .plegar { display: grid; place-items: center; position: absolute; top: 50%; right: -15px; width: 28px; height: 44px; padding: 0;
   border: 1px solid var(--borde); border-radius: 0 10px 10px 0; border-left: 0; background: var(--vidrio-fuerte); color: var(--suave); font-size: 18px; line-height: 1; transform: translateY(-50%); }

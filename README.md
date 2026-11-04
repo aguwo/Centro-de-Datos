@@ -106,6 +106,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | — | Arreglo: «+ Nuevo» pasa abajo a la derecha (píldora en el computador, redonda en el teléfono); su menú se abre hacia arriba desde ahí y el minimapa sube para no chocar | — | — | `estilos.css`, `nuevo.js`, `index.html` |
 | 55 | Barra lateral personalizable en Ajustes: cinco estilos (Clásica, Solo íconos, Ancha, Flotante, Isla), mostrar u ocultar cada botón y cambiar su orden; Ajustes queda siempre abajo y el elegido se marca con un fondo suave y una rayita | — | — | `apariencia.js` (`BARRAS`), `carcasa.js` (`entradasDeLaBarra`), `ajustes.js` (`barra`), `estilos.css` |
 | — | Arreglo: barra lateral casi sólida (sin transparencias que se mezclan), el costado de Proyectos ya no pasa por debajo de la barra al esconderse, la barra se puede retraer (‹ al pie, › en el borde para sacarla; se recuerda), el minimapa pasa abajo a la izquierda y en Ajustes los botones se ordenan arrastrándolos | — | — | `estilos.css`, `carcasa.js`, `apariencia.js` (`retraida`), `ajustes.js` (`arrastrable`) |
+| — | Arreglo: animaciones suaves en la barra lateral: fundido al pasar el mouse, ícono que se levanta y se hunde al apretar, rayita del elegido que crece, barra y contenido que se deslizan al retraer, botones que aparecen uno tras otro, cambio de estilo gradual y globos que entran deslizándose (respeta «reducir movimiento» del equipo) | — | — | `estilos.css`, `carcasa.js` (`--i`) |
 
 ## Hoja de ruta
 

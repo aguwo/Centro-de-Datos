@@ -76,7 +76,7 @@ export function entradasDeLaBarra() {
 // el que tiene "abajo" (Ajustes) va pegado al fondo de la barra y no se puede esconder.
 function armarDock() {
   const { ocultos } = preferencia();
-  $("dock").replaceChildren(...entradasDeLaBarra().map(({ x, clase, accion }) => {
+  $("dock").replaceChildren(...entradasDeLaBarra().map(({ x, clase, accion }, i) => {
     const b = el("button", { title: x.nombre, onclick: accion }, el("span", { className: "etiqueta", textContent: x.nombre }));
     b.dataset[clase] = x.id;
     b.insertAdjacentHTML("afterbegin", `<svg class="icono" viewBox="0 0 24 24" aria-hidden="true">${x.icono}</svg>`);
@@ -84,6 +84,7 @@ function armarDock() {
     if (x.lugar) b.classList.add("en-lienzo"); // en el computador se juntan en "Escritorio"
     if (x.abajo) b.classList.add("al-fondo");
     b.hidden = !x.abajo && ocultos.includes(x.id);
+    b.style.setProperty("--i", i); // su turno al aparecer (estilos.css: aparecen uno tras otro)
     return b;
   }), el("button", { className: "retraer", textContent: "‹", title: "Retraer la barra", ariaLabel: "Retraer la barra", onclick: () => cambiar({ retraida: true }) }));
   marcar();
