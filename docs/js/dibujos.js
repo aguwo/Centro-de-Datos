@@ -3,7 +3,7 @@
 //   icono(nombre)          un ícono de línea de 24×24, ej. icono("reloj")
 //   portada(tema, color)   una franja con el dibujo de un tema, teñida con ese color, y su ícono encima
 //   elegir(texto, reglas)  el primer nombre cuya palabra clave aparece en el texto (para adivinar tema o tipo)
-//   anillo(fraccion, texto, minimo)  un anillo de avance de 0 a 1, con el texto al centro y, si se da, la marca del mínimo
+//   progreso(fraccion, minimo)  una barra delgada de avance de 0 a 1 y, si se da, la rayita del mínimo
 // Agregar uno = agregarlo a ICONOS (y, si es un tema con dibujo, a DIBUJOS).
 import { el } from "./base.js";
 
@@ -73,12 +73,15 @@ export function portada(tema, color, clase = "") {
 
 export const elegir = (texto, reglas, porDefecto) => reglas.find(([palabras]) => palabras.test(texto ?? ""))?.[1] ?? porDefecto;
 
-// El anillo mide 100 de largo (pathLength), así la fracción se escribe tal cual: 0,52 = 52.
-export function anillo(fraccion, texto, minimo) {
-  const f = Math.max(0, Math.min(1, fraccion ?? 0)) * 100;
-  const marca = minimo == null ? "" : `<line x1="18" y1="1" x2="18" y2="6" class="minimo" transform="rotate(${minimo * 360} 18 18)"/>`;
-  return el("span", { className: "anillo" }, svg("0 0 36 36",
-    `<circle cx="18" cy="18" r="15" pathLength="100" class="fondo-anillo"/>` +
-    `<circle cx="18" cy="18" r="15" pathLength="100" class="avance" stroke-dasharray="${f} 100" transform="rotate(-90 18 18)"/>` + marca, "anillo-svg"),
-    el("b", { textContent: texto }));
+// Una barra delgada de avance (0 a 1), con el color --c de lo que la rodea. minimo (0 a 1, opcional): una rayita ahí.
+export function progreso(fraccion, minimo) {
+  const relleno = el("i");
+  relleno.style.width = Math.max(0, Math.min(1, fraccion ?? 0)) * 100 + "%";
+  const b = el("span", { className: "progreso" }, relleno);
+  if (minimo != null) {
+    const raya = el("b", { title: `Mínimo: ${Math.round(minimo * 100)}%` });
+    raya.style.left = minimo * 100 + "%";
+    b.append(raya);
+  }
+  return b;
 }

@@ -559,13 +559,9 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .pastilla .icono { width: 15px; height: 15px; color: var(--suave); }
 .pastilla.alerta, .pastilla.alerta .icono { color: var(--alerta); }
 .portada .pastilla.aviso { position: absolute; right: 10px; top: 10px; padding: 3px 9px; font-size: 11.5px; font-weight: 600; box-shadow: none; }
-.anillo { position: relative; display: inline-grid; place-items: center; width: 52px; height: 52px; flex: none; }
-.anillo-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.anillo circle { fill: none; stroke-width: 3.6; }
-.anillo .fondo-anillo { stroke: var(--linea); }
-.anillo .avance { stroke: var(--c, var(--acento)); stroke-linecap: round; }
-.anillo .minimo { stroke: var(--texto); stroke-width: 1.6; }
-.anillo b { position: relative; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.progreso { position: relative; display: block; height: 4px; border-radius: 2px; background: var(--linea); }
+.progreso > i { display: block; height: 100%; border-radius: 2px; background: var(--c, var(--acento)); opacity: .85; }
+.progreso > b { position: absolute; top: -3px; width: 2px; height: 10px; margin-left: -1px; border-radius: 1px; background: var(--texto); opacity: .35; }
 
 /* Las tarjetas de los ramos */
 .resumen-ramos { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -580,10 +576,12 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .tarjeta-ramo .nombre small, .tarjeta-ramo .nota small { color: var(--suave); font-size: 12.5px; }
 .tarjeta-ramo .nota { display: flex; flex-direction: column; min-width: 0; }
 .tarjeta-ramo .nota strong { font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.tarjeta-ramo .asis { display: flex; align-items: center; gap: 7px; color: var(--suave); font-size: 12.5px; }
+.tarjeta-ramo .asis { display: flex; flex-direction: column; gap: 7px; color: var(--suave); font-size: 12.5px; }
+.tarjeta-ramo .asis > span { display: flex; align-items: center; gap: 7px; }
 .tarjeta-ramo .asis .icono { width: 15px; height: 15px; }
 .tarjeta-ramo .asis b { color: var(--texto); font-variant-numeric: tabular-nums; }
 .tarjeta-ramo .asis.baja, .tarjeta-ramo .asis.baja b { color: var(--alerta); }
+.asis.baja .progreso > i, .asistencia.baja .progreso > i { background: var(--alerta); }
 .tarjeta-ramo .prox { display: flex; align-items: center; gap: 8px; font-size: 13px; border-top: 1px solid var(--linea); padding-top: 12px; margin-top: auto; }
 .tarjeta-ramo .prox > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .cuenta { flex: none; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--linea); color: var(--suave); font-variant-numeric: tabular-nums; }
@@ -636,10 +634,11 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .simulador label { flex: 1 1 200px; font-size: 13px; }
 .simulador input { width: 64px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--linea); background: var(--vidrio-fuerte); font-weight: 600; text-align: center; }
 .simulador output { font-size: 13px; color: var(--suave); }
-.resumen-asis { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
-.resumen-asis .anillo { width: 72px; height: 72px; }
-.resumen-asis .anillo b { font-size: 15px; }
-.asistencia.baja .anillo .avance { stroke: var(--alerta); }
+.resumen-asis { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.cifra-asis { display: flex; align-items: baseline; gap: 8px; }
+.cifra-asis strong { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cifra-asis small { color: var(--suave); font-size: 12.5px; }
+.asistencia.baja .cifra-asis strong { color: var(--alerta); }
 .puntos { display: flex; flex-wrap: wrap; gap: 4px; }
 .puntos i { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; }
 .puntos .icono { width: 11px; height: 11px; stroke-width: 2.6; }
