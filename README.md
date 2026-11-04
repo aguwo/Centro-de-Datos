@@ -110,6 +110,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | — | Arreglo: el escritorio infinito pasa por debajo de la barra (ya no se corta en seco a su lado) y centra lo que miras en el espacio libre; el calendario ya no tapa la barra; el botón para retraer queda al lado de Ajustes | — | — | `escritorio.js` (`libre`), `carcasa.js`, `estilos.css` |
 | — | Arreglo: con barra Flotante o Isla, el costado de Proyectos también flota como tarjeta; los nombres que salen al pasar el mouse (Solo íconos e Isla) se ven enteros | — | — | `estilos.css` |
 | — | Arreglo: en el calendario y en «Tu día», lo que está dentro de un ramo o proyecto toma su color (`colorDeSuCaja`), y los títulos no repiten el día que ya se ve (`sinLoQueYaSeVe`: «Clase Inglés II (jueves)» → «Clase Inglés II») | — | — | `base.js`, `fechas.js` (`esDia`), `agenda.js`, `calendario.js` |
+| — | Arreglo: en el calendario, lo que cae a la misma hora se escalona (encima va lo de una vez, como una evaluación, sobre lo que se repite, como una clase), lo de una vez va lleno de color y los nombres usan hasta 3 líneas | — | — | `agenda.js` (`columnas`), `estilos.css` |
 
 ## Hoja de ruta
 

@@ -23,16 +23,20 @@ export function delDia(d) {
     .sort((a, b) => (a.ini ?? -1) - (b.ini ?? -1));
 }
 
-// Si dos bloques se pisan, se reparten el ancho (como Google Calendar).
+// Si dos bloques se pisan, se escalonan (como Google Calendar): cada uno parte un poco más a la derecha y llega
+// hasta el borde, encima del anterior. Abajo va lo que se repite (las clases) y encima lo de una vez (una evaluación),
+// así lo puntual se lee entero y de lo de siempre queda a la vista su orilla con su color.
+const fijo = (x) => !!x.n.props?.repite;
 function columnas(items) {
   const grupos = [];
   for (const x of items) {
     const g = grupos.find((g) => g.some((y) => x.ini < y.fin && y.ini < x.fin));
     g ? g.push(x) : grupos.push([x]);
   }
-  for (const g of grupos) g.forEach((x, i) => Object.assign(x, { col: i, de: g.length }));
+  for (const g of grupos) g.sort((a, b) => fijo(b) - fijo(a) || a.ini - b.ini).forEach((x, i) => Object.assign(x, { col: i, de: g.length }));
   return items;
 }
+const ESCALON = 22; // % que se corre cada bloque encima de otro
 
 // cont: dónde dibujar. dias: ["2026-11-02", ...]. Opciones:
 //   desde, hasta  qué horas se ven (por defecto de 7 a 24)
@@ -76,7 +80,9 @@ export function dibujarAgenda(cont, dias, { desde = 7, hasta = 24, alto = 48, to
       const altoBloque = Math.max(22, (x.fin - ini) * alto - 2);
       b.classList.toggle("corto", altoBloque < 40); // poco espacio: la hora va al lado del nombre
       Object.assign(b.style, { top: (ini - desde) * alto + "px", height: altoBloque + "px",
-        left: `calc(${(x.col / x.de) * 100}% + 2px)`, width: `calc(${100 / x.de}% - 4px)` });
+        left: `calc(${x.col * ESCALON}% + 2px)`, width: `calc(${100 - x.col * ESCALON}% - 4px)`, zIndex: x.col + 1 });
+      b.classList.toggle("encima", x.col > 0);
+      b.classList.toggle("unico", x.n.tipos.clave === "evento" && !fijo(x)); // lo de una vez (una evaluación) va lleno de color
       col.append(b);
     }
     if (d === hoy && ahora >= desde) { const l = el("i", { className: "ahora" }); l.style.top = (ahora - desde) * alto + "px"; col.append(l); }
