@@ -1,6 +1,6 @@
 // El panel lateral: los datos de un nodo con sus conexiones, y el formulario para crear o editar.
 // Lee de los datos cargados (no del mapa), así funciona igual desde el Inicio.
-import { db, $, el, avisar, datos, colorDe, recargar, pedirRecarga, dia, hora } from "./base.js";
+import { db, $, el, avisar, datos, colorDe, recargar, pedirRecarga, dia, hora, fijas, FIJA } from "./base.js";
 import { enfocar, desenfocar, ajustarMapa } from "./mapa.js";
 import { crear, conectar } from "./acciones.js";
 
@@ -192,6 +192,7 @@ export function formulario(n, { tipos, tipo: elegido, valores = {}, conexion: in
     for (const b of selector.querySelectorAll("button")) b.setAttribute("aria-pressed", b.dataset.clave === tipo);
     const valorInicial = (p) => (p.clave in valores ? valores[p.clave] : n ? valorDe(n, p) : p.tipo === "estado" ? "Por hacer" : null);
     campos = propiedadesDe(tipo).map((p) => ({ p, c: control(p, valorInicial(p)) }));
+    for (const { p, c } of campos) if (fijas(n).includes(p.clave)) Object.assign(c, { disabled: true, title: FIJA });
     const aLaVista = (x, i) => i < PRINCIPALES || (n && legible(x.p, valorDe(n, x.p)) !== null);
     principales.replaceChildren(...campos.filter(aLaVista).flatMap(({ p, c }) => campo(p.nombre, c)));
     mas.replaceChildren(...campos.filter((x, i) => !aLaVista(x, i)).flatMap(({ p, c }) => campo(p.nombre, c)));

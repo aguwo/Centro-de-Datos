@@ -96,6 +96,10 @@ export function crearRepositorio(db: SupabaseClient, usuario: string): Repositor
       if (props) {
         // Se parte de las props que ya tiene, para no perder las que no se mencionan.
         const actual = revisar(await db.from("nodos").select("props").eq("id", id).single()) as any;
+        // Una nota que subió el portal de la U no se cambia a mano (paso 51): la próxima subida la pisaría igual.
+        if (actual?.props?.portal && "nota" in props && props.nota !== actual.props.nota) {
+          throw new Error(`La nota de «${actual.props.portal}» viene del portal de la U y no se cambia a mano.`);
+        }
         const juntas: Record<string, unknown> = { ...(actual?.props ?? {}), ...props };
         for (const k of Object.keys(juntas)) if (juntas[k] === null) delete juntas[k];
         fila.props = juntas;

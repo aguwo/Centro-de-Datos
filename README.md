@@ -96,10 +96,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 48 | El syllabus de cada ramo (sacado de EV@) se ve en la página del ramo, en «Syllabus», que se abre al tocarlo. Una evaluación con ponderación 0 es formativa (un diagnóstico, una guía): aparece en la tabla pero no cuenta en la nota | #31 | — | `docs/js/universidad.js`, `docs/js/notas.js`, `tests/notas.test.mjs` |
 | 49 | Tus notas y tu asistencia reales desde el sistema de la U (intranet7, que se abre desde «Ficha del curso» del portal). Corre en tu PC porque la U bloquea la nube: entra con tu RUT y clave guardados cifrados en Windows y deja todo en un archivo en tu PC. Todavía no los sube al centro de datos | #32 | — | `universidad-pc/`, `tests/universidad-pc.test.mjs` |
 | 50 | Lo que lee el paso 49 se sube solo al centro de datos cada vez que prendes el PC: notas nuevas y la asistencia de cada clase (sin duplicar; lo que no encuentra pareja se avisa). Tu PC se conecta una vez con el correo de siempre y guarda la sesión cifrada. La web ahora trae la asistencia de todo el semestre. Arreglo: no sube las clases de hoy en adelante (el portal ya las lista como faltas) y borra las que subió de más | #33, #34 | — | `universidad-pc/`, `docs/js/base.js` |
+| 51 | Las notas que sube el portal de la U quedan fijas: en la web no se pueden editar (ni en la tabla del ramo ni en «Editar») y Martita tampoco las cambia. Se actualizan solas con la próxima subida | #35 | — | `docs/js/base.js` (`fijas`), `universidad.js`, `panel.js`, `universidad-pc/subir.mjs`, conector (redeploy) |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 51, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 52, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |

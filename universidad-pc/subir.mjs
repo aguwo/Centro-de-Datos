@@ -42,7 +42,8 @@ export function plan(portal, { ramos, eventos, asistencias }, hoy = diaEnChile(n
     for (const ev of r.evaluaciones.filter((e) => e.nota !== null)) {
       const e = suyos.find((x) => clave(x.titulo) === clave(ev.nombre));
       if (!e) p.sinEvaluacion.push({ ramo: ramo.titulo, nombre: ev.nombre, nota: ev.nota });
-      else if (e.props?.nota !== ev.nota) p.notas.push({ id: e.id, titulo: e.titulo, props: { ...e.props, nota: ev.nota } });
+      else if (e.props?.nota !== ev.nota || e.props?.portal !== ev.nombre) // portal = su nombre allá, y la marca de que no se edita a mano
+        p.notas.push({ id: e.id, titulo: e.titulo, props: { ...e.props, nota: ev.nota, portal: ev.nombre } });
     }
 
     const libres = asistencias.filter((a) => a.nodo_id === ramo.id);

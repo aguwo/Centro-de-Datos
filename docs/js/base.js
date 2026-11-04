@@ -62,6 +62,11 @@ export const hora = (fecha) => {
   return sinHora(d) ? "" : d.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
 };
 
+// Props que llegan solas de afuera y no se cambian a mano (paso 51): la nota de una evaluación
+// que subió el portal de la U (universidad-pc/subir.mjs le pone props.portal = su nombre allá).
+export const fijas = (n) => (n?.props?.portal ? ["nota"] : []);
+export const FIJA = "Viene del portal de la U: se actualiza sola";
+
 export const colorDe = (clave) => datos.tipo.get(clave)?.color ?? "#78716c";
 // Dentro de qué proyecto, área o materia está un nodo (su caja), para mostrarlo al lado.
 export const dentroDe = (id) => datos.nodo.get(datos.padre.get(id))?.titulo;

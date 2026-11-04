@@ -6,7 +6,7 @@
 //
 // Un ramo es un tópico con semestre (se muestran los del semestre más reciente). Sus evaluaciones son los eventos
 // que tiene adentro y no se repiten (las clases sí se repiten). Las cuentas están en notas.js.
-import { el, db, datos, dia, hora, cajasDe, colorDeProyecto, escribir, escribiendoEn, avisar } from "./base.js";
+import { el, db, datos, dia, hora, cajasDe, colorDeProyecto, escribir, escribiendoEn, avisar, fijas, FIJA } from "./base.js";
 import { hoyTexto, diasEntre, corto } from "./fechas.js";
 import { cambiarProps, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario } from "./panel.js";
@@ -107,7 +107,8 @@ export function paginaDeRamo(v, ctx) {
     // Las evaluaciones: la ponderación y la nota se escriben directo en la tabla.
     const numero = (e, clave, etiqueta, min, max) => {
       const i = el("input", { type: "number", inputMode: "decimal", min, max, step: clave === "nota" ? 0.1 : 1, value: e.props?.[clave] ?? "",
-        ariaLabel: `${etiqueta} de ${e.titulo}`, placeholder: "—" });
+        ariaLabel: `${etiqueta} de ${e.titulo}`, placeholder: "—", disabled: fijas(e).includes(clave) });
+      if (i.disabled) i.title = FIJA;
       i.onchange = () => {
         const x = i.value === "" ? null : Number(i.value);
         if (x !== null && !(x >= min && x <= max)) return avisar(`${etiqueta}: entre ${min} y ${max}.`);

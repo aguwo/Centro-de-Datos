@@ -175,7 +175,7 @@ type Herramienta = {
 const texto = { type: "string" };
 
 const EN_COLUMNA = ["estado", "fecha"]; // estas propiedades se guardan en su columna, no en props
-const INTERNAS = ["notion_id", "postit", "orden"]; // props que pone el sistema, no el usuario (postit: dónde está pegado en el escritorio; orden: el de tus áreas)
+const INTERNAS = ["notion_id", "postit", "orden", "portal"]; // props que pone el sistema, no el usuario (postit: dónde está pegado en el escritorio; orden: el de tus áreas; portal: el nombre de la evaluación en el portal de la U)
 
 /**
  * Paso 23: revisa que las props calcen con las propiedades del tipo (clave conocida, número donde va número,
