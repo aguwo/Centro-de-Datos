@@ -78,7 +78,7 @@ const pastilla = (nombre, texto, clase = "") => el("span", { className: "pastill
 
 // ---------- ramos (las tarjetas) ----------
 // Arriba, unas pastillas con el objetivo del semestre, los días que quedan y los ramos con poca asistencia.
-// Cada tarjeta: su portada, tu nota, cuánto necesitas, cuánto del ramo ya está evaluado (el anillo), tu asistencia y lo próximo.
+// Cada tarjeta: su portada, tu nota, cuánto necesitas, tu asistencia y lo próximo.
 export function tarjetasDeRamos(v, ctx) {
   const resumen = el("div", { className: "resumen-ramos" }), grilla = el("div", { className: "tarjetas-ramos" });
   v.append(resumen, grilla);
@@ -104,9 +104,7 @@ export function tarjetasDeRamos(v, ctx) {
       const t = el("button", { className: "tarjeta-ramo", onclick: () => ctx.cambiar({ ramo: r.id }) }, tapa,
         el("span", { className: "cuerpo" },
           el("span", { className: "nombre" }, el("b", { textContent: r.titulo }), el("small", { textContent: profeDe(r) ?? "" })),
-          el("span", { className: "cifras" },
-            el("span", { className: "nota" }, el("strong", { textContent: nota(c.actual) }), el("small", { textContent: r.estado === "Hecho" ? como === "Seguro" ? "Aprobado" : "Reprobado" : necesitasTexto(c) })),
-            c.evaluado === null ? "" : el("span", { className: "evaluado", title: "Qué parte del ramo ya tiene nota" }, anillo(c.evaluado, Math.round(c.evaluado * 100) + "%"), el("small", { textContent: "evaluado" }))),
+          el("span", { className: "nota" }, el("strong", { textContent: nota(c.actual) }), el("small", { textContent: r.estado === "Hecho" ? como === "Seguro" ? "Aprobado" : "Reprobado" : necesitasTexto(c) })),
           el("span", { className: "asis" + (bajo(a, r) ? " baja" : "") }, icono("persona"),
             el("span", {}, "Asistencia ", el("b", { textContent: porcentaje(a) }), a.porcentaje === null ? "" : ` · mínimo ${Math.round(minimoDe(r) * 100)}%`)),
           el("span", { className: "prox" }, ...(prox
