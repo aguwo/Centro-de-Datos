@@ -58,7 +58,8 @@ test("plan: solo lo que cambió, sin duplicar, y avisa lo que no tiene pareja", 
   const portal = [...leerNotas(html), { nombre: "RAMO NUEVO", evaluaciones: [], asistencia: { clases: [] } }];
   portal[0].evaluaciones.push({ nombre: "Certamen 2", nota: 6 }, { nombre: "Tareas 1", nota: 7 });
 
-  const p = plan(portal, base);
+  portal[0].asistencia.clases.push({ fecha: "2026-11-05T10:10", descripcion: "Clase 39", fui: false }); // todavía no pasa
+  const p = plan(portal, base, "2026-11-04");
   assert.deepEqual(p.notas, [{ id: "c2", titulo: "Certamen 2", props: { peso: 21, nota: 6 } }]);
   assert.deepEqual(p.cambios, [{ id: "a1", fecha: "2026-08-06T14:10:00.000Z", valor: 1, props: { portal: "Clase 1" } }]);
   assert.deepEqual(p.nuevas, [{ clase: "asistencia", nodo_id: "arq", fecha: "2026-08-11T14:10:00.000Z", valor: 0,
@@ -69,6 +70,11 @@ test("plan: solo lo que cambió, sin duplicar, y avisa lo que no tiene pareja", 
   // La segunda vez, con lo ya subido, no hay nada que hacer.
   const despues = { ...base, eventos: base.eventos.map((e) => (e.id === "c2" ? { ...e, props: p.notas[0].props } : e)),
     asistencias: [{ ...base.asistencias[0], ...p.cambios[0] }, { id: "a2", ...p.nuevas[0] }] };
-  const otra = plan(portal, despues);
-  assert.deepEqual([otra.notas, otra.nuevas, otra.cambios], [[], [], []]);
+  const otra = plan(portal, despues, "2026-11-04");
+  assert.deepEqual([otra.notas, otra.nuevas, otra.cambios, otra.borrar], [[], [], [], []]);
+
+  // Una clase que se subió antes y el portal ya no lista (o todavía no pasa) se borra; una anotada a mano, no.
+  const viejas = [...despues.asistencias, { id: "a3", nodo_id: "arq", fecha: "2026-11-05T13:10:00Z", valor: 0, props: { portal: "Clase 39" } },
+    { id: "a4", nodo_id: "arq", fecha: "2026-11-05T13:10:00Z", valor: 1, props: {} }];
+  assert.deepEqual(plan(portal, { ...despues, asistencias: viejas }, "2026-11-04").borrar, ["a3"]);
 });

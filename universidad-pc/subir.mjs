@@ -8,7 +8,9 @@
 //   ramo        «BASES DE DATOS» = «Base de Datos»: se comparan las palabras sin tildes, sin «de/y/la…» y por sus 4 primeras letras
 //   evaluación  igual que el ramo, con lo que va antes de « — » («Certamen 1 — Base de Datos» = «Certamen 1»),
 //               solo entre los eventos del ramo que no se repiten (las clases sí se repiten)
-//   clase       por su fecha y hora. Si ese día ya anotaste a mano si fuiste, se corrige esa anotación en vez de agregar otra
+//   clase       por su fecha y hora. Si ese día ya anotaste a mano si fuiste, se corrige esa anotación en vez de agregar otra.
+//               Solo las de días anteriores a hoy: el portal ya lista las clases que vienen (con «-», como si faltaras)
+//               y no las cuenta hasta que el profesor pasa la lista. Lo que se subió del portal y ya no calza, se borra.
 // Lo que no encuentra pareja no se crea solo (podría quedar repetido con otro nombre): se avisa, y se arregla
 // cambiándole el nombre al evento para que se parezca al del portal.
 export const ZONA = "America/Santiago";
@@ -29,8 +31,8 @@ const diaEnChile = (fecha) => new Date(fecha).toLocaleDateString("sv-SE", { time
  * portal: los ramos de leerNotas(). base: { ramos, eventos, asistencias } del centro de datos
  * (ramos = tópicos con semestre; eventos con padre_id = su ramo; asistencias = registros con nodo_id = su ramo).
  */
-export function plan(portal, { ramos, eventos, asistencias }) {
-  const p = { notas: [], nuevas: [], cambios: [], sinRamo: [], sinEvaluacion: [] };
+export function plan(portal, { ramos, eventos, asistencias }, hoy = diaEnChile(new Date())) {
+  const p = { notas: [], nuevas: [], cambios: [], borrar: [], sinRamo: [], sinEvaluacion: [] };
   const porSemestre = [...ramos].sort((a, b) => String(b.props?.semestre).localeCompare(String(a.props?.semestre)));
   for (const r of portal) {
     const ramo = porSemestre.find((x) => clave(x.titulo) === clave(r.nombre));
@@ -44,7 +46,7 @@ export function plan(portal, { ramos, eventos, asistencias }) {
     }
 
     const libres = asistencias.filter((a) => a.nodo_id === ramo.id);
-    for (const c of r.asistencia.clases) {
+    for (const c of r.asistencia.clases.filter((c) => c.fecha.slice(0, 10) < hoy)) {
       const fecha = instante(c.fecha), valor = c.fui ? 1 : 0, props = { portal: c.descripcion };
       const i = libres.findIndex((a) => Date.parse(a.fecha) === Date.parse(fecha));
       const j = i >= 0 ? i : libres.findIndex((a) => !a.props?.portal && diaEnChile(a.fecha) === diaEnChile(fecha));
@@ -52,6 +54,7 @@ export function plan(portal, { ramos, eventos, asistencias }) {
       const [a] = libres.splice(j, 1); // una anotación sirve para una sola clase
       if (Number(a.valor) !== valor || i < 0) p.cambios.push({ id: a.id, fecha, valor, props: { ...a.props, ...props } });
     }
+    p.borrar.push(...libres.filter((a) => a.props?.portal).map((a) => a.id)); // las anotaciones a mano se quedan
   }
   return p;
 }
@@ -82,5 +85,6 @@ export async function subir(portal, conexion) {
   for (const n of p.notas) await pedir(conexion, `nodos?id=eq.${n.id}`, { method: "PATCH", body: { props: n.props } });
   if (p.nuevas.length) await pedir(conexion, "registros", { method: "POST", body: p.nuevas });
   for (const { id, ...cambio } of p.cambios) await pedir(conexion, `registros?id=eq.${id}`, { method: "PATCH", body: cambio });
+  if (p.borrar.length) await pedir(conexion, `registros?id=in.(${p.borrar.join(",")})`, { method: "DELETE" });
   return p;
 }
