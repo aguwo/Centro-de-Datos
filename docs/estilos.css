@@ -99,19 +99,51 @@ main { position: fixed; inset: 0; }
 .dock [data-escritorio] { display: none; } /* en el teléfono cada sección tiene su botón */
 
 /* Paso 35c: en el computador el dock es una barra lateral fija, pegada al borde izquierdo,
-   con el nombre bajo cada ícono. Las secciones del escritorio van juntas en "Escritorio". */
-.con-escritorio main { left: 80px; }
+   con el nombre bajo cada ícono. Las secciones del escritorio van juntas en "Escritorio".
+   Paso 55: su estilo se elige en Ajustes (:root[data-barra], abajo). --barra = el espacio que el contenido le deja a la izquierda. */
+.con-escritorio { --barra: 84px; }
+.con-escritorio main { left: var(--barra); }
 .con-escritorio .asa { display: none; }
-.con-escritorio .dock { top: 0; bottom: 0; left: 0; width: 80px; max-width: none; transform: none; transition: none;
-  flex-direction: column; gap: 2px; padding: 10px 8px 76px; border-radius: 0; border-width: 0 1px 0 0; box-shadow: none; overflow-y: auto; } /* abajo queda lugar para «+ Nuevo» */
-.con-escritorio .dock button { width: 100%; height: auto; flex: none; padding: 9px 0 7px; gap: 3px; background: none; color: var(--suave); transition: none; }
+.con-escritorio .dock { top: 0; bottom: 0; left: 0; width: var(--barra); max-width: none; transform: none; transition: none;
+  flex-direction: column; gap: 2px; padding: 10px 8px; border-radius: 0; border-width: 0 1px 0 0; box-shadow: none; overflow-y: auto; }
+.con-escritorio .dock button { width: 100%; height: auto; flex: none; padding: 9px 0 7px; gap: 3px; border-radius: 12px; background: none; color: var(--suave); transition: none; }
 .con-escritorio .dock button:hover { transform: none; background: color-mix(in srgb, var(--texto) 7%, transparent); color: var(--texto); }
-.con-escritorio .dock button[aria-current="page"] { background: var(--acento-fondo); color: var(--sobre-acento); }
+/* El elegido: un fondo suave del color de acento y una rayita al costado */
+.con-escritorio .dock button[aria-current="page"] { background: color-mix(in srgb, var(--acento) 15%, transparent); color: var(--acento); font-weight: 600; }
+.con-escritorio .dock button[aria-current="page"]::before { content: ""; position: absolute; left: -8px; top: 22%; bottom: 22%; width: 3px; border-radius: 0 3px 3px 0; background: var(--acento); }
 .con-escritorio .dock .icono { width: 22px; height: 22px; }
-.con-escritorio .dock .etiqueta { position: static; opacity: 1; padding: 0; background: none; color: inherit; font-size: 11px; }
-.con-escritorio .dock .separador { width: 60%; height: 1px; margin: 6px auto; background: var(--linea); }
+.con-escritorio .dock .etiqueta { position: static; max-width: 100%; overflow: hidden; text-overflow: ellipsis; opacity: 1; padding: 0; background: none; color: inherit; font-size: 11px; }
+.con-escritorio .dock .al-fondo { margin-top: auto; } /* Ajustes, abajo del todo */
 .con-escritorio .dock .en-lienzo { display: none; }
 .con-escritorio .dock [data-escritorio] { display: grid; }
+
+/* Solo íconos e Isla: el nombre sale como globo al pasar el mouse */
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock { overflow: visible; }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock button { padding: 11px 0; }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta { position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%);
+  max-width: none; padding: 4px 10px; border-radius: 8px; background: var(--vidrio-fuerte); color: var(--texto); font-size: 12.5px; font-weight: 500;
+  box-shadow: var(--sombra); opacity: 0; pointer-events: none; transition: opacity .12s; }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock button:is(:hover, :focus-visible) .etiqueta { opacity: 1; }
+[data-barra="iconos"] .con-escritorio { --barra: 64px; }
+/* Ancha: ícono y nombre en una fila, con el nombre de la web arriba */
+[data-barra="ancha"] .con-escritorio { --barra: 212px; }
+[data-barra="ancha"] .con-escritorio .dock { padding: 16px 12px; }
+[data-barra="ancha"] .con-escritorio .dock::before { content: "Martita"; padding: 2px 12px 14px; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--texto); }
+[data-barra="ancha"] .con-escritorio .dock button { grid-template-columns: 22px minmax(0, 1fr); justify-items: start; align-items: center; gap: 12px; padding: 9px 12px; }
+[data-barra="ancha"] .con-escritorio .dock .etiqueta { font-size: 14px; }
+[data-barra="ancha"] .con-escritorio .dock button[aria-current="page"]::before { left: -12px; }
+/* Flotante: una tarjeta de vidrio separada del borde */
+[data-barra="flotante"] .con-escritorio { --barra: 108px; }
+[data-barra="flotante"] .con-escritorio .dock { top: 12px; bottom: 12px; left: 12px; width: 84px; border-radius: 22px; border-width: 1px; box-shadow: var(--sombra); }
+[data-barra="flotante"] .con-escritorio .dock button[aria-current="page"]::before { display: none; }
+/* Isla: una píldora corta, al centro de la altura */
+[data-barra="isla"] .con-escritorio { --barra: 84px; }
+[data-barra="isla"] .con-escritorio .dock { top: 50%; bottom: auto; left: 14px; width: 58px; transform: translateY(-50%); padding: 8px 6px; gap: 4px;
+  border-radius: 29px; border-width: 1px; box-shadow: var(--sombra); }
+[data-barra="isla"] .con-escritorio .dock button { border-radius: 50%; aspect-ratio: 1; padding: 0; }
+[data-barra="isla"] .con-escritorio .dock button[aria-current="page"] { background: var(--acento-fondo); color: var(--sobre-acento); }
+[data-barra="isla"] .con-escritorio .dock button[aria-current="page"]::before { display: none; }
+[data-barra="isla"] .con-escritorio .dock .al-fondo { margin-top: 6px; }
 
 /* «+ Nuevo» flota abajo a la derecha: redondo en el teléfono, una píldora «+ Nuevo» en el computador.
    Su menú sale hacia arriba, desde el botón (nuevo.js pone --derecha y --abajo). */
@@ -188,7 +220,7 @@ main { position: fixed; inset: 0; }
 .costado > .ventana { display: flex; flex-direction: column; flex: 1; min-height: 0; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; }
 .costado .plegar { display: none; }
 .con-escritorio .con-costado { padding-left: calc(var(--costado) + 32px); transition: padding-left .25s cubic-bezier(.2,.7,.2,1); }
-.con-escritorio .con-costado > .costado { --costado: 264px; position: fixed; top: 0; bottom: 0; left: 80px; z-index: 5; width: var(--costado);
+.con-escritorio .con-costado > .costado { --costado: 264px; position: fixed; top: 0; bottom: 0; left: var(--barra); z-index: 5; width: var(--costado);
   padding: 18px 16px 16px; border-radius: 0; border-width: 0 1px 0 0; box-shadow: none; transition: transform .25s cubic-bezier(.2,.7,.2,1); }
 .con-escritorio .con-costado { --costado: 264px; }
 .con-escritorio .costado .plegar { display: grid; place-items: center; position: absolute; top: 50%; right: -15px; width: 28px; height: 44px; padding: 0;
@@ -709,6 +741,26 @@ button.chico { padding: 1px 8px; font-size: 11.5px; border-radius: 99px; }
 .letras b { font-size: 22px; font-weight: 600; line-height: 1.1; }
 .letras span { font-size: 11.5px; color: var(--suave); text-align: center; }
 .de-siempre { margin-top: 16px; justify-self: start; align-self: flex-start; }
+/* Barra lateral: cada estilo con un dibujito (la franja oscura es la barra) */
+.barras { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; }
+.barras button { display: grid; gap: 6px; justify-items: center; padding: 8px 6px; border-radius: 12px; background: var(--vidrio-fuerte); font-size: 11.5px; }
+.barras button[aria-pressed="true"] { outline: 2px solid var(--acento-fondo); outline-offset: 1px; font-weight: 600; }
+.muestra-barra { position: relative; width: 100%; height: 48px; border-radius: 7px; border: 1px solid var(--linea); background: color-mix(in srgb, var(--texto) 6%, transparent); }
+.muestra-barra b { position: absolute; background: color-mix(in srgb, var(--texto) 30%, transparent); border-radius: 2px; }
+.muestra-barra b:first-child { inset: 0 auto 0 0; width: 22%; border-radius: 6px 0 0 6px; background: color-mix(in srgb, var(--texto) 18%, transparent); }
+.muestra-barra b:nth-child(2) { left: 7%; top: 18%; width: 8%; height: 9%; background: var(--acento); }
+.muestra-barra b:nth-child(3) { left: 32%; top: 18%; right: 10%; height: 30%; }
+.muestra-barra.iconos b:first-child { width: 14%; } .muestra-barra.iconos b:nth-child(2) { left: 4%; width: 6%; } .muestra-barra.iconos b:nth-child(3) { left: 24%; }
+.muestra-barra.ancha b:first-child { width: 36%; } .muestra-barra.ancha b:nth-child(2) { width: 22%; } .muestra-barra.ancha b:nth-child(3) { left: 44%; }
+.muestra-barra.flotante b:first-child { inset: 8% auto 8% 4%; border-radius: 4px; } .muestra-barra.flotante b:nth-child(2) { left: 9%; } .muestra-barra.flotante b:nth-child(3) { left: 34%; }
+.muestra-barra.isla b:first-child { inset: 26% auto 26% 5%; width: 10%; border-radius: 99px; } .muestra-barra.isla b:nth-child(2) { left: 7%; top: 36%; width: 6%; } .muestra-barra.isla b:nth-child(3) { left: 24%; }
+.botones-barra { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.botones-barra li { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 10px; background: color-mix(in srgb, var(--texto) 4%, transparent); }
+.botones-barra .casilla { flex: 1; }
+.botones-barra .icono-barra { display: grid; color: var(--suave); }
+.botones-barra .icono-barra .icono { width: 18px; height: 18px; }
+.botones-barra button:disabled { opacity: .35; }
+.botones-barra .fija small { color: var(--suave); font-size: 11.5px; padding-right: 6px; }
 .w-cuenta .correo { margin: 0 0 12px; color: var(--suave); overflow-wrap: anywhere; }
 .w-cuenta .peligro { align-self: flex-start; }
 @media (max-width: 700px) { .con-widgets, #inicio { padding-bottom: 96px; } } /* que «+ Nuevo» no tape lo último */

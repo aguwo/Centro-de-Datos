@@ -1,16 +1,26 @@
 // Cómo se ve la web (paso 53): el modo claro u oscuro, el color, el fondo, el vidrio, las esquinas y la letra.
+// Paso 55: también la barra lateral: su estilo, qué botones muestra y en qué orden (los arma carcasa.js).
 // Lo que eliges en Ajustes se aplica al tiro poniendo encima las variables de estilos.css (en el <html>),
 // se guarda en este navegador (para que la web abra ya con tu estilo) y en la base, en la tabla
 // preferencias (para que te siga al celular u otro computador). Si la base dice otra cosa, gana la base.
 import { db, avisar } from "./base.js";
 
 // Lo de siempre: cómo se ve si nunca tocaste nada. null = lo decide el modo (ej. cuánto se oscurece la foto).
-export const DE_SIEMPRE = { tema: "auto", tono: null, fondo: "paisaje", oscurecer: null, mover: true, opacidad: 1, desenfoque: 28, radio: 16, letra: "Inter" };
+export const DE_SIEMPRE = { tema: "auto", tono: null, fondo: "paisaje", oscurecer: null, mover: true, opacidad: 1, desenfoque: 28, radio: 16, letra: "Inter",
+  barra: "clasica", ocultos: [], orden: [] };
 
 export const TEMAS = { auto: "Automático", claro: "Claro", oscuro: "Oscuro" };
 // Los colores de acento (todos se leen bien con letra blanca encima). También se puede elegir cualquier otro.
 export const TONOS = { "#2f7a4c": "Verde", "#2563a8": "Azul", "#0f7a7a": "Turquesa", "#6d4bb8": "Violeta",
   "#b83a7a": "Rosa", "#b8571d": "Naranja", "#8a6a12": "Mostaza", "#3f4a56": "Grafito" };
+// Los estilos de la barra lateral del computador (estilos.css, :root[data-barra]). En el teléfono el dock no cambia.
+export const BARRAS = {
+  clasica:  { nombre: "Clásica", detalle: "Ícono y nombre debajo" },
+  iconos:   { nombre: "Solo íconos", detalle: "Angosta; el nombre al pasar el mouse" },
+  ancha:    { nombre: "Ancha", detalle: "Ícono y nombre en una fila" },
+  flotante: { nombre: "Flotante", detalle: "Una tarjeta de vidrio separada del borde" },
+  isla:     { nombre: "Isla", detalle: "Una píldora corta al centro, solo íconos" },
+};
 // Los fondos: tu foto de siempre, unos degradados y la foto que subas (propia).
 export const FONDOS = {
   paisaje:   { nombre: "Paisaje", css: "url(fondo.jpg)" },
@@ -39,6 +49,8 @@ function limpiar(x) {
   if (!FONDOS[p.fondo]) p.fondo = DE_SIEMPRE.fondo;
   if (!(p.letra in LETRAS)) p.letra = DE_SIEMPRE.letra;
   if (p.tono !== null && !/^#[0-9a-f]{6}$/i.test(p.tono)) p.tono = null;
+  if (!BARRAS[p.barra]) p.barra = DE_SIEMPRE.barra;
+  for (const k of ["ocultos", "orden"]) p[k] = Array.isArray(p[k]) ? p[k].filter((x) => typeof x === "string") : [];
   return p;
 }
 const leer = (llave) => { try { return localStorage.getItem(llave); } catch { return null; } };
@@ -67,9 +79,11 @@ function aplicar() {
   poner("--radio", p.radio + "px", "16px");
   poner("--sans", p.letra === "Inter" ? null : LETRAS[p.letra] ? `"${LETRAS[p.letra]}", system-ui, sans-serif` : "system-ui, sans-serif");
   r.classList.toggle("fondo-quieto", !p.mover);
+  r.dataset.barra = p.barra;
   bajarLetra(LETRAS[p.letra]);
   // El mapa lee los colores al dibujarse: si cambió el modo, que se vuelva a dibujar todo (lo atiende main.js).
   if (cambioElTema) document.dispatchEvent(new Event("apariencia"));
+  document.dispatchEvent(new Event("barra")); // carcasa.js vuelve a armar la barra (botones y orden)
 }
 function bajarLetra(nombre) {
   if (!nombre || nombre === "Inter" || document.querySelector(`link[data-letra="${nombre}"]`)) return;

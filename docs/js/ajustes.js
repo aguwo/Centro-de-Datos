@@ -2,10 +2,12 @@
 // y la web cambia al tiro (este mismo apartado, con sus ventanas de vidrio, sirve de vista previa).
 //   modo      claro, oscuro o automático (como tu equipo) y el color de acento
 //   fondo     el fondo de pantalla: tu paisaje, un degradado o una foto tuya; cuánto se oscurece y si se mueve
+//   barra     la barra lateral (paso 55): uno de cinco estilos, qué botones muestra y en qué orden
 //   ventanas  qué tan transparente y difuminado es el vidrio, las esquinas y la letra
 //   cuenta    con qué correo entraste y el botón para salir
 import { db, el } from "./base.js";
-import { preferencia, cambiar, TEMAS, TONOS, FONDOS, LETRAS, cssDelFondo, tuFoto, ponerFoto, achicar, volverALoDeSiempre } from "./apariencia.js";
+import { entradasDeLaBarra } from "./carcasa.js";
+import { preferencia, cambiar, TEMAS, TONOS, FONDOS, BARRAS, LETRAS, cssDelFondo, tuFoto, ponerFoto, achicar, volverALoDeSiempre } from "./apariencia.js";
 
 // Las ventanas de Ajustes se ponen al día juntas: un cambio en una (ej. el modo) se ve en las otras.
 const ponerAlDia = new Set();
@@ -84,6 +86,37 @@ export function fondo(v) {
     oscurecer.poner(efectivo);
     auto.hidden = p.oscurecer === null;
     mover.checked = p.mover;
+  });
+}
+
+// La barra lateral: el estilo (cada opción con un dibujito de cómo queda) y sus botones.
+// Los botones se esconden con su casilla y se ordenan con ↑ ↓. Lo del escritorio infinito va junto en «Escritorio».
+export function barra(v) {
+  const estilos = opciones("barra", Object.fromEntries(Object.entries(BARRAS).map(([k, b]) => [k, b.nombre])), (valor) => [
+    el("i", { className: "muestra-barra " + valor }, el("b"), el("b"), el("b")), el("span", { textContent: BARRAS[valor].nombre })], "barras");
+  const detalle = el("p", { className: "pista" }), lista = el("ol", { className: "botones-barra" });
+  v.append(titulo("Estilo"), estilos, detalle, titulo("Botones"), lista,
+    el("p", { className: "pista", textContent: "Se ve en el computador. En el teléfono la barra es la de abajo, con el mismo orden." }));
+  const dibujo = (x) => { const i = el("span", { className: "icono-barra" }); i.innerHTML = `<svg class="icono" viewBox="0 0 24 24" aria-hidden="true">${x.icono}</svg>`; return i; };
+  return conPonerAlDia(() => {
+    const p = preferencia(), todos = entradasDeLaBarra().map((e) => e.x);
+    estilos.marcar(p.barra);
+    detalle.textContent = BARRAS[p.barra].detalle;
+    const movibles = todos.filter((x) => !x.lugar && !x.abajo);
+    // Subir o bajar = cambiar de puesto con el vecino (en la lista completa, así lo del escritorio no se mueve).
+    const mover = (x, paso) => {
+      const orden = todos.map((t) => t.id), a = orden.indexOf(x.id), b = orden.indexOf(movibles[movibles.indexOf(x) + paso].id);
+      [orden[a], orden[b]] = [orden[b], orden[a]];
+      elegir({ orden });
+    };
+    lista.replaceChildren(...movibles.map((x, i) => {
+      const ver = el("input", { type: "checkbox", checked: !p.ocultos.includes(x.id),
+        onchange: () => elegir({ ocultos: ver.checked ? p.ocultos.filter((id) => id !== x.id) : [...p.ocultos, x.id] }) });
+      return el("li", {}, el("label", { className: "casilla" }, ver, dibujo(x), el("span", { textContent: x.nombre })),
+        el("button", { type: "button", className: "chico", textContent: "↑", title: "Subir", disabled: i === 0, onclick: () => mover(x, -1) }),
+        el("button", { type: "button", className: "chico", textContent: "↓", title: "Bajar", disabled: i === movibles.length - 1, onclick: () => mover(x, 1) }));
+    }), ...todos.filter((x) => x.abajo).map((x) => el("li", { className: "fija" }, el("span", { className: "casilla" }, dibujo(x), el("span", { textContent: x.nombre })),
+      el("small", { textContent: "siempre abajo" }))));
   });
 }
 
