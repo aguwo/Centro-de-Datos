@@ -1,23 +1,29 @@
 /* Cómo se ve la web. Arriba, los colores (todo lo demás los usa, así un cambio de color se hace en un solo lugar).
-   Estilo escritorio (paso 26): fondo de paisaje, paneles de vidrio con desenfoque, barra arriba y dock abajo. */
+   Estilo escritorio (paso 26): fondo de paisaje, paneles de vidrio con desenfoque y la barra de apartados.
+   Paso 53: lo que eliges en Ajustes (apariencia.js) se pone encima de estas variables, en el <html>:
+   el modo (data-tema), el color (--tono), el fondo (--foto), el vidrio, las esquinas y la letra. */
 :root {
   --texto: #14231b; --suave: #44574b; --linea: rgba(20,45,30,.12); --borde: rgba(255,255,255,.6);
-  --vidrio: rgba(250,252,248,.82); --vidrio-fuerte: rgba(255,255,255,.92); --sombra: 0 12px 36px rgba(20,45,30,.16);
-  --acento: #2f7a4c; --acento-fondo: #2f7a4c; --sobre-acento: #fff;
+  --tinte: 250 252 248; --opaco: .82; /* el vidrio: su color y qué tan sólido es (Ajustes lo multiplica por --opacidad) */
+  --vidrio: rgb(var(--tinte) / calc(var(--opaco) * var(--opacidad, 1))); --vidrio-fuerte: rgba(255,255,255,.92); --sombra: 0 12px 36px rgba(20,45,30,.16);
+  --tono: #2f7a4c; /* el color de acento que elegiste; los botones lo usan tal cual y el texto en una versión que se lea */
+  --acento: var(--tono); --acento-fondo: var(--tono); --sobre-acento: #fff;
   --bien: #2f7a4c; --alerta: #b4321f; --alerta-suave: rgba(180,50,31,.12); --aviso: #8a5a00; --aviso-suave: rgba(138,90,0,.12);
   --cielo: #1b2430; --foto: url(fondo.jpg); /* foto de Agustin, 2560 × 1440 */
   --oscurecer: 0; /* cuánto se oscurece la foto (en modo oscuro, para que el vidrio se lea) */
+  --desenfoque: 28px; /* cuánto se difumina lo que está detrás del vidrio */
   --fondo: #f4f7f3; /* lo usa el mapa para el borde de las etiquetas */
   --sans: "Inter", system-ui, sans-serif;
   --radio: 16px;
   --postit: #fbe38e; /* el papel de los post-its (se tiñe un poco con el color del tipo) */
 }
-@media (prefers-color-scheme: dark) { :root {
+/* Modo oscuro: lo pone apariencia.js según lo que elegiste en Ajustes (o lo que usa tu equipo, en Automático) */
+:root[data-tema="oscuro"] {
   --texto: #edf3ee; --suave: #a7b9ad; --linea: rgba(255,255,255,.09); --borde: rgba(255,255,255,.12);
-  --vidrio: rgba(12,22,18,.6); --vidrio-fuerte: rgba(14,26,21,.82); --sombra: 0 12px 36px rgba(0,0,0,.45);
-  --acento: #79c995; --bien: #79c995; --alerta: #f08a76; --alerta-suave: rgba(240,138,118,.14); --aviso: #e8c46a; --aviso-suave: rgba(232,196,106,.14);
+  --tinte: 12 22 18; --opaco: .6; --vidrio-fuerte: rgba(14,26,21,.82); --sombra: 0 12px 36px rgba(0,0,0,.45);
+  --acento: color-mix(in oklch, var(--tono) 55%, #fff); --bien: #79c995; --alerta: #f08a76; --alerta-suave: rgba(240,138,118,.14); --aviso: #e8c46a; --aviso-suave: rgba(232,196,106,.14);
   --cielo: #0b0f14; --fondo: #0f1a15; --oscurecer: .45; color-scheme: dark;
-} }
+}
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -27,12 +33,13 @@ body { margin: 0; font: 14px/1.5 var(--sans); color: var(--texto); background: v
 :focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
 
 /* Fondo y vidrio */
-.fondo { position: fixed; inset: -24px; z-index: -1; background: var(--cielo) var(--foto) center / cover no-repeat;
+.fondo { position: fixed; inset: -24px; z-index: -1; background: var(--cielo); /* --foto puede ser una foto o un degradado de varias capas (Ajustes): por eso va aparte */
+        background-image: var(--foto); background-position: center; background-size: cover; background-repeat: no-repeat;
          transform: translate(var(--px, 0), var(--py, 0)); transition: transform .6s cubic-bezier(.2,.7,.2,1); } /* --px/--py: parallax del escritorio */
 .fondo::after { content: ""; position: absolute; inset: 0; background: #000; opacity: var(--oscurecer); }
 /* Textos que van directo sobre la foto: blancos con una sombra suave para leerse sobre cualquier parte */
 .sobre-foto, #inicio .saludo h2, .columna > h2 { color: #fff; text-shadow: 0 1px 12px rgba(0,0,0,.45); }
-.vidrio { background: var(--vidrio); backdrop-filter: blur(28px) saturate(170%); -webkit-backdrop-filter: blur(28px) saturate(170%);
+.vidrio { background: var(--vidrio); backdrop-filter: blur(var(--desenfoque)) saturate(170%); -webkit-backdrop-filter: blur(var(--desenfoque)) saturate(170%);
           border: 1px solid var(--borde); box-shadow: var(--sombra); }
 
 /* Botones y campos */
@@ -50,16 +57,8 @@ input, select, textarea { font: inherit; color: inherit; }
 .meta.atrasada { color: var(--alerta); }
 .vacio { color: var(--suave); font-size: 13px; margin: 0; }
 
-/* Barra de arriba */
-.barra { position: fixed; top: 0; left: 0; right: 0; height: 40px; z-index: 10; display: flex; align-items: center; gap: 14px;
-         padding: 0 12px 0 16px; border-width: 0 0 1px; box-shadow: none; font-size: 13px; }
-.barra .marca { font-weight: 700; }
-.barra .app-actual { color: var(--suave); }
-.barra .reloj { margin-left: auto; font-weight: 500; font-variant-numeric: tabular-nums; }
-.barra button { padding: 4px 10px; font-size: 12.5px; }
-
-/* El contenido: entre la barra y el borde de abajo (el dock flota encima solo cuando lo llamas) */
-main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
+/* El contenido: toda la pantalla (paso 53: sin barra arriba). El dock flota encima solo cuando lo llamas */
+main { position: fixed; inset: 0; }
 .apartado { position: absolute; inset: 0; }
 
 /* Escritorio movible (escritorio.js). Sin la clase con-escritorio (pantalla angosta) no existe:
@@ -103,8 +102,8 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
    con el nombre bajo cada ícono. Las secciones del escritorio van juntas en "Escritorio". */
 .con-escritorio main { left: 80px; }
 .con-escritorio .asa { display: none; }
-.con-escritorio .dock { top: 40px; bottom: 0; left: 0; width: 80px; max-width: none; transform: none; transition: none;
-  flex-direction: column; gap: 2px; padding: 10px 8px; border-radius: 0; border-width: 0 1px 0 0; box-shadow: none; overflow-y: auto; }
+.con-escritorio .dock { top: 0; bottom: 0; left: 0; width: 80px; max-width: none; transform: none; transition: none;
+  flex-direction: column; gap: 2px; padding: 10px 8px 76px; border-radius: 0; border-width: 0 1px 0 0; box-shadow: none; overflow-y: auto; } /* abajo queda lugar para «+ Nuevo» */
 .con-escritorio .dock button { width: 100%; height: auto; flex: none; padding: 9px 0 7px; gap: 3px; background: none; color: var(--suave); transition: none; }
 .con-escritorio .dock button:hover { transform: none; background: color-mix(in srgb, var(--texto) 7%, transparent); color: var(--texto); }
 .con-escritorio .dock button[aria-current="page"] { background: var(--acento-fondo); color: var(--sobre-acento); }
@@ -113,6 +112,16 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 .con-escritorio .dock .separador { width: 60%; height: 1px; margin: 6px auto; background: var(--linea); }
 .con-escritorio .dock .en-lienzo { display: none; }
 .con-escritorio .dock [data-escritorio] { display: grid; }
+
+/* Paso 53: «+ Nuevo» abajo a la izquierda: al pie de la barra lateral en el computador; redondo y flotante en el teléfono.
+   Su menú sale hacia arriba, desde el botón (nuevo.js pone --izquierda y --abajo). */
+.nuevo { position: fixed; left: 16px; bottom: 20px; z-index: 11; width: 54px; height: 54px; padding: 0; border-radius: 50%;
+         display: grid; place-content: center; box-shadow: var(--sombra); }
+.nuevo .mas { font-size: 28px; font-weight: 400; line-height: 1; }
+.nuevo .etiqueta { display: none; }
+.con-escritorio .nuevo { left: 8px; bottom: 12px; width: 64px; height: 56px; border-radius: 14px; box-shadow: none; gap: 2px; }
+.con-escritorio .nuevo .mas { font-size: 22px; }
+.con-escritorio .nuevo .etiqueta { display: block; font-size: 11px; }
 
 .con-escritorio #mundo > .apartado { transition: outline-color .15s; outline: 4px solid transparent; outline-offset: 8px; }
 .escritorio.lejos #mundo > .apartado { cursor: zoom-in; }
@@ -178,7 +187,7 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 .costado > .ventana { display: flex; flex-direction: column; flex: 1; min-height: 0; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; }
 .costado .plegar { display: none; }
 .con-escritorio .con-costado { padding-left: calc(var(--costado) + 32px); transition: padding-left .25s cubic-bezier(.2,.7,.2,1); }
-.con-escritorio .con-costado > .costado { --costado: 264px; position: fixed; top: 40px; bottom: 0; left: 80px; z-index: 5; width: var(--costado);
+.con-escritorio .con-costado > .costado { --costado: 264px; position: fixed; top: 0; bottom: 0; left: 80px; z-index: 5; width: var(--costado);
   padding: 18px 16px 16px; border-radius: 0; border-width: 0 1px 0 0; box-shadow: none; transition: transform .25s cubic-bezier(.2,.7,.2,1); }
 .con-escritorio .con-costado { --costado: 264px; }
 .con-escritorio .costado .plegar { display: grid; place-items: center; position: absolute; top: 50%; right: -15px; width: 28px; height: 44px; padding: 0;
@@ -255,7 +264,7 @@ main { position: fixed; top: 40px; left: 0; right: 0; bottom: 0; }
 .ahora::before { content: ""; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--alerta); }
 
 /* Cajones: paneles que salen desde la derecha (calendario, más adelante el chat). Quedan bajo el panel de un nodo. */
-.cajon { position: fixed; top: 52px; right: 12px; bottom: 12px; z-index: 7; border-radius: 20px; background: var(--vidrio-fuerte);
+.cajon { position: fixed; top: 12px; right: 12px; bottom: 12px; z-index: 7; border-radius: 20px; background: var(--vidrio-fuerte);
          transform: translateX(calc(100% + 24px)); visibility: hidden; transition: transform .3s cubic-bezier(.2,.7,.2,1), visibility 0s .3s; }
 .cajon.abierto { transform: none; visibility: visible; transition: transform .3s cubic-bezier(.2,.7,.2,1); }
 @media (prefers-reduced-motion: reduce) { .cajon, .cajon.abierto { transition: none; } }
@@ -344,7 +353,7 @@ button.peligro:hover { background: var(--alerta-suave); }
 #grafo { width: 100%; height: 100%; }
 
 /* Panel de un nodo: flota a la derecha */
-#panel { position: fixed; top: 52px; right: 12px; bottom: 12px; z-index: 8; width: 340px; padding: 18px 20px; border-radius: 20px; overflow-y: auto; background: var(--vidrio-fuerte); }
+#panel { position: fixed; top: 12px; right: 12px; bottom: 12px; z-index: 8; width: 340px; padding: 18px 20px; border-radius: 20px; overflow-y: auto; background: var(--vidrio-fuerte); }
 #panel h2 { font-size: 18px; margin: 4px 0 12px; letter-spacing: -.01em; }
 #panel h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); margin: 0 0 8px; }
 #panel ul { list-style: none; padding: 0; margin: 0; }
@@ -370,7 +379,7 @@ form.nodo details { margin-top: 14px; }
 form.nodo summary { cursor: pointer; font-size: 12.5px; color: var(--suave); }
 form.nodo .conexion select + select { margin-top: 6px; }
 /* Menú de "+ Nuevo" en el escritorio */
-.menu { position: fixed; top: 46px; right: var(--derecha, 12px); z-index: 12; min-width: 180px; padding: 6px; border-radius: 14px; display: grid; background: var(--vidrio-fuerte); }
+.menu { position: fixed; left: var(--izquierda, 12px); bottom: var(--abajo, 72px); z-index: 12; min-width: 180px; padding: 6px; border-radius: 14px; display: grid; background: var(--vidrio-fuerte); }
 .menu button { border: 0; border-radius: 8px; padding: 7px 10px; text-align: left; display: flex; align-items: center; gap: 8px; }
 .menu button:hover, .menu button:focus-visible { background: var(--linea); }
 .menu hr { width: 100%; border: 0; border-top: 1px solid var(--linea); margin: 4px 0; }
@@ -504,7 +513,6 @@ form.nodo .conexion select + select { margin-top: 6px; }
 @media (prefers-reduced-motion: reduce) { .postit { transition: none; } }
 
 @media (max-width: 700px) {
-  .barra .app-actual { display: none; }
   #inicio { padding: 20px 16px 48px; }
   /* Los apartados con widgets en una sola columna: cada ventana mide lo que su contenido y se desplaza la página.
      Las que filtran (ej. los proyectos) van primero, para elegir antes de ver. */
@@ -520,7 +528,7 @@ form.nodo .conexion select + select { margin-top: 6px; }
   .avance, .columna > .w-dentro { grid-template-columns: minmax(0, 1fr); }
   .tablero { grid-template-columns: repeat(4, minmax(220px, 80%)); }
   /* El calendario ocupa el ancho; el costado se esconde */
-  #calendario { top: 46px; right: 6px; left: 6px; width: auto; grid-template-columns: minmax(0, 1fr); }
+  #calendario { top: 6px; right: 6px; left: 6px; width: auto; grid-template-columns: minmax(0, 1fr); }
   .cal-lado { display: none; }
   .cal-barra b { order: -2; flex: 1 0 calc(100% - 44px); margin: 0 0 4px; }
   .cal-barra [data-cerrar] { order: -1; }
@@ -554,7 +562,7 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .como.va { color: #2b6cb0; background: rgba(43,108,176,.13); }
 .como.riesgo { color: var(--alerta); background: var(--alerta-suave); }
 .como.nada { color: var(--suave); background: var(--linea); }
-@media (prefers-color-scheme: dark) { .como.va { color: #8ab8ec; background: rgba(138,184,236,.14); } }
+:root[data-tema="oscuro"] .como.va { color: #8ab8ec; background: rgba(138,184,236,.14); }
 
 .cabeza-ramo { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
 .cabeza-ramo .titulo { flex: 1 1 320px; min-width: 0; }
@@ -609,3 +617,51 @@ form.nodo .conexion select + select { margin-top: 6px; }
 }
 .evaluaciones input, .simulador input { -moz-appearance: textfield; appearance: textfield; }
 .evaluaciones input::-webkit-inner-spin-button, .simulador input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Paso 53: Ajustes (ajustes.js). Los controles; la vista previa es la web misma. */
+.fondo-quieto .fondo { transform: none; } /* "Mover el fondo" apagado: sin parallax */
+h4.ajuste { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); margin: 14px 0 8px; }
+h4.ajuste:first-of-type { margin-top: 2px; }
+.ventana .pista { margin: 8px 0 0; }
+/* Modo: tres tarjetas con un dibujito de cómo se ve */
+.temas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.temas button, .letras button { display: grid; gap: 6px; justify-items: center; padding: 10px 8px; border-radius: 12px; background: var(--vidrio-fuerte); }
+.temas button[aria-pressed="true"], .letras button[aria-pressed="true"], .fondo-tile[aria-pressed="true"] { outline: 2px solid var(--acento-fondo); outline-offset: 1px; font-weight: 600; }
+.muestra-tema { width: 100%; height: 44px; border-radius: 8px; border: 1px solid var(--linea);
+  background: linear-gradient(#fff 0 0) 10px 10px / 46% 8px no-repeat, linear-gradient(#cfe0d4 0 0) 10px 24px / 30% 8px no-repeat, #eef3ef; }
+.muestra-tema.oscuro { background: linear-gradient(#2a3a33 0 0) 10px 10px / 46% 8px no-repeat, linear-gradient(#3d5a49 0 0) 10px 24px / 30% 8px no-repeat, #121c18; }
+.muestra-tema.auto { background: linear-gradient(105deg, transparent 50%, #121c18 50%), #eef3ef; }
+/* Color: círculos; el último elige cualquier color */
+.tonos { display: flex; flex-wrap: wrap; gap: 10px; }
+.tonos button, .otro-tono { width: 32px; height: 32px; padding: 3px; border-radius: 50%; border: 1px solid var(--borde); background: none; }
+.tonos button i { display: block; width: 100%; height: 100%; border-radius: 50%; }
+.tonos button[aria-pressed="true"], .otro-tono[aria-pressed="true"] { outline: 2px solid var(--texto); outline-offset: 1px; }
+.otro-tono { position: relative; overflow: hidden; cursor: pointer; background: conic-gradient(#e5484d, #f5a524, #46a758, #0090ff, #8e4ec6, #e5484d); }
+.otro-tono input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+/* Fondo: miniaturas 16:10 */
+.fondos { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.fondo-tile { position: relative; aspect-ratio: 16 / 10; padding: 0; border-radius: 10px; overflow: hidden; background: var(--cielo) center / cover no-repeat;
+  display: flex; align-items: flex-end; }
+.fondo-tile span { width: 100%; padding: 4px 8px; font-size: 12px; text-align: left; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.55)); }
+.fondo-tile.subir { flex-direction: column; justify-content: center; align-items: center; gap: 2px; border: 1.5px dashed var(--suave); background: none; color: var(--suave); }
+.fondo-tile.subir b { font-size: 22px; font-weight: 400; line-height: 1; }
+.fondo-tile.subir span { width: auto; background: none; color: inherit; padding: 0; }
+.fondo-tile .quitar { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  font-style: normal; font-size: 15px; color: #fff; background: rgba(0,0,0,.5); }
+/* Deslizadores: nombre y valor arriba, la barra, y lo que significa cada punta */
+.deslizador { display: grid; gap: 4px; margin: 0 0 14px; }
+.deslizador > span { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.deslizador output { margin-left: auto; color: var(--suave); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.deslizador input { width: 100%; accent-color: var(--acento-fondo); }
+.deslizador .extremos { display: flex; justify-content: space-between; color: var(--suave); font-size: 11.5px; }
+button.chico { padding: 1px 8px; font-size: 11.5px; border-radius: 99px; }
+.casilla { display: flex; align-items: center; gap: 8px; }
+.casilla input { width: 16px; height: 16px; margin: 0; accent-color: var(--acento-fondo); }
+/* Letra: cada opción escrita con su letra */
+.letras { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.letras b { font-size: 22px; font-weight: 600; line-height: 1.1; }
+.letras span { font-size: 11.5px; color: var(--suave); text-align: center; }
+.de-siempre { margin-top: 16px; justify-self: start; align-self: flex-start; }
+.w-cuenta .correo { margin: 0 0 12px; color: var(--suave); overflow-wrap: anywhere; }
+.w-cuenta .peligro { align-self: flex-start; }
+@media (max-width: 700px) { .con-widgets, #inicio { padding-bottom: 96px; } } /* que «+ Nuevo» no tape lo último */

@@ -52,6 +52,13 @@ do $$ declare r text; begin
   assert (select propiedades @> '[{"clave":"claude","tipo":"enlace"}]'::jsonb from tipos where clave = 'proyecto'), 'proyecto debería tener su enlace a Claude (paso 38c)';
   assert (select propiedades @> '[{"clave":"peso"},{"clave":"nota"}]'::jsonb from tipos where clave = 'evento'), 'evento debería tener ponderación y nota (paso 46a)';
 end $$;
+-- Paso 53: una preferencia propia; guardarla de nuevo la reemplaza (upsert, como la web).
+insert into preferencias (clave, valor) values ('visual', '{"tema": "claro"}');
+insert into preferencias (clave, valor) values ('visual', '{"tema": "oscuro"}')
+  on conflict (owner_id, clave) do update set valor = excluded.valor, actualizado = now();
+do $$ begin
+  assert (select valor->>'tema' from preferencias where clave = 'visual') = 'oscuro', 'la preferencia debería haberse reemplazado';
+end $$;
 
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
 do $$ declare n int; begin
@@ -60,6 +67,7 @@ do $$ declare n int; begin
   select count(*) into n from tipos; assert n = 16, 'usuario 2 debería ver las 16 plantillas (paso 37a: sin hito)';
   select count(*) into n from registros; assert n = 0, 'usuario 2 no debería ver registros ajenos';
   select count(*) into n from disposiciones; assert n = 0, 'usuario 2 no debería ver disposiciones ajenas';
+  select count(*) into n from preferencias; assert n = 0, 'usuario 2 no debería ver preferencias ajenas';
 end $$;
 
 do $$ begin
