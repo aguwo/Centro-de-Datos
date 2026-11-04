@@ -5,12 +5,16 @@
 //   con todas las ponderaciones   tu nota hasta ahora es el promedio ponderado de lo que ya tiene nota,
 //                                 y "necesitas" es el promedio que te falta sacar en lo que queda para llegar a 4
 //   si falta alguna ponderación   la nota es el promedio simple y no se puede saber cuánto necesitas
+//   ponderación 0                 es formativa (un diagnóstico, una guía): se ve en la tabla pero no cuenta (paso 48)
 export const APRUEBA = 4, MINIMA = 1, MAXIMA = 7;
 
 const esNumero = (x) => typeof x === "number" && Number.isFinite(x);
 const suma = (lista, f) => lista.reduce((s, x) => s + f(x), 0);
 
-export function calcular(evaluaciones) {
+export const formativa = (e) => e.peso === 0;
+
+export function calcular(todas) {
+  const evaluaciones = todas.filter((e) => !formativa(e));
   const conNota = evaluaciones.filter((e) => esNumero(e.nota));
   const sinPeso = evaluaciones.filter((e) => !(esNumero(e.peso) && e.peso > 0)).length;
   if (sinPeso) {

@@ -39,3 +39,10 @@ test("asistencia y notas escritas con coma", () => {
   assert.equal(nota(4), "4,0");
   assert.equal(nota(undefined), "—");
 });
+
+test("una evaluación con ponderación 0 es formativa y no cuenta", () => {
+  const c = calcular([{ nota: 2, peso: 0 }, { nota: 6, peso: 50 }, { peso: 50 }]);
+  assert.equal(c.actual, 6);
+  assert.equal(c.sinPeso, 0);
+  assert.equal(c.falta, 50);
+});

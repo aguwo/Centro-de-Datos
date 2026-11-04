@@ -12,7 +12,7 @@ import { cambiarProps, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario } from "./panel.js";
 import { listaDeTareas, agregarTarea, porFecha } from "./tareas.js";
 import { aportesDe, comoVa, esObjetivo } from "./objetivos.js";
-import { calcular, estado, asistencia, nota, MINIMA, MAXIMA } from "./notas.js";
+import { calcular, estado, asistencia, nota, formativa, MINIMA, MAXIMA } from "./notas.js";
 
 const PROXIMOS = 8; // cuántas cosas muestra "Lo que viene" (las atrasadas van siempre)
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
@@ -124,8 +124,8 @@ export function paginaDeRamo(v, ctx) {
         el("td", {}, numero(e, "nota", "Nota", MINIMA, MAXIMA))))));
     const nueva = el("button", { textContent: "+ Evaluación", onclick: () => formulario(null, { tipos: ["evento"], conexion: dentroDeCaja("evento", ramo.id) }) });
 
-    // ¿Y si me saco…? Prueba una nota en la próxima evaluación sin guardarla.
-    const proxima = evals.find((e) => typeof e.props?.nota !== "number");
+    // ¿Y si me saco…? Prueba una nota en la próxima evaluación que cuenta, sin guardarla.
+    const proxima = evals.find((e) => typeof e.props?.nota !== "number" && !formativa(e.props ?? {}));
     let simulador = "";
     if (proxima) {
       const salida = el("output");
@@ -160,9 +160,15 @@ export function paginaDeRamo(v, ctx) {
       pendientes(ramo).length ? listaDeTareas(pendientes(ramo), { conFecha: true, sinCaja: true }) : el("p", { className: "vacio", textContent: "Nada pendiente." }),
       agregar.form, agregar.cuando);
 
+    // Lo que dice el syllabus (paso 48): son las notas del ramo, y se cambian con «Editar ramo».
+    const syllabus = ramo.contenido ? el("details", { className: "ventana vidrio syllabus" },
+      el("summary", {}, el("h3", { textContent: "Syllabus" })), el("p", { className: "contenido", textContent: ramo.contenido })) : "";
+
     v.replaceChildren(cabeza, el("div", { className: "cuerpo-ramo" },
-      el("section", { className: "ventana vidrio" }, el("h3", {}, "Evaluaciones", nueva),
-        evals.length ? tabla : el("p", { className: "vacio", textContent: "Sin evaluaciones. Agrégalas con «+ Evaluación»." }), simulador),
+      el("div", { className: "lado" },
+        el("section", { className: "ventana vidrio" }, el("h3", {}, "Evaluaciones", nueva),
+          evals.length ? tabla : el("p", { className: "vacio", textContent: "Sin evaluaciones. Agrégalas con «+ Evaluación»." }), simulador),
+        syllabus),
       el("div", { className: "lado" }, asis, tareas)));
   }
 }
