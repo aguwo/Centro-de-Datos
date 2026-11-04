@@ -29,12 +29,18 @@ export function crearRepositorio(db: SupabaseClient, usuario: string): Repositor
     return filas[0].id;
   }
 
-  // Le agrega a cada nodo su ruta en el árbol (paso 19), para que el agente sepa dónde está cada cosa.
+  // Le agrega a cada nodo su ruta en el árbol (paso 19) y la caja donde está (paso 47),
+  // para que el agente sepa dónde está cada cosa (ej. de qué ramo es una clase).
   async function conRuta(nodos: Nodo[]): Promise<Nodo[]> {
     if (!nodos.length) return nodos;
-    const filas = revisar(await db.from("arbol").select("id, ruta").in("id", nodos.map((n) => n.id))) ?? [];
-    const rutas = new Map(filas.map((f: any) => [f.id, f.ruta]));
-    return nodos.map((n) => ({ ...n, ruta: rutas.get(n.id) }));
+    const filas = revisar(await db.from("arbol").select("id, ruta, padre_id").in("id", nodos.map((n) => n.id))) ?? [];
+    const padres = [...new Set(filas.map((f: any) => f.padre_id).filter(Boolean))];
+    const cajas = padres.length ? revisar(await db.from("arbol").select("id, titulo, tipo").in("id", padres)) ?? [] : [];
+    const porId = new Map([...filas, ...cajas].map((f: any) => [f.id, f]));
+    return nodos.map((n) => {
+      const f: any = porId.get(n.id);
+      return { ...n, ruta: f?.ruta, caja: porId.get(f?.padre_id) as Nodo["caja"] };
+    });
   }
 
   return {
@@ -118,17 +124,18 @@ export function crearRepositorio(db: SupabaseClient, usuario: string): Repositor
       return (revisar(await q.select("id")) ?? []).length;
     },
 
-    async agendaDelDia(fechaISO) {
-      const manana = new Date(new Date(fechaISO + "T00:00:00Z").getTime() + 86_400_000).toISOString();
+    async conFechaHasta(dia) {
+      // Hasta el final de ese día en Chile (UTC-3 o -4): se pide un día de más y agenda() descarta lo que sobra.
+      const tope = new Date(Date.parse(dia + "T00:00:00Z") + 2 * 86_400_000).toISOString();
       const filas = revisar(
         await db.from("nodos").select(COLUMNAS)
           .in("tipos.clave", ["tarea", "evento"])
           .eq("archivado", false)
-          .lt("fecha", manana)
+          .lt("fecha", tope)
           .or("estado.is.null,estado.neq.Hecho") // los eventos no tienen estado
           .order("fecha"),
       );
-      return (filas ?? []).map(aNodo);
+      return conRuta((filas ?? []).map(aNodo));
     },
 
     async anotarRegistro(r) {

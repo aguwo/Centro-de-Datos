@@ -1,6 +1,7 @@
 // Servidor MCP mínimo del centro de datos.
 // Habla JSON-RPC sobre HTTP ("Streamable HTTP" sin streaming: cada POST recibe una respuesta JSON).
 // No depende de Supabase: recibe un `Repositorio` para poder probarlo con datos falsos.
+import { diaDe, hoy, ocurreEl, sumarDias } from "./dias.ts";
 
 export type Nodo = {
   id: string;
@@ -12,6 +13,7 @@ export type Nodo = {
   props?: Record<string, unknown>;
   archivado?: boolean;
   ruta?: string; // dónde está, ej. "Universidad / Base de Datos / Proyecto BD"
+  caja?: { id: string; titulo: string; tipo: string }; // la caja donde está directamente (paso 47), ej. el ramo de una clase
 };
 
 /** Una fila de la vista `arbol` (paso 19): el nodo y la caja donde está. */
@@ -75,7 +77,8 @@ export interface Repositorio {
   conectar(origenId: string, relacion: string, destinoId: string): Promise<void>;
   /** Cierra conexiones (les pone fecha de término). Sin destino, cierra todas las de esa relación. Devuelve cuántas. */
   desconectar(origenId: string, relacion: string, destinoId?: string): Promise<number>;
-  agendaDelDia(fechaISO: string): Promise<Nodo[]>;
+  /** Tareas abiertas y eventos que empiezan a más tardar ese día (AAAA-MM-DD), con su caja. agenda() elige cuáles van. */
+  conFechaHasta(dia: string): Promise<Nodo[]>;
   anotarRegistro(r: Registro): Promise<Registro>;
   registros(f: FiltroRegistros): Promise<RegistroLegible[]>;
   editarRegistro(id: string, cambios: Partial<Omit<Registro, "id">>): Promise<Registro>;
@@ -96,6 +99,69 @@ export const CLASES: Record<string, string> = {
   riego: "nodo = la planta",
   asistencia: "nodo = el ramo (tópico), valor = 1 si fue a clases y 0 si faltó; fecha = el día de la clase",
 };
+
+// ---------- Agenda (paso 47) ----------
+export type DiaDeAgenda = { dia: string; eventos: Nodo[]; tareas: Nodo[] };
+
+/**
+ * Reparte en días lo que devuelve conFechaHasta: los eventos van cada día en que ocurren (también los que se
+ * repiten, como las clases) y las tareas abiertas el día de su fecha; las de antes de "desde" son atrasadas.
+ */
+export function agenda(nodos: Nodo[], desde: string, dias: number): { atrasadas: Nodo[]; dias: DiaDeAgenda[] } {
+  const conFecha = nodos.filter((n) => n.fecha);
+  const tareas = conFecha.filter((n) => n.tipo === "tarea" && n.estado !== "Hecho");
+  const eventos = conFecha.filter((n) => n.tipo === "evento");
+  return {
+    atrasadas: tareas.filter((t) => diaDe(t.fecha!) < desde),
+    dias: Array.from({ length: dias }, (_, i) => {
+      const dia = sumarDias(desde, i);
+      return {
+        dia,
+        eventos: eventos.filter((e) => ocurreEl(diaDe(e.fecha!), e.props as any, dia)),
+        tareas: tareas.filter((t) => diaDe(t.fecha!) === dia),
+      };
+    }),
+  };
+}
+
+// Lo que Martita hace en el cierre del día. Va dentro de la respuesta de cierre_del_dia, así cualquier cliente lo sigue.
+export const PASOS_CIERRE = [
+  "Habla como Martita: corto, cercano, en español de Chile, una pregunta a la vez. Empieza preguntando cómo estuvo el día.",
+  "Por cada clase con asistencia null, pregunta si fue y anótalo con anotar_registro (clase asistencia, nodo_id = ramo_id, valor 1 si fue y 0 si faltó, fecha = dia).",
+  "Repasa tareas_de_hoy y atrasadas: lo que hizo pásalo a Hecho con actualizar_nodo; para lo que no, pregunta si lo mueve a mañana, a otro día o lo suelta.",
+  "Pregunta si salió alguna nota de evaluaciones_sin_nota (puede estar en Ucampus o EV@) y guárdala en props.nota del evento con actualizar_nodo.",
+  "Si cuenta algo más que vale la pena guardar (un gasto, una comida, un hábito, una idea), búscalo y anótalo como registro o nodo.",
+  "Planifica mañana con lo que viene en manana y proximas_evaluaciones: propón hasta 3 prioridades y, si está de acuerdo, ponles props.prioridad_dia = la fecha de mañana.",
+  "Termina con un resumen de tres líneas de lo que quedó anotado y lo importante de mañana.",
+];
+
+const RAMO = "topico"; // los ramos son tópicos: sus clases son los eventos que se repiten y sus evaluaciones los que no
+const deRamo = (e: Nodo) => e.caja?.tipo === RAMO;
+const corto = ({ id, titulo, fecha, estado, props, caja }: Nodo) => ({ id, titulo, fecha, estado, props, caja: caja?.titulo });
+
+/** Lo que Martita necesita para el cierre del día d: clases y su asistencia, tareas, notas pendientes y mañana. */
+async function cierreDelDia(repo: Repositorio, d: string) {
+  const SEMANA = 7;
+  const [nodos, asistencias] = await Promise.all([
+    repo.conFechaHasta(sumarDias(d, SEMANA)),
+    repo.registros({ clase: "asistencia", desde: d, hasta: d }),
+  ]);
+  const { atrasadas, dias: [deHoy, manana, ...resto] } = agenda(nodos, d, SEMANA + 1);
+  const evaluaciones = nodos.filter((e) => e.tipo === "evento" && deRamo(e) && !e.props?.repite && typeof e.props?.nota !== "number");
+  return {
+    dia: d,
+    pasos: PASOS_CIERRE,
+    clases: deHoy.eventos.filter((e) => deRamo(e) && e.props?.repite).map((e) => ({
+      clase: e.titulo, ramo: e.caja!.titulo, ramo_id: e.caja!.id, fecha: e.fecha,
+      asistencia: asistencias.find((r) => r.nodo_id === e.caja!.id)?.valor ?? null,
+    })),
+    tareas_de_hoy: deHoy.tareas.map(corto),
+    atrasadas: atrasadas.map(corto),
+    evaluaciones_sin_nota: evaluaciones.filter((e) => diaDe(e.fecha!) <= d && diaDe(e.fecha!) > sumarDias(d, -30)).map(corto),
+    manana: { dia: manana.dia, eventos: manana.eventos.map(corto), tareas: manana.tareas.map(corto) },
+    proximas_evaluaciones: [manana, ...resto].flatMap((x) => x.eventos.filter((e) => evaluaciones.includes(e)).map(corto)),
+  };
+}
 
 const VERSIONES = ["2025-11-25", "2025-06-18", "2025-03-26"];
 
@@ -375,9 +441,28 @@ export const HERRAMIENTAS: Herramienta[] = [
   },
   {
     name: "agenda_de_hoy",
-    description: "Tareas y eventos con fecha de hoy o atrasados que no están completados.",
+    description:
+      "La agenda día por día: eventos (también los que se repiten, como las clases) y tareas abiertas, " +
+      "más las tareas atrasadas. Por defecto solo hoy (hora de Chile); con dias=7, la semana.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        fecha: { ...texto, description: "YYYY-MM-DD, por defecto hoy" },
+        dias: { type: "integer", minimum: 1, maximum: 31, default: 1 },
+      },
+    },
+    ejecutar: async (repo, a) => {
+      const desde = a.fecha ?? hoy(), dias = Math.min(Math.max(a.dias ?? 1, 1), 31);
+      return agenda(await repo.conFechaHasta(sumarDias(desde, dias - 1)), desde, dias);
+    },
+  },
+  {
+    name: "cierre_del_dia",
+    description:
+      "Úsala cuando el usuario pida el cierre del día (o en la noche, para repasar el día). Devuelve las clases de hoy " +
+      "y si ya marcó asistencia, las tareas de hoy y atrasadas, las evaluaciones sin nota, lo de mañana y los pasos a seguir.",
     inputSchema: { type: "object", properties: { fecha: { ...texto, description: "YYYY-MM-DD, por defecto hoy" } } },
-    ejecutar: (repo, a) => repo.agendaDelDia(a.fecha ?? new Date().toISOString().slice(0, 10)),
+    ejecutar: (repo, a) => cierreDelDia(repo, a.fecha ?? hoy()),
   },
   {
     name: "anotar_registro",
@@ -496,7 +581,7 @@ export async function procesar(msg: Peticion, repo: Repositorio): Promise<object
         serverInfo: { name: "centro-de-datos", version: "0.1.0" },
         instructions:
           "Centro de datos personal en forma de grafo. Usa ver_arbol para orientarte, busca antes de crear " +
-          "para no duplicar, y conecta cada tarea a su proyecto o área.",
+          "para no duplicar, y conecta cada tarea a su proyecto o área. Si pide el cierre del día, usa cierre_del_dia.",
       });
     }
     case "ping":

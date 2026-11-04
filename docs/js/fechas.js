@@ -16,6 +16,26 @@ export const aHora = (t) => { const [h, m] = t.split(":"); return +h + m / 60; }
 // La hora local de una fecha completa como número (14:30 -> 14.5)
 export const horaDecimal = (fecha) => { const d = new Date(fecha); return d.getHours() + d.getMinutes() / 60; };
 
+// ---------- Eventos que se repiten (migración 0011) ----------
+// ¿Un evento que ocurre por primera vez el día "primero" ocurre también el día d?
+// p son sus props: repite (una de las REGLAS), repite_hasta (último día) y excepto ("día,día" que se saltan).
+// El conector (supabase/functions/mcp/dias.ts) usa la misma regla; tests/dias.test.ts revisa que digan lo mismo.
+const MEDIODIA = (d) => new Date(d + "T12:00:00");
+const REGLAS = {
+  "Cada día": () => true,
+  "Cada semana": (a, b) => a.getDay() === b.getDay(),
+  "Días hábiles": (a, b) => b.getDay() % 6 !== 0, // ni sábado (6) ni domingo (0)
+  "Cada mes": (a, b) => a.getDate() === b.getDate(),
+  "Cada año": (a, b) => a.getDate() === b.getDate() && a.getMonth() === b.getMonth(),
+};
+export function ocurreEl(primero, p, d) {
+  p ??= {};
+  if (!primero || d < primero || p.excepto?.split(",").includes(d)) return false;
+  if (d === primero) return true;
+  const regla = REGLAS[p.repite];
+  return !!regla && !(p.repite_hasta && d > p.repite_hasta) && regla(MEDIODIA(primero), MEDIODIA(d));
+}
+
 // ---------- Fechas escritas (paso 32) ----------
 // Saca la fecha y la hora de un texto y deja el resto como título:
 //   "llamar al dentista mañana 10:00"   -> { titulo: "llamar al dentista", dia: mañana, hora: 10 }

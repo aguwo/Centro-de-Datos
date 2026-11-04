@@ -2,26 +2,12 @@
 // La usan "Tu día" en Hoy (un día, desde ahora) y el calendario (un día o siete).
 // Solo sabe dibujar: qué pasa al tocar un bloque, un hueco o al soltar una tarea encima lo decide quien la usa.
 import { el, datos, dia, sinHora, colorDe } from "./base.js";
-import { hoyTexto, hhmm, horaDecimal } from "./fechas.js";
+import { hoyTexto, hhmm, horaDecimal, ocurreEl } from "./fechas.js";
 
 const DURACION = 0.75; // si algo no dice cuándo termina, se dibuja de 45 minutos
 
-// ¿Un evento ocurre el día d? Su fecha es la primera vez; "repite" dice cómo sigue (migración 0011).
-const MEDIODIA = (d) => new Date(d + "T12:00:00");
-const REGLAS = {
-  "Cada día": () => true,
-  "Cada semana": (a, b) => a.getDay() === b.getDay(),
-  "Días hábiles": (a, b) => b.getDay() % 6 !== 0, // ni sábado (6) ni domingo (0)
-  "Cada mes": (a, b) => a.getDate() === b.getDate(),
-  "Cada año": (a, b) => a.getDate() === b.getDate() && a.getMonth() === b.getMonth(),
-};
-export function ocurre(n, d) {
-  const primero = dia(n.fecha), p = n.props ?? {};
-  if (!primero || d < primero || p.excepto?.split(",").includes(d)) return false;
-  if (d === primero) return true;
-  const regla = REGLAS[p.repite];
-  return !!regla && !(p.repite_hasta && d > p.repite_hasta) && regla(MEDIODIA(primero), MEDIODIA(d));
-}
+// ¿Un evento ocurre el día d? Su fecha es la primera vez; la regla de cómo sigue está en fechas.js.
+export const ocurre = (n, d) => ocurreEl(dia(n.fecha), n.props, d);
 
 // Lo que va en la agenda de un día: eventos (también los que se repiten) y tareas abiertas con esa fecha.
 // ini y fin son horas locales (14.5 = 14:30); ini es null si no tiene hora (va arriba, en "todo el día").
