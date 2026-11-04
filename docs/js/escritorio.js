@@ -200,6 +200,14 @@ export function iniciarEscritorio(ir, actual) {
   // Cuando cambia el tamaño de la ventana (o el escritorio aparece por primera vez), se vuelve a enfocar.
   const enfocar = (animar) => { if (escritorioActivo() && mirando) lejos ? verTodo() : mirar(mirando, animar); };
   new ResizeObserver(() => enfocar(false)).observe($("escritorio"));
+  // Al terminar un viaje animado, Chromium (Chrome, Brave, Edge) a veces no redibuja el vidrio de las ventanas y deja
+  // una franja oscura hasta que mueves el escritorio. Moverlo medio píxel y volver (sin animar) lo obliga a redibujarlo.
+  $("mundo").addEventListener("transitionend", (e) => {
+    if (e.target !== e.currentTarget) return; // solo el viaje del mundo, no las transiciones de lo que hay dentro
+    e.target.classList.remove("animar");
+    e.target.style.transform = `translate(${cam.x + 0.5}px, ${cam.y}px) scale(${cam.z})`;
+    requestAnimationFrame(() => aplicar());
+  });
   // Al retraer, sacar o cambiar la barra, lo que miras se corre con ella (suave) para seguir al centro de lo libre.
   let antes = libre().izq;
   document.addEventListener("barra", () => requestAnimationFrame(() => { const izq = libre().izq; if (izq !== antes) { antes = izq; enfocar(true); } }));
