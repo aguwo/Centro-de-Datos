@@ -7,7 +7,7 @@ import { db, avisar } from "./base.js";
 
 // Lo de siempre: cómo se ve si nunca tocaste nada. null = lo decide el modo (ej. cuánto se oscurece la foto).
 export const DE_SIEMPRE = { tema: "auto", tono: null, fondo: "paisaje", oscurecer: null, mover: true, opacidad: 1, desenfoque: 28, radio: 16, letra: "Inter",
-  barra: "clasica", ocultos: [], orden: [] };
+  barra: "clasica", ocultos: [], orden: [], retraida: false };
 
 export const TEMAS = { auto: "Automático", claro: "Claro", oscuro: "Oscuro" };
 // Los colores de acento (todos se leen bien con letra blanca encima). También se puede elegir cualquier otro.
@@ -80,6 +80,7 @@ function aplicar() {
   poner("--sans", p.letra === "Inter" ? null : LETRAS[p.letra] ? `"${LETRAS[p.letra]}", system-ui, sans-serif` : "system-ui, sans-serif");
   r.classList.toggle("fondo-quieto", !p.mover);
   r.dataset.barra = p.barra;
+  r.classList.toggle("barra-retraida", p.retraida);
   bajarLetra(LETRAS[p.letra]);
   // El mapa lee los colores al dibujarse: si cambió el modo, que se vuelva a dibujar todo (lo atiende main.js).
   if (cambioElTema) document.dispatchEvent(new Event("apariencia"));

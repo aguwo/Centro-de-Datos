@@ -90,7 +90,7 @@ export function fondo(v) {
 }
 
 // La barra lateral: el estilo (cada opción con un dibujito de cómo queda) y sus botones.
-// Los botones se esconden con su casilla y se ordenan con ↑ ↓. Lo del escritorio infinito va junto en «Escritorio».
+// Los botones se esconden con su casilla y se ordenan arrastrándolos de su asa (⋮⋮). Lo del escritorio infinito va junto en «Escritorio».
 export function barra(v) {
   const estilos = opciones("barra", Object.fromEntries(Object.entries(BARRAS).map(([k, b]) => [k, b.nombre])), (valor) => [
     el("i", { className: "muestra-barra " + valor }, el("b"), el("b"), el("b")), el("span", { textContent: BARRAS[valor].nombre })], "barras");
@@ -103,21 +103,51 @@ export function barra(v) {
     estilos.marcar(p.barra);
     detalle.textContent = BARRAS[p.barra].detalle;
     const movibles = todos.filter((x) => !x.lugar && !x.abajo);
-    // Subir o bajar = cambiar de puesto con el vecino (en la lista completa, así lo del escritorio no se mueve).
-    const mover = (x, paso) => {
-      const orden = todos.map((t) => t.id), a = orden.indexOf(x.id), b = orden.indexOf(movibles[movibles.indexOf(x) + paso].id);
-      [orden[a], orden[b]] = [orden[b], orden[a]];
-      elegir({ orden });
-    };
-    lista.replaceChildren(...movibles.map((x, i) => {
+    lista.replaceChildren(...movibles.map((x) => {
       const ver = el("input", { type: "checkbox", checked: !p.ocultos.includes(x.id),
         onchange: () => elegir({ ocultos: ver.checked ? p.ocultos.filter((id) => id !== x.id) : [...p.ocultos, x.id] }) });
-      return el("li", {}, el("label", { className: "casilla" }, ver, dibujo(x), el("span", { textContent: x.nombre })),
-        el("button", { type: "button", className: "chico", textContent: "↑", title: "Subir", disabled: i === 0, onclick: () => mover(x, -1) }),
-        el("button", { type: "button", className: "chico", textContent: "↓", title: "Bajar", disabled: i === movibles.length - 1, onclick: () => mover(x, 1) }));
+      const li = el("li", {}, el("span", { className: "asa-mover", textContent: "⋮⋮", title: "Arrastra para ordenar" }),
+        el("label", { className: "casilla" }, ver, dibujo(x), el("span", { textContent: x.nombre })));
+      li.dataset.id = x.id;
+      arrastrable(li, lista, (ids) => {
+        // El orden nuevo de los movibles, puesto en sus mismos puestos de la lista completa (así lo del escritorio no se mueve).
+        const orden = todos.map((t) => t.id), puestos = movibles.map((m) => orden.indexOf(m.id));
+        puestos.forEach((p, i) => { orden[p] = ids[i]; });
+        elegir({ orden });
+      });
+      return li;
     }), ...todos.filter((x) => x.abajo).map((x) => el("li", { className: "fija" }, el("span", { className: "casilla" }, dibujo(x), el("span", { textContent: x.nombre })),
       el("small", { textContent: "siempre abajo" }))));
   });
+}
+
+// Arrastrar un <li> de una lista por su asa (.asa-mover): mientras lo mueves cambia de lugar entre sus hermanos,
+// y al soltar, listo(ids) recibe el orden nuevo (los data-id de la lista). Sirve con mouse, lápiz o dedo.
+function arrastrable(li, lista, listo) {
+  li.querySelector(".asa-mover").onpointerdown = (e) => {
+    e.preventDefault();
+    li.classList.add("arrastrando");
+    lista.classList.add("moviendo");
+    // Se escucha en la página (no en el asa): al mover el <li> dentro de la lista, el asa perdería el puntero.
+    const mover = (m) => {
+      const otro = [...lista.children].find((o) => {
+        const r = o.getBoundingClientRect();
+        return o !== li && !o.classList.contains("fija") && m.clientY > r.top && m.clientY < r.bottom;
+      });
+      if (otro) otro.getBoundingClientRect().top > li.getBoundingClientRect().top ? otro.after(li) : otro.before(li);
+    };
+    const soltar = () => {
+      removeEventListener("pointermove", mover);
+      removeEventListener("pointerup", soltar);
+      removeEventListener("pointercancel", soltar);
+      li.classList.remove("arrastrando");
+      lista.classList.remove("moviendo");
+      listo([...lista.children].filter((o) => o.dataset.id).map((o) => o.dataset.id));
+    };
+    addEventListener("pointermove", mover);
+    addEventListener("pointerup", soltar);
+    addEventListener("pointercancel", soltar);
+  };
 }
 
 export function ventanas(v) {
