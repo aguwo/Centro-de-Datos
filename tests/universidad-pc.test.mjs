@@ -49,7 +49,7 @@ test("plan: solo lo que cambió, sin duplicar, y avisa lo que no tiene pareja", 
   const base = {
     ramos: [{ id: "arq", titulo: "Arquitectura de Computadores", props: { semestre: "2026-2" } }],
     eventos: [
-      { id: "c1", titulo: "Certamen 1", padre_id: "arq", props: { peso: 21, nota: 5.8 } },  // ya tiene la nota
+      { id: "c1", titulo: "Certamen 1", padre_id: "arq", props: { peso: 21, nota: 5.8, portal: "Certamen 1" } },  // ya subida
       { id: "c2", titulo: "Certamen 2", padre_id: "arq", props: { peso: 21 } },
       { id: "cl", titulo: "Certamen 2", padre_id: "otro", props: {} },                      // de otro ramo
     ],
@@ -60,7 +60,10 @@ test("plan: solo lo que cambió, sin duplicar, y avisa lo que no tiene pareja", 
 
   portal[0].asistencia.clases.push({ fecha: "2026-11-05T10:10", descripcion: "Clase 39", fui: false }); // todavía no pasa
   const p = plan(portal, base, "2026-11-04");
-  assert.deepEqual(p.notas, [{ id: "c2", titulo: "Certamen 2", props: { peso: 21, nota: 6 } }]);
+  assert.deepEqual(p.notas, [{ id: "c2", titulo: "Certamen 2", props: { peso: 21, nota: 6, portal: "Certamen 2" } }]);
+  // Una nota que ya estaba bien pero escrita a mano se marca como del portal (y desde ahí no se edita).
+  const aMano = plan(portal, { ...base, eventos: [{ ...base.eventos[0], props: { peso: 21, nota: 5.8 } }] }, "2026-11-04");
+  assert.deepEqual(aMano.notas, [{ id: "c1", titulo: "Certamen 1", props: { peso: 21, nota: 5.8, portal: "Certamen 1" } }]);
   assert.deepEqual(p.cambios, [{ id: "a1", fecha: "2026-08-06T14:10:00.000Z", valor: 1, props: { portal: "Clase 1" } }]);
   assert.deepEqual(p.nuevas, [{ clase: "asistencia", nodo_id: "arq", fecha: "2026-08-11T14:10:00.000Z", valor: 0,
     props: { portal: "Ayudantia 1: Sistemas numericos y compuertas logicas" } }]);
