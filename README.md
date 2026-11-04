@@ -54,6 +54,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 34b | La disposición de cada apartado se guarda por persona (tabla `disposiciones`); si lo guardado no sirve, vuelve a la de siempre | #14 | SQL 8 | `supabase/migrations/0012_disposiciones.sql`, `docs/js/widgets.js` |
 | 35c | En el computador, el dock es una barra lateral pegada al borde; el escritorio infinito se recorre con ← →, Esc (ver todo) y clic en una sección | #18 | — | `docs/js/carcasa.js`, `docs/js/escritorio.js` |
 | 35d | El escritorio infinito sin barra de secciones: solo el minimapa, flechas, Esc, arrastrar y doble clic | #19 | — | `docs/js/escritorio.js` |
+| 53 | Ajustes: modo claro, oscuro o automático, color de acento, fondo de pantalla (tu paisaje, degradados o una foto tuya), cuánto se oscurece y si se mueve, vidrio (transparencia y desenfoque), esquinas y letra. Se aplica al tiro, abre ya con tu estilo y te sigue a otros equipos (tabla `preferencias`). Sin barra arriba: «Salir» está en Ajustes y «+ Nuevo» abajo a la izquierda | — | SQL 13 | `supabase/migrations/0017_preferencias.sql`, `docs/js/apariencia.js`, `docs/js/ajustes.js`, `estilos.css` |
 
 ### Hoy y calendario
 
@@ -141,6 +142,8 @@ docs/js/agenda.js    la agenda por horas (un día o varios); la usan Hoy y el ca
 docs/js/clima.js     el tiempo de Open-Meteo y el consejo del día
 docs/js/acciones.js  lo que la web le cambia a tus datos (completar, posponer, soltar, agendar...)
 docs/js/fechas.js    ayudas de fechas (hoy, sumar días, horas)
+docs/js/apariencia.js cómo se ve la web (modo, color, fondo, vidrio, letra): se aplica y se guarda
+docs/js/ajustes.js   el apartado Ajustes: los controles que la cambian y tu cuenta
 docs/js/universidad.js  el apartado Universidad: tarjetas de ramos, la página de un ramo y lo que viene
 docs/js/notas.js     las cuentas de un ramo: nota hasta ahora, cuánto necesitas, cómo va, asistencia
 docs/js/dibujos.js   íconos y portadas ilustradas (trazos SVG propios, se tiñen con el color del ramo o proyecto)

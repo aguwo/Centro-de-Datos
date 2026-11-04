@@ -1,4 +1,4 @@
-// El botón "+ Nuevo" de la barra (paso 29). Qué ofrece depende de dónde estás:
+// El botón "+ Nuevo" (paso 29; desde el paso 53, abajo a la izquierda). Qué ofrece depende de dónde estás:
 //   en el escritorio  un menú con un post-it y lo que se crea en sus secciones; al elegir, se abre el formulario
 //   en otro apartado  directo el formulario, con botones para lo que se crea en ese apartado
 // Cada apartado dice qué se crea en él con "nuevo" (apartados.js); sin lista, se puede crear cualquier tipo.
@@ -24,7 +24,9 @@ function abrirMenu(tipos) {
     ...tipos.map((c) => opcion(datos.tipo.get(c).nombre, () => formulario(null, { tipos, tipo: c }), colorDe(c))),
     el("hr"),
     opcion("Otra cosa…", () => formulario(null)));
-  menu().style.setProperty("--derecha", innerWidth - $("nuevo").getBoundingClientRect().right + "px"); // bajo el botón
+  const b = $("nuevo").getBoundingClientRect(); // el menú sale hacia arriba, desde el botón
+  menu().style.setProperty("--izquierda", b.left + "px");
+  menu().style.setProperty("--abajo", innerHeight - b.top + 8 + "px");
   menu().hidden = false;
   $("nuevo").setAttribute("aria-expanded", "true");
   menu().querySelector("button").focus();
