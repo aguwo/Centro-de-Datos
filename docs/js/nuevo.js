@@ -25,7 +25,7 @@ function abrirMenu(tipos) {
     el("hr"),
     opcion("Otra cosa…", () => formulario(null)));
   const b = $("nuevo").getBoundingClientRect(); // el menú sale hacia arriba, desde el botón
-  menu().style.setProperty("--izquierda", b.left + "px");
+  menu().style.setProperty("--derecha", innerWidth - b.right + "px");
   menu().style.setProperty("--abajo", innerHeight - b.top + 8 + "px");
   menu().hidden = false;
   $("nuevo").setAttribute("aria-expanded", "true");

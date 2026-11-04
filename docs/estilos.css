@@ -74,7 +74,7 @@ main { position: fixed; inset: 0; }
   padding-inline: 24px; } /* el margen que en pantalla completa centra el contenido aquí se calcularía sobre todo el mundo */
 .con-escritorio #mundo > .apartado .sobre-foto { cursor: grab; user-select: none; }
 /* Minimapa: abajo a la derecha. Cada sección es un botón; el marco es lo que estás viendo. */
-.con-escritorio .minimapa { display: block; position: absolute; right: 16px; bottom: 24px; z-index: 5; width: 132px; height: 84px; border-radius: 12px; overflow: hidden; }
+.con-escritorio .minimapa { display: block; position: absolute; right: 24px; bottom: 88px; z-index: 5; width: 132px; height: 84px; border-radius: 12px; overflow: hidden; }
 .minimapa button { position: absolute; padding: 0; border: 0; border-radius: 3px; background: color-mix(in srgb, var(--texto) 25%, transparent); }
 .minimapa button:hover { background: color-mix(in srgb, var(--acento) 60%, transparent); }
 .minimapa .vista { position: absolute; border: 1.5px solid var(--acento); border-radius: 3px; pointer-events: none; background: color-mix(in srgb, var(--acento) 10%, transparent); }
@@ -113,15 +113,16 @@ main { position: fixed; inset: 0; }
 .con-escritorio .dock .en-lienzo { display: none; }
 .con-escritorio .dock [data-escritorio] { display: grid; }
 
-/* Paso 53: «+ Nuevo» abajo a la izquierda: al pie de la barra lateral en el computador; redondo y flotante en el teléfono.
-   Su menú sale hacia arriba, desde el botón (nuevo.js pone --izquierda y --abajo). */
-.nuevo { position: fixed; left: 16px; bottom: 20px; z-index: 11; width: 54px; height: 54px; padding: 0; border-radius: 50%;
+/* «+ Nuevo» flota abajo a la derecha: redondo en el teléfono, una píldora «+ Nuevo» en el computador.
+   Su menú sale hacia arriba, desde el botón (nuevo.js pone --derecha y --abajo). */
+.nuevo { position: fixed; right: 16px; bottom: 20px; z-index: 6; width: 54px; height: 54px; padding: 0; border-radius: 50%;
          display: grid; place-content: center; box-shadow: var(--sombra); }
 .nuevo .mas { font-size: 28px; font-weight: 400; line-height: 1; }
 .nuevo .etiqueta { display: none; }
-.con-escritorio .nuevo { left: 8px; bottom: 12px; width: 64px; height: 56px; border-radius: 14px; box-shadow: none; gap: 2px; }
-.con-escritorio .nuevo .mas { font-size: 22px; }
-.con-escritorio .nuevo .etiqueta { display: block; font-size: 11px; }
+.con-escritorio .nuevo { right: 24px; bottom: 24px; width: auto; height: 48px; padding: 0 20px 0 16px; border-radius: 999px;
+                         display: flex; align-items: center; gap: 8px; }
+.con-escritorio .nuevo .mas { font-size: 24px; }
+.con-escritorio .nuevo .etiqueta { display: block; font-size: 15px; font-weight: 600; }
 
 .con-escritorio #mundo > .apartado { transition: outline-color .15s; outline: 4px solid transparent; outline-offset: 8px; }
 .escritorio.lejos #mundo > .apartado { cursor: zoom-in; }
@@ -173,7 +174,7 @@ main { position: fixed; inset: 0; }
 
 /* Un apartado armado con widgets (widgets.js): su título y sus columnas. Cabe en la pantalla;
    las ventanas que "crecen" se quedan con el alto que sobra y se desplazan por dentro. */
-.con-widgets { display: flex; flex-direction: column; gap: 20px; padding: 24px max(24px, calc((100% - 1240px) / 2)) 32px; overflow-y: auto; }
+.con-widgets { display: flex; flex-direction: column; gap: 20px; padding: 24px max(24px, calc((100% - 1240px) / 2)) 88px; overflow-y: auto; }
 .con-widgets > h2 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
 .con-widgets > h2::first-letter { text-transform: uppercase; }
 .columnas { flex: 1; min-height: 0; display: grid; grid-template-columns: var(--columnas); gap: 20px; }
@@ -379,7 +380,7 @@ form.nodo details { margin-top: 14px; }
 form.nodo summary { cursor: pointer; font-size: 12.5px; color: var(--suave); }
 form.nodo .conexion select + select { margin-top: 6px; }
 /* Menú de "+ Nuevo" en el escritorio */
-.menu { position: fixed; left: var(--izquierda, 12px); bottom: var(--abajo, 72px); z-index: 12; min-width: 180px; padding: 6px; border-radius: 14px; display: grid; background: var(--vidrio-fuerte); }
+.menu { position: fixed; right: var(--derecha, 12px); bottom: var(--abajo, 72px); z-index: 12; min-width: 180px; padding: 6px; border-radius: 14px; display: grid; background: var(--vidrio-fuerte); }
 .menu button { border: 0; border-radius: 8px; padding: 7px 10px; text-align: left; display: flex; align-items: center; gap: 8px; }
 .menu button:hover, .menu button:focus-visible { background: var(--linea); }
 .menu hr { width: 100%; border: 0; border-top: 1px solid var(--linea); margin: 4px 0; }
@@ -564,8 +565,8 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .progreso > b { position: absolute; top: -3px; width: 2px; height: 10px; margin-left: -1px; border-radius: 1px; background: var(--texto); opacity: .35; }
 
 /* Las tarjetas de los ramos */
-.resumen-ramos { display: flex; flex-wrap: wrap; gap: 8px; }
-.resumen-ramos:empty { display: none; }
+.barra-apartado { display: flex; flex-wrap: wrap; gap: 8px; }
+.barra-apartado:empty { display: none; }
 .tarjetas-ramos { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
 .tarjeta-ramo { display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: var(--radio); text-align: left; font: inherit; color: inherit;
                 background: var(--vidrio-fuerte); border: 1px solid var(--borde); box-shadow: var(--sombra); transition: transform .15s, box-shadow .15s; }

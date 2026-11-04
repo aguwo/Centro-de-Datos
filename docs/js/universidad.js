@@ -77,11 +77,11 @@ function cuenta(n) {
 const pastilla = (nombre, texto, clase = "") => el("span", { className: "pastilla " + clase }, icono(nombre), texto);
 
 // ---------- ramos (las tarjetas) ----------
-// Arriba, unas pastillas con el objetivo del semestre, los días que quedan y los ramos con poca asistencia.
+// Arriba (en la barra del apartado, así las columnas parten parejas), unas pastillas con el objetivo del semestre, los días que quedan y los ramos con poca asistencia.
 // Cada tarjeta: su portada, tu nota, cuánto necesitas, tu asistencia y lo próximo.
 export function tarjetasDeRamos(v, ctx) {
-  const resumen = el("div", { className: "resumen-ramos" }), grilla = el("div", { className: "tarjetas-ramos" });
-  v.append(resumen, grilla);
+  const grilla = el("div", { className: "tarjetas-ramos" });
+  v.append(grilla);
   return function dibujar() {
     v.hidden = !!datos.nodo.get(ctx.ramo);
     const lista = ramos(), enCurso = lista.filter((r) => r.estado !== "Hecho");
@@ -89,11 +89,11 @@ export function tarjetasDeRamos(v, ctx) {
     const objetivo = datos.nodos.find((o) => esObjetivo(o) && aportesDe(o.id).some((a) => lista.includes(a)));
     const faltan = objetivo?.fecha && diasEntre(hoyTexto(), dia(objetivo.fecha));
     const bajos = enCurso.filter((r) => bajo(asistencia(asistenciasDe(r)), r)).length;
-    resumen.replaceChildren(...[
+    ctx.barra.replaceChildren(...(v.hidden ? [] : [
       objetivo && pastilla("objetivo", `${objetivo.titulo}: ${comoVa(objetivo).texto}`),
       faltan > 0 && pastilla("calendario", `Quedan ${faltan} días`),
       bajos && pastilla("alerta", `Asistencia baja en ${bajos} ${bajos === 1 ? "ramo" : "ramos"}`, "alerta"),
-    ].filter(Boolean));
+    ].filter(Boolean)));
     if (!lista.length) return grilla.replaceChildren(el("p", { className: "vacio vidrio ventana", textContent: "No hay ramos todavía: son los tópicos que tienen semestre." }));
     grilla.replaceChildren(...lista.map((r) => {
       const c = evaluar(evaluacionesDe(r)), a = asistencia(asistenciasDe(r)), prox = queViene(r)[0], color = colorDeProyecto(r.id);
@@ -106,7 +106,7 @@ export function tarjetasDeRamos(v, ctx) {
           el("span", { className: "nombre" }, el("b", { textContent: r.titulo }), el("small", { textContent: profeDe(r) ?? "" })),
           el("span", { className: "nota" }, el("strong", { textContent: nota(c.actual) }), el("small", { textContent: r.estado === "Hecho" ? como === "Seguro" ? "Aprobado" : "Reprobado" : necesitasTexto(c) })),
           el("span", { className: "asis" + (bajo(a, r) ? " baja" : "") },
-            el("span", {}, icono("persona"), "Asistencia ", el("b", { textContent: porcentaje(a) }), a.porcentaje === null ? "" : ` · mínimo ${Math.round(minimoDe(r) * 100)}%`),
+            el("span", {}, icono("persona"), "Asistencia ", el("b", { textContent: porcentaje(a) })),
             a.porcentaje === null ? "" : progreso(a.porcentaje, minimoDe(r))),
           el("span", { className: "prox" }, ...(prox
             ? [insignia(tipoDe(prox.n), color, "chica"), el("span", { textContent: prox.n.titulo }), el("span", { className: "cuenta", textContent: cuenta(prox.n) })]
@@ -144,7 +144,7 @@ export function paginaDeRamo(v, ctx) {
         dato("estrella", "Nota hasta ahora", nota(c.actual), c.evaluado === null ? "" : `con el ${Math.round(c.evaluado * 100)}% evaluado`),
         dato("objetivo", "Para aprobar", c.necesitas !== null && !c.sinPeso && c.necesitas > MINIMA && c.necesitas <= MAXIMA ? nota(c.necesitas) : "—",
           c.necesitas !== null && !c.sinPeso && c.necesitas > MINIMA && c.necesitas <= MAXIMA ? `en el ${Math.round(c.falta)}% que falta` : necesitasTexto(c), estado(c) === "No alcanza"),
-        dato(bajo(a, ramo) ? "alerta" : "persona", "Asistencia", porcentaje(a), `mínimo ${Math.round(minimo * 100)}%`, bajo(a, ramo))));
+        dato(bajo(a, ramo) ? "alerta" : "persona", "Asistencia", porcentaje(a), a.total ? `${a.fui} de ${a.total} clases` : "", bajo(a, ramo))));
 
     // Las evaluaciones: la ponderación y la nota se escriben directo en la tabla.
     const numero = (e, clave, etiqueta, min, max) => {
@@ -195,7 +195,7 @@ export function paginaDeRamo(v, ctx) {
     const asis = el("section", { className: "ventana vidrio asistencia" + (bajo(a, ramo) ? " baja" : "") },
       el("h3", {}, "Asistencia", el("small", { textContent: a.total ? `${a.fui} de ${a.total} clases` : "" })),
       regs.length ? el("div", { className: "resumen-asis" },
-        el("div", { className: "cifra-asis" }, el("strong", { textContent: porcentaje(a) }), el("small", { textContent: `mínimo ${Math.round(minimo * 100)}%` })),
+        el("div", { className: "cifra-asis" }, el("strong", { textContent: porcentaje(a) })),
         progreso(a.porcentaje, minimo),
         el("div", { className: "puntos" }, ...regs.map((r) => el("i", { className: Number(r.valor) === 1 ? "fui" : "falte",
           title: `${corto(dia(r.fecha))}: ${Number(r.valor) === 1 ? "fuiste" : "faltaste"}` }, icono(Number(r.valor) === 1 ? "si" : "no")))))
