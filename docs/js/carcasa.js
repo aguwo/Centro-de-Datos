@@ -7,7 +7,7 @@ import { $, el } from "./base.js";
 import { APARTADOS, CAJONES } from "./apartados.js";
 import { iniciarEscritorio, enEscritorio, mirar } from "./escritorio.js";
 import { montar } from "./widgets.js";
-import { preferencia } from "./apariencia.js";
+import { preferencia, cambiar } from "./apariencia.js";
 
 let actual = APARTADOS[0];
 let enElEscritorio = APARTADOS.find((a) => a.lugar); // la última sección del escritorio que viste: "Escritorio" vuelve ahí
@@ -85,7 +85,7 @@ function armarDock() {
     if (x.abajo) b.classList.add("al-fondo");
     b.hidden = !x.abajo && ocultos.includes(x.id);
     return b;
-  }));
+  }), el("button", { className: "retraer", textContent: "‹", title: "Retraer la barra", ariaLabel: "Retraer la barra", onclick: () => cambiar({ retraida: true }) }));
   marcar();
 }
 
@@ -128,6 +128,8 @@ export function iniciarCarcasa() {
   montarApartados();
   armarDock();
   document.addEventListener("barra", armarDock); // cambiaste la barra en Ajustes (apariencia.js avisa)
+  // Con la barra retraída queda esta pestaña en el borde izquierdo para volver a sacarla.
+  document.body.append(el("button", { className: "sacar-barra", textContent: "›", title: "Mostrar la barra", ariaLabel: "Mostrar la barra", onclick: () => cambiar({ retraida: false }) }));
   for (const a of APARTADOS) a.iniciar?.();
   cajones();
   dockEscondido();

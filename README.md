@@ -105,6 +105,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | — | Arreglo: Universidad sin el texto «mínimo X%» (queda solo la rayita en la barra); las pastillas de aviso pasan a una barra bajo el título del apartado (`ctx.barra`), así «Lo que viene» parte a la altura de las tarjetas | — | — | `widgets.js`, `universidad.js`, `estilos.css` |
 | — | Arreglo: «+ Nuevo» pasa abajo a la derecha (píldora en el computador, redonda en el teléfono); su menú se abre hacia arriba desde ahí y el minimapa sube para no chocar | — | — | `estilos.css`, `nuevo.js`, `index.html` |
 | 55 | Barra lateral personalizable en Ajustes: cinco estilos (Clásica, Solo íconos, Ancha, Flotante, Isla), mostrar u ocultar cada botón y cambiar su orden; Ajustes queda siempre abajo y el elegido se marca con un fondo suave y una rayita | — | — | `apariencia.js` (`BARRAS`), `carcasa.js` (`entradasDeLaBarra`), `ajustes.js` (`barra`), `estilos.css` |
+| — | Arreglo: barra lateral casi sólida (sin transparencias que se mezclan), el costado de Proyectos ya no pasa por debajo de la barra al esconderse, la barra se puede retraer (‹ al pie, › en el borde para sacarla; se recuerda), el minimapa pasa abajo a la izquierda y en Ajustes los botones se ordenan arrastrándolos | — | — | `estilos.css`, `carcasa.js`, `apariencia.js` (`retraida`), `ajustes.js` (`arrastrable`) |
 
 ## Hoja de ruta
 
