@@ -113,6 +113,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | — | Arreglo: en el calendario, lo que cae a la misma hora se escalona (encima va lo de una vez, como una evaluación, sobre lo que se repite, como una clase), lo de una vez va lleno de color y los nombres usan hasta 3 líneas | — | — | `agenda.js` (`columnas`), `estilos.css` |
 | — | Arreglo: en el calendario la hora va siempre debajo del nombre; en los bloques cortos el texto se aprieta, y solo si ni así cabe va al lado | — | — | `agenda.js`, `estilos.css` |
 | — | Arreglo: al tocar un ícono de la barra ya no queda una franja oscura sobre las ventanas del escritorio infinito (Chrome/Brave no redibujaban el vidrio al terminar el viaje) | — | — | `escritorio.js` |
+| — | Arreglo: la franja oscura volvía cuando la cámara no viajaba; ahora el escritorio infinito redibuja el vidrio después de cualquier toque en la barra | — | — | `escritorio.js` |
 
 ## Hoja de ruta
 
