@@ -29,3 +29,46 @@ test("la asistencia: porcentaje y cada clase con su día y hora", () => {
   });
   assert.deepEqual(bd.asistencia, { porcentaje: null, clases: [] }); // «Curso no registra asistencia»
 });
+
+// Paso 50: qué se sube al centro de datos.
+import { plan, clave, instante } from "../universidad-pc/subir.mjs";
+
+test("el portal y el centro de datos escriben distinto lo mismo", () => {
+  assert.equal(clave("BASES DE DATOS"), clave("Base de Datos"));
+  assert.equal(clave("Certamen 1 — Base de Datos"), clave("Certamen 1"));
+  assert.equal(clave("test de entrada 1"), clave("Test Entrada 1"));
+  assert.notEqual(clave("Certamen 1"), clave("Certamen 2"));
+});
+
+test("una hora de Chile pasa a UTC con su horario (invierno -4, verano -3)", () => {
+  assert.equal(instante("2026-08-06T10:10"), "2026-08-06T14:10:00.000Z");
+  assert.equal(instante("2026-11-05T10:10"), "2026-11-05T13:10:00.000Z");
+});
+
+test("plan: solo lo que cambió, sin duplicar, y avisa lo que no tiene pareja", () => {
+  const base = {
+    ramos: [{ id: "arq", titulo: "Arquitectura de Computadores", props: { semestre: "2026-2" } }],
+    eventos: [
+      { id: "c1", titulo: "Certamen 1", padre_id: "arq", props: { peso: 21, nota: 5.8 } },  // ya tiene la nota
+      { id: "c2", titulo: "Certamen 2", padre_id: "arq", props: { peso: 21 } },
+      { id: "cl", titulo: "Certamen 2", padre_id: "otro", props: {} },                      // de otro ramo
+    ],
+    asistencias: [{ id: "a1", nodo_id: "arq", fecha: "2026-08-06T20:00:00Z", valor: 1, props: {} }], // anotada a mano ese día
+  };
+  const portal = [...leerNotas(html), { nombre: "RAMO NUEVO", evaluaciones: [], asistencia: { clases: [] } }];
+  portal[0].evaluaciones.push({ nombre: "Certamen 2", nota: 6 }, { nombre: "Tareas 1", nota: 7 });
+
+  const p = plan(portal, base);
+  assert.deepEqual(p.notas, [{ id: "c2", titulo: "Certamen 2", props: { peso: 21, nota: 6 } }]);
+  assert.deepEqual(p.cambios, [{ id: "a1", fecha: "2026-08-06T14:10:00.000Z", valor: 1, props: { portal: "Clase 1" } }]);
+  assert.deepEqual(p.nuevas, [{ clase: "asistencia", nodo_id: "arq", fecha: "2026-08-11T14:10:00.000Z", valor: 0,
+    props: { portal: "Ayudantia 1: Sistemas numericos y compuertas logicas" } }]);
+  assert.deepEqual(p.sinEvaluacion, [{ ramo: "Arquitectura de Computadores", nombre: "Tareas 1", nota: 7 }]);
+  assert.deepEqual(p.sinRamo, ["BASES DE DATOS", "RAMO NUEVO"]);
+
+  // La segunda vez, con lo ya subido, no hay nada que hacer.
+  const despues = { ...base, eventos: base.eventos.map((e) => (e.id === "c2" ? { ...e, props: p.notas[0].props } : e)),
+    asistencias: [{ ...base.asistencias[0], ...p.cambios[0] }, { id: "a2", ...p.nuevas[0] }] };
+  const otra = plan(portal, despues);
+  assert.deepEqual([otra.notas, otra.nuevas, otra.cambios], [[], [], []]);
+});
