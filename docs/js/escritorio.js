@@ -49,15 +49,16 @@ export function alrededor(ancho, alto, monta = 24, aire = 24) {
   return lugares;
 }
 
+// Redondea a un píxel entero de la pantalla (en una pantalla al 125 %, un píxel CSS son 1,25). Si el mundo queda
+// corrido medio píxel, el navegador dibuja mal el vidrio de las ventanas (una franja oscura junto a su borde).
+const px = (v) => Math.round(v * devicePixelRatio) / devicePixelRatio;
+
 // La cámara: x, y = dónde queda la esquina del mundo en la pantalla; z = acercamiento.
 function aplicar(animar = false) {
   const { izq, W, H } = libre(), m = 200; // se sale un poco del borde, sin perderse
   cam.x = Math.min(izq + m, Math.max(izq + W - mundo.w * cam.z - m, cam.x));
   cam.y = Math.min(m, Math.max(H - mundo.h * cam.z - m, cam.y));
   $("mundo").classList.toggle("animar", animar);
-  // Se mueve en píxeles enteros de la pantalla: con medio píxel, Chromium (Chrome, Brave, Edge) dibuja mal el vidrio
-  // de las ventanas y deja una franja oscura del ancho del desenfoque (pasaba con zoom normal en pantallas al 125 %).
-  const px = (v) => Math.round(v * devicePixelRatio) / devicePixelRatio;
   $("mundo").style.transform = `translate(${px(cam.x)}px, ${px(cam.y)}px) scale(${cam.z})`;
   // El fondo acompaña un poco (parallax): parece que la foto está más lejos que las ventanas.
   document.body.style.setProperty("--px", (cam.x / mundo.w) * 24 + "px");
@@ -201,8 +202,15 @@ export function iniciarEscritorio(ir, actual) {
   modo();
   pantallaAncha.addEventListener("change", () => { modo(); ir(actual()); });
   // Cuando cambia el tamaño de la ventana (o el escritorio aparece por primera vez), se vuelve a enfocar.
+  // Esconderlo y volver a mostrarlo (ir a Proyectos y volver) no cuenta: de eso ya se encarga ir(), con su viaje.
   const enfocar = (animar) => { if (escritorioActivo() && mirando) lejos ? verTodo() : mirar(mirando, animar); };
-  new ResizeObserver(() => enfocar(false)).observe($("escritorio"));
+  let tamano = "";
+  new ResizeObserver(([r]) => {
+    const { width, height } = r.contentRect, nuevo = width + "×" + height;
+    if (!height || nuevo === tamano) return;
+    tamano = nuevo;
+    enfocar(false);
+  }).observe($("escritorio"));
   // Al retraer, sacar o cambiar la barra, lo que miras se corre con ella (suave) para seguir al centro de lo libre.
   let antes = libre().izq;
   document.addEventListener("barra", () => requestAnimationFrame(() => { const izq = libre().izq; if (izq !== antes) { antes = izq; enfocar(true); } }));
