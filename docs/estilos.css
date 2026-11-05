@@ -102,7 +102,7 @@ main { position: fixed; inset: 0; }
    con el nombre bajo cada ícono. Las secciones del escritorio van juntas en "Escritorio".
    Paso 55: su estilo se elige en Ajustes (:root[data-barra], abajo). --barra = el espacio que el contenido le deja a la izquierda. */
 .con-escritorio { --barra: 84px; }
-.con-escritorio main { left: var(--barra); transition: left .25s cubic-bezier(.2,.7,.2,1); }
+.con-escritorio main { left: var(--barra); } /* se corre con la barra; la animación va abajo, con las demás */
 .con-escritorio .asa { display: none; }
 /* La barra va casi sólida (--vidrio-fuerte): así nada se transparenta ni se mezcla con lo que queda detrás.
    --fuera la saca hacia la izquierda al retraerla; --medio la centra en alto (Isla). */
