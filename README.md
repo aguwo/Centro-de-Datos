@@ -114,6 +114,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | — | Arreglo: en el calendario la hora va siempre debajo del nombre; en los bloques cortos el texto se aprieta, y solo si ni así cabe va al lado | — | — | `agenda.js`, `estilos.css` |
 | — | Arreglo: al tocar un ícono de la barra ya no queda una franja oscura sobre las ventanas del escritorio infinito (Chrome/Brave no redibujaban el vidrio al terminar el viaje) | — | — | `escritorio.js` |
 | — | Arreglo: la franja oscura volvía cuando la cámara no viajaba; ahora el escritorio infinito redibuja el vidrio después de cualquier toque en la barra | — | — | `escritorio.js` |
+| — | Arreglo: la cámara del escritorio infinito se mueve en píxeles enteros de la pantalla (con medio píxel Chromium dibujaba mal el vidrio); se quita el redibujo forzado, que no servía | — | — | `escritorio.js` |
 | 56 | EV@ automático: dos veces al día (8:00 y 20:00) la base llama sola a la función `eva`, que copia tus entregas de EV@ como tareas dentro de cada ramo, mueve la fecha si la cambian y las marca «Hecho» cuando entregas. Solo lee EV@. Cada ramo dice su curso en la propiedad «Curso en EV@» | #53 | 15 | `supabase/functions/eva/`, `supabase/migrations/0019_eva.sql`, `tests/eva.test.ts` |
 
 ## Hoja de ruta
