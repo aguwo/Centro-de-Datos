@@ -142,10 +142,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 68 | Rutinas de entreno en la vista Ejercicio: cada rutina (ej. «Día A», con sus Días) tiene sus ejercicios con series, repeticiones y kilos (tipo nuevo «ejercicio»). Sale sola la del próximo entreno; marcas lo que hiciste, ajustas los kilos y «Terminar entreno» los guarda (y marca «Entrenar»); abajo, cómo vas subiendo de peso en cada ejercicio | — | 17 (`0021_ejercicios.sql`) | `docs/js/salud.js`, `widgets.js`, `apartados.js`, `estilos.css`, `supabase/migrations/0021_ejercicios.sql` |
 | 69 | Salud ordenada: sin pestañas, una sola página con tres bloques (Ejercicio, Hábitos y Dieta), cada uno con «Hoy» a la izquierda y «Cómo vas» a la derecha, y columnas que terminan parejas. Sin las cifras de arriba. La Dieta, simple: solo desayuno, almuerzo, merienda y cena; el + de cada una abre ahí mismo un buscador de alimentos con sus gramos. Sin agua ni panel «Agregar a». Los apartados aceptan bloques (`{ bloque }` en sus columnas) | — | — | `docs/js/widgets.js`, `apartados.js`, `salud.js`, `estilos.css` |
 | 70 | Salud con selector de bloques: arriba, una tarjeta por bloque (Ejercicio, Hábitos, Dieta) con su ícono, un dato de hoy y un anillo de avance; se ve un bloque a la vez. Al cambiar, el fondo de la tarjeta marcada se desliza, el bloque viejo sale hacia un lado y el nuevo entra desde el otro con sus ventanas una tras otra. Flechas del teclado y deslizar el dedo también cambian; se recuerda el último. Sin animaciones si tu equipo pide menos movimiento | — | — | `docs/js/bloques.js`, `widgets.js`, `apartados.js`, `salud.js`, `estilos.css` |
+| 71 | Las ventanas de Salud y las tarjetas de sus bloques siguen el vidrio de Ajustes (opacidad y desenfoque), como el resto: antes eran casi opacas fijas | — | — | `estilos.css` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 71, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 72, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
