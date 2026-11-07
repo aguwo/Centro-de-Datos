@@ -153,10 +153,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 79 | Arreglo: el primer alimento del día (y terminar un entreno) daba «null value in column props». Al guardar varias filas juntas, la marca del hábito (sin props) iba con null; ahora toma el valor por defecto de la tabla | — | — | `docs/js/salud.js` |
 | 80 | Salud en el escritorio infinito, ordenado: una columna por bloque, en el mismo orden que la página Salud (Ejercicio con el peso, Hábitos, Dieta). Las tres terminan parejas y lo principal de cada una queda centrado. «Te pesaste ayer» en vez de «hace 1 días» | — | — | `docs/js/apartados.js`, `salud.js`, `estilos.css` |
 | 81 | Salud en el escritorio infinito con dos vistas que se eligen en Ajustes → Escritorio infinito: **Bento** (Dieta grande con anillo, nutrientes y las 4 comidas; peso con barra de inicio a meta; Ejercicio y Hábitos lado a lado) y **Anillos** (dieta, hábitos, ejercicio y peso de un vistazo, y el detalle abajo). En una columna, una lista de widgets va en una fila; las secciones del escritorio no muestran selector de vistas | — | — | `docs/js/apartados.js`, `widgets.js`, `ajustes.js`, `salud.js`, `estilos.css` |
+| 82 | Escritorio infinito: las flechas ← → ↑ ↓ llevan a la sección de al lado según el plano (ej. ↑ desde Hoy = Esta semana). Si hacia ese lado no hay nada, no se mueve | — | — | `docs/js/escritorio.js` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 82, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 83, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
