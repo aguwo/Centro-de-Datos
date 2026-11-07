@@ -164,10 +164,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 85 | El bloque Suscripciones de Finanzas: cuánto se va al mes, un calendario con el día de cobro de cada una (sacado de tus gastos) y cuál viene; las activas con su día de cobro, el último cobro si fue distinto y «Pausar»; «¿Son suscripciones?», cobros que el banco marca SUB o que se repiten igual cada mes y no están en tu lista («Agregar» o «No es»); lo que se va en un año y qué parte es de cada una; y las pausadas con «Activar» | — | — | `docs/js/finanzas.js`, `widgets.js`, `apartados.js`, `estilos.css` |
 | 86 | La ventana «Anotar» de Finanzas (botón «Anotar gasto» en la semana y «+ Anotar» en Movimientos): Gasto, Ingreso o Mover a ahorro; el monto grande, la categoría con su ícono, la cuenta, qué fue (opcional) y Hoy/Ayer. Antes de anotar te dice cómo quedarías («Te quedarían $X esta semana · Comida $Y de $Z», el saldo de la cuenta o tu objetivo de ahorro). Mover a ahorro usa lo mismo que «Apartar plata» | — | — | `docs/js/finanzas.js`, `estilos.css` |
 | 87 | Finanzas en el escritorio infinito, abajo de Hoy: la semana en un medio anillo (lo que te queda), el gasto de cada día y cuánto por día te queda, con «+ Anotar»; el presupuesto por categoría; el próximo cobro de tus suscripciones; y tu objetivo de ahorro con cuánto apartar por semana | — | — | `docs/js/finanzas.js`, `widgets.js`, `apartados.js`, `estilos.css` |
+| 88 | Los avisos de BancoEstado se anotan solos: un script de Google en cada Gmail (`correos/Codigo.gs`) manda cada 15 minutos los avisos nuevos a la función «correos» de Supabase, que entiende compras y transferencias (enviadas = gasto, recibidas = ingreso), no repite un correo ya anotado y copia la categoría del último gasto con el mismo nombre (si no hay, queda «por revisar»). Necesita el secreto CORREOS_CLAVE | — | — | `supabase/functions/correos/` (nuevo), `correos/Codigo.gs` (nuevo), `supabase/config.toml`, `tests/correos.test.ts` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 88, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 89, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
