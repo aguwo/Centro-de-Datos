@@ -61,9 +61,9 @@ export const APARTADOS = [
   // Paso 63: tu salud completa (salud.js). Va a pantalla completa.
   // Paso 65: tres vistas separadas: Ejercicio (entrenos y peso), Hábitos y Dieta (las comidas de un día; paso 67, como Samsung Health).
   {
-    id: "salud", nombre: "Salud", nuevo: ["habito", "alimento"],
+    id: "salud", nombre: "Salud", nuevo: ["habito", "alimento", "ejercicio", "rutina"],
     vistas: [
-      { nombre: "Ejercicio", icono: "pesa", columnas: [{ ancho: 1.6, widgets: ["cifras-ejercicio", "semana-entreno", "peso"] }, { ancho: 1, widgets: ["constancia-entreno"] }] },
+      { nombre: "Ejercicio", icono: "pesa", columnas: [{ ancho: 1.6, widgets: ["cifras-ejercicio", "semana-entreno", "peso"] }, { ancho: 1, widgets: ["rutina", "constancia-entreno"] }] },
       { nombre: "Hábitos", icono: "si", columnas: [{ ancho: 1, widgets: ["cifras-habitos", "habitos-hoy"] }, { ancho: 1.9, widgets: ["cada-habito", "por-dia"] }] },
       { nombre: "Dieta", icono: "plato", columnas: [{ ancho: 1.1, widgets: ["calorias-dia", "equilibrio", "agua", "despensa"] }, { ancho: 1, widgets: ["comidas-dia", "semana-comida"] }, { ancho: 0.95, widgets: ["agregar-comida"] }] },
     ],
