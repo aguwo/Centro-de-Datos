@@ -83,14 +83,11 @@ export function selectorDeBloques(id, grupos) {
     grupos.forEach((g, i) => tarjetas[i].replaceChildren(...contenidoDeTarjeta(g.b)));
     marcar();
   }
-  // Ir a un bloque por su nombre (ej. desde el resumen del escritorio: irA("salud", { bloque: "Dieta" })).
-  const elegir = (nombre) => { const i = grupos.findIndex((g) => g.b.bloque === nombre); if (i >= 0) ir(i); };
-  return { selector, escena, redibujar, elegir };
+  return { selector, escena, redibujar };
 }
 
 // Lo que va dentro de la tarjeta de un bloque: marca de agua, insignia, nombre, dato, detalle y anillo.
-// También la usa el resumen de Salud del escritorio infinito (salud.js).
-export function contenidoDeTarjeta(b) {
+function contenidoDeTarjeta(b) {
   const r = b.resumen?.() ?? {};
   return [el("span", { className: "marca-agua", ariaHidden: "true" }, icono(b.icono)),
     el("span", { className: "insignia" }, icono(b.icono)),

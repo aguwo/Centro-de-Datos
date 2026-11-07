@@ -1001,10 +1001,10 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .w-salud { --linea-salud: color-mix(in srgb, var(--texto) 10%, transparent); }
 /* Paso 74: un bloque, un color. Todo lo de adentro (íconos, barras, checks, gráficos) usa el color del bloque elegido
    (--color-bloque, lo pone bloques.js), aclarado en modo oscuro igual que el acento. Solo los nutrientes tienen color propio. */
-.escena-bloques { --bloque: var(--color-bloque, var(--acento)); }
-:root[data-tema="oscuro"] .escena-bloques { --bloque: color-mix(in oklch, var(--color-bloque, var(--tono)) 55%, #fff); }
+.escena-bloques, .con-color-bloque { --bloque: var(--color-bloque, var(--acento)); }
+:root[data-tema="oscuro"] :is(.escena-bloques, .con-color-bloque) { --bloque: color-mix(in oklch, var(--color-bloque, var(--tono)) 55%, #fff); }
 .w-salud { --c: var(--bloque, var(--acento)); --entreno: var(--bloque, var(--acento)); --habitos: var(--bloque, var(--acento)); }
-.escena-bloques .w-salud { --bien: var(--bloque); }
+.escena-bloques .w-salud, .w-salud.con-color-bloque { --bien: var(--bloque); }
 .w-salud .principal { background: var(--c); border-color: var(--c); }
 .w-salud .vacio { font-size: 12.5px; }
 /* El camino del peso */
@@ -1285,8 +1285,43 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .de-afuera:empty { display: none; }
 
 /* ---------- Paso 73: Salud en el escritorio infinito ---------- */
-.tarjetas-salud { display: grid; gap: 12px; }
-.tarjetas-salud .tarjeta-bloque { min-height: 84px; }
+/* Paso 78: lo clave de cada bloque (con-color-bloque = el color del bloque, lo pone salud.js). Dieta: anillo + nutrientes */
+.resumen-dieta { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 22px; }
+.anillo-kcal { position: relative; width: 132px; height: 132px; display: grid; place-items: center; align-content: center; }
+.anillo-kcal > svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.anillo-kcal circle { fill: none; stroke-width: 11; stroke-linecap: round; }
+.anillo-kcal .pista { stroke: color-mix(in srgb, var(--bloque) 16%, transparent); }
+.anillo-kcal .lleno { stroke: var(--bloque); }
+.anillo-kcal b { font-size: 26px; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.anillo-kcal small { color: var(--suave); font-size: 11.5px; }
+.macros-hoy { display: grid; gap: 12px; }
+.macro-hoy { display: grid; gap: 5px; }
+.macro-hoy > span { display: flex; align-items: baseline; gap: 4px; font-size: 13px; }
+.macro-hoy > span > span:first-child { flex: 1; }
+.macro-hoy b { font-variant-numeric: tabular-nums; }
+.macro-hoy small { color: var(--suave); font-size: 11.5px; }
+.macro-hoy .barra-dieta { height: 6px; }
+.pie-resumen { margin: 0; font-size: 13px; color: var(--suave); }
+.pie-resumen b { color: var(--texto); }
+.con-color-bloque > .barra-dieta { margin-bottom: 4px; }
+/* Ejercicio: qué toca hoy y la semana en puntos */
+.hoy-entreno { display: flex; align-items: center; gap: 12px; }
+.hoy-entreno .insignia { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, var(--bloque) 16%, transparent); color: var(--bloque); }
+.hoy-entreno.hecho .insignia { background: var(--bloque); color: #fff; }
+.hoy-entreno > span:last-child { display: grid; }
+.hoy-entreno b { font-size: 16px; }
+.hoy-entreno small { color: var(--suave); font-size: 12.5px; }
+.puntos-semana { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.punto-dia { display: grid; justify-items: center; gap: 6px; padding: 8px 0; border-radius: 12px; }
+.punto-dia i { width: 22px; height: 22px; border-radius: 50%; background: var(--linea-salud); }
+.punto-dia.libre i { transform: scale(.45); }
+.punto-dia.toca i { background: none; border: 2px dashed color-mix(in srgb, var(--bloque) 60%, transparent); }
+.punto-dia.falto i { background: none; border: 2px solid color-mix(in srgb, var(--texto) 18%, transparent); }
+.punto-dia.hecho i { background: var(--bloque); }
+.punto-dia small { font-size: 11.5px; color: var(--suave); text-transform: uppercase; }
+.punto-dia.es-hoy { background: color-mix(in srgb, var(--bloque) 10%, transparent); }
+.punto-dia.es-hoy small { color: var(--texto); font-weight: 700; }
+@media (max-width: 700px) { .resumen-dieta { grid-template-columns: 1fr; justify-items: center; } .macros-hoy { width: 100%; } }
 .habitos-rapidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 10px 6px; }
 .habito-rapido { display: grid; justify-items: center; gap: 5px; padding: 4px 0; border: 0; background: none; color: inherit; }
 .habito-rapido .circulo { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--c);

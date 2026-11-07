@@ -23,12 +23,11 @@
 //   metas     las que guardes (tabla preferencias, clave "salud"); sin eso, unas sugeridas según tu peso
 // Cada hábito cae en un bloque: los de entrenar en Ejercicio, los de registrar calorías en Dieta
 // (se cumplen solos al anotar comida) y el resto en Hábitos.
-import { el, db, datos, dia, escribir, areaDe, irA, flotante } from "./base.js";
+import { el, db, datos, dia, escribir, areaDe, flotante } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes, sinHoraISO } from "./fechas.js";
 import { alternarRegistro, cambiarProps, crear, dentroDeCaja } from "./acciones.js";
 import { icono, elegir } from "./dibujos.js";
 import { formulario, mostrarPanel } from "./panel.js";
-import { contenidoDeTarjeta } from "./bloques.js";
 
 const SANO = [0.25, 0.5];   // kg por semana que se considera sano subir (o bajar)
 const SEMANAS = 13;          // cuántas semanas muestra la constancia
@@ -670,40 +669,73 @@ export const BLOQUES = {
   dieta: { bloque: "Dieta", icono: "plato", color: "#2f7a4c", resumen: resumenDieta },
 };
 
-// ---------- el resumen de Salud en el escritorio infinito (paso 73) ----------
-// salud-de-hoy   las tres tarjetas (Ejercicio, Hábitos, Dieta); tocar una abre Salud en ese bloque
-// habitos-rapidos los hábitos de hoy como botones redondos con su ícono: tocar marca o desmarca
-// medidor-peso   un medio círculo del peso de inicio a la meta, con el de ahora, y para anotar el de hoy
-export function saludDeHoy(v, ctx) {
-  v.querySelector("h3").append(el("button", { className: "abrir", textContent: "Abrir ↗", title: "Abrir Salud", onclick: () => irA("salud") }));
-  const tarjetas = Object.values(BLOQUES).map((b) => {
-    const t = el("button", { className: "tarjeta-bloque", onclick: () => irA("salud", { bloque: b.bloque }) });
-    t.style.setProperty("--c", b.color);
-    return [t, b];
-  });
-  v.append(el("div", { className: "tarjetas-salud" }, ...tarjetas.map(([t]) => t)));
+// ---------- el resumen de Salud en el escritorio infinito (pasos 73 y 78) ----------
+// Lo clave de cada bloque, con su color, para ver cómo vas sin entrar a Salud:
+// dieta-hoy       un anillo con las calorías de hoy contra tu meta y cuánto llevas de cada nutriente
+// entreno-hoy     qué toca hoy (o cuándo es el próximo), la semana en puntos y tu racha
+// habitos-rapidos los hábitos de hoy como botones redondos: tocar marca o desmarca
+// medidor-peso    un medio círculo del peso de inicio a la meta, con el de ahora, y para anotar el de hoy
+const conColor = (v, b) => { v.classList.add("w-salud", "con-color-bloque"); v.style.setProperty("--color-bloque", b.color); };
+
+export function dietaHoy(v, ctx) {
+  conColor(v, BLOQUES.dieta);
   return () => {
     cargarMetas(() => ctx.cambiar({})); // la meta de calorías llega una vez, de la base
-    for (const [t, b] of tarjetas) t.replaceChildren(...contenidoDeTarjeta(b));
+    const t = comidaDe(hoyTexto()), m = metas(), frac = Math.min(1, t.kcal / (m.kcal || 1)), quedan = Math.round(m.kcal - t.kcal);
+    const comidas = new Set(comidasDe(hoyTexto()).map((x) => x.momento)).size;
+    v.sub.textContent = comidas ? plural(comidas, "comida", "comidas") + " anotadas" : "nada anotado aún";
+    v.replaceChildren(v.firstChild,
+      el("div", { className: "resumen-dieta" },
+        el("div", { className: "anillo-kcal" }, svgDe("0 0 120 120", `<circle cx="60" cy="60" r="50" pathLength="100" class="pista"/>${frac ? `<circle cx="60" cy="60" r="50" pathLength="100" class="lleno" stroke-dasharray="${frac * 100} 100"/>` : ""}`),
+          el("b", { textContent: numero(t.kcal) }), el("small", { textContent: "de " + numero(m.kcal) + " kcal" })),
+        el("div", { className: "macros-hoy" }, ...[["proteina", "Proteína"], ["carbos", "Carbohidratos"], ["grasa", "Grasa"]].map(([k, nombre]) => {
+          const f = el("div", { className: "macro-hoy" }, el("span", {}, el("span", { textContent: nombre }), el("b", { textContent: numero(t[k]) }), el("small", { textContent: " / " + numero(m[k]) + " g" })),
+            barra(t[k] / (m[k] || 1), COLOR[k]));
+          f.style.setProperty("--c", COLOR[k]);
+          return f;
+        }))),
+      el("p", { className: "pie-resumen" }, quedan >= 0 ? el("span", {}, "Te quedan ", el("b", { textContent: numero(quedan) + " kcal" })) : el("span", {}, "Te pasaste por ", el("b", { textContent: numero(-quedan) + " kcal" }))));
+  };
+}
+
+export function entrenoHoy(v) {
+  conColor(v, BLOQUES.ejercicio);
+  return () => {
+    const hoy = hoyTexto(), h = entrenos()[0];
+    if (!h) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Crea un hábito «Entrenar» con sus Días para ver aquí tu semana." }));
+    const hecho = entrenoDel(hoy), prox = proximoEntreno(), hora = horaDe(h), r = rachaDeEntrenos();
+    const rutinaDel = (d) => rutinasDeEntreno().find((x) => x.props?.dias && tocaEl(x, d));
+    const [titulo, detalle] = hecho ? ["Entrenaste hoy", "bien ahí"]
+      : tocaEntrenar(hoy) ? ["Hoy toca entrenar", [rutinaDel(hoy)?.titulo, hora].filter(Boolean).join(" · ")]
+      : ["Hoy descansas", prox ? "próximo: " + [diaCorto(prox), rutinaDel(prox)?.titulo, hora].filter(Boolean).join(" · ") : ""];
+    v.sub.textContent = r.actual ? "racha de " + plural(r.actual, "entreno", "entrenos") : "";
+    v.replaceChildren(v.firstChild,
+      el("div", { className: "hoy-entreno" + (hecho ? " hecho" : "") }, el("span", { className: "insignia" }, icono(hecho ? "si" : "pesa")),
+        el("span", {}, el("b", { textContent: titulo }), el("small", { textContent: detalle }))),
+      el("div", { className: "puntos-semana" }, ...Array.from({ length: 7 }, (_, i) => sumarDias(lunes(hoy), i)).map((d) => {
+        const estado = entrenoDel(d) ? "hecho" : !tocaEntrenar(d) ? "libre" : d < hoy ? "falto" : "toca";
+        return el("span", { className: `punto-dia ${estado}${d === hoy ? " es-hoy" : ""}`, title: `${diaCorto(d)}: ${{ hecho: "entrenaste", libre: "descanso", falto: "no fuiste", toca: "toca" }[estado]}` },
+          el("i"), el("small", { textContent: new Date(d + "T12:00").toLocaleDateString("es-CL", { weekday: "narrow" }) }));
+      })),
+      el("p", { className: "pie-resumen" }, el("b", { textContent: resumenEjercicio().detalle })));
   };
 }
 export function habitosRapidos(v) {
-  v.classList.add("w-salud");
+  conColor(v, BLOQUES.habitos);
   return () => {
     const hoy = hoyTexto(), lista = habitos().filter((h) => tocaEl(h, hoy));
     const marcaDe = (h) => marcasDe(h).find((r) => dia(r.fecha) === hoy);
-    v.sub.textContent = lista.length ? `${lista.filter(marcaDe).length} de ${lista.length}` : "";
-    v.replaceChildren(v.firstChild, lista.length ? el("div", { className: "habitos-rapidos" }, ...lista.map((h) => {
-      const marca = marcaDe(h), [nombre, color] = temaDe(h);
-      const b = el("button", { className: "habito-rapido" + (marca ? " hecho" : ""), title: h.titulo, ariaPressed: String(!!marca), onclick: () => alternarRegistro("habito", h, marca) },
+    const hechos = lista.filter(marcaDe).length;
+    v.sub.textContent = lista.length ? `${hechos} de ${lista.length}` : "";
+    v.replaceChildren(v.firstChild, lista.length ? barra(hechos / lista.length, "var(--bloque)") : "", lista.length ? el("div", { className: "habitos-rapidos" }, ...lista.map((h) => {
+      const marca = marcaDe(h), [nombre] = temaDe(h);
+      return el("button", { className: "habito-rapido" + (marca ? " hecho" : ""), title: h.titulo, ariaPressed: String(!!marca), onclick: () => alternarRegistro("habito", h, marca) },
         el("span", { className: "circulo" }, icono(marca ? "si" : nombre)), el("small", { textContent: h.titulo }));
-      b.style.setProperty("--c", color);
-      return b;
     })) : el("p", { className: "vacio", textContent: "Hoy no te toca ningún hábito." }));
   };
 }
 export function medidorPeso(v) {
-  v.classList.add("w-salud");
+  conColor(v, BLOQUES.ejercicio); // el peso vive en el bloque Ejercicio
   return () => {
     const o = objetivoDePeso();
     if (!o) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Crea un objetivo con unidad «kg» para ver tu peso aquí." }));

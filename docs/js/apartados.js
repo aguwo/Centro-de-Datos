@@ -49,7 +49,7 @@ export const APARTADOS = [
   // Paso 73: lo de hoy de Salud, a la derecha de Hoy en el escritorio infinito. Tocar una tarjeta abre Salud en ese bloque.
   {
     id: "salud-hoy", nombre: "Salud hoy", lugar: [2, 1], nuevo: ["habito", "alimento"], titulo: () => "Salud",
-    columnas: [{ ancho: 1.15, widgets: ["salud-de-hoy"] }, { ancho: 1, widgets: ["habitos-rapidos", "medidor-peso"] }],
+    columnas: [{ ancho: 1, widgets: ["dieta-hoy", "entreno-hoy"] }, { ancho: 1, widgets: ["habitos-rapidos", "medidor-peso"] }],
     icono: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/><path d="M3 12h4l2-3 3 6 2-3h3"/>',
   },
   // Paso 35: una caja (área, ramo, proyecto...) completa, para verla entera y editarla. Va a pantalla completa.
