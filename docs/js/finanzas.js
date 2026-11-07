@@ -21,12 +21,13 @@
 //   presupuesto         la suma del "Presupuesto semanal" de tus categorías (la semana va de lunes a domingo)
 //   saldo de una cuenta su "Saldo inicial" + lo que entró − lo que salió, con las transferencias entre cuentas
 //                       (registros "transferencia": de nodo_id hacia otro_id)
-import { el, db, datos, dia, escribir, areaDe } from "./base.js";
+import { el, db, datos, dia, escribir, areaDe, flotante } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes } from "./fechas.js";
 import { icono, elegir } from "./dibujos.js";
 import { cambiar, cambiarProps, dentroDeCaja } from "./acciones.js";
 import { formulario } from "./panel.js";
 
+const BLOQUE_GASTOS = "#0d9488", BLOQUE_AHORRO = "#d97706", BLOQUE_SUSCRIPCIONES = "#7c3aed";
 const SEMANAS = 8; // cuántas semanas muestra «Últimas 8 semanas»
 export const plata = (x) => (x < 0 ? "−$" : "$") + Math.round(Math.abs(x)).toLocaleString("es-CL");
 const deTipo = (clave) => datos.nodos.filter((n) => n.tipos.clave === clave);
@@ -82,7 +83,8 @@ export function semanaGasto(v, ctx) {
       linea,
       el("div", { className: "pie-kcal" }, el("span", {}, "Gastado ", el("b", { textContent: plata(s.gastado) })),
         esta && s.quedan > 0 && s.dias ? el("span", {}, s.dias === 1 ? "Para hoy " : `Para ${s.dias} días `, el("b", { textContent: plata(s.quedan / s.dias) + (s.dias === 1 ? "" : " al día") })) : ""),
-      el("p", { className: "frase-finanzas" + (s.quedan < 0 || (esta && frac > s.pasado) ? " mal" : "") }, frase));
+      el("p", { className: "frase-finanzas" + (s.quedan < 0 || (esta && frac > s.pasado) ? " mal" : "") }, frase),
+      esta ? el("button", { className: "principal", textContent: "Anotar gasto", ariaHasPopup: "dialog", onclick: () => anotar("gasto") }) : "");
   };
 }
 
@@ -93,7 +95,7 @@ export function movimientos(v, ctx) {
   return () => {
     const s = semana(lunesDe(ctx)), lista = [...s.gastos, ...entre("ingreso", s.desde, s.hasta)].sort((a, b) => b.fecha.localeCompare(a.fecha));
     const sinCategoria = s.gastos.filter((r) => !categoriaDe(r));
-    v.sub.textContent = sinCategoria.length ? `${sinCategoria.length} por revisar` : "";
+    v.sub.replaceChildren(sinCategoria.length ? `${sinCategoria.length} por revisar · ` : "", botonAnotar());
     if (!lista.length) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Nada anotado esta semana." }));
     v.replaceChildren(v.firstChild, el("ul", { className: "movimientos" }, ...lista.map((r) => {
       const entra = r.clase === "ingreso", c = categoriaDe(r), cuenta = datos.nodo.get(r.nodo_id);
@@ -212,10 +214,18 @@ export function cuentas(v, ctx) {
 
 // Apartar: una transferencia de tu cuenta del día a día a la de ahorro. Si tienes un objetivo de ahorro, se le suma.
 const MONTOS = [5000, 10000, 15000];
+const objetivoAbierto = () => { const o = objetivoDeAhorro(); return o && vaEn(o) < Number(o.props.meta) ? o : null; }; // uno ya cumplido no suma más
+async function moverAAhorro(monto, desde, fecha) {
+  const o = objetivoAbierto();
+  const ok = await escribir(db.from("registros").insert({ clase: "transferencia", titulo: o ? "Apartado para " + o.titulo : "Apartado", valor: monto, unidad: "CLP",
+    nodo_id: desde.id, otro_id: cuentaDeAhorro().id, props: o ? { objetivo: o.id } : {}, ...(fecha && { fecha }) }));
+  if (ok && o) cambiarProps(o, { actual: vaEn(o) + monto });
+  return ok;
+}
 export function apartar(v, ctx) {
   v.classList.add("w-finanzas");
   return () => {
-    const desde = cuentaDiaria(), hacia = cuentaDeAhorro(), meta = objetivoDeAhorro(), o = meta && vaEn(meta) < Number(meta.props.meta) ? meta : null; // uno ya cumplido no suma más
+    const desde = cuentaDiaria(), hacia = cuentaDeAhorro(), o = objetivoAbierto();
     if (!desde || !hacia) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Para apartar necesitas una cuenta «Ahorro» y otra para el día a día." }));
     v.sub.textContent = `de ${desde.titulo} a ${hacia.titulo}`;
     const monto = ctx.monto ?? MONTOS[0];
@@ -230,9 +240,7 @@ export function apartar(v, ctx) {
         el("button", { textContent: plata(x), ariaPressed: String(x === monto), onclick: () => ctx.cambiar({ monto: x }) })), otro),
       costumbre ? el("p", { className: "vacio", textContent: `Lo que más apartas: ${plata(costumbre[0])} (${costumbre[1]} ${costumbre[1] === 1 ? "vez" : "veces"}).` }) : "",
       el("button", { className: "principal", textContent: `Apartar ${plata(monto)}` + (o ? ` para «${o.titulo}»` : ""), onclick: async () => {
-        const ok = await escribir(db.from("registros").insert({ clase: "transferencia", titulo: o ? "Apartado para " + o.titulo : "Apartado", valor: monto, unidad: "CLP",
-          nodo_id: desde.id, otro_id: hacia.id, props: o ? { objetivo: o.id } : {} }));
-        if (ok && o) cambiarProps(o, { actual: vaEn(o) + monto });
+        await moverAAhorro(monto, desde);
         ctx.monto = null;
       } }));
   };
@@ -296,6 +304,66 @@ export function historialAhorro(v) {
       : el("p", { className: "vacio", textContent: "Todavía no apartas nada." }));
   };
 }
+
+// ---------- la ventana «Anotar» (paso 86) ----------
+// Una ventana flotante para anotar en segundos: un gasto (cuánto, en qué categoría, con qué cuenta), un ingreso
+// o plata que mueves al ahorro. Abajo te dice cómo quedarías antes de anotar. Anotado, la ventana se cierra.
+const TIPOS_ANOTAR = { gasto: ["Gasto", BLOQUE_GASTOS], ingreso: ["Ingreso", BLOQUE_GASTOS], ahorro: ["Mover a ahorro", BLOQUE_AHORRO] };
+export function anotar(tipo = "gasto") {
+  const f = { tipo, monto: 0, categoria: null, cuenta: null, titulo: "", ayer: false };
+  const cuerpo = el("div", { className: "anotar" });
+  const d = flotante("Anotar", cuerpo);
+  d.classList.add("w-finanzas");
+  const campoMonto = el("input", { type: "text", inputMode: "numeric", placeholder: "$0", ariaLabel: "¿Cuánto?", autocomplete: "off",
+    oninput: () => { f.monto = Number(campoMonto.value.replace(/\D/g, "")) || 0; campoMonto.value = f.monto ? plata(f.monto) : ""; pie(); } });
+  const campoTitulo = el("input", { type: "text", placeholder: "Ej. almuerzo casino", oninput: () => { f.titulo = campoTitulo.value; } });
+  const linea = el("p", { className: "frase-finanzas", ariaLive: "polite" }), boton = el("button", { className: "principal anotar-boton", onclick: guardar });
+  const cuentasPara = () => deTipo("cuenta").filter((c) => f.tipo !== "ahorro" || !esAhorro(c));
+  function pie() {
+    const s = semana(lunes(hoyTexto())), c = f.categoria, cuenta = datos.nodo.get(f.cuenta);
+    const enCat = c ? sumar(s.gastos.filter((r) => r.otro_id === c.id)) + f.monto : 0, tope = Number(c?.props?.presupuesto_semanal) || 0;
+    linea.className = "frase-finanzas" + (f.tipo === "gasto" && s.quedan - f.monto < 0 ? " mal" : "");
+    linea.textContent = f.tipo === "gasto" ? `Te quedarían ${plata(s.quedan - f.monto)} esta semana` + (tope ? ` · ${c.titulo} ${plata(enCat)} de ${plata(tope)}` : "")
+      : f.tipo === "ingreso" ? (cuenta ? `${cuenta.titulo} quedaría en ${plata(saldo(cuenta) + f.monto)}` : "")
+      : objetivoAbierto() ? `«${objetivoAbierto().titulo}» quedaría en ${plata(vaEn(objetivoAbierto()) + f.monto)} de ${plata(Number(objetivoAbierto().props.meta))}`
+      : `Tu ahorro quedaría en ${plata(saldo(cuentaDeAhorro()) + f.monto)}`;
+    const falta = !f.monto ? "Escribe cuánto" : f.tipo === "gasto" && !f.categoria ? "Elige en qué" : !f.cuenta ? "Elige la cuenta" : "";
+    boton.disabled = !!falta;
+    boton.textContent = falta || `Anotar ${plata(f.monto)}`;
+  }
+  function dibujar() {
+    const [, color] = TIPOS_ANOTAR[f.tipo];
+    d.style.setProperty("--bloque", color);
+    if (!cuentasPara().some((c) => c.id === f.cuenta)) f.cuenta = cuentaDiaria()?.id ?? cuentasPara()[0]?.id ?? null;
+    if (f.tipo === "ahorro" && !cuentaDeAhorro()) return cuerpo.replaceChildren(el("p", { className: "vacio", textContent: "Crea una cuenta «Ahorro» para mover plata a ella." }));
+    const opcion = (activa, texto, alTocar, hijos = []) => el("button", { type: "button", ariaPressed: String(activa), onclick: () => { alTocar(); dibujar(); } }, ...hijos, texto);
+    cuerpo.replaceChildren(
+      el("div", { className: "segmento tipos-anotar", role: "group", ariaLabel: "Qué anotas" }, ...Object.entries(TIPOS_ANOTAR).map(([k, [nombre]]) =>
+        opcion(f.tipo === k, nombre, () => { f.tipo = k; }))),
+      el("label", { className: "monto-grande" }, el("span", { textContent: "¿Cuánto?" }), campoMonto),
+      f.tipo === "gasto" ? el("div", { className: "grupo-anotar" }, el("b", { textContent: "¿En qué?" }),
+        el("div", { className: "baldosas", role: "group", ariaLabel: "Categoría" }, ...categorias().map((c) =>
+          opcion(f.categoria?.id === c.id, c.titulo, () => { f.categoria = c; }, [icono(iconoDe(c))])))) : "",
+      el("div", { className: "grupo-anotar" }, el("b", { textContent: f.tipo === "gasto" ? "¿Con qué pagaste?" : f.tipo === "ingreso" ? "¿A qué cuenta?" : "¿Desde qué cuenta?" }),
+        el("div", { className: "montos", role: "group", ariaLabel: "Cuenta" }, ...cuentasPara().map((c) => opcion(f.cuenta === c.id, c.titulo, () => { f.cuenta = c.id; })))),
+      f.tipo === "ahorro" ? "" : el("label", { className: "grupo-anotar" }, el("b", {}, "¿Qué fue? ", el("small", { textContent: "(opcional)" })), campoTitulo),
+      linea,
+      el("div", { className: "pie-anotar" }, el("div", { className: "segmento", role: "group", ariaLabel: "Cuándo" },
+        opcion(!f.ayer, "Hoy", () => { f.ayer = false; }), opcion(f.ayer, "Ayer", () => { f.ayer = true; })), boton));
+    pie();
+  }
+  async function guardar() {
+    boton.disabled = true;
+    const fecha = f.ayer ? new Date(Date.now() - 864e5).toISOString() : undefined, cuenta = datos.nodo.get(f.cuenta);
+    const ok = f.tipo === "ahorro" ? await moverAAhorro(f.monto, cuenta, fecha)
+      : await escribir(db.from("registros").insert({ clase: f.tipo, titulo: f.titulo.trim() || (f.tipo === "gasto" ? f.categoria.titulo : "Ingreso"), valor: f.monto, unidad: "CLP",
+        nodo_id: cuenta.id, otro_id: f.tipo === "gasto" ? f.categoria.id : null, ...(fecha && { fecha }) }));
+    ok ? d.close() : pie();
+  }
+  dibujar();
+  campoMonto.focus();
+}
+const botonAnotar = (texto = "+ Anotar", tipo) => el("button", { className: "enlace", textContent: texto, ariaHasPopup: "dialog", onclick: () => anotar(tipo) });
 
 // ---------- las suscripciones (paso 85) ----------
 // El día de cobro y el último cobro salen de tus gastos: el más nuevo cuyo título nombra la suscripción
@@ -447,7 +515,7 @@ export function resumenSuscripciones() {
 }
 
 export const BLOQUES = {
-  gastos: { bloque: "Gastos", icono: "billetera", color: "#0d9488", resumen: resumenGastos },
-  ahorro: { bloque: "Ahorro", icono: "monedas", color: "#d97706", resumen: resumenAhorro },
-  suscripciones: { bloque: "Suscripciones", icono: "repetir", color: "#7c3aed", resumen: resumenSuscripciones },
+  gastos: { bloque: "Gastos", icono: "billetera", color: BLOQUE_GASTOS, resumen: resumenGastos },
+  ahorro: { bloque: "Ahorro", icono: "monedas", color: BLOQUE_AHORRO, resumen: resumenAhorro },
+  suscripciones: { bloque: "Suscripciones", icono: "repetir", color: BLOQUE_SUSCRIPCIONES, resumen: resumenSuscripciones },
 };
