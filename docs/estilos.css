@@ -1428,3 +1428,22 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 
 .w-semana-gasto { gap: 12px; }
 .w-semana-gasto .pie-kcal { margin-top: 4px; }
+/* Paso 84: Ahorro */
+.cuenta .enlace { justify-self: start; }
+.cuenta .monto.pasada { color: var(--alerta); }
+.ajustar-saldo { display: flex; gap: 6px; }
+.ajustar-saldo input { flex: 1; min-width: 0; padding: 6px 8px; border-radius: 9px; border: 1px solid var(--linea); background: var(--vidrio-fuerte); color: inherit; font: inherit; }
+.montos { display: flex; flex-wrap: wrap; gap: 8px; }
+.montos button { border-radius: 999px; padding: 0 16px; min-height: 38px; font-weight: 600; }
+.montos button[aria-pressed="true"] { border-color: var(--c); color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); }
+.montos input { width: 120px; padding: 0 12px; min-height: 38px; border-radius: 999px; border: 1px solid var(--linea); background: none; color: inherit; font: inherit; }
+.w-apartar > .principal, .w-objetivo-ahorro .principal { min-height: 44px; border-radius: 12px; }
+.titulo-objetivo { margin: 0; font-size: 15px; }
+.titulo-objetivo small { color: var(--suave); font-weight: 400; }
+.w-objetivo-ahorro { gap: 10px; }
+.w-objetivo-ahorro .barra-dieta { height: 12px; border-radius: 6px; }
+.botones { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.logrados { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--linea); font-size: 13px; }
+.logrados span { display: flex; align-items: center; gap: 8px; }
+.logrados .icono { width: 16px; height: 16px; color: var(--c); }
+.logrados small { margin-left: auto; color: var(--suave); }

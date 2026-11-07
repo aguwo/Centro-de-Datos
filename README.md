@@ -160,10 +160,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | Paso | Qué agrega | PR | SQL | Archivo |
 | --- | --- | --- | --- | --- |
 | 83 | El apartado Finanzas en la barra lateral, ordenado como Salud: tres bloques con su tarjeta y su color (**Gastos**, **Ahorro** y **Suscripciones**). Gastos: ‹ › cambia de semana; cuánto te queda del presupuesto semanal (la suma del de tus categorías), cuánto por día y si vas bien según la parte de la semana que ya pasó; los movimientos de la semana, y a los gastos sin categoría se la eliges con un toque; cada categoría contra su presupuesto; las últimas 8 semanas contra el presupuesto; y lo que entró y salió en el mes. Ahorro muestra el saldo de cada cuenta y Suscripciones las activas con su total al mes (los dos se completan en los pasos que siguen). La web ahora trae todos los gastos, ingresos y transferencias, no solo los de 14 semanas, para que el saldo cuadre | — | — | `docs/js/finanzas.js` (nuevo), `apartados.js`, `widgets.js`, `base.js` (registros con título; la plata completa), `dibujos.js` (billetera, monedas, repetir, bus, control, puntos), `estilos.css` |
+| 84 | El bloque Ahorro de Finanzas: cada cuenta con «Ajustar», para escribir lo que dice el banco (se corrige su saldo inicial, sin inventar movimientos); «Apartar plata» de tu cuenta del día a día a la de ahorro ($5.000, $10.000, $15.000 u otro monto), que también se suma a tu objetivo de ahorro; tu objetivo en pesos con cuánto falta, cuántas semanas quedan y cuánto apartar por semana. Al cumplirlo, «Usar la plata» la saca de la cuenta de ahorro y el objetivo queda Hecho (no se borra) y pasa a «Logrados»; «+ Objetivo de ahorro» crea otro. Abajo, lo que entró y salió del ahorro | — | — | `docs/js/finanzas.js`, `widgets.js`, `apartados.js`, `estilos.css` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 84, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 85, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |

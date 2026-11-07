@@ -28,7 +28,7 @@ import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { loImportante, diasDeLaSemana } from "./semana.js";
 import { semanaEntreno, constanciaEntreno, rutina, peso, habitosHoy, cadaHabito, porDiaDeSemana, despensa,
   caloriasDia, equilibrio, comidasDia, semanaComida, dietaHoy, entrenoHoy, habitosRapidos, medidorPeso, anillosSalud, macrosHoy } from "./salud.js";
-import { semanaGasto, movimientos, porCategoria, semanasGasto, entraSale, cuentas, suscripciones } from "./finanzas.js";
+import { semanaGasto, movimientos, porCategoria, semanasGasto, entraSale, cuentas, apartar, objetivoAhorro, historialAhorro, suscripciones } from "./finanzas.js";
 import { icono } from "./dibujos.js";
 import { selectorDeBloques } from "./bloques.js";
 import { modo, fondo, barra, vistas, ventanas, cuenta } from "./ajustes.js";
@@ -72,6 +72,9 @@ export const WIDGETS = {
   "semanas-gasto": { titulo: "Últimas 8 semanas", crear: semanasGasto },
   "entra-sale":    { titulo: "Lo que entró y salió", crear: entraSale },
   "cuentas":       { titulo: "Tus cuentas", crear: cuentas },
+  "apartar":       { titulo: "Apartar plata", crear: apartar },
+  "objetivo-ahorro": { titulo: "Tu objetivo", crear: objetivoAhorro },
+  "historial-ahorro": { titulo: "Lo que entró y salió del ahorro", crece: true, crear: historialAhorro },
   "suscripciones": { titulo: "Activas", crece: true, crear: suscripciones },
   "modo":          { titulo: "Modo y color", crear: modo },
   "fondo":         { titulo: "Fondo de pantalla", crear: fondo },

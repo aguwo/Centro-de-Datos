@@ -6,7 +6,10 @@
 //   por-categoria  cada categoría contra su presupuesto semanal
 //   semanas-gasto  las últimas 8 semanas contra el presupuesto (tocar una barra la elige)
 //   entra-sale     lo que entró y lo que salió en el mes
-//   cuentas        cuánto tienes en cada cuenta
+//   cuentas        cuánto tienes en cada cuenta; «Ajustar» corrige el saldo con lo que dice el banco (paso 84)
+//   apartar        mover plata de tu cuenta del día a día a la de ahorro (y sumarla a tu objetivo de ahorro)
+//   objetivo-ahorro cómo va tu objetivo en pesos: cuánto falta y cuánto apartar por semana; al cumplirlo, usar la plata
+//   historial-ahorro lo que entró y salió de la cuenta de ahorro
 //   suscripciones  las suscripciones activas y cuánto suman al mes
 //
 // De dónde sale cada cosa:
@@ -14,9 +17,11 @@
 //   presupuesto         la suma del "Presupuesto semanal" de tus categorías (la semana va de lunes a domingo)
 //   saldo de una cuenta su "Saldo inicial" + lo que entró − lo que salió, con las transferencias entre cuentas
 //                       (registros "transferencia": de nodo_id hacia otro_id)
-import { el, db, datos, dia, escribir } from "./base.js";
+import { el, db, datos, dia, escribir, areaDe } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes } from "./fechas.js";
 import { icono, elegir } from "./dibujos.js";
+import { cambiar, cambiarProps, dentroDeCaja } from "./acciones.js";
+import { formulario } from "./panel.js";
 
 const SEMANAS = 8; // cuántas semanas muestra «Últimas 8 semanas»
 export const plata = (x) => (x < 0 ? "−$" : "$") + Math.round(Math.abs(x)).toLocaleString("es-CL");
@@ -167,14 +172,124 @@ export function saldo(c) {
   return (Number(c.props?.saldo_inicial) || 0) + de("ingreso", "nodo_id") - de("gasto", "nodo_id") - de("transferencia", "nodo_id") + de("transferencia", "otro_id");
 }
 const ICONOS_CUENTA = [[/ahorro/i, "monedas"], [/junaeb|beca|alimenta/i, "plato"]];
-export function cuentas(v) {
+const esAhorro = (c) => /ahorro/i.test(c.titulo);
+const cuentaDeAhorro = () => deTipo("cuenta").find(esAhorro);
+// La cuenta del día a día: la primera que no es de ahorro ni la Junaeb (que solo sirve para comida).
+const cuentaDiaria = () => deTipo("cuenta").find((c) => !esAhorro(c) && !/junaeb/i.test(c.titulo)) ?? deTipo("cuenta").find((c) => !esAhorro(c));
+const areaDeFinanzas = () => areaDe(deTipo("cuenta")[0]?.id ?? deTipo("categoria")[0]?.id ?? "");
+
+// Cada cuenta con su saldo. «Ajustar» deja escribir lo que dice el banco: se corrige el saldo inicial para que cuadre
+// (así no se inventa ningún movimiento).
+export function cuentas(v, ctx) {
   v.classList.add("w-finanzas");
   return () => {
     const lista = deTipo("cuenta");
     v.sub.textContent = lista.length ? "en total " + plata(lista.reduce((s, c) => s + saldo(c), 0)) : "";
-    v.replaceChildren(v.firstChild, lista.length ? el("div", { className: "cuentas" }, ...lista.map((c) => el("div", { className: "cuenta" },
-      el("span", { className: "insignia" }, icono(elegir(c.titulo, ICONOS_CUENTA, "billetera"))), el("b", { textContent: c.titulo }), el("span", { className: "monto", textContent: plata(saldo(c)) }))))
-      : el("p", { className: "vacio", textContent: "Crea tus cuentas (débito, ahorro...) con su «Saldo inicial» para ver aquí cuánto tienes." }));
+    if (!lista.length) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Crea tus cuentas (débito, ahorro...) con «+ Nuevo» para ver aquí cuánto tienes." }));
+    v.replaceChildren(v.firstChild, el("div", { className: "cuentas" }, ...lista.map((c) => {
+      const ajustando = ctx.ajustando === c.id;
+      const campo = el("input", { type: "number", step: "1", value: Math.round(saldo(c)), ariaLabel: "Saldo real de " + c.titulo });
+      const guardar = (e) => {
+        e.preventDefault();
+        const real = Number(campo.value);
+        ctx.ajustando = null;
+        if (Number.isFinite(real)) cambiarProps(c, { saldo_inicial: (Number(c.props?.saldo_inicial) || 0) + real - saldo(c) });
+        else ctx.cambiar({});
+      };
+      return el("div", { className: "cuenta" },
+        el("span", { className: "insignia" }, icono(elegir(c.titulo, ICONOS_CUENTA, "billetera"))), el("b", { textContent: c.titulo }),
+        ajustando ? el("form", { className: "ajustar-saldo", onsubmit: guardar }, campo, el("button", { className: "principal", textContent: "Listo" }))
+          : el("span", { className: "monto" + (saldo(c) < 0 ? " pasada" : ""), textContent: plata(saldo(c)) }),
+        ajustando ? "" : el("button", { className: "enlace", textContent: "Ajustar", onclick: () => ctx.cambiar({ ajustando: c.id }) }));
+    })));
+    v.querySelector(".ajustar-saldo input")?.focus();
+  };
+}
+
+// Apartar: una transferencia de tu cuenta del día a día a la de ahorro. Si tienes un objetivo de ahorro, se le suma.
+const MONTOS = [5000, 10000, 15000];
+export function apartar(v, ctx) {
+  v.classList.add("w-finanzas");
+  return () => {
+    const desde = cuentaDiaria(), hacia = cuentaDeAhorro(), meta = objetivoDeAhorro(), o = meta && vaEn(meta) < Number(meta.props.meta) ? meta : null; // uno ya cumplido no suma más
+    if (!desde || !hacia) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Para apartar necesitas una cuenta «Ahorro» y otra para el día a día." }));
+    v.sub.textContent = `de ${desde.titulo} a ${hacia.titulo}`;
+    const monto = ctx.monto ?? MONTOS[0];
+    const otro = el("input", { type: "number", min: "1", step: "1", placeholder: "Otro monto", value: MONTOS.includes(monto) ? "" : monto, ariaLabel: "Otro monto",
+      onchange: (e) => ctx.cambiar({ monto: Number(e.target.value) || MONTOS[0] }) });
+    // Lo que más apartas (el monto que más se repite), como recordatorio.
+    const veces = new Map();
+    for (const r of datos.registros) if (r.clase === "transferencia" && r.otro_id === hacia.id) veces.set(valor(r), (veces.get(valor(r)) ?? 0) + 1);
+    const costumbre = [...veces].sort((a, b) => b[1] - a[1])[0];
+    v.replaceChildren(v.firstChild,
+      el("div", { className: "montos", role: "group", ariaLabel: "Cuánto apartar" }, ...MONTOS.map((x) =>
+        el("button", { textContent: plata(x), ariaPressed: String(x === monto), onclick: () => ctx.cambiar({ monto: x }) })), otro),
+      costumbre ? el("p", { className: "vacio", textContent: `Lo que más apartas: ${plata(costumbre[0])} (${costumbre[1]} ${costumbre[1] === 1 ? "vez" : "veces"}).` }) : "",
+      el("button", { className: "principal", textContent: `Apartar ${plata(monto)}` + (o ? ` para «${o.titulo}»` : ""), onclick: async () => {
+        const ok = await escribir(db.from("registros").insert({ clase: "transferencia", titulo: o ? "Apartado para " + o.titulo : "Apartado", valor: monto, unidad: "CLP",
+          nodo_id: desde.id, otro_id: hacia.id, props: o ? { objetivo: o.id } : {} }));
+        if (ok && o) cambiarProps(o, { actual: vaEn(o) + monto });
+        ctx.monto = null;
+      } }));
+  };
+}
+
+// El objetivo de ahorro: cuánto llevas, cuánto falta y cuánto apartar por semana para llegar a la fecha.
+// Cumplido, ofrece usar la plata (sale de la cuenta de ahorro y el objetivo queda Hecho) o crear otro.
+// Abajo, los que ya lograste.
+const vaEn = (o) => Number(o.props?.actual ?? o.props?.inicio) || 0;
+const enPesos = (n) => n.tipos.clave === "objetivo" && /^(clp|\$|pesos)$/i.test(n.props?.unidad ?? "");
+const nuevoObjetivo = (texto) => el("button", { className: "enlace", textContent: texto, onclick: () => {
+  const area = areaDeFinanzas();
+  formulario(null, { tipo: "objetivo", valores: { unidad: "CLP" }, conexion: area && dentroDeCaja("objetivo", area) });
+} });
+export function objetivoAhorro(v) {
+  v.classList.add("w-finanzas");
+  return () => {
+    const o = objetivoDeAhorro(), logrados = datos.nodos.filter((n) => enPesos(n) && n.estado === "Hecho");
+    v.sub.replaceChildren(nuevoObjetivo("+ Objetivo de ahorro"));
+    const lista = logrados.length ? el("div", { className: "logrados" }, el("b", { textContent: "Logrados" }),
+      ...logrados.map((n) => el("span", {}, icono("si"), n.titulo, el("small", { textContent: plata(Number(n.props?.meta) || vaEn(n)) })))) : "";
+    if (!o) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "No tienes un objetivo de ahorro. Crea uno con «+ Objetivo de ahorro» (unidad CLP)." }), lista);
+    const meta = Number(o.props.meta), va = vaEn(o), falta = meta - va, hoy = hoyTexto(), tope = o.fecha && dia(o.fecha);
+    const semanas = tope ? diasEntre(hoy, tope) / 7 : null, logrado = falta <= 0;
+    const fila = (nombre, x) => el("div", { className: "pie-kcal" }, el("span", { textContent: nombre }), el("b", { textContent: x }));
+    const ahorro = cuentaDeAhorro();
+    v.replaceChildren(v.firstChild,
+      el("h4", { className: "titulo-objetivo" }, o.titulo, tope ? el("small", { textContent: " · hasta el " + new Date(tope + "T12:00").toLocaleDateString("es-CL", { day: "numeric", month: "long" }) }) : ""),
+      el("div", { className: "kcal-grande" }, el("b", { textContent: plata(va) }), el("span", { textContent: "de " + plata(meta) })),
+      barra(va / (meta || 1)),
+      ...(logrado ? [el("p", { className: "frase-finanzas" }, `¡Lo lograste! Juntaste ${plata(va)}.`),
+        el("div", { className: "botones" },
+          el("button", { className: "principal", textContent: "Usar la plata", onclick: async () => {
+            // La plata sale de la cuenta de ahorro (una transferencia sin destino) y el objetivo queda Hecho, no se borra.
+            const ok = !ahorro || await escribir(db.from("registros").insert({ clase: "transferencia", titulo: "Usé: " + o.titulo, valor: va, unidad: "CLP", nodo_id: ahorro.id, props: { objetivo: o.id } }));
+            if (ok) cambiar(o, { estado: "Hecho" });
+          } }),
+          el("button", { textContent: "Ya está, sin usarla", onclick: () => cambiar(o, { estado: "Hecho" }) }))]
+        : [fila("Te faltan", plata(falta)),
+          semanas === null ? "" : semanas <= 0 ? fila("La fecha", "ya pasó")
+            : [fila("Quedan", Math.ceil(semanas) === 1 ? "1 semana" : Math.ceil(semanas) + " semanas"), fila("Para llegar, aparta", plata(falta / Math.max(1, semanas)) + " por semana")]].flat()),
+      el("div", { className: "botones" }, el("button", { className: "enlace", textContent: "Editar", onclick: () => formulario(o) })),
+      lista);
+  };
+}
+
+// Lo que entró y salió de la cuenta de ahorro, del más nuevo al más viejo (los últimos 8), y el total de cada cosa.
+export function historialAhorro(v) {
+  v.classList.add("w-finanzas");
+  return () => {
+    const a = cuentaDeAhorro();
+    if (!a) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Crea una cuenta «Ahorro» para ver aquí lo que apartas." }));
+    const lista = datos.registros.filter((r) => r.clase === "transferencia" && (r.nodo_id === a.id || r.otro_id === a.id) || ["ingreso", "gasto"].includes(r.clase) && r.nodo_id === a.id);
+    const entra = (r) => r.otro_id === a.id || r.clase === "ingreso";
+    const aparte = sumar(lista.filter(entra)), saque = sumar(lista.filter((r) => !entra(r)));
+    v.sub.textContent = lista.length ? `apartaste ${plata(aparte)} · sacaste ${plata(saque)}` : "";
+    v.replaceChildren(v.firstChild, lista.length ? el("ul", { className: "movimientos" }, ...lista.slice(-8).reverse().map((r) => el("li", { className: "movimiento" + (entra(r) ? " entra" : "") },
+      el("span", { className: "insignia" }, icono(entra(r) ? "monedas" : "flecha")),
+      el("span", {}, el("b", { textContent: r.titulo || (entra(r) ? "Apartado" : "Sacado") }), el("small", { textContent: diaCorto(dia(r.fecha)) })),
+      el("b", { className: "monto", textContent: (entra(r) ? "+" : "−") + plata(valor(r)) }))))
+      : el("p", { className: "vacio", textContent: "Todavía no apartas nada." }));
   };
 }
 
@@ -203,7 +318,7 @@ export function resumenGastos() {
     detalle: `de ${plata(s.tope)} esta semana`, avance: s.tope ? s.gastado / s.tope : 0 };
 }
 // El objetivo de ahorro: un objetivo en pesos (unidad CLP o $) que no esté hecho.
-export const objetivoDeAhorro = () => datos.nodos.find((n) => n.tipos.clave === "objetivo" && n.estado !== "Hecho" && /^(clp|\$|pesos)$/i.test(n.props?.unidad ?? "") && Number(n.props?.meta) > 0);
+export const objetivoDeAhorro = () => datos.nodos.find((n) => enPesos(n) && n.estado !== "Hecho" && Number(n.props?.meta) > 0);
 export function resumenAhorro() {
   const o = objetivoDeAhorro();
   if (!o) {
