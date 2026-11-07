@@ -998,15 +998,7 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 
 /* Salud (paso 63, salud.js). --c es el color de cada cosa: verde las calorías, naranjo la proteína, azul los carbohidratos,
    ámbar la grasa, y uno por hábito. Las superficies son casi opacas para que los gráficos se lean sobre la foto. */
-.w-salud, .w-cifras { --linea-salud: color-mix(in srgb, var(--texto) 10%, transparent); }
-.cifras-salud { flex: 1 1 560px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-.cifra-salud { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: var(--radio); background: var(--vidrio-fuerte); }
-.cifra-salud .insignia { width: 40px; height: 40px; border-radius: 12px; }
-.cifra-salud > div { display: grid; gap: 1px; min-width: 0; }
-.cifra-salud small { color: var(--suave); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cifra-salud b { font-size: 22px; font-variant-numeric: tabular-nums; }
-.cifra-salud b i { font-style: normal; font-size: 13px; font-weight: 500; color: var(--suave); }
-.barra-apartado:has(.cifras-salud) { align-items: stretch; }
+.w-salud { --linea-salud: color-mix(in srgb, var(--texto) 10%, transparent); }
 .w-salud { background: var(--vidrio-fuerte); }
 .w-salud .vacio { font-size: 12.5px; }
 /* El camino del peso */
@@ -1060,7 +1052,6 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .alimento-salud .nivel { height: 5px; border-radius: 3px; background: var(--linea-salud); }
 .alimento-salud .nivel i { display: block; height: 100%; border-radius: 3px; width: 6%; background: var(--alerta); }
 .alimento-salud.bajo .nivel i { width: 30%; background: var(--aviso); }
-@media (max-width: 1100px) { .cifras-salud { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .despensa-salud { grid-template-columns: 1fr; } }
 
 /* Salud · Dieta: el día que miras y la tendencia de la semana (paso 64) */
@@ -1171,14 +1162,6 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .nutriente > div small, .nutriente > small { color: var(--suave); font-size: 11.5px; }
 .nutriente .barra-dieta { height: 8px; }
 /* Agua */
-.vasos { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.vasos > button { width: 40px; height: 40px; padding: 0; font-size: 18px; flex: none; }
-.fila-vasos { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
-.vaso { color: color-mix(in srgb, #0284c7 35%, transparent); }
-.vaso .icono { width: 28px; height: 34px; }
-.vaso.lleno { color: #0284c7; }
-.vaso.lleno .icono { fill: color-mix(in srgb, #0284c7 20%, transparent); }
-:root[data-tema="oscuro"] .vaso.lleno { color: #38bdf8; }
 /* Comidas del día: una fila por momento */
 .momento { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--linea); }
 .cabeza-momento { display: flex; align-items: center; gap: 12px; border: 0; background: none; padding: 0; text-align: left; min-width: 0; color: inherit; }
@@ -1197,33 +1180,22 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .cosas-momento .quitar { border: 0; padding: 0 4px; color: var(--suave); opacity: 0; font-size: 16px; background: none; }
 .cosas-momento li:hover .quitar, .cosas-momento .quitar:focus-visible { opacity: 1; }
 @media (hover: none) { .cosas-momento .quitar { opacity: .6; } }
-/* Agregar comida: buscador, pestañas, opciones con casilla y lo elegido con sus gramos */
-.w-agregar-comida { gap: 12px; }
-.w-agregar-comida h3 { display: flex; align-items: center; justify-content: flex-start; gap: 6px; }
-.w-agregar-comida h3 select { width: auto; }
-.w-agregar-comida h3 select { font-weight: 600; }
+/* Paso 69: el buscador que abre el + de una comida, ahí mismo bajo su fila */
+.momento .mas.abierto { background: var(--vidrio-fuerte); color: var(--texto); border: 1px solid var(--borde); }
+.buscador-comida { grid-column: 1 / -1; display: grid; gap: 6px; margin: 6px 0 2px 52px; }
 .buscar-alimento { display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid var(--borde); border-radius: 12px; background: var(--vidrio-fuerte); }
 .buscar-alimento .icono { width: 18px; height: 18px; color: var(--suave); }
 .buscar-alimento input { flex: 1; border: 0; background: none; padding: 10px 0; outline: none; }
-.pestanas-dieta { display: flex; border-bottom: 1px solid var(--linea); }
-.pestanas-dieta button { border: 0; background: none; padding: 8px 12px; border-radius: 0; color: var(--suave); border-bottom: 2.5px solid transparent; }
-.pestanas-dieta button[aria-selected="true"] { color: var(--bien); border-bottom-color: var(--bien); font-weight: 600; }
-.opciones { display: grid; overflow: auto; min-height: 0; flex: 1 1 auto; max-height: 360px; }
-.opcion-alimento { display: flex; align-items: center; gap: 12px; padding: 8px 2px; border-top: 1px solid var(--linea); cursor: pointer; text-align: left; }
+.opciones { display: grid; max-height: 320px; overflow: auto; }
+.opcion-alimento { display: grid; grid-template-columns: minmax(0, 1fr) 64px auto 34px; align-items: center; gap: 8px; padding: 6px 2px; border-top: 1px solid var(--linea); }
 .opcion-alimento:first-child { border-top: 0; }
-.opcion-alimento input { width: 20px; height: 20px; accent-color: var(--bien); flex: none; }
 .opcion-alimento > span { display: grid; min-width: 0; font-size: 13.5px; }
-.opcion-alimento small { color: var(--suave); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.comida-guardada { border: 0; border-top: 1px solid var(--linea); background: none; border-radius: 0; }
-.lista-elegidos { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--bien) 8%, transparent); }
-.fila-elegida { display: grid; grid-template-columns: minmax(0, 1fr) 28px 64px auto 28px 64px; align-items: center; gap: 6px; font-size: 13px; }
-.fila-elegida > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fila-elegida button { width: 28px; height: 28px; padding: 0; }
-.fila-elegida input { width: 100%; padding: 3px 6px; text-align: right; }
-.fila-elegida small { color: var(--suave); }
-.fila-elegida b { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
-.agregar-todo { min-height: 44px; margin-top: auto; }
-@media (max-width: 700px) { .metas-dieta { grid-template-columns: 1fr; } .kcal-grande b { font-size: 36px; } .vaso .icono { width: 20px; height: 26px; } .fila-vasos { flex-wrap: nowrap; } }
+.opcion-alimento > span > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.opcion-alimento small { color: var(--suave); font-size: 11.5px; }
+.opcion-alimento input { width: 100%; padding: 4px 6px; text-align: right; }
+.opcion-alimento button { width: 34px; height: 34px; padding: 0; border-radius: 50%; font-size: 18px; }
+@media (max-width: 700px) { .buscador-comida { margin-left: 0; } }
+@media (max-width: 700px) { .metas-dieta { grid-template-columns: 1fr; } .kcal-grande b { font-size: 36px; } }
 
 /* Paso 68: la rutina de entreno. Una fila por ejercicio: casilla, nombre, series × repeticiones y los kilos. */
 .w-rutina h3 small .segmento { font-size: 12.5px; }
@@ -1247,3 +1219,13 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .grafico-ejercicio { width: 100%; height: auto; overflow: visible; }
 .grafico-ejercicio .linea { fill: none; stroke: var(--entreno); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .grafico-ejercicio circle { fill: var(--entreno); }
+
+/* ---------- Paso 69: apartados en bloques (Salud: Ejercicio, Hábitos y Dieta, uno debajo del otro) ---------- */
+.grupos-widgets { display: flex; flex-direction: column; gap: 40px; }
+.grupo-widgets { display: flex; flex-direction: column; gap: 16px; }
+.titulo-bloque { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 22px; letter-spacing: -.01em; }
+.titulo-bloque .icono, .titulo-bloque svg { width: 24px; height: 24px; }
+.grupo-widgets + .grupo-widgets { padding-top: 28px; border-top: 1px solid rgba(255, 255, 255, .35); }
+/* La última ventana de cada columna se estira hasta el fondo del bloque: las columnas terminan parejas, sin huecos. */
+.grupo-widgets .columna > .ventana:last-child { flex: 1; }
+.grupo-widgets .columna > h2 { margin-bottom: -8px; }

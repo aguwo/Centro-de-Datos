@@ -1,7 +1,7 @@
 // El apartado Salud (paso 63): tu peso, lo que comiste hoy, tus hábitos y tu despensa, con gráficos.
-// Va en la barra lateral, a pantalla completa. Paso 65: tres vistas separadas, Ejercicio, Hábitos y Dieta (apartados.js).
+// Va en la barra lateral, a pantalla completa. Paso 69: una sola página con tres bloques, Ejercicio, Hábitos y Dieta (apartados.js),
+// cada uno con lo de hoy primero y cómo vas después.
 // Sus widgets (widgets.js):
-//   cifras-ejercicio, cifras-habitos   cuatro números con su ícono, en la barra del apartado
 //   semana-entreno    los 7 días de esta semana: cuáles tocaba entrenar y si fuiste; un botón marca el de hoy
 //   constancia-entreno 13 semanas de entrenos: lo que hiciste, lo que tocaba y lo que no
 //   rutina       la rutina del próximo entreno: marcas cada ejercicio, anotas los kilos y ves cómo vas subiendo (paso 68)
@@ -12,9 +12,8 @@
 // La Dieta (paso 67, como Samsung Health) mira un día (ctx.dia; sin nada, hoy):
 //   calorias-dia  ‹ › para cambiar de día; las calorías contra tu meta y cuánto te queda; ahí se cambian las metas
 //   equilibrio    de dónde vienen las calorías (carbos, grasa, proteína) contra lo recomendado
-//   agua          los vasos de agua del día, con − y +
-//   comidas-dia   desayuno, snacks, almuerzo, merienda y cena: sus kcal y su +; tocar una muestra qué comiste
-//   agregar-comida buscar o elegir (Frecuentes, Mis alimentos, Mis comidas), ajustar gramos y agregar varios juntos
+//   comidas-dia   desayuno, almuerzo, merienda y cena: sus kcal y su +, que abre ahí el buscador de alimentos;
+//                 tocar una muestra qué comiste
 //   semana-comida las calorías de los 7 días hasta el que miras, contra tu meta
 //   despensa     los alimentos que se acabaron o quedan pocos: tocar sube su nivel
 //
@@ -22,11 +21,11 @@
 //   peso      el objetivo con unidad "kg" (ej. «Subir 10 kilos»): sus registros "medida" o, si no hay, su "Va en"
 //   comida    los registros "comida" de hoy; cada uno apunta a un alimento, que sabe sus kcal y macros por 100 g
 //   metas     las que guardes (tabla preferencias, clave "salud"); sin eso, unas sugeridas según tu peso
-// Cada hábito cae en una vista: los de entrenar en Ejercicio, los de registrar calorías y tomar agua en Dieta
-// (se cumplen solos al anotar comida o sumar vasos) y el resto en Hábitos.
+// Cada hábito cae en un bloque: los de entrenar en Ejercicio, los de registrar calorías en Dieta
+// (se cumplen solos al anotar comida) y el resto en Hábitos.
 import { el, db, datos, dia, escribir, areaDe } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes, sinHoraISO } from "./fechas.js";
-import { alternarRegistro, cambiarProps, crear, dentroDeCaja } from "./acciones.js";
+import { alternarRegistro, cambiarProps, dentroDeCaja } from "./acciones.js";
 import { icono, elegir } from "./dibujos.js";
 import { formulario, mostrarPanel } from "./panel.js";
 
@@ -103,7 +102,7 @@ function tocaEl(h, d) {
   return !nombra.length || nombra.includes(NOMBRES[new Date(d + "T12:00").getDay()]);
 }
 // Paso 65: en qué vista va cada hábito, según su nombre. Los que no son de Ejercicio ni de Dieta van en Hábitos.
-const SECCIONES = [[/entren|gimnasio|ejercicio|correr|deporte/i, "ejercicio"], [/calor[ií]as|kcal|comida|dieta|agua/i, "dieta"]];
+const SECCIONES = [[/entren|gimnasio|ejercicio|correr|deporte/i, "ejercicio"], [/calor[ií]as|kcal|comida|dieta/i, "dieta"]];
 const habitos = (seccion = "habitos") => datos.nodos.filter((n) => n.tipos.clave === "habito" && elegir(n.titulo, SECCIONES, "habitos") === seccion);
 const marcasDe = (h) => datos.registros.filter((r) => r.clase === "habito" && r.nodo_id === h.id);
 const diasMarcados = (lista) => { const ids = new Set(lista.map((h) => h.id)); return new Set(datos.registros.filter((r) => r.clase === "habito" && ids.has(r.nodo_id)).map((r) => dia(r.fecha))); };
@@ -122,16 +121,6 @@ const TEMAS = [[/creatina|vitamina|pastilla|remedio/i, ["pildora", "#7c3aed"]], 
   [/mañana|piel|sol/i, ["sol", "#c2410c"]], [/noche|dormir/i, ["luna", "#4338ca"]], [/entren|gim|ejercicio|correr/i, ["pesa", "#2f7a4c"]],
   [/le(er|ctura)|libro/i, ["libro", "#a16207"]], [/estudi/i, ["examen", "#0f766e"]], [/calor|comida|kcal/i, ["fuego", "#c2410c"]]];
 const temaDe = (h) => elegir(h.titulo, TEMAS, ["si", "#2f7a4c"]).map((x, i) => (i === 0 ? h.props?.icono ?? x : x));
-// Días seguidos con algún hábito de la lista cumplido, contando hacia atrás desde hoy (o desde ayer, si hoy aún no marcas nada).
-function rachas(lista = habitos()) {
-  const dias = diasMarcados(lista);
-  let d = dias.has(hoyTexto()) ? hoyTexto() : sumarDias(hoyTexto(), -1), actual = 0;
-  while (dias.has(d)) { actual++; d = sumarDias(d, -1); }
-  let mejor = 0, corrida = 0, previo = null;
-  for (const x of [...dias].sort()) { corrida = previo && diasEntre(previo, x) === 1 ? corrida + 1 : 1; mejor = Math.max(mejor, corrida); previo = x; }
-  return { actual, mejor };
-}
-
 // ---------- los entrenos (paso 65) ----------
 // Tus entrenos son los hábitos de Ejercicio (ej. «Entrenar», con Días «Lunes, martes, miércoles y viernes, 08:00 a 09:00»).
 const entrenos = () => habitos("ejercicio");
@@ -158,52 +147,7 @@ function rachaDeEntrenos() {
 const diaCorto = (d) => new Date(d + "T12:00").toLocaleDateString("es-CL", { weekday: "short", day: "numeric" });
 
 // ---------- los widgets ----------
-// Una vista de Salud lleva arriba, a todo el ancho, cuatro cifras con su ícono.
-// barraDeCifras(tarjetas) arma ese widget: tarjetas() devuelve las cuatro como [ícono, color, título, valor, unidad, pie].
-function tarjeta(nombre, color, titulo, valor, unidad, pie) {
-  const t = el("div", { className: "cifra-salud vidrio" }, el("span", { className: "insignia" }, icono(nombre)),
-    el("div", {}, el("small", { textContent: titulo }), el("b", {}, String(valor), el("i", { textContent: " " + unidad })), el("small", { textContent: pie })));
-  t.style.setProperty("--c", color);
-  return t;
-}
-const barraDeCifras = (tarjetas) => (v, ctx) => {
-  v.hidden = true; // esta ventana no se ve: pone sus cifras en la barra del apartado
-  return () => {
-    cargarMetas(() => ctx.cambiar({}));
-    ctx.barra.replaceChildren(el("div", { className: "cifras-salud" }, ...tarjetas().map((t) => tarjeta(...t))));
-  };
-};
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
-function cifraDePeso() {
-  const o = objetivoDePeso();
-  return o ? ["balanza", COLOR.kcal, "Peso", numero(pesoActual(o).v, 1), "kg", `faltan ${numero(Math.abs(o.props.meta - pesoActual(o).v), 1)} para ${numero(o.props.meta, 1)}`]
-    : ["balanza", COLOR.kcal, "Peso", "—", "", "crea un objetivo con unidad kg"];
-}
-
-export const cifrasEjercicio = barraDeCifras(() => {
-  const hoy = hoyTexto(), mes = hoy.slice(0, 8) + "01", hechos = [...diasMarcados(entrenos())].filter((d) => d >= mes && d <= hoy).length;
-  let tocaban = 0;
-  for (let d = mes; d <= hoy; d = sumarDias(d, 1)) if (tocaEntrenar(d)) tocaban++;
-  const r = rachaDeEntrenos(), prox = proximoEntreno(), en = prox && diasEntre(hoy, prox);
-  const nombreMes = new Date(hoy + "T12:00").toLocaleDateString("es-CL", { month: "long" });
-  return [cifraDePeso(),
-    ["pesa", "#1d4ed8", "Entrenos en " + nombreMes, String(hechos), `de ${tocaban}`, tocaban ? "los que tocaban hasta hoy" : "aún no tocaba ninguno"],
-    ["fuego", COLOR.proteina, "Racha de entrenos", String(r.actual), r.actual === 1 ? "seguido" : "seguidos", `la mejor: ${r.mejor}`],
-    prox ? ["reloj", COLOR.carbos, "Próximo entreno", en === 0 ? "hoy" : en === 1 ? "mañana" : diaCorto(prox), horaDe(entrenos()[0]), en > 1 ? `en ${en} días` : entrenos()[0].props?.dias ?? ""]
-      : ["reloj", COLOR.carbos, "Próximo entreno", "—", "", "pon los días en tu hábito «Entrenar»"]];
-});
-
-export const cifrasHabitos = barraDeCifras(() => {
-  const hoy = hoyTexto(), lista = habitos(), deHoy = lista.filter((h) => tocaEl(h, hoy)), marcados = diasMarcados(lista);
-  const hechos = deHoy.filter((h) => marcasDe(h).some((r) => dia(r.fecha) === hoy)).length, r = rachas(lista);
-  const mes = cumplido(lista, sumarDias(hoy, -29), hoy), antes = cumplido(lista, sumarDias(hoy, -89), hoy);
-  const mejor = lista.map((h) => [h, cumplido([h], sumarDias(hoy, -89), hoy)]).sort((a, b) => b[1] - a[1])[0];
-  return [["si", "#7c3aed", "Hoy", String(hechos), `de ${deHoy.length}`, hechos === deHoy.length && hechos ? "¡todo listo!" : "los que tocan hoy"],
-    ["fuego", COLOR.proteina, "Racha", String(r.actual), r.actual === 1 ? "día" : "días", `la mejor: ${plural(r.mejor, "día", "días")}`],
-    ["calendario", COLOR.carbos, "Cumplido en 30 días", Math.round(mes * 100) + "%", "", `en 90 días: ${Math.round(antes * 100)}%`],
-    mejor && mejor[1] ? [temaDe(mejor[0])[0], temaDe(mejor[0])[1], "El más constante", mejor[0].titulo, "", `${Math.round(mejor[1] * 100)}% en 90 días`]
-      : ["estrella", COLOR.grasa, "El más constante", "—", "", marcados.size ? "" : "marca tus hábitos y aparecerá"]];
-});
 
 export function peso(v) {
   v.classList.add("w-salud");
@@ -484,20 +428,16 @@ export function despensa(v) {
 }
 
 // ---------- la Dieta (paso 67, como Samsung Health) ----------
-// Toda la vista mira un día (ctx.dia; sin nada, hoy). ctx.momento es la comida a la que se agrega (sin nada, la de la hora)
-// y ctx.elegidos lo que vas eligiendo para agregar: Map id del alimento → gramos.
-const MOMENTOS = [["Desayuno", "taza", "#c2410c"], ["Snack de la mañana", "galleta", "#be185d"], ["Almuerzo", "plato", "#2f7a4c"],
-  ["Merienda", "manzana", "#0e7490"], ["Cena", "luna", "#4338ca"], ["Snack de la noche", "galleta", "#7c3aed"]];
+// Toda la vista mira un día (ctx.dia; sin nada, hoy). Paso 69: solo las cuatro comidas, y se agrega con el + de cada una.
+const MOMENTOS = [["Desayuno", "taza", "#c2410c"], ["Almuerzo", "plato", "#2f7a4c"], ["Merienda", "manzana", "#0e7490"], ["Cena", "luna", "#4338ca"]];
 const diaDe = (ctx) => ctx.dia ?? hoyTexto();
-// La comida que toca ahora: hasta las 10 desayuno, hasta las 12 snack, hasta las 15 almuerzo, hasta las 19 merienda, hasta las 22 cena.
-const momentoDeAhora = () => { const h = new Date().getHours(); return MOMENTOS[[10, 12, 15, 19, 22, 24].findIndex((t) => h < t)][0]; };
 const nombreDelDia = (d) => {
   const f = diasEntre(hoyTexto(), d), largo = new Date(d + "T12:00").toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" });
   return f === 0 ? "Hoy, " + largo : f === -1 ? "Ayer, " + largo : largo;
 };
-// Los hábitos de Dieta que se cuentan solos: registrar calorías (al anotar comida) y el agua (con sus vasos).
+// El hábito de Dieta que se cumple solo: registrar calorías (al anotar comida).
 const habitoDe = (palabras) => habitos("dieta").find((h) => palabras.test(h.titulo));
-const REGISTRAR = /calor[ií]as|kcal/i, AGUA = /agua/i;
+const REGISTRAR = /calor[ií]as|kcal/i;
 // Anotar cosas comidas ([{ a, g }]) en un momento del día d: hoy con la hora de ahora; otro día, sin hora.
 // También cumple ese día el hábito de registrar calorías, si lo tienes y aún no está marcado.
 function anotarComida(cosas, momento, d) {
@@ -562,27 +502,8 @@ export function equilibrio(v, ctx) {
   };
 }
 
-// El agua del día en vasos, contra una meta (8 si no le pones otra en props.meta). Cada vaso es una marca del hábito «Tomar agua».
-export function agua(v, ctx) {
-  v.classList.add("w-salud");
-  return () => {
-    const h = habitoDe(AGUA), d = diaDe(ctx);
-    if (!h) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Cuenta los vasos de agua que tomas al día." }),
-      el("button", { className: "principal", textContent: "Empezar a contar el agua", onclick: () => {
-        const area = areaDeSalud();
-        crear("habito", { titulo: "Tomar agua", props: { meta: 8 } }, { enfocar: false, conexion: area && dentroDeCaja("habito", area) });
-      } }));
-    const vasos = marcasDe(h).filter((r) => dia(r.fecha) === d), meta = Number(h.props?.meta) || 8;
-    v.sub.textContent = `${vasos.length} de ${meta} vasos · ${numero(vasos.length * 0.25, 2)} L`;
-    const fecha = d === hoyTexto() ? {} : { fecha: sinHoraISO(d) };
-    v.replaceChildren(v.firstChild, el("div", { className: "vasos" },
-      el("button", { textContent: "−", ariaLabel: "Quitar un vaso", disabled: !vasos.length, onclick: () => escribir(db.from("registros").delete().eq("id", vasos.at(-1).id)) }),
-      el("span", { className: "fila-vasos" }, ...Array.from({ length: Math.max(meta, vasos.length) }, (_, i) => el("span", { className: "vaso" + (i < vasos.length ? " lleno" : "") }, icono("vaso")))),
-      el("button", { className: "principal", textContent: "+", ariaLabel: "Sumar un vaso", onclick: () => escribir(db.from("registros").insert({ clase: "habito", nodo_id: h.id, ...fecha })) })));
-  };
-}
-
-// Las comidas del día, una fila por momento con sus kcal y su +. Tocar una fila la abre para ver qué comiste (× lo borra).
+// Las comidas del día, una fila por comida con sus kcal y su +. Tocar una fila la abre para ver qué comiste (× lo borra).
+// El + abre ahí mismo el buscador de alimentos (ctx.agregando = la comida).
 export function comidasDia(v, ctx) {
   v.classList.add("w-salud");
   return () => {
@@ -590,44 +511,30 @@ export function comidasDia(v, ctx) {
     const grupos = [...MOMENTOS, ...(sueltas.length ? [["Sin comida asignada", "reloj", "#64748b"]] : [])];
     v.replaceChildren(v.firstChild, ...grupos.map(([nombre, ic, color]) => {
       const cosas = nombre === "Sin comida asignada" ? sueltas : lista.filter((x) => x.momento === nombre), t = sumar(cosas);
-      const abierta = ctx.abierta === nombre && cosas.length;
+      const abierta = ctx.abierta === nombre && cosas.length, agregando = ctx.agregando === nombre;
       const fila = el("div", { className: "momento" + (abierta ? " abierta" : "") },
         el("button", { className: "cabeza-momento", ariaExpanded: String(!!abierta), disabled: !cosas.length, onclick: () => ctx.cambiar({ abierta: abierta ? null : nombre }) },
           el("span", { className: "insignia" }, icono(ic)),
           el("span", {}, el("b", { textContent: nombre }), el("small", { textContent: cosas.length ? plural(cosas.length, "alimento", "alimentos") : "sin registro" })),
-          cosas.length ? el("b", { className: "kcal", textContent: numero(t.kcal) + " kcal" }) : el("small", { textContent: "Toca + para anotar" })),
-        nombre !== "Sin comida asignada" ? el("button", { className: "mas", textContent: "+", ariaLabel: "Agregar a " + nombre.toLowerCase(),
-          onclick: () => ctx.cambiar({ momento: nombre, enfocar: Date.now() }) }) : "",
+          cosas.length ? el("b", { className: "kcal", textContent: numero(t.kcal) + " kcal" }) : ""),
+        nombre !== "Sin comida asignada" ? el("button", { className: "mas" + (agregando ? " abierto" : ""), textContent: agregando ? "×" : "+",
+          ariaLabel: agregando ? "Cerrar el buscador" : "Agregar a " + nombre.toLowerCase(), ariaExpanded: String(agregando),
+          onclick: () => ctx.cambiar({ agregando: agregando ? null : nombre, texto: "" }) }) : "",
         abierta ? el("ul", { className: "cosas-momento" }, ...cosas.sort((a, b) => b.kcal - a.kcal).map((x) => el("li", {},
           el("span", { textContent: x.a ? sinEstimacion(x.a.titulo) : "(alimento borrado)" }), el("small", { textContent: numero(x.g) + " g" }), el("b", { textContent: numero(x.kcal) + " kcal" }),
-          el("button", { className: "quitar", textContent: "×", ariaLabel: "Borrar " + (x.a?.titulo ?? ""), onclick: () => escribir(db.from("registros").delete().eq("id", x.r.id)) })))) : "");
+          el("button", { className: "quitar", textContent: "×", ariaLabel: "Borrar " + (x.a?.titulo ?? ""), onclick: () => escribir(db.from("registros").delete().eq("id", x.r.id)) })))) : "",
+        agregando ? buscador(nombre, ctx) : "");
       fila.style.setProperty("--c", color);
       return fila;
     }));
   };
 }
 
-// Lo que más repites: las comidas (un momento de un día) que se repiten igual, de la más repetida a la menos.
-function frecuentes() {
-  const porComida = new Map(), veces = new Map();
-  for (const r of datos.registros) if (r.clase === "comida" && r.props?.comida) {
-    const k = dia(r.fecha) + "|" + r.props.comida;
-    if (!porComida.has(k)) porComida.set(k, []);
-    porComida.get(k).push(r);
-  }
-  for (const [k, rs] of porComida) {
-    const momento = k.split("|")[1], firma = momento + "|" + rs.map((r) => r.nodo_id).sort().join(",");
-    if (!veces.has(firma)) veces.set(firma, { momento, rs, n: 0 });
-    veces.get(firma).n++;
-    veces.get(firma).rs = rs; // la última vez, con sus cantidades
-  }
-  return [...veces.values()].filter((f) => f.n >= 2 && f.rs.every((r) => datos.nodo.has(r.nodo_id))).sort((a, b) => b.n - a.n).slice(0, 6);
-}
 // Los alimentos que más anotas, del más al menos.
 function masAnotados() {
   const n = new Map();
   for (const r of datos.registros) if (r.clase === "comida" && datos.nodo.has(r.nodo_id)) n.set(r.nodo_id, (n.get(r.nodo_id) ?? 0) + 1);
-  return [...n].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id]) => datos.nodo.get(id));
+  return [...n].sort((a, b) => b[1] - a[1]).map(([id]) => datos.nodo.get(id));
 }
 // Los gramos de siempre de un alimento: los de la última vez que lo anotaste, o su porción, o 100.
 function gramosDeSiempre(a) {
@@ -636,52 +543,29 @@ function gramosDeSiempre(a) {
 }
 const kcalDe = (a, g) => g / 100 * (a.props?.kcal_100g ?? 0);
 
-// Agregar comida, como en Samsung Health: buscas o eliges de Frecuentes, Mis alimentos o Mis comidas, marcas varios,
-// ajustas los gramos y los agregas juntos a la comida elegida.
-const PESTANAS = ["Frecuentes", "Mis alimentos", "Mis comidas"];
-export function agregarComida(v, ctx) {
-  v.classList.add("w-salud");
-  const buscar = el("input", { type: "search", placeholder: "Buscar alimento", ariaLabel: "Buscar alimento", oninput: () => ctx.cambiar({}) });
-  let enfocado = null;
-  return () => {
-    const momento = ctx.momento ?? momentoDeAhora(), pestana = ctx.pestana ?? PESTANAS[0], elegidos = (ctx.elegidos ??= new Map());
-    const alimentos = datos.nodos.filter((n) => n.tipos.clave === "alimento");
-    if (ctx.enfocar && ctx.enfocar !== enfocado) { enfocado = ctx.enfocar; buscar.focus(); }
-    const alternar = (a, g = gramosDeSiempre(a)) => { if (elegidos.has(a.id)) elegidos.delete(a.id); else elegidos.set(a.id, g); ctx.cambiar({}); };
-    const filaAlimento = (a) => el("label", { className: "opcion-alimento" },
-      el("input", { type: "checkbox", checked: elegidos.has(a.id), onchange: () => alternar(a) }),
-      el("span", {}, el("span", { textContent: sinEstimacion(a.titulo) }), el("small", { textContent: `${numero(gramosDeSiempre(a))} g · ${numero(kcalDe(a, gramosDeSiempre(a)))} kcal` })));
-    const texto = sinTildes(buscar.value.trim());
-    let opciones;
-    if (texto) opciones = alimentos.filter((a) => sinTildes(a.titulo).includes(texto)).slice(0, 12).map(filaAlimento);
-    else if (pestana === "Frecuentes") opciones = masAnotados().map(filaAlimento);
-    else if (pestana === "Mis alimentos") opciones = alimentos.sort((a, b) => a.titulo.localeCompare(b.titulo, "es")).map(filaAlimento);
-    else opciones = frecuentes().map((f) => {
-      const cosas = f.rs.map((r) => ({ a: datos.nodo.get(r.nodo_id), g: gramos(r, datos.nodo.get(r.nodo_id)) }));
-      return el("button", { className: "opcion-alimento comida-guardada", onclick: () => { cosas.forEach(({ a, g }) => elegidos.set(a.id, Math.round(g))); ctx.cambiar({}); } },
-        el("span", {}, el("span", { textContent: `${f.momento} de siempre` }),
-          el("small", { textContent: `${cosas.map((x) => sinEstimacion(x.a.titulo).toLowerCase()).join(", ")} · ${numero(cosas.reduce((s, x) => s + kcalDe(x.a, x.g), 0))} kcal` })));
-    });
-    const lista = [...elegidos].map(([id, g]) => ({ a: datos.nodo.get(id), g })).filter((x) => x.a);
-    const total = lista.reduce((s, x) => s + kcalDe(x.a, x.g), 0);
-    const cambiarG = (id, g) => { elegidos.set(id, Math.max(1, g)); ctx.cambiar({}); };
-    v.replaceChildren(
-      el("h3", {}, "Agregar a ", el("select", { ariaLabel: "Comida", onchange: (e) => ctx.cambiar({ momento: e.target.value }) },
-        ...MOMENTOS.map(([n]) => el("option", { value: n, textContent: n.toLowerCase(), selected: n === momento })))),
-      el("div", { className: "buscar-alimento" }, icono("lupa"), buscar),
-      texto ? "" : el("div", { className: "pestanas-dieta", role: "tablist" }, ...PESTANAS.map((p) =>
-        el("button", { role: "tab", ariaSelected: String(p === pestana), textContent: p, onclick: () => ctx.cambiar({ pestana: p }) }))),
-      el("div", { className: "opciones" }, ...(opciones.length ? opciones : [el("p", { className: "vacio", textContent: texto ? "No hay un alimento con ese nombre. Créalo con «+ Nuevo»." : "Aún no hay nada aquí." })])),
-      lista.length ? el("div", { className: "lista-elegidos" }, ...lista.map(({ a, g }) => el("div", { className: "fila-elegida" },
-        el("span", { textContent: sinEstimacion(a.titulo) }),
-        el("button", { textContent: "−", ariaLabel: "Menos gramos", onclick: () => cambiarG(a.id, g - 10) }),
-        el("input", { type: "number", min: "1", value: g, ariaLabel: "Gramos de " + a.titulo, onchange: (e) => cambiarG(a.id, Number(e.target.value) || 1) }),
-        el("small", { textContent: "g" }),
-        el("button", { textContent: "+", ariaLabel: "Más gramos", onclick: () => cambiarG(a.id, g + 10) }),
-        el("b", { textContent: numero(kcalDe(a, g)) + " kcal" })))) : "",
-      el("button", { className: "principal agregar-todo", disabled: !lista.length, textContent: lista.length ? `Agregar ${plural(lista.length, "alimento", "alimentos")} · ${numero(total)} kcal` : "Elige qué comiste",
-        onclick: () => { anotarComida(lista, momento, diaDe(ctx)); elegidos.clear(); buscar.value = ""; ctx.cambiar({}); } }));
+// El buscador de una comida: escribes y salen tus alimentos (sin escribir, los que más anotas primero).
+// Cada uno con sus gramos de siempre, que puedes cambiar, y su +. Lo que agregas queda en la comida y el buscador sigue abierto.
+const RESULTADOS = 8;
+function buscador(momento, ctx) {
+  const resultados = el("div", { className: "opciones" });
+  const campo = el("input", { type: "search", placeholder: "Buscar alimento", ariaLabel: "Buscar alimento", value: ctx.texto ?? "",
+    oninput: () => { ctx.texto = campo.value; mostrar(); } }); // solo cambia la lista: el campo no pierde el foco
+  const mostrar = () => {
+    const texto = sinTildes(campo.value.trim()), alimentos = datos.nodos.filter((n) => n.tipos.clave === "alimento");
+    const usados = masAnotados(), resto = alimentos.filter((a) => !usados.includes(a)).sort((a, b) => a.titulo.localeCompare(b.titulo, "es"));
+    const lista = [...usados, ...resto].filter((a) => !texto || sinTildes(a.titulo).includes(texto)).slice(0, RESULTADOS);
+    resultados.replaceChildren(...(lista.length ? lista.map((a) => {
+      const g = el("input", { type: "number", min: "1", value: gramosDeSiempre(a), ariaLabel: "Gramos de " + a.titulo,
+        oninput: () => { kcal.textContent = numero(kcalDe(a, Number(g.value) || 0)) + " kcal"; } });
+      const kcal = el("small", { textContent: numero(kcalDe(a, Number(g.value))) + " kcal" });
+      return el("div", { className: "opcion-alimento" }, el("span", {}, el("span", { textContent: sinEstimacion(a.titulo) }), kcal), g, el("small", { textContent: "g" }),
+        el("button", { className: "principal", textContent: "+", ariaLabel: `Agregar ${a.titulo} a ${momento.toLowerCase()}`,
+          onclick: () => { anotarComida([{ a, g: Math.max(1, Number(g.value) || 1) }], momento, diaDe(ctx)); ctx.abierta = momento; } }));
+    }) : [el("p", { className: "vacio", textContent: "No tienes un alimento con ese nombre. Créalo con «+ Nuevo»." })]));
   };
+  mostrar();
+  requestAnimationFrame(() => { if (!document.activeElement || document.activeElement === document.body) campo.focus(); });
+  return el("div", { className: "buscador-comida" }, el("div", { className: "buscar-alimento" }, icono("lupa"), campo), resultados);
 }
 
 export function semanaComida(v, ctx) {
