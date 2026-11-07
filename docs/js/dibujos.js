@@ -1,7 +1,8 @@
 // Íconos y portadas ilustradas (paso 52). Son trazos SVG escritos aquí mismo: no dependen de imágenes de afuera
 // y toman el color del texto que los rodea (currentColor), así un mismo dibujo sirve para cualquier ramo o proyecto.
 //   icono(nombre)          un ícono de línea de 24×24, ej. icono("reloj")
-//   portada(tema, color)   una franja con el dibujo de un tema, teñida con ese color, y su ícono encima
+//   portada(tema, color, clase, foto)  una franja con el dibujo de un tema, teñida con ese color, y su ícono encima;
+//                          con foto (el enlace a una imagen), la foto en vez del dibujo
 //   elegir(texto, reglas)  el primer nombre cuya palabra clave aparece en el texto (para adivinar tema o tipo)
 //   progreso(fraccion, marca, nombre)  una barra delgada de avance de 0 a 1 y, si se da, una rayita en la marca (ej. el mínimo)
 //   anillo(fraccion, texto)     un anillo de avance de 0 a 1 con un texto al medio (ej. "54%")
@@ -72,9 +73,15 @@ export function insignia(nombre, color, clase = "") {
   return i;
 }
 
-export function portada(tema, color, clase = "") {
+export function portada(tema, color, clase = "", foto) {
   const p = el("div", { className: "portada " + clase }, svg("0 0 240 80", DIBUJOS[tema] ?? DIBUJOS.libro, "dibujo"), insignia(tema, color, "grande"));
   p.style.setProperty("--c", color);
+  if (/^https?:\/\//.test(foto ?? "")) { // la foto va encima del dibujo; si no carga, se sigue viendo el dibujo
+    const img = el("img", { className: "foto", src: foto, alt: "", loading: "lazy", decoding: "async" });
+    img.onerror = () => img.remove();
+    p.querySelector(".dibujo").after(img);
+    p.classList.add("con-foto");
+  }
   p.querySelector(".dibujo").setAttribute("preserveAspectRatio", "xMidYMid slice");
   return p;
 }

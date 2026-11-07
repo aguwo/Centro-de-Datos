@@ -9,7 +9,7 @@
 // Los widgets no saben de proyectos más allá de MUESTRA: otra vista puede reusarlos con otro tipo.
 import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, areaDe, dentroDe, escribible, escribiendoEn } from "./base.js";
 import { hoyTexto, diasEntre, corto } from "./fechas.js";
-import { cambiar, completar, dentroDeCaja } from "./acciones.js";
+import { cambiar, cambiarProps, completar, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario, camposDe, tienePropiedad } from "./panel.js";
 import { listaDeTareas, seccion, porFecha, agregarTarea } from "./tareas.js";
 import { ocurre } from "./agenda.js";
@@ -103,7 +103,7 @@ export function galeria(v, ctx) {
   // con una rayita donde debería ir según el plazo.
   function tarjeta(n, r, i) {
     const color = colorDeProyecto(n.id), sig = r.pendientes[0], area = datos.nodo.get(areaDe(n.id))?.titulo;
-    const tapa = portada(temaDe(n), color);
+    const tapa = portada(temaDe(n), color, "", n.props?.portada);
     tapa.append(el("span", { className: "como " + r.salud.clase, textContent: r.salud.texto }));
     const t = el("button", { className: "tarjeta-proyecto", onclick: () => elegir(ctx, n.id) }, tapa,
       el("span", { className: "cuerpo" },
@@ -130,6 +130,7 @@ export function cabecera(v, ctx) {
     v.hidden = !n;
     if (!n) return;
     if (escribiendoEn(v) && v.dataset.id === n.id) return; // estás escribiendo aquí: no se pisa
+    const recien = v.dataset.id !== n.id; // recién abierto: la portada entra con un zoom suave (no en cada redibujo)
     v.dataset.id = n.id;
 
     const titulo = escribible("h2", n.titulo, (t) => (t && t !== n.titulo ? cambiar(n, { titulo: t }) : (titulo.textContent = n.titulo)), "titulo-caja");
@@ -139,24 +140,51 @@ export function cabecera(v, ctx) {
     const conEnlace = (datos.tipo.get(n.tipos.clave)?.propiedades ?? [])
       .filter((p) => p.tipo === "enlace" && /^https?:\/\//.test(n.props?.[p.clave] ?? ""));
     const enlaces = conEnlace.map((p) => el("a", { className: "boton", href: n.props[p.clave], target: "_blank", rel: "noopener", textContent: p.nombre + " ↗" }));
+    const conPortada = tienePropiedad(n, "portada"), foto = elegirFoto(n);
     const acciones = el("div", { className: "acciones-caja" }, ...enlaces,
+      conPortada ? el("button", { textContent: "Cambiar portada", ariaExpanded: "false", onclick: (e) => {
+        foto.hidden = !foto.hidden;
+        e.currentTarget.ariaExpanded = String(!foto.hidden);
+        if (!foto.hidden) foto.querySelector("input").focus();
+      } }) : "",
       el("button", { textContent: "Editar todo", onclick: editar }),
       puedeTerminar ? el("button", { textContent: terminada(n) ? "Reabrir" : "✓ Terminar",
         onclick: () => cambiar(n, { estado: terminada(n) ? "En curso" : "Hecho" }) }) : "");
     // Dónde está (área › ramo...) y sus datos como fichas; tocar una abre el formulario completo.
+    // Los enlaces ya van como botón y la portada se ve arriba: no se repiten como ficha.
     const ruta = cajasDe(n.id).reverse().map((id) => datos.nodo.get(id)?.titulo).filter(Boolean).join(" › ");
     const ficha = (nombre, valor) => el("button", { className: "ficha", onclick: editar }, el("span", { textContent: nombre }), valor);
     const fichas = el("div", { className: "fichas" },
-      ...camposDe(n).filter((c) => !conEnlace.some((p) => p.clave === c.clave)).map((c) => ficha(c.nombre, c.valor)), // los enlaces ya van como botón
+      ...camposDe(n).filter((c) => c.tipo !== "enlace" && c.tipo !== "imagen").map((c) => ficha(c.nombre, c.valor)),
       el("button", { className: "ficha vacia", textContent: "+ Más datos", onclick: editar }));
     const descripcion = el("textarea", { className: "descripcion", value: n.contenido ?? "", rows: 2, ariaLabel: "Descripción",
       placeholder: `¿De qué se trata ${n.titulo}? La idea, con quién, links…` });
     descripcion.onchange = () => cambiar(n, { contenido: descripcion.value.trim() || null });
 
+    // Arriba, la portada (paso 58) a todo el ancho: su foto o el dibujo de su tema. Encima, volver y las acciones;
+    // abajo, dónde está, el título y sus datos.
     const volver = el("button", { className: "volver", textContent: "‹ Proyectos", onclick: () => ctx.cambiar({ caja: null }) });
-    v.replaceChildren(el("div", { className: "arriba" }, volver, el("span", { className: "suave" }, ruta ? "en " + ruta : "Sin área"), acciones),
-      el("div", { className: "nombre-caja" }, punto(n), titulo), fichas, descripcion, avance(n));
+    const heroe = portada(temaDe(n), colorDeProyecto(n.id), "heroe" + (recien ? " recien" : ""), n.props?.portada);
+    heroe.append(el("div", { className: "arriba" }, volver, acciones),
+      el("div", { className: "pie" }, el("span", { className: "ruta", textContent: ruta ? "en " + ruta : "Sin área" }), titulo, fichas));
+    v.replaceChildren(heroe, foto, descripcion, avance(n));
   };
+}
+
+// El cuadro para cambiar la portada: pegar el enlace de una foto, o quitarla (vuelve el dibujo). Parte escondido.
+function elegirFoto(n) {
+  const campo = el("input", { type: "url", value: n.props?.portada ?? "", placeholder: "Pega el enlace de una foto (https://…)", ariaLabel: "Enlace de la foto de portada" });
+  const quitar = el("button", { type: "button", textContent: "Quitar foto", hidden: !n.props?.portada, onclick: () => cambiarProps(n, { portada: null }) });
+  const f = el("form", { className: "elegir-foto", hidden: true }, campo, el("button", { className: "principal", textContent: "Usar esta foto" }), quitar,
+    el("small", { className: "suave", textContent: "Sirve cualquier foto de internet: clic derecho sobre ella › «Copiar dirección de imagen»." }));
+  f.onsubmit = (e) => {
+    e.preventDefault();
+    const url = campo.value.trim();
+    if (url && !/^https?:\/\//.test(url)) return campo.setCustomValidity("Tiene que empezar con https://"), campo.reportValidity();
+    cambiarProps(n, { portada: url || null });
+  };
+  campo.oninput = () => campo.setCustomValidity("");
+  return f;
 }
 
 // Tres datos: cuánto va hecho, cuánto queda del plazo y qué está atrasado (las cuentas, en ritmo).

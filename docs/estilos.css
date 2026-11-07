@@ -543,6 +543,8 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .tarjeta-proyecto:hover { transform: translateY(-4px); box-shadow: 0 22px 48px rgba(0,0,0,.24); }
 .tarjeta-proyecto:active { transform: translateY(-1px) scale(.99); }
 .tarjeta-proyecto .portada { height: 118px; }
+.tarjeta-proyecto .portada.con-foto::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.25), transparent 50%); }
+.tarjeta-proyecto .portada > :is(.insignia, .como) { z-index: 1; }
 .tarjeta-proyecto .portada > .como { position: absolute; right: 12px; top: 12px; background: var(--vidrio-fuerte); box-shadow: 0 2px 8px rgba(0,0,0,.12); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 .tarjeta-proyecto .cuerpo { display: flex; flex-direction: column; gap: 14px; padding: 28px 18px 16px; flex: 1; }
 .tarjeta-proyecto .nombre { display: flex; align-items: center; gap: 12px; }
@@ -577,18 +579,39 @@ form.nodo .conexion select + select { margin-top: 6px; }
 @media (prefers-reduced-motion: reduce) {
   .tarjeta-proyecto, .tarjeta-proyecto .progreso > i, .anillo-avance .lleno, .w-caja, .w-tablero, .w-dentro { animation: none; transition: none; }
 }
-/* La cabecera */
+/* La cabecera (paso 58): la portada a todo el ancho, con su foto o el dibujo del tema sobre un fondo de su color.
+   Encima van volver y las acciones; abajo, el título y sus datos, en blanco sobre un degradado oscuro para leerse sobre cualquier foto. */
 .columna > .w-caja { display: grid; gap: 12px; }
-.w-caja .arriba { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
-.acciones-caja { margin-left: auto; display: flex; gap: 8px; }
-.nombre-caja { display: flex; align-items: center; gap: 4px; }
-.nombre-caja .punto { width: 12px; height: 12px; }
-.titulo-caja { margin: 0; font-size: 26px; letter-spacing: -.02em; outline: none; border-radius: 6px; cursor: text; }
-.titulo-caja:hover, .titulo-caja:focus { box-shadow: 0 0 0 6px color-mix(in srgb, var(--texto) 6%, transparent); }
+.portada .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.portada.con-foto .dibujo { visibility: hidden; }
+.portada.heroe { height: 280px; margin: -16px -20px 0; overflow: hidden; border-radius: var(--radio) var(--radio) 0 0; color: #fff;
+                 background: color-mix(in oklch, var(--c) 62%, #0d1512); }
+.portada.heroe > .insignia { display: none; }
+.portada.heroe .dibujo { position: absolute; right: 0; bottom: 0; width: auto; height: 62%; opacity: .5; } /* a su tamaño, abajo a la derecha */
+.portada.heroe::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(8,13,11,.85) 8%, rgba(8,13,11,.1) 60%, rgba(8,13,11,.3)); }
+.portada.heroe.recien :is(.foto, .dibujo) { animation: acercar 1.2s var(--suave-curva) both; }
+.portada.heroe > .arriba, .portada.heroe > .pie { position: absolute; z-index: 1; left: 20px; right: 20px; }
+.portada.heroe > .arriba { top: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.portada.heroe > .pie { bottom: 18px; display: grid; gap: 8px; text-shadow: 0 1px 10px rgba(0,0,0,.35); }
+.portada.heroe :is(button, a.boton) { color: #fff; border-color: rgba(255,255,255,.28); background: rgba(10,16,13,.45);
+                                      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transition: background .2s; }
+.portada.heroe :is(button, a.boton):hover { background: rgba(10,16,13,.65); }
+.portada.heroe .volver { padding: 6px 12px; border: 1px solid rgba(255,255,255,.28); }
+.portada.heroe .ruta { font-size: 13px; opacity: .85; }
+.acciones-caja { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.titulo-caja { margin: 0; font-size: 34px; line-height: 1.15; letter-spacing: -.025em; outline: none; border-radius: 6px; cursor: text; }
+.titulo-caja:hover, .titulo-caja:focus { box-shadow: 0 0 0 6px rgba(255,255,255,.12); }
 .fichas { display: flex; flex-wrap: wrap; gap: 6px; }
 .ficha { display: inline-flex; gap: 6px; padding: 4px 11px; border-radius: 999px; font-size: 13px; border-color: var(--linea); }
 .ficha span { color: var(--suave); }
 .ficha.vacia { border-style: dashed; color: var(--suave); }
+.portada.heroe .ficha span, .portada.heroe .ficha.vacia { color: rgba(255,255,255,.75); }
+.elegir-foto { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid var(--linea); }
+.elegir-foto input { flex: 1 1 260px; min-width: 0; padding: 7px 11px; border: 1px solid var(--linea); border-radius: 9px; background: transparent; }
+.elegir-foto small { flex-basis: 100%; }
+@keyframes acercar { from { transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .portada.heroe.recien :is(.foto, .dibujo) { animation: none; } }
+@media (max-width: 700px) { .portada.heroe { height: 300px; } .titulo-caja { font-size: 26px; } }
 .descripcion { width: 100%; resize: vertical; padding: 8px 10px; margin: 0 -10px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: inherit; font: inherit; }
 .descripcion:hover, .descripcion:focus { border-color: var(--linea); }
 .avance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }

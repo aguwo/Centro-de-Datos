@@ -7,7 +7,7 @@
 -- Ahora cada propiedad dice:
 --   clave   cómo se guarda. Si es "estado" o "fecha" va en esa columna del nodo; si no, en props.<clave>.
 --   nombre  cómo se muestra.
---   tipo    texto, numero, fecha, fecha_hora, seleccion, booleano, enlace o estado.
+--   tipo    texto, numero, fecha, fecha_hora, seleccion, booleano, enlace, imagen (el enlace a una foto, paso 58) o estado.
 --   opciones (solo en seleccion) los valores permitidos.
 
 update public.tipos t set propiedades = v.propiedades::jsonb

@@ -25,7 +25,7 @@ function legible(p, v) {
 
 // Los datos de un nodo que tienen valor, ya legibles: [{ nombre: "Prioridad", valor: "Alta" }, ...]
 export const camposDe = (n) => propiedadesDe(n.tipos.clave)
-  .map((p) => ({ clave: p.clave, nombre: p.nombre, valor: legible(p, valorDe(n, p)) })).filter((x) => x.valor !== null);
+  .map((p) => ({ clave: p.clave, nombre: p.nombre, tipo: p.tipo, valor: legible(p, valorDe(n, p)) })).filter((x) => x.valor !== null);
 // ¿Su tipo tiene esta propiedad? (ej. "estado": se puede terminar)
 export const tienePropiedad = (n, clave) => todasDe(n.tipos.clave).some((p) => p.clave === clave);
 
@@ -44,6 +44,7 @@ function control(p, v) {
     case "fecha": return el("input", { type: "date", value: dia(v) ?? "" });
     case "fecha_hora": return el("input", { type: "datetime-local", value: v ? `${dia(v)}T${hora(v) || "00:00"}` : "" });
     case "enlace": return el("input", { type: "url", value: v ?? "", placeholder: "https://…" });
+    case "imagen": return el("input", { type: "url", value: v ?? "", placeholder: "https://… (el enlace a una foto)" });
     default: return el("input", { value: v ?? "" });
   }
 }
