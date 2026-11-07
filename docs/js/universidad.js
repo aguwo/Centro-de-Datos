@@ -14,7 +14,7 @@ import { mostrarPanel, formulario } from "./panel.js";
 import { listaDeTareas, agregarTarea, porFecha } from "./tareas.js";
 import { aportesDe, comoVa, esObjetivo } from "./objetivos.js";
 import { calcular, estado, asistencia, nota, formativa, MINIMA, MAXIMA } from "./notas.js";
-import { icono, insignia, portada, elegir, progreso } from "./dibujos.js";
+import { icono, insignia, portada, elegir, progreso, pastilla } from "./dibujos.js";
 
 const PROXIMOS = 8; // cuántas cosas muestra "Lo que viene" (las atrasadas van siempre)
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
@@ -74,7 +74,6 @@ function cuenta(n) {
   const faltan = diasEntre(hoyTexto(), dia(n.fecha));
   return faltan < 0 ? "atrasada" : faltan === 0 ? "hoy" : faltan === 1 ? "mañana" : `en ${faltan} días`;
 }
-const pastilla = (nombre, texto, clase = "") => el("span", { className: "pastilla " + clase }, icono(nombre), texto);
 
 // ---------- ramos (las tarjetas) ----------
 // Arriba (en la barra del apartado, así las columnas parten parejas), unas pastillas con el objetivo del semestre, los días que quedan y los ramos con poca asistencia.

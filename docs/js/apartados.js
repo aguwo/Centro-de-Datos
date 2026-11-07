@@ -40,7 +40,7 @@ export const APARTADOS = [
   // Paso 35: una caja (área, ramo, proyecto...) completa, para verla entera y editarla. Va a pantalla completa.
   {
     id: "proyectos", nombre: "Proyectos", nuevo: ["proyecto", "tarea", "nota", "evento"],
-    columnas: [{ costado: true, widgets: ["indice"] }, { widgets: ["caja", "tablero", "dentro"] }], // el índice, pegado al costado (paso 38b)
+    columnas: [{ widgets: ["galeria", "caja", "tablero", "dentro"] }], // la galería o, si abriste uno, el proyecto (paso 57)
     icono: '<path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
   },
   // Paso 46a: tus ramos del semestre (universidad.js). Las tarjetas; al tocar una, la página de ese ramo.
