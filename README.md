@@ -154,7 +154,6 @@ Lo que viene va con nombre, sin número: el número se pone recién al empezar e
 | --- | --- |
 | Ahora | Respaldos semanales de la base |
 | Siguiente | EV@: material de cada ramo (lista con enlaces) y cuestionarios con fecha |
-| Ahora | Salud con Dieta: falta el resumen en el escritorio infinito |
 | Siguiente | Finanzas |
 | Después | Chat con Martita en la web |
 | Después | Google Calendar en los dos sentidos |
