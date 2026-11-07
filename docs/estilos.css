@@ -573,7 +573,7 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .anillo-avance circle { fill: none; stroke-width: 5; }
 .anillo-avance .pista { stroke: var(--linea); }
 .anillo-avance .lleno { stroke: var(--c, var(--acento)); stroke-linecap: round; }
-.anillo-avance b { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.anillo-avance b { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
 /* Al abrir un proyecto (o volver a la galería) sus ventanas entran de a una */
 .w-caja, .w-tablero, .w-dentro { animation: entrar .45s var(--suave-curva) both; }
 .w-tablero { animation-delay: 60ms; }
@@ -643,7 +643,7 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .ritmo-caja { display: flex; align-items: center; gap: 16px; }
 .ritmo-caja .anillo-avance { width: 84px; height: 84px; }
 .ritmo-caja .anillo-avance circle { stroke-width: 4.5; }
-.ritmo-caja .anillo-avance b { font-size: 18px; }
+.ritmo-caja .anillo-avance b { font-size: 15px; }
 .ritmo-caja > div { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
 .ritmo-caja p { margin: 0; font-size: 13px; }
 .ritmo-caja .como { font-size: 13px; padding: 3px 11px; }
