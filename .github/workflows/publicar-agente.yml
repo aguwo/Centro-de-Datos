@@ -1,6 +1,6 @@
 # Paso 24: publicar el agente solo.
 # Cada vez que se sube un cambio a main que toca el servidor del agente (supabase/functions/),
-# GitHub corre las pruebas y, si pasan, publica la función "mcp" en Supabase.
+# GitHub corre las pruebas y, si pasan, publica las funciones en Supabase (mcp, eva y alimentos: todas las de supabase/functions/).
 # Necesita un secreto en GitHub: SUPABASE_ACCESS_TOKEN (una llave de acceso de tu cuenta de Supabase).
 # Los cambios de estructura de la base (supabase/migrations/) se siguen pegando a mano en el SQL Editor.
 name: Publicar agente
@@ -27,6 +27,6 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
-      - run: supabase functions deploy mcp --project-ref fugvincuaakcnvujtqlt --use-api
+      - run: supabase functions deploy --project-ref fugvincuaakcnvujtqlt --use-api
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

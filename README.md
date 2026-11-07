@@ -143,10 +143,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 69 | Salud ordenada: sin pestañas, una sola página con tres bloques (Ejercicio, Hábitos y Dieta), cada uno con «Hoy» a la izquierda y «Cómo vas» a la derecha, y columnas que terminan parejas. Sin las cifras de arriba. La Dieta, simple: solo desayuno, almuerzo, merienda y cena; el + de cada una abre ahí mismo un buscador de alimentos con sus gramos. Sin agua ni panel «Agregar a». Los apartados aceptan bloques (`{ bloque }` en sus columnas) | — | — | `docs/js/widgets.js`, `apartados.js`, `salud.js`, `estilos.css` |
 | 70 | Salud con selector de bloques: arriba, una tarjeta por bloque (Ejercicio, Hábitos, Dieta) con su ícono, un dato de hoy y un anillo de avance; se ve un bloque a la vez. Al cambiar, el fondo de la tarjeta marcada se desliza, el bloque viejo sale hacia un lado y el nuevo entra desde el otro con sus ventanas una tras otra. Flechas del teclado y deslizar el dedo también cambian; se recuerda el último. Sin animaciones si tu equipo pide menos movimiento | — | — | `docs/js/bloques.js`, `widgets.js`, `apartados.js`, `salud.js`, `estilos.css` |
 | 71 | Las ventanas de Salud y las tarjetas de sus bloques siguen el vidrio de Ajustes (opacidad y desenfoque), como el resto: antes eran casi opacas fijas | — | — | `estilos.css` |
+| 72 | El buscador de comidas también busca en Open Food Facts (la base libre de alimentos, primero lo que se vende en Chile) desde 3 letras: cada resultado trae marca y kcal; su + lo guarda como alimento tuyo con sus macros y lo anota. Solo salen los que traen calorías y macros que cuadran entre sí. Lo pregunta una función nueva de Supabase («alimentos»), porque Open Food Facts no deja que la web le pregunte directo | — | — | `supabase/functions/alimentos/index.ts`, `docs/js/salud.js`, `estilos.css`, `.github/workflows/publicar-agente.yml` (publica todas las funciones) |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 72, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 73, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |

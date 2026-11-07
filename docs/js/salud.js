@@ -25,7 +25,7 @@
 // (se cumplen solos al anotar comida) y el resto en Hábitos.
 import { el, db, datos, dia, escribir, areaDe } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes, sinHoraISO } from "./fechas.js";
-import { alternarRegistro, cambiarProps, dentroDeCaja } from "./acciones.js";
+import { alternarRegistro, cambiarProps, crear, dentroDeCaja } from "./acciones.js";
 import { icono, elegir } from "./dibujos.js";
 import { formulario, mostrarPanel } from "./panel.js";
 
@@ -541,31 +541,61 @@ function gramosDeSiempre(a) {
   const r = datos.registros.findLast((x) => x.clase === "comida" && x.nodo_id === a.id);
   return Math.round(r ? gramos(r, a) : a.props?.porcion_g ?? 100);
 }
-const kcalDe = (a, g) => g / 100 * (a.props?.kcal_100g ?? 0);
 
 // El buscador de una comida: escribes y salen tus alimentos (sin escribir, los que más anotas primero).
 // Cada uno con sus gramos de siempre, que puedes cambiar, y su +. Lo que agregas queda en la comida y el buscador sigue abierto.
+// Paso 72: desde 3 letras también busca en Open Food Facts (la función "alimentos" de Supabase); tocar el + de uno de esos
+// lo guarda como alimento tuyo, con sus macros, y lo anota.
 const RESULTADOS = 8;
 function buscador(momento, ctx) {
-  const resultados = el("div", { className: "opciones" });
+  const tuyos = el("div", { className: "opciones" }), deAfuera = el("div", { className: "opciones de-afuera" });
   const campo = el("input", { type: "search", placeholder: "Buscar alimento", ariaLabel: "Buscar alimento", value: ctx.texto ?? "",
-    oninput: () => { ctx.texto = campo.value; mostrar(); } }); // solo cambia la lista: el campo no pierde el foco
+    oninput: () => { ctx.texto = campo.value; mostrar(); } }); // solo cambian las listas: el campo no pierde el foco
+  const anotar = (a, g) => { anotarComida([{ a, g }], momento, diaDe(ctx)); ctx.abierta = momento; };
+  let espera;
   const mostrar = () => {
     const texto = sinTildes(campo.value.trim()), alimentos = datos.nodos.filter((n) => n.tipos.clave === "alimento");
     const usados = masAnotados(), resto = alimentos.filter((a) => !usados.includes(a)).sort((a, b) => a.titulo.localeCompare(b.titulo, "es"));
     const lista = [...usados, ...resto].filter((a) => !texto || sinTildes(a.titulo).includes(texto)).slice(0, RESULTADOS);
-    resultados.replaceChildren(...(lista.length ? lista.map((a) => {
-      const g = el("input", { type: "number", min: "1", value: gramosDeSiempre(a), ariaLabel: "Gramos de " + a.titulo,
-        oninput: () => { kcal.textContent = numero(kcalDe(a, Number(g.value) || 0)) + " kcal"; } });
-      const kcal = el("small", { textContent: numero(kcalDe(a, Number(g.value))) + " kcal" });
-      return el("div", { className: "opcion-alimento" }, el("span", {}, el("span", { textContent: sinEstimacion(a.titulo) }), kcal), g, el("small", { textContent: "g" }),
-        el("button", { className: "principal", textContent: "+", ariaLabel: `Agregar ${a.titulo} a ${momento.toLowerCase()}`,
-          onclick: () => { anotarComida([{ a, g: Math.max(1, Number(g.value) || 1) }], momento, diaDe(ctx)); ctx.abierta = momento; } }));
-    }) : [el("p", { className: "vacio", textContent: "No tienes un alimento con ese nombre. Créalo con «+ Nuevo»." })]));
+    tuyos.replaceChildren(...lista.map((a) => filaParaAgregar(sinEstimacion(a.titulo), "", a.props ?? {}, gramosDeSiempre(a), (g) => anotar(a, g))));
+    clearTimeout(espera);
+    if (texto.length < 3) return deAfuera.replaceChildren(lista.length ? "" : el("p", { className: "vacio", textContent: "Escribe para buscar también fuera de tus alimentos." }));
+    deAfuera.replaceChildren(el("small", { className: "titulo-afuera", textContent: "Buscando en Open Food Facts…" }));
+    espera = setTimeout(() => buscarAfuera(campo.value.trim()).then((hallados) => {
+      if (campo.value.trim() !== ctx.texto?.trim()) return; // ya escribiste otra cosa
+      const nuevos = hallados.filter((x) => !alimentos.some((a) => a.props?.off === x.codigo));
+      deAfuera.replaceChildren(el("small", { className: "titulo-afuera", textContent: nuevos.length ? "En Open Food Facts" : "Nada más en Open Food Facts." }),
+        ...nuevos.map((x) => filaParaAgregar(x.nombre, x.marca ?? "", x, x.porcion_g ?? 100, (g) => guardarDeAfuera(x).then((a) => a && anotar(a, g)))));
+    }, () => deAfuera.replaceChildren(el("small", { className: "titulo-afuera", textContent: "No se pudo buscar en Open Food Facts." }))), 400);
   };
   mostrar();
   requestAnimationFrame(() => { if (!document.activeElement || document.activeElement === document.body) campo.focus(); });
-  return el("div", { className: "buscador-comida" }, el("div", { className: "buscar-alimento" }, icono("lupa"), campo), resultados);
+  return el("div", { className: "buscador-comida" }, el("div", { className: "buscar-alimento" }, icono("lupa"), campo), tuyos, deAfuera);
+}
+// Una fila del buscador: nombre, marca, kcal de esos gramos, los gramos y su +. macros = { kcal_100g, ... }.
+function filaParaAgregar(nombre, marca, macros, gramosIniciales, alAgregar) {
+  const kcalDeG = () => numero((Number(g.value) || 0) / 100 * (macros.kcal_100g ?? 0)) + " kcal";
+  const g = el("input", { type: "number", min: "1", value: Math.round(gramosIniciales), ariaLabel: "Gramos de " + nombre, oninput: () => { kcal.textContent = kcalDeG(); } });
+  const kcal = el("small", { textContent: kcalDeG() });
+  return el("div", { className: "opcion-alimento" }, el("span", {}, el("span", { textContent: nombre }), marca ? el("small", { textContent: marca }) : "", kcal),
+    g, el("small", { textContent: "g" }),
+    el("button", { className: "principal", textContent: "+", ariaLabel: `Agregar ${nombre}`, onclick: (e) => { e.currentTarget.disabled = true; alAgregar(Math.max(1, Number(g.value) || 1)); } }));
+}
+// Buscar en Open Food Facts por la función "alimentos" (una vez por texto: lo ya buscado se recuerda).
+const buscados = new Map();
+function buscarAfuera(q) {
+  if (!buscados.has(q)) buscados.set(q, Promise.resolve().then(() => db.functions.invoke("alimentos", { body: { q } })).then(({ data, error }) => {
+    if (error || !Array.isArray(data)) { buscados.delete(q); throw error ?? new Error("respuesta rara"); }
+    return data;
+  }));
+  return buscados.get(q);
+}
+// Guardar un alimento de Open Food Facts como tuyo, en la misma área que tus otros alimentos. Devuelve el nodo.
+async function guardarDeAfuera(x) {
+  const otro = datos.nodos.find((n) => n.tipos.clave === "alimento"), area = otro ? areaDe(otro.id) : areaDeSalud();
+  const props = { kcal_100g: x.kcal_100g, prot_100g: x.prot_100g, carb_100g: x.carb_100g, grasa_100g: x.grasa_100g, off: x.codigo, ...(x.porcion_g ? { porcion_g: x.porcion_g } : {}) };
+  const id = await crear("alimento", { titulo: x.marca ? `${x.nombre} (${x.marca})` : x.nombre, props }, { enfocar: false, conexion: area && dentroDeCaja("alimento", area) });
+  return id && datos.nodo.get(id);
 }
 
 export function semanaComida(v, ctx) {
