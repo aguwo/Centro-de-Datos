@@ -1116,7 +1116,8 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .filas-habitos { display: grid; }
 .tira-habito { display: grid; grid-template-columns: 34px minmax(110px, 170px) minmax(0, 1fr) 48px 104px; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--linea); }
 .tira-habito .insignia { width: 34px; height: 34px; border-radius: 10px; }
-.tira-habito .nombre { font-weight: 500; }
+.tira-habito .nombre { font: inherit; font-weight: 500; border: 0; background: none; padding: 0; text-align: left; color: inherit; }
+.tira-habito .nombre:hover { text-decoration: underline; }
 .tira-habito b { text-align: right; font-variant-numeric: tabular-nums; }
 .tira-habito small { text-align: right; color: var(--suave); font-size: 12px; }
 .rayas { display: flex; gap: 2px; height: 18px; }

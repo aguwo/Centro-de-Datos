@@ -154,7 +154,7 @@ export function peso(v) {
   v.classList.add("w-salud");
   return () => {
     const o = objetivoDePeso();
-    if (!o) return v.replaceChildren(el("p", { className: "vacio", textContent: "Crea un objetivo con Meta y unidad «kg» (ej. «Subir 10 kilos») y aquí verás tu camino." }));
+    if (!o) return v.replaceChildren(el("p", { className: "vacio", textContent: "Crea un objetivo de peso (ej. «Subir 10 kilos», con su meta en kg) y aquí verás tu camino." }), nuevoObjetivo());
     const { inicio = pesoActual(o).v, meta } = o.props, ahora = pesoActual(o), r = ritmo(o), hoy = hoyTexto();
     // Los puntos: el inicio (cuando creaste el objetivo) y tus pesadas.
     // (El inicio solo si lo creaste antes de tu primera pesada: los importados de Notion se crearon después.)
@@ -176,7 +176,7 @@ export function peso(v) {
     const hoyX = x(hoy), hoyY = y(ahora.v);
     const hacia = Math.sign(meta - inicio), pideDemasiado = r.pide !== null && Math.sign(r.falta) === hacia && Math.abs(r.pide) > SANO[1];
     v.replaceChildren(
-      el("h3", {}, "Camino a ", String(numero(meta, 1) + " kg"), el("small", { textContent: `${o.titulo}${tope ? " · tope " + new Date(tope + "T12:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : ""}` })),
+      el("h3", {}, "Camino a ", String(numero(meta, 1) + " kg"), el("small", {}, `${o.titulo}${tope ? " · tope " + new Date(tope + "T12:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : ""} · `, editar(o, "Editar"))),
       el("div", { className: "leyenda" }, el("span", { className: "l-peso", textContent: "tu peso" }),
         pideDemasiado ? el("span", { className: "l-pide", textContent: "lo que pide la fecha" }) : "", el("span", { className: "l-sano", textContent: "ritmo sano" })),
       svgDe(`0 0 ${W} ${H}`, `${lineas.join("")}${meses.join("")}
@@ -187,11 +187,22 @@ export function peso(v) {
         ${puntos.map((p, i) => `<circle cx="${x(p.d)}" cy="${y(p.v)}" r="${i === puntos.length - 1 ? 7 : 4.5}" class="${i === puntos.length - 1 ? "ultimo" : "punto"}"/>`).join("")}
         <line x1="${hoyX}" y1="${ARRIBA - 8}" x2="${hoyX}" y2="${ABAJO + 6}" class="hoy"/><text x="${hoyX}" y="${ABAJO + 18}" class="hoy-texto">hoy</text>`, "grafico-peso"),
       pideDemasiado ? el("p", { className: "aviso-salud" }, icono("alerta"),
-        el("span", { textContent: `La fecha pide ${numero(Math.abs(r.pide), 1)} kg por semana. Lo sano es ${numero(SANO[0], 2)} a ${numero(SANO[1], 1)}: llegarías entre el ${largo(r.sano[1])} y el ${largo(r.sano[0])}. Puedes mover la fecha tope del objetivo.` })) : "",
+        el("span", { textContent: `La fecha pide ${numero(Math.abs(r.pide), 1)} kg por semana. Lo sano es ${numero(SANO[0], 2)} a ${numero(SANO[1], 1)}: llegarías entre el ${largo(r.sano[1])} y el ${largo(r.sano[0])}. ` }), editar(o, "Cambiar la fecha")) : "",
       anotarPeso(o, ahora),
     );
   };
 }
+// Paso 75: el objetivo se edita con el formulario de siempre (meta, inicio, fecha tope...); sin objetivo, se crea uno de peso.
+const editar = (n, texto) => el("button", { className: "enlace", textContent: texto, onclick: () => formulario(n) });
+const nuevoObjetivo = () => el("button", { className: "principal", textContent: "+ Objetivo de peso", onclick: () => {
+  const area = areaDeSalud();
+  formulario(null, { tipo: "objetivo", valores: { unidad: "kg" }, conexion: area && dentroDeCaja("objetivo", area) });
+} });
+// Paso 75: crear un hábito desde Salud (queda en el área de Salud; en el formulario se elige su rutina y sus días).
+const nuevoHabito = () => el("button", { className: "enlace", textContent: "+ Hábito", onclick: () => {
+  const area = areaDeSalud();
+  formulario(null, { tipo: "habito", conexion: area && dentroDeCaja("habito", area) });
+} });
 const largo = (d) => new Date(d + "T12:00").toLocaleDateString("es-CL", { day: "numeric", month: "long", year: d.slice(0, 4) === hoyTexto().slice(0, 4) ? undefined : "numeric" });
 // Anotar el peso de hoy: un campo y un botón. Una pesada por semana basta.
 function anotarPeso(o, ahora) {
@@ -210,9 +221,9 @@ export function habitosHoy(v) {
   v.classList.add("w-salud");
   return () => {
     const hoy = hoyTexto(), lista = habitos().filter((h) => tocaEl(h, hoy));
+    v.sub.replaceChildren(nuevoHabito());
     if (!lista.length) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Hoy no te toca ningún hábito." }));
     const deHoy = (h) => marcasDe(h).find((r) => dia(r.fecha) === hoy), hechos = lista.filter(deHoy).length;
-    v.sub.textContent = "toca para marcar";
     // Los grupos: una rutina por caja (ej. «Mañana»); los que no están en una rutina van al final.
     const rutinaDe = (h) => { const p = datos.nodo.get(datos.padre.get(h.id)); return p?.tipos.clave === "rutina" ? p : null; };
     const grupos = new Map();
@@ -246,14 +257,14 @@ export function cadaHabito(v, ctx) {
     const hoy = hoyTexto(), n = ctx.rango ?? RANGOS.at(-1), desde = sumarDias(hoy, 1 - n), lista = habitos();
     v.sub.replaceChildren(el("span", { className: "segmento", role: "group", ariaLabel: "Cuántos días" }, ...RANGOS.map((k) =>
       el("button", { textContent: k + " días", ariaPressed: String(k === n), onclick: () => ctx.cambiar({ rango: k }) }))));
-    if (!lista.length) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Aún no tienes hábitos. Créalos con «+ Nuevo»." }));
+    if (!lista.length) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Aún no tienes hábitos. Crea el primero con «+ Hábito», en Hábitos de hoy." }));
     const ultimo = [...diasMarcados(lista)].sort().at(-1), sin = ultimo ? diasEntre(ultimo, hoy) : null;
     v.replaceChildren(v.firstChild,
       el("div", { className: "filas-habitos" }, ...lista.map((h) => [h, cumplido([h], desde, hoy)]).sort((a, b) => b[1] - a[1]).map(([h, frac]) => {
         const hechos = diasMarcados([h]), [nombre] = temaDe(h), rayas = [];
         for (let d = desde; d <= hoy; d = sumarDias(d, 1))
           rayas.push(el("i", { className: hechos.has(d) ? "si" : tocaEl(h, d) ? "" : "libre", title: `${d.split("-").reverse().join("/")}: ${hechos.has(d) ? "cumplido" : tocaEl(h, d) ? "no" : "no tocaba"}` }));
-        return el("div", { className: "tira-habito" }, el("span", { className: "insignia" }, icono(nombre)), el("span", { className: "nombre", textContent: h.titulo }),
+        return el("div", { className: "tira-habito" }, el("span", { className: "insignia" }, icono(nombre)), el("button", { className: "nombre", textContent: h.titulo, title: "Ver o editar", onclick: () => mostrarPanel(h.id) }),
           el("span", { className: "rayas" }, ...rayas), el("b", {}, String(Math.round(frac * 100) + "%")), el("small", { textContent: "mejor racha " + mejorRacha(h, desde, hoy) }));
       })),
       sin !== null && sin > 2 ? el("p", { className: "aviso-salud" }, icono("reloj"), el("span", { textContent: `Hace ${sin} días que no marcas ningún hábito. ¿Retomas hoy con uno solo?` })) : "");
