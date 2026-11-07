@@ -9,3 +9,7 @@ verify_jwt = false
 [functions.eva]
 # La llama la base (pg_cron) con su propia clave, no una sesión: la función la revisa por su cuenta.
 verify_jwt = false
+
+[functions.correos]
+# La llama el script de Google de tus Gmail con su propia clave (CORREOS_CLAVE), no una sesión.
+verify_jwt = false
