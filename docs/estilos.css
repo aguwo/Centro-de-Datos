@@ -1270,3 +1270,7 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
   .texto-bloque small, .tarjeta-bloque .anillo-avance { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .fondo-bloque, .tarjeta-bloque, .tarjeta-bloque .insignia, .marca-agua { transition: none; } }
+
+/* Paso 72: lo que se encontró en Open Food Facts, bajo tus alimentos */
+.titulo-afuera { display: block; margin: 8px 0 2px; font-size: 11.5px; font-weight: 600; color: var(--suave); }
+.de-afuera:empty { display: none; }
