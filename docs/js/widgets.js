@@ -28,7 +28,7 @@ import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { loImportante, diasDeLaSemana } from "./semana.js";
 import { semanaEntreno, constanciaEntreno, rutina, peso, habitosHoy, cadaHabito, porDiaDeSemana, despensa,
   caloriasDia, equilibrio, comidasDia, semanaComida, dietaHoy, entrenoHoy, habitosRapidos, medidorPeso, anillosSalud, macrosHoy } from "./salud.js";
-import { semanaGasto, movimientos, porCategoria, semanasGasto, entraSale, cuentas, apartar, objetivoAhorro, historialAhorro, suscripciones } from "./finanzas.js";
+import { semanaGasto, movimientos, porCategoria, semanasGasto, entraSale, cuentas, apartar, objetivoAhorro, historialAhorro, esteMes, suscripciones, suscripcionesDetectadas, enUnAno, suscripcionesPausadas } from "./finanzas.js";
 import { icono } from "./dibujos.js";
 import { selectorDeBloques } from "./bloques.js";
 import { modo, fondo, barra, vistas, ventanas, cuenta } from "./ajustes.js";
@@ -75,7 +75,11 @@ export const WIDGETS = {
   "apartar":       { titulo: "Apartar plata", crear: apartar },
   "objetivo-ahorro": { titulo: "Tu objetivo", crear: objetivoAhorro },
   "historial-ahorro": { titulo: "Lo que entró y salió del ahorro", crece: true, crear: historialAhorro },
+  "este-mes":      { crear: esteMes },
   "suscripciones": { titulo: "Activas", crece: true, crear: suscripciones },
+  "detectadas":    { titulo: "¿Son suscripciones?", crear: suscripcionesDetectadas },
+  "en-un-ano":     { titulo: "En un año", crear: enUnAno },
+  "pausadas":      { titulo: "Pausadas", crear: suscripcionesPausadas },
   "modo":          { titulo: "Modo y color", crear: modo },
   "fondo":         { titulo: "Fondo de pantalla", crear: fondo },
   "barra":         { titulo: "Barra lateral", crear: barra },

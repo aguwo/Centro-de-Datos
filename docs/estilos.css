@@ -1447,3 +1447,22 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .logrados span { display: flex; align-items: center; gap: 8px; }
 .logrados .icono { width: 16px; height: 16px; color: var(--c); }
 .logrados small { margin-left: auto; color: var(--suave); }
+/* Paso 85: Suscripciones */
+.w-este-mes { gap: 14px; }
+.mes-cobros { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; }
+.mes-cobros small { font-size: 11px; color: var(--suave); }
+.mes-cobros span { height: 32px; display: grid; place-items: center; border-radius: 9px; font-size: 12.5px; color: var(--suave); font-variant-numeric: tabular-nums; }
+.mes-cobros .cobrado { background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--texto); font-weight: 700; }
+.mes-cobros .cobro { background: var(--c); color: #fff; font-weight: 700; }
+.mes-cobros .es-hoy { outline: 1.5px solid var(--texto); color: var(--texto); font-weight: 700; }
+.monto-y-boton { display: grid; justify-items: end; gap: 2px; }
+.movimiento .botones { grid-column: 2 / -1; }
+.movimiento.detectada { border: 1.5px dashed color-mix(in srgb, var(--c) 55%, transparent); border-radius: 12px; padding: 10px 12px; margin-bottom: 6px; }
+.movimiento.pausada .insignia { background: var(--linea-salud); color: var(--suave); }
+.kcal-grande.izquierda { justify-content: flex-start; }
+.kcal-grande.izquierda b { font-size: 32px; }
+.partes { display: flex; height: 16px; border-radius: 8px; overflow: hidden; gap: 2px; }
+.partes span, .leyenda-partes i { background: color-mix(in srgb, var(--c) var(--tono), transparent); }
+.leyenda-partes { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--suave); }
+.leyenda-partes span { display: flex; align-items: center; gap: 6px; }
+.leyenda-partes i { width: 10px; height: 10px; border-radius: 3px; }

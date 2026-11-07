@@ -10,7 +10,11 @@
 //   apartar        mover plata de tu cuenta del día a día a la de ahorro (y sumarla a tu objetivo de ahorro)
 //   objetivo-ahorro cómo va tu objetivo en pesos: cuánto falta y cuánto apartar por semana; al cumplirlo, usar la plata
 //   historial-ahorro lo que entró y salió de la cuenta de ahorro
-//   suscripciones  las suscripciones activas y cuánto suman al mes
+//   este-mes       lo que se va al mes en suscripciones, el calendario con los días de cobro y cuál viene (paso 85)
+//   suscripciones  las activas: precio, día de cobro y último cobro; «Pausar» la desactiva
+//   detectadas     cobros de tus gastos que parecen suscripción y no están en tu lista: «Agregar» o «No es»
+//   en-un-ano      lo que se va en un año y qué parte es de cada una
+//   pausadas       las que no cobran ahora; «Activar» la vuelve a sumar
 //
 // De dónde sale cada cosa:
 //   gastos e ingresos   registros "gasto" e "ingreso": nodo_id = la cuenta, otro_id = la categoría (si la tiene)
@@ -293,20 +297,129 @@ export function historialAhorro(v) {
   };
 }
 
-// ---------- las suscripciones ----------
+// ---------- las suscripciones (paso 85) ----------
+// El día de cobro y el último cobro salen de tus gastos: el más nuevo cuyo título nombra la suscripción
+// (ej. «Compra Spotify Las Condes» es de Spotify).
 const activas = () => deTipo("suscripcion").filter((s) => s.props?.activa !== false);
+const pausadas = () => deTipo("suscripcion").filter((s) => s.props?.activa === false);
 const alMes = (s) => (Number(s.props?.precio) || 0) / (s.props?.periodo === "Anual" ? 12 : 1);
 export const totalAlMes = () => activas().reduce((t, s) => t + alMes(s), 0);
+const sinTildes = (t) => (t ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const palabra = (s) => sinTildes(s.titulo).split(/\s+/)[0];
+const esDe = (s, r) => r.clase === "gasto" && sinTildes(r.titulo).includes(palabra(s));
+const ultimoCobro = (s) => datos.registros.findLast((r) => esDe(s, r));
+// El próximo día de cobro (desde hoy), si sabemos qué día del mes cobra.
+function proximoCobro(s) {
+  const u = ultimoCobro(s);
+  if (!u) return null;
+  const n = Number(dia(u.fecha).slice(8)), hoy = hoyTexto();
+  const en = (mes) => { const fin = Number(sumarDias(sumarDias(mes + "-01", 32).slice(0, 8) + "01", -1).slice(8)); return `${mes}-${String(Math.min(n, fin)).padStart(2, "0")}`; };
+  const este = en(hoy.slice(0, 7));
+  return este >= hoy ? este : en(sumarDias(hoy.slice(0, 8) + "01", 32).slice(0, 7));
+}
+const letra = (s) => el("span", { className: "insignia letra", textContent: s.titulo.trim()[0]?.toUpperCase() ?? "?" });
+
+// Este mes: lo que se va al mes, el calendario con los días de cobro y cuál viene.
+export function esteMes(v) {
+  v.classList.add("w-finanzas");
+  return () => {
+    const hoy = hoyTexto(), inicio = hoy.slice(0, 8) + "01", lista = activas();
+    const cobros = new Map(lista.map((s) => [proximoCobro(s), s]).filter(([d]) => d?.startsWith(hoy.slice(0, 7))));
+    const pasados = new Map(lista.map((s) => [ultimoCobro(s), s]).filter(([r]) => r && dia(r.fecha).startsWith(hoy.slice(0, 7))).map(([r, s]) => [dia(r.fecha), s]));
+    const siguiente = lista.map((s) => [proximoCobro(s), s]).filter(([d]) => d).sort()[0];
+    const dias = Number(sumarDias(sumarDias(inicio, 32).slice(0, 8) + "01", -1).slice(8)), vacios = (new Date(inicio + "T12:00").getDay() + 6) % 7;
+    v.replaceChildren(
+      el("div", { className: "kcal-grande" }, el("b", { textContent: plata(totalAlMes()) }), el("span", { textContent: `al mes · unos ${plata(totalAlMes() * 12 / 52)} por semana` })),
+      el("div", { className: "mes-cobros", role: "img", ariaLabel: "Días de cobro de este mes" },
+        ...["L", "M", "M", "J", "V", "S", "D"].map((x) => el("small", { textContent: x })),
+        ...Array.from({ length: vacios }, () => el("span")),
+        ...Array.from({ length: dias }, (_, i) => {
+          const d = inicio.slice(0, 8) + String(i + 1).padStart(2, "0"), s = cobros.get(d) ?? pasados.get(d);
+          return el("span", { className: [s && (d < hoy ? "cobrado" : "cobro"), d === hoy && "es-hoy"].filter(Boolean).join(" "), title: s ? s.titulo : "", textContent: i + 1 });
+        })),
+      siguiente ? el("p", { className: "frase-finanzas" }, `El próximo cobro es ${siguiente[1].titulo}, el ${diaCorto(siguiente[0])}: unos ${plata(Number(siguiente[1].props?.precio) || 0)}.`)
+        : el("p", { className: "vacio", textContent: "Cuando aparezca un cobro en tus gastos, aquí sale su día." }));
+  };
+}
+
+// Las activas: cuánto cuesta cada una, qué día cobra y, si el último cobro fue distinto, cuánto fue. «Pausar» la desactiva.
 export function suscripciones(v) {
   v.classList.add("w-finanzas");
   return () => {
     const lista = activas().sort((a, b) => alMes(b) - alMes(a));
-    v.sub.textContent = lista.length ? plata(totalAlMes()) + " al mes" : "";
-    v.replaceChildren(v.firstChild, lista.length ? el("ul", { className: "movimientos" }, ...lista.map((s) => el("li", { className: "movimiento" },
-      el("span", { className: "insignia letra", textContent: s.titulo.trim()[0]?.toUpperCase() ?? "?" }),
-      el("span", {}, el("b", { textContent: s.titulo }), el("small", { textContent: s.props?.periodo ?? "Mensual" })),
-      el("b", { className: "monto", textContent: plata(Number(s.props?.precio) || 0) }))))
-      : el("p", { className: "vacio", textContent: "No tienes suscripciones activas." }));
+    v.sub.replaceChildren(el("button", { className: "enlace", textContent: "+ Suscripción", onclick: () => formulario(null, { tipo: "suscripcion", valores: { activa: true, periodo: "Mensual" }, conexion: categoriaDeSuscripciones() }) }));
+    v.replaceChildren(v.firstChild, lista.length ? el("ul", { className: "movimientos" }, ...lista.map((s) => {
+      const u = ultimoCobro(s), precio = Number(s.props?.precio) || 0;
+      const detalle = [u ? `el ${Number(dia(u.fecha).slice(8))} de cada ${s.props?.periodo === "Anual" ? "año" : "mes"}` : s.props?.periodo ?? "Mensual",
+        u && Math.round(valor(u)) !== precio ? `el último cobro fue ${plata(valor(u))}` : ""].filter(Boolean).join(" · ");
+      return el("li", { className: "movimiento" }, letra(s),
+        el("span", {}, el("b", { textContent: s.titulo }), el("small", { textContent: detalle })),
+        el("span", { className: "monto-y-boton" }, el("b", { className: "monto", textContent: plata(precio) }),
+          el("button", { className: "enlace", textContent: "Pausar", onclick: () => cambiarProps(s, { activa: false }) })));
+    })) : el("p", { className: "vacio", textContent: "No tienes suscripciones activas." }));
+  };
+}
+const categoriaDeSuscripciones = () => { const c = categorias().find((x) => /suscrip/i.test(x.titulo)); return c && dentroDeCaja("suscripcion", c.id); };
+
+// Cobros de tus gastos que parecen suscripción y no están en tu lista: los que dicen SUB (suscripción, en el aviso del banco)
+// o los que se repiten con el mismo nombre en dos meses distintos. «Agregar» la crea; «No es» la olvida (en este navegador).
+const OLVIDADAS = "suscripciones-olvidadas";
+const olvidadas = () => { try { return JSON.parse(localStorage.getItem(OLVIDADAS) || "[]"); } catch { return []; } };
+const nombreDe = (r) => (r.titulo ?? "").replace(/^(compra|pago|cargo)\s+/i, "").replace(/^(dl|ks|flow)\*\s*/i, "").trim();
+function detectadas() {
+  const tuyas = deTipo("suscripcion"), fuera = new Set([...olvidadas(), ...categorias().map((c) => sinTildes(c.titulo)), "transferencia"]), grupos = new Map();
+  for (const r of datos.registros) if (r.clase === "gasto" && !tuyas.some((s) => esDe(s, r))) {
+    const k = sinTildes(nombreDe(r)).split(/\s+/).slice(0, 2).join(" ");
+    if (k && !fuera.has(k)) grupos.set(k, [...(grupos.get(k) ?? []), r]);
+  }
+  // Parece suscripción si el banco dice SUB, o si cobra lo mismo (±15%) una sola vez al mes, en dos meses o más.
+  const parece = (rs) => {
+    if (rs.some((r) => /\bsub\b|suscrip/i.test(`${r.titulo} ${r.props?.notas ?? ""}`))) return true;
+    const meses = new Set(rs.map((r) => dia(r.fecha).slice(0, 7))), montos = rs.map(valor);
+    return meses.size >= 2 && meses.size === rs.length && Math.max(...montos) <= Math.min(...montos) * 1.15;
+  };
+  return [...grupos].filter(([, rs]) => parece(rs)).map(([k, rs]) => ({ k, r: rs.at(-1) }));
+}
+export function suscripcionesDetectadas(v, ctx) {
+  v.classList.add("w-finanzas");
+  return () => {
+    const lista = detectadas();
+    v.replaceChildren(v.firstChild, lista.length ? el("ul", { className: "movimientos" }, ...lista.map(({ k, r }) => el("li", { className: "movimiento detectada" },
+      el("span", { className: "insignia letra", textContent: nombreDe(r)[0]?.toUpperCase() ?? "?" }),
+      el("span", {}, el("b", { textContent: `${nombreDe(r)} · ${plata(valor(r))}` }), el("small", { textContent: `cobrado el ${diaCorto(dia(r.fecha))}. ¿Es una suscripción?` })),
+      el("span", { className: "botones" },
+        el("button", { className: "principal", textContent: "Agregar", onclick: () => formulario(null, { tipo: "suscripcion",
+          valores: { titulo: nombreDe(r).replace(/\s+sub$/i, ""), precio: Math.round(valor(r)), periodo: "Mensual", activa: true }, conexion: categoriaDeSuscripciones() }) }),
+        el("button", { textContent: "No es", onclick: () => { try { localStorage.setItem(OLVIDADAS, JSON.stringify([...olvidadas(), k])); } catch {} ctx.cambiar({}); } })))))
+      : el("p", { className: "vacio", textContent: "Nada nuevo: todos los cobros que se repiten ya están en tu lista." }));
+  };
+}
+
+// En un año: lo que se va si nada cambia, y qué parte es de cada una.
+const TONOS = [100, 70, 45, 28, 16]; // de la más cara a la más barata, el color del bloque cada vez más suave
+export function enUnAno(v) {
+  v.classList.add("w-finanzas");
+  return () => {
+    const lista = activas().sort((a, b) => alMes(b) - alMes(a)), total = totalAlMes() * 12;
+    if (!lista.length) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Sin suscripciones activas." }));
+    const parte = (s, i) => { const x = el("span"); x.style.width = alMes(s) * 12 / total * 100 + "%"; x.style.setProperty("--tono", TONOS[Math.min(i, TONOS.length - 1)] + "%"); return x; };
+    v.replaceChildren(v.firstChild,
+      el("div", { className: "kcal-grande izquierda" }, el("b", { textContent: plata(total) }), el("span", { textContent: "al año" })),
+      el("div", { className: "partes" }, ...lista.map(parte)),
+      el("div", { className: "leyenda-partes" }, ...lista.map((s, i) => { const x = el("span", {}, el("i"), `${s.titulo} ${Math.round(alMes(s) * 12 / total * 100)}%`); x.style.setProperty("--tono", TONOS[Math.min(i, TONOS.length - 1)] + "%"); return x; })));
+  };
+}
+
+// Pausadas: las que no cobran ahora. «Activar» la vuelve a sumar.
+export function suscripcionesPausadas(v) {
+  v.classList.add("w-finanzas");
+  return () => {
+    const lista = pausadas();
+    v.sub.textContent = lista.length ? `si las activas: +${plata(lista.reduce((t, s) => t + alMes(s), 0))} al mes` : "";
+    v.replaceChildren(v.firstChild, lista.length ? el("ul", { className: "movimientos" }, ...lista.map((s) => el("li", { className: "movimiento pausada" }, letra(s),
+      el("span", {}, el("b", { textContent: s.titulo }), el("small", { textContent: `${plata(Number(s.props?.precio) || 0)} ${s.props?.periodo === "Anual" ? "al año" : "al mes"}` })),
+      el("button", { className: "enlace", textContent: "Activar", onclick: () => cambiarProps(s, { activa: true }) }))))
+      : el("p", { className: "vacio", textContent: "Ninguna pausada." }));
   };
 }
 
@@ -329,8 +442,8 @@ export function resumenAhorro() {
   return { dato: `${plata(va)} de ${plata(o.props.meta)}`, detalle: [o.titulo, fecha].filter(Boolean).join(" · "), avance: va / o.props.meta };
 }
 export function resumenSuscripciones() {
-  const n = activas().length;
-  return { dato: plata(totalAlMes()) + " al mes", detalle: n === 1 ? "1 activa" : `${n} activas` };
+  const n = activas().length, prox = activas().map((s) => [proximoCobro(s), s]).filter(([d]) => d).sort()[0];
+  return { dato: plata(totalAlMes()) + " al mes", detalle: prox ? `Próximo: ${prox[1].titulo} · ${diaCorto(prox[0])}` : n === 1 ? "1 activa" : `${n} activas` };
 }
 
 export const BLOQUES = {
