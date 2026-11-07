@@ -8,6 +8,8 @@
 // Paso 65: una vista puede llevar su ícono (un nombre de dibujos.js), que sale en su botón.
 // Paso 69: las columnas se pueden partir en bloques: { bloque: "Dieta", icono: "plato" } abre una fila nueva con
 // ese título, y las columnas que siguen van en ella. Una columna con nombre lo muestra arriba (ej. "Hoy", "Cómo vas").
+// Paso 70: si todo va en bloques, se ve uno a la vez y se cambia con tarjetas animadas (bloques.js); la marca puede
+// llevar color y resumen() para su tarjeta.
 //
 //   titulo  (opcional) lo que dice arriba de la ventana; sin título, empieza directo con su contenido
 //   crece   (opcional) ocupa el alto que sobra en su columna (las listas largas); las demás miden lo que su contenido
@@ -25,6 +27,7 @@ import { loImportante, diasDeLaSemana } from "./semana.js";
 import { semanaEntreno, constanciaEntreno, rutina, peso, habitosHoy, cadaHabito, porDiaDeSemana, despensa,
   caloriasDia, equilibrio, comidasDia, semanaComida } from "./salud.js";
 import { icono } from "./dibujos.js";
+import { selectorDeBloques } from "./bloques.js";
 import { modo, fondo, barra, ventanas, cuenta } from "./ajustes.js";
 
 export const WIDGETS = {
@@ -72,7 +75,7 @@ export function disposicionDe(a) {
 }
 const lista = (x) => (Array.isArray(x) ? x : []);
 const normal = (columnas) => lista(columnas)
-  .map((c) => (c?.bloque ? { bloque: String(c.bloque), icono: c.icono }
+  .map((c) => (c?.bloque ? { ...c, bloque: String(c.bloque) }
     : { ancho: Number(c?.ancho) > 0 ? Number(c.ancho) : 1, costado: c?.costado === true, nombre: c?.nombre, widgets: lista(c?.widgets).filter((id) => WIDGETS[id]) }))
   .filter((c) => c.bloque || c.widgets.length);
 // Las columnas de siempre: las de su primera vista, si tiene vistas.
@@ -131,7 +134,13 @@ export function montar(a) {
       g.style.setProperty("--columnas", cols.map((c) => `minmax(0, ${c.ancho ?? 1}fr)`).join(" "));
       return g;
     };
-    const grilla = grupos.length === 1 && !grupos[0].b ? grillaDe(grupos[0].cols)
+    // Paso 70: con dos o más bloques se ve uno a la vez, con su selector arriba (bloques.js).
+    let grilla;
+    if (grupos.length > 1 && grupos.every((g) => g.b)) {
+      const { selector, escena, redibujar: tarjetas } = selectorDeBloques(a.id, grupos.map(({ b, cols }) => ({ b, grilla: grillaDe(cols) })));
+      grilla = el("div", { className: "grupos-widgets" }, selector, escena);
+      redibujar.push(tarjetas);
+    } else grilla = grupos.length === 1 && !grupos[0].b ? grillaDe(grupos[0].cols)
       : el("div", { className: "grupos-widgets" }, ...grupos.map(({ b, cols }) => el("div", { className: "grupo-widgets" },
         b ? el("h2", { className: "titulo-bloque sobre-foto" }, b.icono ? icono(b.icono) : "", b.bloque) : "", grillaDe(cols))));
     const costado = lado.length ? el("aside", { className: "costado vidrio" }, botonCostado(), ...lado.flatMap((c) => c.widgets.map(ventana))) : null;
