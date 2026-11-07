@@ -32,6 +32,12 @@ export const APARTADOS = [
     columnas: [{ ancho: 3, widgets: ["tareas-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }],
     icono: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   },
+  // Paso 61: tus 7 días de un vistazo (semana.js), arriba de Hoy en el escritorio infinito.
+  {
+    id: "semana", nombre: "Esta semana", lugar: [1, 0], nuevo: ["evento", "tarea"],
+    columnas: [{ widgets: ["lo-importante", "dias"] }],
+    icono: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/>',
+  },
   {
     id: "productividad", nombre: "Productividad", lugar: [0, 1], nuevo: ["tarea", "proyecto"],
     columnas: [{ widgets: ["tareas"] }, { widgets: ["proyectos"] }],
