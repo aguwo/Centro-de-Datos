@@ -219,11 +219,9 @@ export function habitosHoy(v) {
     for (const h of lista) { const r = rutinaDe(h), k = r?.id ?? ""; if (!grupos.has(k)) grupos.set(k, { r, hs: [] }); grupos.get(k).hs.push(h); }
     const orden = [...grupos.values()].sort((a, b) => !a.r - !b.r);
     const fila = (h) => {
-      const marca = deHoy(h), [nombre, color] = temaDe(h);
-      const b = el("button", { className: "fila-habito" + (marca ? " hecho" : ""), ariaPressed: String(!!marca), onclick: () => alternarRegistro("habito", h, marca) },
+      const marca = deHoy(h), [nombre] = temaDe(h);
+      return el("button", { className: "fila-habito" + (marca ? " hecho" : ""), ariaPressed: String(!!marca), onclick: () => alternarRegistro("habito", h, marca) },
         el("span", { className: "insignia" }, icono(nombre)), el("span", { textContent: h.titulo }), el("span", { className: "check" }, marca ? icono("si") : ""));
-      b.style.setProperty("--c", color);
-      return b;
     };
     v.replaceChildren(v.firstChild,
       el("div", { className: "aro-hoy" }, svgDe("0 0 160 160", `<circle cx="80" cy="80" r="64" pathLength="100" class="pista"/>${hechos ? `<circle cx="80" cy="80" r="64" pathLength="100" class="lleno" stroke-dasharray="${hechos / lista.length * 100} 100"/>` : ""}`),
@@ -252,13 +250,11 @@ export function cadaHabito(v, ctx) {
     const ultimo = [...diasMarcados(lista)].sort().at(-1), sin = ultimo ? diasEntre(ultimo, hoy) : null;
     v.replaceChildren(v.firstChild,
       el("div", { className: "filas-habitos" }, ...lista.map((h) => [h, cumplido([h], desde, hoy)]).sort((a, b) => b[1] - a[1]).map(([h, frac]) => {
-        const hechos = diasMarcados([h]), [nombre, color] = temaDe(h), rayas = [];
+        const hechos = diasMarcados([h]), [nombre] = temaDe(h), rayas = [];
         for (let d = desde; d <= hoy; d = sumarDias(d, 1))
           rayas.push(el("i", { className: hechos.has(d) ? "si" : tocaEl(h, d) ? "" : "libre", title: `${d.split("-").reverse().join("/")}: ${hechos.has(d) ? "cumplido" : tocaEl(h, d) ? "no" : "no tocaba"}` }));
-        const f = el("div", { className: "tira-habito" }, el("span", { className: "insignia" }, icono(nombre)), el("span", { className: "nombre", textContent: h.titulo }),
+        return el("div", { className: "tira-habito" }, el("span", { className: "insignia" }, icono(nombre)), el("span", { className: "nombre", textContent: h.titulo }),
           el("span", { className: "rayas" }, ...rayas), el("b", {}, String(Math.round(frac * 100) + "%")), el("small", { textContent: "mejor racha " + mejorRacha(h, desde, hoy) }));
-        f.style.setProperty("--c", color);
-        return f;
       })),
       sin !== null && sin > 2 ? el("p", { className: "aviso-salud" }, icono("reloj"), el("span", { textContent: `Hace ${sin} días que no marcas ningún hábito. ¿Retomas hoy con uno solo?` })) : "");
   };
@@ -295,7 +291,7 @@ function mapaCalor(claseDe, tituloDe) {
     celdas.push(el("span", { className: "celda " + claseDe(d), title: `${d.split("-").reverse().join("/")}: ${tituloDe(d)}` }));
   return el("div", { className: "mapa-calor" }, ..."L M X J V S D".split(" ").map((t, i) => el("span", { className: "dia-calor", textContent: i % 2 ? "" : t })), ...celdas);
 }
-const dato = (nombre, color, grande, chico) => { const d = el("div", { className: "dato-salud" }, icono(nombre), el("span", {}, el("b", { textContent: grande }), el("br"), chico)); d.style.setProperty("--c", color); return d; };
+const dato = (nombre, grande, chico) => el("div", { className: "dato-salud" }, icono(nombre), el("span", {}, el("b", { textContent: grande }), el("br"), chico));
 
 // ---------- Ejercicio (paso 65) ----------
 export function semanaEntreno(v) {
@@ -331,8 +327,8 @@ export function constanciaEntreno(v) {
         mapaCalor(estado, (d) => ({ hecho: "entrenaste", falto: "tocaba y no fuiste", toca: "toca entrenar", n0: "descanso" })[estado(d)]),
         el("div", { className: "lado-constancia" },
           el("div", { className: "leyenda-calor" }, el("span", { className: "celda hecho" }), "fuiste", el("span", { className: "celda falto" }), "tocaba", el("span", { className: "celda n0" }), "descanso"),
-          dato("fuego", COLOR.proteina, plural(r.mejor, "entreno", "entrenos"), "tu mejor racha"),
-          sin !== null && sin > 3 ? dato("reloj", "#8a5a00", `${sin} días`, "sin entrenar") : dato("si", COLOR.kcal, plural(r.actual, "entreno", "entrenos"), "racha actual"))));
+          dato("fuego", plural(r.mejor, "entreno", "entrenos"), "tu mejor racha"),
+          sin !== null && sin > 3 ? dato("reloj", `${sin} días`, "sin entrenar") : dato("si", plural(r.actual, "entreno", "entrenos"), "racha actual"))));
   };
 }
 
@@ -406,7 +402,7 @@ function progresoDe(ejercicios, ctx) {
 }
 
 const NIVELES = ["Agotado", "Bajo", "Suficiente"];
-const MACRO = { "Proteína": ["carne", COLOR.proteina], "Carbohidrato": ["grano", COLOR.carbos], "Grasa": ["gota", COLOR.grasa] };
+const MACRO = { "Proteína": "carne", "Carbohidrato": "grano", "Grasa": "gota" };
 export function despensa(v) {
   v.classList.add("w-salud");
   return () => {
@@ -416,21 +412,19 @@ export function despensa(v) {
     v.sub.textContent = faltan.length ? `${agotados} agotados · ${faltan.length - agotados} bajos` : "";
     if (!faltan.length) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Tienes de todo. Bien ahí." }));
     v.replaceChildren(v.firstChild, el("div", { className: "despensa-salud" }, ...faltan.map((a) => {
-      const [nombre, color] = MACRO[a.props.macro] ?? ["plato", "#64748b"], nivel = a.props.despensa;
-      const b = el("button", { className: "alimento-salud " + nivel.toLowerCase(), title: `${nivel}${a.props.cantidad_compra ? " · comprar " + a.props.cantidad_compra : ""}. Toca cuando compres.`,
+      const nivel = a.props.despensa;
+      return el("button", { className: "alimento-salud " + nivel.toLowerCase(), title: `${nivel}${a.props.cantidad_compra ? " · comprar " + a.props.cantidad_compra : ""}. Toca cuando compres.`,
         onclick: () => cambiarProps(a, { despensa: NIVELES[NIVELES.indexOf(nivel) + 1] }) },
-        el("span", { className: "insignia" }, icono(nombre)),
+        el("span", { className: "insignia" }, icono(MACRO[a.props.macro] ?? "plato")),
         el("span", {}, el("span", { textContent: a.titulo }), el("span", { className: "nivel" }, el("i"))),
         a.props.cantidad_compra ? el("small", { textContent: a.props.cantidad_compra }) : "");
-      b.style.setProperty("--c", color);
-      return b;
-    })), el("p", { className: "vacio", textContent: "Tocar uno sube su nivel (Agotado → Bajo → Suficiente)." }));
+    })));
   };
 }
 
 // ---------- la Dieta (paso 67, como Samsung Health) ----------
 // Toda la vista mira un día (ctx.dia; sin nada, hoy). Paso 69: solo las cuatro comidas, y se agrega con el + de cada una.
-const MOMENTOS = [["Desayuno", "taza", "#c2410c"], ["Almuerzo", "plato", "#2f7a4c"], ["Merienda", "manzana", "#0e7490"], ["Cena", "luna", "#4338ca"]];
+const MOMENTOS = [["Desayuno", "taza"], ["Almuerzo", "plato"], ["Merienda", "manzana"], ["Cena", "luna"]];
 const diaDe = (ctx) => ctx.dia ?? hoyTexto();
 const nombreDelDia = (d) => {
   const f = diasEntre(hoyTexto(), d), largo = new Date(d + "T12:00").toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" });
@@ -489,9 +483,8 @@ export function equilibrio(v, ctx) {
     const lejos = filas.map(([k, n, f]) => [n, pct(k, f) - pct(k, f, m)]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
     v.sub.replaceChildren(!total ? "" : Math.abs(lejos[1]) < 10 ? el("span", { className: "etiqueta-dieta bien", textContent: "equilibrado" })
       : el("span", { className: "etiqueta-dieta", textContent: (lejos[1] > 0 ? "mucha " : "poca ") + lejos[0].toLowerCase().replace("carbohidratos", "carbohidrato") }));
-    const proporcion = el("span", { className: "proporcion" }, ...filas.map(([k, , f]) => { const i = el("i"); i.style.width = (total ? t[k] * f / total * 100 : 0) + "%"; i.style.background = COLOR[k]; return i; }));
     // Pasarse de la meta solo es malo en grasa y carbohidratos: más proteína no es problema para ganar músculo.
-    v.replaceChildren(v.firstChild, proporcion, ...filas.map(([k, nombre, f]) => {
+    v.replaceChildren(v.firstChild, ...filas.map(([k, nombre, f]) => {
       const pasada = k !== "proteina" && t[k] > m[k] * 1.1;
       const fila = el("div", { className: "nutriente" },
         el("div", {}, el("i"), el("span", { textContent: nombre }), el("b", { className: pasada ? "pasada" : "", textContent: `${numero(t[k])} g` }), el("small", { textContent: ` / ${numero(m[k])} g` })),
@@ -509,8 +502,8 @@ export function comidasDia(v, ctx) {
   v.classList.add("w-salud");
   return () => {
     const lista = comidasDe(diaDe(ctx)), sueltas = lista.filter((x) => !MOMENTOS.some(([n]) => n === x.momento));
-    const grupos = [...MOMENTOS, ...(sueltas.length ? [["Sin comida asignada", "reloj", "#64748b"]] : [])];
-    v.replaceChildren(v.firstChild, ...grupos.map(([nombre, ic, color]) => {
+    const grupos = [...MOMENTOS, ...(sueltas.length ? [["Sin comida asignada", "reloj"]] : [])];
+    v.replaceChildren(v.firstChild, ...grupos.map(([nombre, ic]) => {
       const cosas = nombre === "Sin comida asignada" ? sueltas : lista.filter((x) => x.momento === nombre), t = sumar(cosas);
       const abierta = ctx.abierta === nombre && cosas.length, agregando = ctx.agregando === nombre;
       const fila = el("div", { className: "momento" + (abierta ? " abierta" : "") },
@@ -525,7 +518,6 @@ export function comidasDia(v, ctx) {
           el("span", { textContent: x.a ? sinEstimacion(x.a.titulo) : "(alimento borrado)" }), el("small", { textContent: numero(x.g) + " g" }), el("b", { textContent: numero(x.kcal) + " kcal" }),
           el("button", { className: "quitar", textContent: "×", ariaLabel: "Borrar " + (x.a?.titulo ?? ""), onclick: () => escribir(db.from("registros").delete().eq("id", x.r.id)) })))) : "",
         agregando ? buscador(nombre, ctx) : "");
-      fila.style.setProperty("--c", color);
       return fila;
     }));
   };
@@ -616,8 +608,7 @@ export function semanaComida(v, ctx) {
           el("span", { textContent: new Date(d + "T12:00").toLocaleDateString("es-CL", { weekday: "narrow" }) + " " + Number(d.slice(8)) }));
         b.querySelector("i").style.height = Math.max(2, kcal[i] / tope * 100) + "%";
         return b;
-      })),
-      el("p", { className: "vacio", textContent: "La línea es tu meta. Para subir de peso importa el promedio de la semana." }));
+      })));
   };
 }
 

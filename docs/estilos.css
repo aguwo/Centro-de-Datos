@@ -999,6 +999,13 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 /* Salud (paso 63, salud.js). --c es el color de cada cosa: verde las calorías, naranjo la proteína, azul los carbohidratos,
    ámbar la grasa, y uno por hábito. Las ventanas siguen el vidrio de Ajustes (opacidad y desenfoque), como todas. */
 .w-salud { --linea-salud: color-mix(in srgb, var(--texto) 10%, transparent); }
+/* Paso 74: un bloque, un color. Todo lo de adentro (íconos, barras, checks, gráficos) usa el color del bloque elegido
+   (--color-bloque, lo pone bloques.js), aclarado en modo oscuro igual que el acento. Solo los nutrientes tienen color propio. */
+.escena-bloques { --bloque: var(--color-bloque, var(--acento)); }
+:root[data-tema="oscuro"] .escena-bloques { --bloque: color-mix(in oklch, var(--color-bloque, var(--tono)) 55%, #fff); }
+.w-salud { --c: var(--bloque, var(--acento)); --entreno: var(--bloque, var(--acento)); --habitos: var(--bloque, var(--acento)); }
+.escena-bloques .w-salud { --bien: var(--bloque); }
+.w-salud .principal { background: var(--c); border-color: var(--c); }
 .w-salud .vacio { font-size: 12.5px; }
 /* El camino del peso */
 .w-peso { gap: 10px; }
@@ -1038,12 +1045,12 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .constancia { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
 .constancia .mapa-calor { flex: 0 1 auto; }
 .lado-constancia { flex: 1 1 200px; display: grid; gap: 10px; }
-.dato-salud { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--c) 11%, transparent); font-size: 12.5px; color: var(--suave); }
+.dato-salud { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--suave); }
 .dato-salud .icono { width: 22px; height: 22px; color: var(--c); flex: none; }
 .dato-salud b { color: var(--texto); }
 /* La despensa: lo que se acabó o queda poco, con una barra de cuánto queda */
-.despensa-salud { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.alimento-salud { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 12px; text-align: left; background: var(--vidrio); font-size: 12.5px; min-width: 0; }
+.despensa-salud { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; }
+.alimento-salud { display: flex; align-items: center; gap: 9px; padding: 8px 0; border: 0; border-top: 1px solid var(--linea); border-radius: 0; text-align: left; background: none; font-size: 12.5px; min-width: 0; }
 .alimento-salud .insignia { width: 30px; height: 30px; border-radius: 9px; }
 .alimento-salud .insignia .icono { width: 16px; height: 16px; }
 .alimento-salud > span:nth-child(2) { flex: 1; display: grid; gap: 5px; min-width: 0; }
@@ -1069,8 +1076,6 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .dia-barra span::first-letter { text-transform: uppercase; }
 
 /* Paso 65: Salud en tres vistas. Ejercicio: la semana de entrenos (un día por columna) y su mapa de constancia. */
-.w-salud { --entreno: #1d4ed8; }
-:root[data-tema="oscuro"] .w-salud { --entreno: #7ea2f5; }
 .semana-entreno { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .dia-entreno { display: grid; justify-items: center; gap: 6px; padding: 10px 4px; border-radius: 14px; text-align: center; }
 .dia-entreno b { font-size: 13px; }
@@ -1090,8 +1095,6 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 @media (max-width: 700px) { .semana-entreno { gap: 2px; } .dia-entreno { padding: 8px 0; } .dia-entreno b { font-size: 11px; } .dia-entreno small { display: none; } .aro-entreno { width: 32px; height: 32px; } }
 
 /* Paso 66: Hábitos. Hoy: un anillo con cuántos llevas y una fila por hábito, agrupados por rutina. */
-.w-salud { --habitos: #7c3aed; }
-:root[data-tema="oscuro"] .w-salud { --habitos: #b49cf7; }
 .aro-hoy { position: relative; width: 150px; height: 150px; margin: 4px auto 6px; display: grid; place-items: center; align-content: center; }
 .aro-hoy > svg { position: absolute; inset: 0; transform: rotate(-90deg); }
 .aro-hoy circle { fill: none; stroke-width: 14; stroke-linecap: round; }
@@ -1101,14 +1104,13 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .aro-hoy small { color: var(--suave); font-size: 12px; }
 .grupo-habitos { display: block; margin: 8px 0 2px; font-weight: 600; color: var(--suave); }
 .grupo-habitos:empty { display: none; }
-.fila-habito { width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 10px; margin-top: 6px; border-radius: 12px; border: 1px solid var(--borde); background: color-mix(in srgb, var(--texto) 3%, transparent); text-align: left; font-size: 14px; }
+.fila-habito { width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 0; border: 0; border-top: 1px solid var(--linea); border-radius: 0; background: none; text-align: left; font-size: 14px; }
 .fila-habito > span:nth-child(2) { flex: 1; }
 .fila-habito .insignia { width: 36px; height: 36px; border-radius: 50%; background: none; color: var(--c); border: 2px dashed color-mix(in srgb, var(--c) 45%, transparent); }
 .fila-habito .check { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--borde); display: grid; place-items: center; flex: none; }
 .fila-habito.hecho .insignia { border-style: solid; background: color-mix(in srgb, var(--c) 14%, transparent); }
 .fila-habito.hecho .check { background: var(--c); border-color: var(--c); color: #fff; }
 .fila-habito.hecho .check .icono { width: 16px; height: 16px; }
-.fila-habito:hover { border-color: color-mix(in srgb, var(--c) 50%, transparent); }
 /* Cada hábito: una raya por día (de color = cumplido, tenue = no tocaba) */
 .w-cada-habito h3 small .segmento { font-size: 12.5px; }
 .filas-habitos { display: grid; }
@@ -1150,8 +1152,6 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .w-equilibrio { gap: 12px; }
 .etiqueta-dieta { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--alerta-suave); color: var(--alerta); }
 .etiqueta-dieta.bien { background: color-mix(in srgb, var(--bien) 14%, transparent); color: var(--bien); }
-.proporcion { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--linea-salud); }
-.proporcion i { display: block; height: 100%; }
 .nutriente { display: grid; gap: 5px; }
 .nutriente > div { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
 .nutriente > div i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
@@ -1208,11 +1208,11 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .ejercicio small { color: var(--suave); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .ejercicio input[type="number"] { width: 100%; padding: 3px 6px; text-align: right; font-weight: 600; }
 .datos-rutina { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.datos-rutina > div { display: grid; padding: 8px 12px; border-radius: 12px; background: color-mix(in srgb, var(--entreno) 8%, transparent); }
+.datos-rutina > div { display: grid; }
 .datos-rutina small { color: var(--suave); font-size: 12px; }
 .datos-rutina b { font-size: 17px; font-variant-numeric: tabular-nums; }
 .botones-rutina { display: flex; gap: 8px; flex-wrap: wrap; }
-.botones-rutina .principal { margin-left: auto; background: var(--entreno); border-color: var(--entreno); }
+.botones-rutina .principal { margin-left: auto; }
 .progreso-ejercicio h4 { margin: 4px 0; font-size: 13.5px; display: flex; align-items: center; gap: 6px; }
 .progreso-ejercicio h4 small { color: var(--suave); font-weight: 400; margin-left: auto; }
 .grafico-ejercicio { width: 100%; height: auto; overflow: visible; }
@@ -1250,10 +1250,13 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .tarjeta-bloque[aria-selected="true"] .insignia { background: var(--c); color: #fff; transform: scale(1.06) rotate(-4deg); }
 .texto-bloque { display: grid; gap: 1px; min-width: 0; }
 .texto-bloque b { font-size: 16px; }
-.dato-bloque { font-size: 14px; font-weight: 600; color: var(--c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dato-bloque { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .texto-bloque small { color: var(--suave); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tarjeta-bloque .anillo-avance { width: 48px; height: 48px; }
-.marca-agua { position: absolute; right: -18px; bottom: -30px; color: var(--c); opacity: .07; transform: rotate(-14deg); pointer-events: none;
+/* Paso 74: en el selector solo el bloque elegido lleva color; los otros quedan en gris hasta que los eliges. */
+.selector-bloques .tarjeta-bloque:not([aria-selected="true"]) .insignia { background: color-mix(in srgb, var(--texto) 8%, transparent); color: var(--suave); }
+.selector-bloques .tarjeta-bloque:not([aria-selected="true"]) .anillo-avance .lleno { stroke: var(--suave); }
+.marca-agua { position: absolute; right: -18px; bottom: -30px; color: var(--c); opacity: 0; transform: rotate(-14deg); pointer-events: none;
   transition: opacity .4s, transform .6s cubic-bezier(.22, 1, .36, 1); }
 .marca-agua .icono { width: 120px; height: 120px; stroke-width: 1.2; }
 .tarjeta-bloque[aria-selected="true"] .marca-agua { opacity: .16; transform: rotate(-6deg) scale(1.1); }

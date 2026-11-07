@@ -38,6 +38,7 @@ export function selectorDeBloques(id, grupos) {
     fondo.style.setProperty("--c", grupos[actual].b.color ?? "var(--acento)");
   };
   new ResizeObserver(moverFondo).observe(selector);
+  marcar();
 
   function ir(i, enfocar) {
     if (i === actual) return;
@@ -70,8 +71,10 @@ export function selectorDeBloques(id, grupos) {
     if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) ir(Math.min(grupos.length - 1, Math.max(0, actual - Math.sign(dx))));
   });
 
+  // El bloque elegido le da su color a todo lo de adentro (--color-bloque; estilos.css lo aclara en modo oscuro).
   function marcar() {
     tarjetas.forEach((t, i) => { t.ariaSelected = String(i === actual); t.tabIndex = i === actual ? 0 : -1; });
+    escena.style.setProperty("--color-bloque", grupos[actual].b.color ?? "var(--acento)");
     moverFondo();
   }
 

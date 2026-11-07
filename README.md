@@ -145,10 +145,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 71 | Las ventanas de Salud y las tarjetas de sus bloques siguen el vidrio de Ajustes (opacidad y desenfoque), como el resto: antes eran casi opacas fijas | — | — | `estilos.css` |
 | 72 | El buscador de comidas también busca en Open Food Facts (la base libre de alimentos, primero lo que se vende en Chile) desde 3 letras: cada resultado trae marca y kcal; su + lo guarda como alimento tuyo con sus macros y lo anota. Solo salen los que traen calorías y macros que cuadran entre sí. Lo pregunta una función nueva de Supabase («alimentos»), porque Open Food Facts no deja que la web le pregunte directo | — | — | `supabase/functions/alimentos/index.ts`, `docs/js/salud.js`, `estilos.css`, `.github/workflows/publicar-agente.yml` (publica todas las funciones) |
 | 73 | Salud en el escritorio infinito, a la derecha de Hoy: las tarjetas de Ejercicio, Hábitos y Dieta (tocar una abre Salud en ese bloque), los hábitos de hoy como botones redondos para marcar con un toque, y un medidor de medio círculo del peso de inicio a la meta con para anotar el de hoy | — | — | `docs/js/salud.js`, `bloques.js` (`contenidoDeTarjeta`, `elegir`), `widgets.js`, `apartados.js`, `estilos.css` |
+| 74 | Salud más ordenada a la vista: un bloque, un color. Todo lo de adentro (íconos, barras, checks, gráficos y botones) usa el color del bloque elegido, en vez de un color por hábito, comida o alimento; solo los nutrientes conservan el suyo. En el selector solo el bloque elegido lleva color y los otros quedan en gris. Sin cajas dentro de cajas (hábitos, despensa, rachas y datos de la rutina van como filas simples), sin la barra que repetía los tres nutrientes y sin textos de ayuda que sobraban | — | — | `docs/js/salud.js`, `bloques.js`, `estilos.css` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 74, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 75, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
