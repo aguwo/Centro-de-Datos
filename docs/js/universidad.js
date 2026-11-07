@@ -6,7 +6,7 @@
 //
 // Un ramo es un tópico con semestre (se muestran los del semestre más reciente). Sus evaluaciones son los eventos
 // que tiene adentro y no se repiten (las clases sí se repiten). Las cuentas están en notas.js.
-// Paso 52: cada ramo tiene su tema (ícono y portada ilustrada, de dibujos.js) y cada evaluación su ícono según el tipo.
+// Paso 52: cada ramo tiene su tema (ícono y portada de su color, de dibujos.js) y cada evaluación su ícono según el tipo.
 import { el, db, datos, dia, hora, cajasDe, colorDeProyecto, escribir, escribiendoEn, avisar, fijas, FIJA } from "./base.js";
 import { hoyTexto, diasEntre, corto } from "./fechas.js";
 import { cambiarProps, dentroDeCaja } from "./acciones.js";
@@ -45,7 +45,7 @@ function cuando(n) {
   return h ? `${texto} ${h}` : texto;
 }
 
-// El tema de un ramo (su ícono y su dibujo): el que le pongas en props.icono o, si no, uno adivinado por su nombre.
+// El tema de un ramo (su ícono): el que le pongas en props.icono o, si no, uno adivinado por su nombre.
 const TEMAS = [[/arquitect|comput|electr|circuit/i, "chip"], [/dato|sql/i, "base"], [/ambient|energ|ecolog|biolog|quím/i, "hoja"],
   [/ingl|idioma|franc|alem|portug|comunica/i, "dialogo"], [/sistema|red(es)?\b/i, "red"]];
 const temaDe = (ramo) => ramo.props?.icono ?? elegir(ramo.titulo, TEMAS, "libro");
