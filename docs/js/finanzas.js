@@ -255,6 +255,11 @@ const nuevoObjetivo = (texto) => el("button", { className: "enlace", textContent
   const area = areaDeFinanzas();
   formulario(null, { tipo: "objetivo", valores: { unidad: "CLP" }, conexion: area && dentroDeCaja("objetivo", area) });
 } });
+// Cuánto llevas de un objetivo, cuánto falta y cuántas semanas quedan hasta su fecha (null si no tiene).
+function paraLlegar(o) {
+  const meta = Number(o.props.meta) || 0, va = vaEn(o), tope = o.fecha && dia(o.fecha);
+  return { meta, va, falta: meta - va, tope, semanas: tope ? diasEntre(hoyTexto(), tope) / 7 : null };
+}
 export function objetivoAhorro(v) {
   v.classList.add("w-finanzas");
   return () => {
@@ -263,8 +268,7 @@ export function objetivoAhorro(v) {
     const lista = logrados.length ? el("div", { className: "logrados" }, el("b", { textContent: "Logrados" }),
       ...logrados.map((n) => el("span", {}, icono("si"), n.titulo, el("small", { textContent: plata(Number(n.props?.meta) || vaEn(n)) })))) : "";
     if (!o) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "No tienes un objetivo de ahorro. Crea uno con «+ Objetivo de ahorro» (unidad CLP)." }), lista);
-    const meta = Number(o.props.meta), va = vaEn(o), falta = meta - va, hoy = hoyTexto(), tope = o.fecha && dia(o.fecha);
-    const semanas = tope ? diasEntre(hoy, tope) / 7 : null, logrado = falta <= 0;
+    const { meta, va, falta, tope, semanas } = paraLlegar(o), logrado = falta <= 0;
     const fila = (nombre, x) => el("div", { className: "pie-kcal" }, el("span", { textContent: nombre }), el("b", { textContent: x }));
     const ahorro = cuentaDeAhorro();
     v.replaceChildren(v.firstChild,
@@ -377,7 +381,7 @@ const palabra = (s) => sinTildes(s.titulo).split(/\s+/)[0];
 const esDe = (s, r) => r.clase === "gasto" && sinTildes(r.titulo).includes(palabra(s));
 const ultimoCobro = (s) => datos.registros.findLast((r) => esDe(s, r));
 // El próximo día de cobro (desde hoy), si sabemos qué día del mes cobra.
-function proximoCobro(s) {
+function cobroSiguiente(s) {
   const u = ultimoCobro(s);
   if (!u) return null;
   const n = Number(dia(u.fecha).slice(8)), hoy = hoyTexto();
@@ -392,9 +396,9 @@ export function esteMes(v) {
   v.classList.add("w-finanzas");
   return () => {
     const hoy = hoyTexto(), inicio = hoy.slice(0, 8) + "01", lista = activas();
-    const cobros = new Map(lista.map((s) => [proximoCobro(s), s]).filter(([d]) => d?.startsWith(hoy.slice(0, 7))));
+    const cobros = new Map(lista.map((s) => [cobroSiguiente(s), s]).filter(([d]) => d?.startsWith(hoy.slice(0, 7))));
     const pasados = new Map(lista.map((s) => [ultimoCobro(s), s]).filter(([r]) => r && dia(r.fecha).startsWith(hoy.slice(0, 7))).map(([r, s]) => [dia(r.fecha), s]));
-    const siguiente = lista.map((s) => [proximoCobro(s), s]).filter(([d]) => d).sort()[0];
+    const siguiente = lista.map((s) => [cobroSiguiente(s), s]).filter(([d]) => d).sort()[0];
     const dias = Number(sumarDias(sumarDias(inicio, 32).slice(0, 8) + "01", -1).slice(8)), vacios = (new Date(inicio + "T12:00").getDay() + 6) % 7;
     v.replaceChildren(
       el("div", { className: "kcal-grande" }, el("b", { textContent: plata(totalAlMes()) }), el("span", { textContent: `al mes · unos ${plata(totalAlMes() * 12 / 52)} por semana` })),
@@ -491,6 +495,62 @@ export function suscripcionesPausadas(v) {
   };
 }
 
+// ---------- en el escritorio infinito (paso 87) ----------
+// Finanzas de un vistazo, abajo de Hoy: la semana en un medio anillo con el gasto de cada día, las categorías
+// (el mismo widget de Gastos), el próximo cobro y tu objetivo de ahorro. Cada uno con el color de su bloque.
+const conColor = (v, color) => { v.classList.add("w-finanzas", "con-color-bloque"); v.style.setProperty("--color-bloque", color); };
+const medioAnillo = (frac, grande, chico) => el("div", { className: "medio-anillo" },
+  svgDe("0 0 240 130", `<path d="M20 120a100 100 0 0 1 200 0" pathLength="100" class="pista"/>${frac > 0 ? `<path d="M20 120a100 100 0 0 1 200 0" pathLength="100" class="lleno" stroke-dasharray="${Math.min(1, frac) * 100} 100"/>` : ""}`),
+  el("b", { textContent: grande }), el("small", { textContent: chico }));
+const svgDe = (caja, dentro) => { const x = document.createElementNS("http://www.w3.org/2000/svg", "svg"); x.setAttribute("viewBox", caja); x.setAttribute("aria-hidden", "true"); x.innerHTML = dentro; return x; };
+
+export function finanzasSemana(v) {
+  conColor(v, BLOQUE_GASTOS);
+  return () => {
+    const s = semana(lunes(hoyTexto())), hoy = hoyTexto();
+    const porDia = Array.from({ length: 7 }, (_, i) => sumarDias(s.desde, i)).map((d) => [d, sumar(s.gastos.filter((r) => dia(r.fecha) === d))]);
+    const mayor = Math.max(1, ...porDia.map(([, x]) => x));
+    v.sub.textContent = `${Number(s.desde.slice(8))} al ${new Date(s.hasta + "T12:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" })}`;
+    const dias = el("div", { className: "barras-semana", role: "img", ariaLabel: "Gasto por día: " + porDia.map(([d, x]) => `${diaCorto(d)} ${plata(x)}`).join(", ") },
+      ...porDia.map(([d, x]) => {
+        const b = el("span", { className: "dia-barra" + (d === hoy ? " hoy" : d > hoy ? " futuro" : "") }, el("i"), el("small", { textContent: "LMMJVSD"[(new Date(d + "T12:00").getDay() + 6) % 7] }));
+        b.firstChild.style.height = x ? Math.max(6, x / mayor * 100) + "%" : "";
+        return b;
+      }));
+    v.replaceChildren(v.firstChild,
+      medioAnillo(s.gastado / (s.tope || 1), s.quedan < 0 ? "−" + plata(-s.quedan) : plata(s.quedan), s.quedan < 0 ? "te pasaste" : `te quedan de ${plata(s.tope)}`),
+      dias,
+      el("div", { className: "pie-kcal" }, s.quedan > 0 && s.dias ? el("span", {}, s.dias === 1 ? "Para hoy " : `Para ${s.dias} días `, el("b", { textContent: plata(s.quedan / s.dias) + (s.dias === 1 ? "" : " al día") })) : el("span", { textContent: `Gastado ${plata(s.gastado)}` }),
+        el("button", { className: "enlace", textContent: "+ Anotar", ariaHasPopup: "dialog", onclick: () => anotar("gasto") })));
+  };
+}
+
+export function proximoCobro(v) {
+  conColor(v, BLOQUE_SUSCRIPCIONES);
+  return () => {
+    const prox = activas().map((s) => [cobroSiguiente(s), s]).filter(([d]) => d).sort()[0];
+    if (!prox) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: activas().length ? "Aún no sé qué día cobran tus suscripciones." : "Sin suscripciones activas." }));
+    const [d, s] = prox, n = diasEntre(hoyTexto(), d);
+    v.replaceChildren(v.firstChild,
+      el("div", { className: "dato-grande" }, el("b", { textContent: s.titulo }), el("small", { textContent: `${diaCorto(d)} · ${n === 0 ? "hoy" : n === 1 ? "mañana" : `en ${n} días`}` })),
+      el("div", { className: "pie-kcal" }, el("b", { className: "monto-color", textContent: plata(Number(s.props?.precio) || 0) }), el("span", { textContent: plata(totalAlMes()) + " al mes" })));
+  };
+}
+
+export function metaAhorro(v) {
+  conColor(v, BLOQUE_AHORRO);
+  return () => {
+    const o = objetivoDeAhorro();
+    if (!o) return v.replaceChildren(v.firstChild, el("p", { className: "vacio" }, "Sin objetivo de ahorro. ", nuevoObjetivo("Crear uno")));
+    const { meta, va, falta, tope, semanas } = paraLlegar(o);
+    v.firstChild.firstChild.textContent = o.titulo;
+    v.replaceChildren(v.firstChild,
+      el("div", { className: "pie-kcal" }, el("b", { className: "monto-grande-chico", textContent: plata(va) }), el("span", { textContent: `de ${plata(meta)}` + (tope ? " · " + new Date(tope + "T12:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : "") })),
+      barra(va / (meta || 1)),
+      el("p", { className: "vacio" }, falta <= 0 ? "¡Lo lograste!" : semanas > 0 ? `Aparta ${plata(falta / Math.max(1, semanas))} por semana para llegar` : `Te faltan ${plata(falta)}`));
+  };
+}
+
 // ---------- las tarjetas de los bloques ----------
 // Lo que dice cada tarjeta del selector (bloques.js): un dato, un detalle y el avance para su anillo.
 export function resumenGastos() {
@@ -510,7 +570,7 @@ export function resumenAhorro() {
   return { dato: `${plata(va)} de ${plata(o.props.meta)}`, detalle: [o.titulo, fecha].filter(Boolean).join(" · "), avance: va / o.props.meta };
 }
 export function resumenSuscripciones() {
-  const n = activas().length, prox = activas().map((s) => [proximoCobro(s), s]).filter(([d]) => d).sort()[0];
+  const n = activas().length, prox = activas().map((s) => [cobroSiguiente(s), s]).filter(([d]) => d).sort()[0];
   return { dato: plata(totalAlMes()) + " al mes", detalle: prox ? `Próximo: ${prox[1].titulo} · ${diaCorto(prox[0])}` : n === 1 ? "1 activa" : `${n} activas` };
 }
 
