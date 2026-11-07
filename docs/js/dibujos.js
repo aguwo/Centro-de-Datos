@@ -2,7 +2,7 @@
 // y toman el color del texto que los rodea (currentColor), así un mismo dibujo sirve para cualquier ramo o proyecto.
 //   icono(nombre)          un ícono de línea de 24×24, ej. icono("reloj")
 //   portada(tema, color, clase, foto)  una franja con el dibujo de un tema, teñida con ese color, y su ícono encima;
-//                          con foto (el enlace a una imagen), la foto en vez del dibujo
+//                          con foto (el enlace a una imagen), la foto en vez del dibujo; con la clase "lisa", solo el color
 //   elegir(texto, reglas)  el primer nombre cuya palabra clave aparece en el texto (para adivinar tema o tipo)
 //   progreso(fraccion, marca, nombre)  una barra delgada de avance de 0 a 1 y, si se da, una rayita en la marca (ej. el mínimo)
 //   anillo(fraccion, texto)     un anillo de avance de 0 a 1 con un texto al medio (ej. "54%")

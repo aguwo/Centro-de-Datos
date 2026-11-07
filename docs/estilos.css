@@ -755,6 +755,8 @@ form.nodo .conexion select + select { margin-top: 6px; }
             background: var(--vidrio-fuerte); border: 1px solid var(--borde); box-shadow: var(--sombra); }
 .pastilla .icono { width: 15px; height: 15px; color: var(--suave); }
 .pastilla.alerta, .pastilla.alerta .icono { color: var(--alerta); }
+.portada.lisa { background: color-mix(in srgb, var(--c) 30%, var(--vidrio-fuerte)); } /* solo el color, sin dibujo (Universidad) */
+.portada.lisa .dibujo { display: none; }
 .portada .pastilla.aviso { position: absolute; right: 10px; top: 10px; padding: 3px 9px; font-size: 11.5px; font-weight: 600; box-shadow: none; }
 .progreso { position: relative; display: block; height: 4px; border-radius: 2px; background: var(--linea); }
 .progreso > i { display: block; height: 100%; border-radius: 2px; background: var(--c, var(--acento)); opacity: .85; }
