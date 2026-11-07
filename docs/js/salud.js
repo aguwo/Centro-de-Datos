@@ -4,6 +4,7 @@
 //   cifras-ejercicio, cifras-habitos   cuatro números con su ícono, en la barra del apartado
 //   semana-entreno    los 7 días de esta semana: cuáles tocaba entrenar y si fuiste; un botón marca el de hoy
 //   constancia-entreno 13 semanas de entrenos: lo que hiciste, lo que tocaba y lo que no
+//   rutina       la rutina del próximo entreno: marcas cada ejercicio, anotas los kilos y ves cómo vas subiendo (paso 68)
 //   peso         el camino a tu meta de peso: tu línea, lo que pide la fecha y el ritmo sano
 //   habitos-hoy  los hábitos que tocan hoy, en una lista por rutina con un anillo de cuántos llevas: tocar marca o desmarca
 //   cada-habito  una fila por hábito con una raya por día (30 o 90), su porcentaje y su mejor racha
@@ -23,10 +24,11 @@
 //   metas     las que guardes (tabla preferencias, clave "salud"); sin eso, unas sugeridas según tu peso
 // Cada hábito cae en una vista: los de entrenar en Ejercicio, los de registrar calorías y tomar agua en Dieta
 // (se cumplen solos al anotar comida o sumar vasos) y el resto en Hábitos.
-import { el, db, datos, dia, escribir, cajasDe } from "./base.js";
+import { el, db, datos, dia, escribir, areaDe } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes, sinHoraISO } from "./fechas.js";
 import { alternarRegistro, cambiarProps, crear, dentroDeCaja } from "./acciones.js";
 import { icono, elegir } from "./dibujos.js";
+import { formulario, mostrarPanel } from "./panel.js";
 
 const SANO = [0.25, 0.5];   // kg por semana que se considera sano subir (o bajar)
 const SEMANAS = 13;          // cuántas semanas muestra la constancia
@@ -389,6 +391,75 @@ export function constanciaEntreno(v) {
   };
 }
 
+// ---------- las rutinas de entreno (paso 68) ----------
+// Una rutina de entreno es una caja «rutina» sin hábitos adentro (ej. «Día A», Días «Lunes y jueves»), con sus ejercicios
+// (tipo «ejercicio»: series, repeticiones y kilos). Cada vez que terminas un entreno, cada ejercicio hecho queda como un
+// registro «medida» con los kilos que levantaste: así se ve si vas subiendo.
+const hijosDe = (id) => datos.nodos.filter((n) => datos.padre.get(n.id) === id);
+const rutinasDeEntreno = () => datos.nodos.filter((n) => n.tipos.clave === "rutina" && !hijosDe(n.id).some((h) => h.tipos.clave === "habito"));
+const ejerciciosDe = (r) => hijosDe(r.id).filter((n) => n.tipos.clave === "ejercicio").sort((a, b) => (a.creado_en ?? "").localeCompare(b.creado_en ?? ""));
+const levantadas = (e) => datos.registros.filter((r) => r.clase === "medida" && r.nodo_id === e.id).map((r) => ({ d: dia(r.fecha), kg: Number(r.valor) }));
+const kgDe = (e) => levantadas(e).at(-1)?.kg ?? Number(e.props?.kg ?? 0);
+const areaDeSalud = () => areaDe((entrenos()[0] ?? habitos()[0] ?? habitos("dieta")[0])?.id ?? "");
+
+export function rutina(v, ctx) {
+  v.classList.add("w-salud");
+  return () => {
+    if (!datos.tipo.has("ejercicio")) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Para armar tus rutinas falta pegar en Supabase el SQL del paso 68 (17-paso68-ejercicios.sql)." }));
+    const rutinas = rutinasDeEntreno(), area = areaDeSalud();
+    const nuevaRutina = el("button", { textContent: "+ Rutina", onclick: () => formulario(null, { tipo: "rutina", conexion: area && dentroDeCaja("rutina", area) }) });
+    if (!rutinas.length) return v.replaceChildren(v.firstChild,
+      el("p", { className: "vacio", textContent: "Arma una rutina por día de entreno (ej. «Día A», Días «Lunes y jueves») y agrégale sus ejercicios con series, repeticiones y kilos. Durante el entreno marcas cada uno y anotas el peso." }), nuevaRutina);
+    // La rutina que se muestra: la elegida, o la del próximo día de entreno, o la primera.
+    const prox = proximoEntreno() ?? hoyTexto();
+    const r = rutinas.find((x) => x.id === ctx.rutina) ?? rutinas.find((x) => x.props?.dias && tocaEl(x, prox)) ?? rutinas[0];
+    const ejercicios = ejerciciosDe(r), hechos = (ctx.hechos ??= new Map());
+    v.sub.replaceChildren(rutinas.length > 1 ? el("span", { className: "segmento", role: "group", ariaLabel: "Rutina" }, ...rutinas.map((x) =>
+      el("button", { textContent: x.titulo, ariaPressed: String(x === r), onclick: () => ctx.cambiar({ rutina: x.id }) }))) : r.titulo);
+    const series = ejercicios.reduce((s, e) => s + (Number(e.props?.series) || 0), 0);
+    const ultima = ejercicios.flatMap(levantadas).map((x) => x.d).sort().at(-1);
+    const fila = (e) => {
+      const hecho = hechos.has(e.id), kg = hechos.get(e.id) ?? kgDe(e);
+      return el("div", { className: "ejercicio" + (hecho ? " hecho" : "") },
+        el("input", { type: "checkbox", checked: hecho, ariaLabel: "Hecho: " + e.titulo, onchange: () => { if (hecho) hechos.delete(e.id); else hechos.set(e.id, kg); ctx.cambiar({}); } }),
+        el("button", { className: "nombre", textContent: e.titulo, title: "Ver o editar", onclick: () => mostrarPanel(e.id) }),
+        el("small", { textContent: [e.props?.series, e.props?.reps].filter(Boolean).join(" × ") }),
+        el("input", { type: "number", min: "0", step: "0.5", value: kg || "", placeholder: "kg", ariaLabel: "Kilos de " + e.titulo,
+          onchange: (ev) => { hechos.set(e.id, Number(ev.target.value) || 0); ctx.cambiar({}); } }), el("small", { textContent: "kg" }));
+    };
+    const terminar = () => {
+      const filas = [...hechos].map(([id, kg]) => ({ e: datos.nodo.get(id), kg })).filter((x) => x.e);
+      const h = entrenos()[0], marcar = h && !entrenoDel(hoyTexto()) ? [{ clase: "habito", nodo_id: h.id }] : [];
+      escribir(db.from("registros").insert([...filas.map(({ e, kg }) => ({ clase: "medida", nodo_id: e.id, valor: kg, unidad: "kg", titulo: e.titulo,
+        props: { series: e.props?.series ?? null, reps: e.props?.reps ?? null } })), ...marcar]));
+      hechos.clear();
+    };
+    v.replaceChildren(v.firstChild,
+      el("p", { className: "vacio", textContent: `${r.props?.dias || "Sin días: ponle Días para que salga sola el día que toca"}${ultima ? ` · la última vez: ${diaCorto(ultima)}` : ""}` }),
+      ejercicios.length ? el("div", { className: "ejercicios" }, ...ejercicios.map(fila)) : el("p", { className: "vacio", textContent: "Esta rutina aún no tiene ejercicios." }),
+      el("div", { className: "datos-rutina" }, ...[["Ejercicios", ejercicios.length], ["Series", series], ["Hechos hoy", `${hechos.size} de ${ejercicios.length}`]]
+        .map(([t, n]) => el("div", {}, el("small", { textContent: t }), el("b", { textContent: String(n) })))),
+      el("div", { className: "botones-rutina" },
+        el("button", { textContent: "+ Ejercicio", onclick: () => formulario(null, { tipo: "ejercicio", conexion: dentroDeCaja("ejercicio", r.id) }) }), nuevaRutina,
+        el("button", { className: "principal", disabled: !hechos.size, textContent: hechos.size ? `Terminar entreno (${hechos.size})` : "Marca lo que hiciste", onclick: terminar })),
+      progresoDe(ejercicios, ctx));
+  };
+}
+// Cómo vas subiendo de peso en un ejercicio de la rutina (el elegido o el primero con al menos dos entrenos anotados).
+function progresoDe(ejercicios, ctx) {
+  const conDatos = ejercicios.filter((e) => levantadas(e).length >= 2);
+  if (!conDatos.length) return ejercicios.length ? el("p", { className: "vacio", textContent: "Después de dos entrenos verás aquí cómo vas subiendo de peso en cada ejercicio." }) : "";
+  const e = conDatos.find((x) => x.id === ctx.ejercicio) ?? conDatos[0], puntos = levantadas(e);
+  const W = 400, H = 120, bajo = Math.min(...puntos.map((p) => p.kg)), alto = Math.max(...puntos.map((p) => p.kg), bajo + 1);
+  const x = (i) => 10 + (W - 20) * i / Math.max(puntos.length - 1, 1), y = (kg) => H - 14 - (H - 34) * (kg - bajo) / (alto - bajo);
+  return el("div", { className: "progreso-ejercicio" },
+    el("h4", {}, el("select", { ariaLabel: "Ejercicio", onchange: (ev) => ctx.cambiar({ ejercicio: ev.target.value }) },
+      ...conDatos.map((x) => el("option", { value: x.id, textContent: x.titulo, selected: x === e }))), " en el tiempo",
+      el("small", { textContent: ` ${numero(puntos[0].kg, 1)} → ${numero(puntos.at(-1).kg, 1)} kg` })),
+    svgDe(`0 0 ${W} ${H}`, `<polyline points="${puntos.map((p, i) => `${x(i)},${y(p.kg)}`).join(" ")}" class="linea"/>` +
+      puntos.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.kg)}" r="${i === puntos.length - 1 ? 5 : 3.5}"><title>${p.d.split("-").reverse().join("/")}: ${numero(p.kg, 1)} kg</title></circle>`).join(""), "grafico-ejercicio"));
+}
+
 const NIVELES = ["Agotado", "Bajo", "Suficiente"];
 const MACRO = { "Proteína": ["carne", COLOR.proteina], "Carbohidrato": ["grano", COLOR.carbos], "Grasa": ["gota", COLOR.grasa] };
 export function despensa(v) {
@@ -498,7 +569,7 @@ export function agua(v, ctx) {
     const h = habitoDe(AGUA), d = diaDe(ctx);
     if (!h) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Cuenta los vasos de agua que tomas al día." }),
       el("button", { className: "principal", textContent: "Empezar a contar el agua", onclick: () => {
-        const area = cajasDe((habitoDe(REGISTRAR) ?? entrenos()[0] ?? {}).id ?? "").find((c) => datos.nodo.get(c)?.tipos.clave === "area");
+        const area = areaDeSalud();
         crear("habito", { titulo: "Tomar agua", props: { meta: 8 } }, { enfocar: false, conexion: area && dentroDeCaja("habito", area) });
       } }));
     const vasos = marcasDe(h).filter((r) => dia(r.fecha) === d), meta = Number(h.props?.meta) || 8;
