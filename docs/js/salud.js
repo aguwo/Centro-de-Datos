@@ -150,7 +150,7 @@ const diaCorto = (d) => new Date(d + "T12:00").toLocaleDateString("es-CL", { wee
 // ---------- los widgets ----------
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 
-export function peso(v) {
+export function peso(v, ctx) {
   v.classList.add("w-salud");
   return () => {
     const o = objetivoDePeso();
@@ -189,6 +189,7 @@ export function peso(v) {
       pideDemasiado ? el("p", { className: "aviso-salud" }, icono("alerta"),
         el("span", { textContent: `La fecha pide ${numero(Math.abs(r.pide), 1)} kg por semana. Lo sano es ${numero(SANO[0], 2)} a ${numero(SANO[1], 1)}: llegarías entre el ${largo(r.sano[1])} y el ${largo(r.sano[0])}. ` }), editar(o, "Cambiar la fecha")) : "",
       anotarPeso(o, ahora),
+      tusPesadas(o, ctx),
     );
   };
 }
@@ -204,6 +205,20 @@ const nuevoHabito = () => el("button", { className: "enlace", textContent: "+ H�
   formulario(null, { tipo: "habito", conexion: area && dentroDeCaja("habito", area) });
 } });
 const largo = (d) => new Date(d + "T12:00").toLocaleDateString("es-CL", { day: "numeric", month: "long", year: d.slice(0, 4) === hoyTexto().slice(0, 4) ? undefined : "numeric" });
+// Paso 77: tus pesadas, de la más nueva a la más vieja, para corregir el peso (se guarda al salir del campo) o borrar
+// una con ×. Va plegada; queda abierta si la abriste (ctx.pesadas), aunque lleguen datos nuevos.
+function tusPesadas(o, ctx) {
+  const lista = datos.registros.filter((r) => r.clase === "medida" && r.nodo_id === o.id).reverse();
+  if (!lista.length) return "";
+  const d = el("details", { className: "tus-pesadas", open: !!ctx.pesadas, ontoggle: () => { ctx.pesadas = d.open; } },
+    el("summary", { textContent: `Tus pesadas (${lista.length})` }),
+    ...lista.map((r) => el("div", { className: "pesada" }, el("span", { textContent: largo(dia(r.fecha)) }),
+      el("input", { type: "number", step: "0.1", min: "20", max: "300", value: Number(r.valor), ariaLabel: "Peso del " + largo(dia(r.fecha)),
+        onchange: (e) => { const valor = Number(e.target.value); if (valor > 0) escribir(db.from("registros").update({ valor }).eq("id", r.id)); } }),
+      el("span", { textContent: "kg" }),
+      el("button", { className: "quitar", textContent: "×", ariaLabel: "Borrar la pesada del " + largo(dia(r.fecha)), onclick: () => escribir(db.from("registros").delete().eq("id", r.id)) }))));
+  return d;
+}
 // Anotar el peso de hoy: un campo y un botón. Una pesada por semana basta.
 function anotarPeso(o, ahora) {
   const campo = el("input", { type: "number", step: "0.1", min: "20", max: "300", placeholder: numero(ahora.v, 1), ariaLabel: "Tu peso de hoy en kg" });
