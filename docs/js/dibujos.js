@@ -62,6 +62,13 @@ const ICONOS = {
   galleta: '<path d="M12 3a9 9 0 1 0 9 9 3 3 0 0 1-3-3 3 3 0 0 1-3-3 3 3 0 0 1-3-3z"/><path d="M9 10h.01M14 15h.01M9 15h.01"/>',
   lupa: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/>',
   vaso: '<path d="M6 4h12l-1.5 16h-9zM7 9h10"/>',
+  // finanzas (paso 83)
+  billetera: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>',
+  monedas: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
+  repetir: '<path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/>',
+  bus: '<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M8 21v-4M16 21v-4"/>',
+  control: '<rect x="2.5" y="7" width="19" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M15 12h.01M17.5 14h.01"/>',
+  puntos: '<path d="M6 12h.01M12 12h.01M18 12h.01"/>',
 };
 
 // Los dibujos de las portadas, en un lienzo de 240×80. Se dibujan con el color del tema (currentColor) a distintas opacidades.

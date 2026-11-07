@@ -28,6 +28,7 @@ import { dibujar as dibujarMapa, ajustarMapa } from "./mapa.js";
 import { dibujarCalendario, iniciarCalendario } from "./calendario.js";
 import { semestreActual } from "./universidad.js";
 import { BLOQUES } from "./salud.js";
+import { BLOQUES as FINANZAS } from "./finanzas.js";
 
 export const APARTADOS = [
   {
@@ -88,6 +89,21 @@ export const APARTADOS = [
       { nombre: "Cómo vas", ancho: 1.5, widgets: ["equilibrio", "semana-comida", "despensa"] },
     ],
     icono: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/><path d="M3 12h4l2-3 3 6 2-3h3"/>',
+  },
+  // Paso 83: tu plata (finanzas.js), como Salud: tres bloques, Gastos, Ahorro y Suscripciones, con lo de ahora a la
+  // izquierda y cómo vas a la derecha. Va a pantalla completa.
+  {
+    id: "finanzas", nombre: "Finanzas", nuevo: ["categoria", "cuenta", "suscripcion"],
+    columnas: [
+      FINANZAS.gastos,
+      { nombre: "Esta semana", ancho: 1, widgets: ["semana-gasto", "movimientos"] },
+      { nombre: "Cómo vas", ancho: 1.25, widgets: ["por-categoria", "semanas-gasto", "entra-sale"] },
+      FINANZAS.ahorro,
+      { nombre: "Ahora", ancho: 1, widgets: ["cuentas"] },
+      FINANZAS.suscripciones,
+      { nombre: "Este mes", ancho: 1, widgets: ["suscripciones"] },
+    ],
+    icono: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>',
   },
   // Las tarjetas de antes (hábitos, gastos, plantas...). Se quedan hasta que cada una tenga su apartado (paso 32).
   {

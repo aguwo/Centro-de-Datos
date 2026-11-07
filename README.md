@@ -155,15 +155,21 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 81 | Salud en el escritorio infinito con dos vistas que se eligen en Ajustes → Escritorio infinito: **Bento** (Dieta grande con anillo, nutrientes y las 4 comidas; peso con barra de inicio a meta; Ejercicio y Hábitos lado a lado) y **Anillos** (dieta, hábitos, ejercicio y peso de un vistazo, y el detalle abajo). En una columna, una lista de widgets va en una fila; las secciones del escritorio no muestran selector de vistas | — | — | `docs/js/apartados.js`, `widgets.js`, `ajustes.js`, `salud.js`, `estilos.css` |
 | 82 | Escritorio infinito: las flechas ← → ↑ ↓ llevan a la sección de al lado según el plano (ej. ↑ desde Hoy = Esta semana). Si hacia ese lado no hay nada, no se mueve | — | — | `docs/js/escritorio.js` |
 
+### Finanzas
+
+| Paso | Qué agrega | PR | SQL | Archivo |
+| --- | --- | --- | --- | --- |
+| 83 | El apartado Finanzas en la barra lateral, ordenado como Salud: tres bloques con su tarjeta y su color (**Gastos**, **Ahorro** y **Suscripciones**). Gastos: ‹ › cambia de semana; cuánto te queda del presupuesto semanal (la suma del de tus categorías), cuánto por día y si vas bien según la parte de la semana que ya pasó; los movimientos de la semana, y a los gastos sin categoría se la eliges con un toque; cada categoría contra su presupuesto; las últimas 8 semanas contra el presupuesto; y lo que entró y salió en el mes. Ahorro muestra el saldo de cada cuenta y Suscripciones las activas con su total al mes (los dos se completan en los pasos que siguen). La web ahora trae todos los gastos, ingresos y transferencias, no solo los de 14 semanas, para que el saldo cuadre | — | — | `docs/js/finanzas.js` (nuevo), `apartados.js`, `widgets.js`, `base.js` (registros con título; la plata completa), `dibujos.js` (billetera, monedas, repetir, bus, control, puntos), `estilos.css` |
+
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 83, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 84, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
 | Ahora | Respaldos semanales de la base |
 | Siguiente | EV@: material de cada ramo (lista con enlaces) y cuestionarios con fecha |
-| Siguiente | Finanzas |
+| Ahora | Finanzas (pasos 83 en adelante) |
 | Después | Chat con Martita en la web |
 | Después | Google Calendar en los dos sentidos |
 | Después | Modo editar la interfaz |
@@ -197,6 +203,7 @@ docs/js/acciones.js  lo que la web le cambia a tus datos (completar, posponer, s
 docs/js/fechas.js    ayudas de fechas (hoy, sumar días, horas)
 docs/js/apariencia.js cómo se ve la web (modo, color, fondo, vidrio, letra): se aplica y se guarda
 docs/js/ajustes.js   el apartado Ajustes: los controles que la cambian y tu cuenta
+docs/js/finanzas.js   el apartado Finanzas: gastos de la semana, categorías, cuentas y suscripciones
 docs/js/universidad.js  el apartado Universidad: tarjetas de ramos, la página de un ramo y lo que viene
 docs/js/notas.js     las cuentas de un ramo: nota hasta ahora, cuánto necesitas, cómo va, asistencia
 docs/js/dibujos.js   íconos y portadas ilustradas (trazos SVG propios, se tiñen con el color del ramo o proyecto)
