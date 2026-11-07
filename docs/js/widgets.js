@@ -19,6 +19,7 @@ import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
 import { galeria, cabecera, tablero, dentro } from "./proyectos.js";
 import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { loImportante, diasDeLaSemana } from "./semana.js";
+import { cifras, peso, anillos, habitosHoy, constancia, despensa } from "./salud.js";
 import { modo, fondo, barra, ventanas, cuenta } from "./ajustes.js";
 
 export const WIDGETS = {
@@ -36,6 +37,12 @@ export const WIDGETS = {
   "lo-que-viene":  { titulo: "Lo que viene", crear: loQueViene },
   "lo-importante": { crear: loImportante },
   "dias":          { crece: true, crear: diasDeLaSemana },
+  "cifras":        { crear: cifras },
+  "peso":          { crear: peso },
+  "anillos":       { titulo: "Anillos de hoy", crear: anillos },
+  "habitos-hoy":   { titulo: "Hábitos de hoy", crear: habitosHoy },
+  "constancia":    { titulo: "Constancia", crear: constancia },
+  "despensa":      { titulo: "Despensa", crear: despensa },
   "modo":          { titulo: "Modo y color", crear: modo },
   "fondo":         { titulo: "Fondo de pantalla", crear: fondo },
   "barra":         { titulo: "Barra lateral", crear: barra },
