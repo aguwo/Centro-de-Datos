@@ -20,7 +20,7 @@ import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
 import { galeria, cabecera, tablero, dentro } from "./proyectos.js";
 import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { loImportante, diasDeLaSemana } from "./semana.js";
-import { cifrasEjercicio, cifrasHabitos, cifrasDieta, semanaEntreno, constanciaEntreno, peso, anillos, habitosHoy, constancia, despensa,
+import { cifrasEjercicio, cifrasHabitos, cifrasDieta, semanaEntreno, constanciaEntreno, peso, anillos, habitosHoy, cadaHabito, porDiaDeSemana, despensa,
   diaComida, comidas, plato, anotar, semanaComida } from "./salud.js";
 import { icono } from "./dibujos.js";
 import { modo, fondo, barra, ventanas, cuenta } from "./ajustes.js";
@@ -48,7 +48,8 @@ export const WIDGETS = {
   "peso":          { crear: peso },
   "anillos":       { titulo: "Anillos de hoy", crear: anillos },
   "habitos-hoy":   { titulo: "Hábitos de hoy", crear: habitosHoy },
-  "constancia":    { titulo: "Constancia", crear: constancia },
+  "cada-habito":   { titulo: "Cada hábito", crear: cadaHabito },
+  "por-dia":       { titulo: "Por día de la semana", crear: porDiaDeSemana },
   "despensa":      { titulo: "Despensa", crear: despensa },
   "dia-comida":    { crear: diaComida },
   "comidas":       { crear: comidas },

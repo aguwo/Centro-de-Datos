@@ -6,8 +6,9 @@
 //   constancia-entreno 13 semanas de entrenos: lo que hiciste, lo que tocaba y lo que no
 //   peso         el camino a tu meta de peso: tu línea, lo que pide la fecha y el ritmo sano
 //   anillos      cuatro anillos de hoy: calorías, proteína, carbohidratos y grasa contra tu meta diaria
-//   habitos-hoy  los hábitos que tocan hoy, como botones con ícono: tocar marca o desmarca
-//   constancia   cuántos hábitos cumpliste cada día de las últimas 13 semanas, y tu mejor racha
+//   habitos-hoy  los hábitos que tocan hoy, en una lista por rutina con un anillo de cuántos llevas: tocar marca o desmarca
+//   cada-habito  una fila por hábito con una raya por día (30 o 90), su porcentaje y su mejor racha
+//   por-dia      qué días de la semana cumples más tus hábitos
 //   despensa     los alimentos que se acabaron o quedan pocos: tocar sube su nivel
 // La vista Diario (paso 64) mira un día (ctx.dia; sin nada, hoy):
 //   dia-comida   el día: ‹ › para cambiarlo, sus calorías con una barra por macro y tres anillos (proteína, carbos, grasa)
@@ -22,7 +23,6 @@
 //   metas     las que guardes (tabla preferencias, clave "salud"); sin eso, unas sugeridas según tu peso
 // Cada hábito cae en una vista: los de entrenar en Ejercicio, el de registrar calorías en Dieta (se cumple solo
 // al anotar comida) y el resto en Hábitos.
-// Los datos de salud son sensibles (Ley 21.719): «Ocultar números» los difumina en esta pantalla.
 import { el, db, datos, dia, escribir } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes, sinHoraISO } from "./fechas.js";
 import { alternarRegistro, cambiarProps } from "./acciones.js";
@@ -39,8 +39,6 @@ const svgDe = (viewBox, trazos, clase = "") => {
   s.innerHTML = trazos;
   return s;
 };
-// Un número que se difumina con «Ocultar números».
-const cifra = (texto) => el("span", { className: "cifra", textContent: texto });
 
 // ---------- el peso ----------
 const objetivoDePeso = () => datos.nodos.find((n) => n.tipos.clave === "objetivo" && n.estado !== "Hecho" && n.props?.unidad === "kg" && typeof n.props?.meta === "number");
@@ -158,30 +156,19 @@ function rachaDeEntrenos() {
 const diaCorto = (d) => new Date(d + "T12:00").toLocaleDateString("es-CL", { weekday: "short", day: "numeric" });
 
 // ---------- los widgets ----------
-// «Ocultar números»: un botón en la barra del apartado que difumina las cifras (se recuerda en este navegador).
-function botonPrivado(v) {
-  const leer = () => { try { return localStorage.getItem("salud-privado") === "1"; } catch { return false; } };
-  const b = el("button", { className: "privado-boton" }, icono("ojo"), el("span"));
-  const poner = (si) => { v.closest(".apartado")?.classList.toggle("privado", si); b.lastChild.textContent = si ? "Mostrar números" : "Ocultar números"; b.ariaPressed = String(si); };
-  b.onclick = () => { const si = !leer(); try { localStorage.setItem("salud-privado", si ? "1" : "0"); } catch {} poner(si); };
-  return { b, poner: () => poner(leer()) };
-}
-
-// Una vista de Salud lleva arriba, a todo el ancho, cuatro cifras con su ícono y el botón «Ocultar números».
+// Una vista de Salud lleva arriba, a todo el ancho, cuatro cifras con su ícono.
 // barraDeCifras(tarjetas) arma ese widget: tarjetas() devuelve las cuatro como [ícono, color, título, valor, unidad, pie].
 function tarjeta(nombre, color, titulo, valor, unidad, pie) {
   const t = el("div", { className: "cifra-salud vidrio" }, el("span", { className: "insignia" }, icono(nombre)),
-    el("div", {}, el("small", { textContent: titulo }), el("b", {}, cifra(valor), el("i", { textContent: " " + unidad })), el("small", { textContent: pie })));
+    el("div", {}, el("small", { textContent: titulo }), el("b", {}, String(valor), el("i", { textContent: " " + unidad })), el("small", { textContent: pie })));
   t.style.setProperty("--c", color);
   return t;
 }
 const barraDeCifras = (tarjetas) => (v, ctx) => {
   v.hidden = true; // esta ventana no se ve: pone sus cifras en la barra del apartado
-  const privado = botonPrivado(v);
   return () => {
     cargarMetas(() => ctx.cambiar({}));
-    privado.poner();
-    ctx.barra.replaceChildren(el("div", { className: "cifras-salud" }, ...tarjetas().map((t) => tarjeta(...t))), privado.b);
+    ctx.barra.replaceChildren(el("div", { className: "cifras-salud" }, ...tarjetas().map((t) => tarjeta(...t))));
   };
 };
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
@@ -253,7 +240,7 @@ export function peso(v) {
     const hoyX = x(hoy), hoyY = y(ahora.v);
     const hacia = Math.sign(meta - inicio), pideDemasiado = r.pide !== null && Math.sign(r.falta) === hacia && Math.abs(r.pide) > SANO[1];
     v.replaceChildren(
-      el("h3", {}, "Camino a ", cifra(numero(meta, 1) + " kg"), el("small", { textContent: `${o.titulo}${tope ? " · tope " + new Date(tope + "T12:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : ""}` })),
+      el("h3", {}, "Camino a ", String(numero(meta, 1) + " kg"), el("small", { textContent: `${o.titulo}${tope ? " · tope " + new Date(tope + "T12:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" }) : ""}` })),
       el("div", { className: "leyenda" }, el("span", { className: "l-peso", textContent: "tu peso" }),
         pideDemasiado ? el("span", { className: "l-pide", textContent: "lo que pide la fecha" }) : "", el("span", { className: "l-sano", textContent: "ritmo sano" })),
       svgDe(`0 0 ${W} ${H}`, `${lineas.join("")}${meses.join("")}
@@ -262,7 +249,7 @@ export function peso(v) {
         ${pideDemasiado ? `<path d="M${hoyX} ${hoyY} L${x(tope)} ${y(meta)}" class="pide"/><circle cx="${x(tope)}" cy="${y(meta)}" r="5" class="pide-punto"/>` : ""}
         <polyline points="${puntos.map((p) => `${x(p.d)},${y(p.v)}`).join(" ")}" class="linea"/>
         ${puntos.map((p, i) => `<circle cx="${x(p.d)}" cy="${y(p.v)}" r="${i === puntos.length - 1 ? 7 : 4.5}" class="${i === puntos.length - 1 ? "ultimo" : "punto"}"/>`).join("")}
-        <line x1="${hoyX}" y1="${ARRIBA - 8}" x2="${hoyX}" y2="${ABAJO + 6}" class="hoy"/><text x="${hoyX}" y="${ABAJO + 18}" class="hoy-texto">hoy</text>`, "grafico-peso cifra"),
+        <line x1="${hoyX}" y1="${ARRIBA - 8}" x2="${hoyX}" y2="${ABAJO + 6}" class="hoy"/><text x="${hoyX}" y="${ABAJO + 18}" class="hoy-texto">hoy</text>`, "grafico-peso"),
       pideDemasiado ? el("p", { className: "aviso-salud" }, icono("alerta"),
         el("span", { textContent: `La fecha pide ${numero(Math.abs(r.pide), 1)} kg por semana. Lo sano es ${numero(SANO[0], 2)} a ${numero(SANO[1], 1)}: llegarías entre el ${largo(r.sano[1])} y el ${largo(r.sano[0])}. Puedes mover la fecha tope del objetivo.` })) : "",
       anotarPeso(o, ahora),
@@ -296,8 +283,8 @@ export function anillos(v, ctx) {
     }).join("");
     v.sub.textContent = m.sugeridas ? "metas sugeridas" : "";
     const lista = el("div", { className: "lista-anillos" }, ...filas.map(([k, nombre, u]) => {
-      const f = el("div", {}, el("i"), el("span", { textContent: nombre }), el("b", {}, cifra(numero(hoy[k])), " / ",
-        editando ? el("input", { type: "number", value: m[k], name: k, ariaLabel: "Meta de " + nombre.toLowerCase() }) : cifra(numero(m[k]) + u)));
+      const f = el("div", {}, el("i"), el("span", { textContent: nombre }), el("b", {}, String(numero(hoy[k])), " / ",
+        editando ? el("input", { type: "number", value: m[k], name: k, ariaLabel: "Meta de " + nombre.toLowerCase() }) : String(numero(m[k]) + u)));
       f.style.setProperty("--c", COLOR[k]);
       return f;
     }));
@@ -307,27 +294,89 @@ export function anillos(v, ctx) {
       editando = !editando;
       ctx.cambiar({});
     };
-    v.replaceChildren(v.firstChild, el("div", { className: "anillos-salud" }, svgDe("0 0 200 200", aros, "aros cifra"), lista), boton);
+    v.replaceChildren(v.firstChild, el("div", { className: "anillos-salud" }, svgDe("0 0 200 200", aros, "aros"), lista), boton);
   };
 }
 
+// Paso 66: los hábitos de hoy en una lista, agrupados por su rutina (la caja donde están), con un anillo de cuántos llevas.
 export function habitosHoy(v) {
   v.classList.add("w-salud");
   return () => {
     const hoy = hoyTexto(), lista = habitos().filter((h) => tocaEl(h, hoy));
-    v.sub.textContent = "toca para marcar";
     if (!lista.length) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Hoy no te toca ningún hábito." }));
-    const hace30 = sumarDias(hoy, -29);
-    v.replaceChildren(v.firstChild, el("div", { className: "habitos-salud" }, ...lista.map((h) => {
-      const deHoy = marcasDe(h).find((r) => dia(r.fecha) === hoy), [nombre, color] = temaDe(h), frac = cumplido([h], hace30, hoy);
-      const b = el("button", { className: "habito-salud" + (deHoy ? " hecho" : ""), ariaPressed: String(!!deHoy), title: `${Math.round(frac * 100)}% de las veces en los últimos 30 días`,
-        onclick: () => alternarRegistro("habito", h, deHoy) },
-        el("span", { className: "aro-habito" }, svgDe("0 0 64 64", `<circle cx="32" cy="32" r="28" pathLength="100" class="pista"/>${frac ? `<circle cx="32" cy="32" r="28" pathLength="100" class="lleno" stroke-dasharray="${Math.min(1, frac) * 100} 100"/>` : ""}`),
-          el("span", { className: "insignia" }, icono(deHoy ? "si" : nombre))),
-        el("span", { textContent: h.titulo }), el("small", { className: "cifra", textContent: Math.round(frac * 100) + "%" }));
+    const deHoy = (h) => marcasDe(h).find((r) => dia(r.fecha) === hoy), hechos = lista.filter(deHoy).length;
+    v.sub.textContent = "toca para marcar";
+    // Los grupos: una rutina por caja (ej. «Mañana»); los que no están en una rutina van al final.
+    const rutinaDe = (h) => { const p = datos.nodo.get(datos.padre.get(h.id)); return p?.tipos.clave === "rutina" ? p : null; };
+    const grupos = new Map();
+    for (const h of lista) { const r = rutinaDe(h), k = r?.id ?? ""; if (!grupos.has(k)) grupos.set(k, { r, hs: [] }); grupos.get(k).hs.push(h); }
+    const orden = [...grupos.values()].sort((a, b) => !a.r - !b.r);
+    const fila = (h) => {
+      const marca = deHoy(h), [nombre, color] = temaDe(h);
+      const b = el("button", { className: "fila-habito" + (marca ? " hecho" : ""), ariaPressed: String(!!marca), onclick: () => alternarRegistro("habito", h, marca) },
+        el("span", { className: "insignia" }, icono(nombre)), el("span", { textContent: h.titulo }), el("span", { className: "check" }, marca ? icono("si") : ""));
       b.style.setProperty("--c", color);
       return b;
-    })), el("p", { className: "vacio", textContent: "El anillo = cuántas veces lo cumpliste en los últimos 30 días." }));
+    };
+    v.replaceChildren(v.firstChild,
+      el("div", { className: "aro-hoy" }, svgDe("0 0 160 160", `<circle cx="80" cy="80" r="64" pathLength="100" class="pista"/>${hechos ? `<circle cx="80" cy="80" r="64" pathLength="100" class="lleno" stroke-dasharray="${hechos / lista.length * 100} 100"/>` : ""}`),
+        el("b", { textContent: `${hechos}/${lista.length}` }), el("small", { textContent: hechos === lista.length ? "¡todo listo!" : "hechos" })),
+      ...orden.flatMap(({ r, hs }) => [el("small", { className: "grupo-habitos", textContent: r ? "Rutina " + r.titulo.toLowerCase() : orden.length > 1 ? "Sin rutina" : "" }), ...hs.map(fila)]));
+  };
+}
+
+// Paso 66: cada hábito en una fila con una raya por día (de color si lo cumpliste, tenue si no tocaba),
+// su porcentaje y su mejor racha. Arriba se elige cuántos días mirar.
+const RANGOS = [30, 90];
+// La racha más larga de días que tocaba y cumpliste (los días que no tocaba no la cortan).
+function mejorRacha(h, desde, hasta) {
+  const hechos = diasMarcados([h]);
+  let mejor = 0, corrida = 0;
+  for (let d = desde; d <= hasta; d = sumarDias(d, 1)) if (tocaEl(h, d)) { corrida = hechos.has(d) ? corrida + 1 : 0; mejor = Math.max(mejor, corrida); }
+  return mejor;
+}
+export function cadaHabito(v, ctx) {
+  v.classList.add("w-salud");
+  return () => {
+    const hoy = hoyTexto(), n = ctx.rango ?? RANGOS.at(-1), desde = sumarDias(hoy, 1 - n), lista = habitos();
+    v.sub.replaceChildren(el("span", { className: "segmento", role: "group", ariaLabel: "Cuántos días" }, ...RANGOS.map((k) =>
+      el("button", { textContent: k + " días", ariaPressed: String(k === n), onclick: () => ctx.cambiar({ rango: k }) }))));
+    if (!lista.length) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Aún no tienes hábitos. Créalos con «+ Nuevo»." }));
+    const ultimo = [...diasMarcados(lista)].sort().at(-1), sin = ultimo ? diasEntre(ultimo, hoy) : null;
+    v.replaceChildren(v.firstChild,
+      el("div", { className: "filas-habitos" }, ...lista.map((h) => [h, cumplido([h], desde, hoy)]).sort((a, b) => b[1] - a[1]).map(([h, frac]) => {
+        const hechos = diasMarcados([h]), [nombre, color] = temaDe(h), rayas = [];
+        for (let d = desde; d <= hoy; d = sumarDias(d, 1))
+          rayas.push(el("i", { className: hechos.has(d) ? "si" : tocaEl(h, d) ? "" : "libre", title: `${d.split("-").reverse().join("/")}: ${hechos.has(d) ? "cumplido" : tocaEl(h, d) ? "no" : "no tocaba"}` }));
+        const f = el("div", { className: "tira-habito" }, el("span", { className: "insignia" }, icono(nombre)), el("span", { className: "nombre", textContent: h.titulo }),
+          el("span", { className: "rayas" }, ...rayas), el("b", {}, String(Math.round(frac * 100) + "%")), el("small", { textContent: "mejor racha " + mejorRacha(h, desde, hoy) }));
+        f.style.setProperty("--c", color);
+        return f;
+      })),
+      sin !== null && sin > 2 ? el("p", { className: "aviso-salud" }, icono("reloj"), el("span", { textContent: `Hace ${sin} días que no marcas ningún hábito. ¿Retomas hoy con uno solo?` })) : "");
+  };
+}
+
+// Paso 66: qué días de la semana cumples más tus hábitos (los últimos 90 días), para ver cuáles te cuestan.
+export function porDiaDeSemana(v) {
+  v.classList.add("w-salud");
+  return () => {
+    const hoy = hoyTexto(), lista = habitos(), por = Array.from({ length: 7 }, () => ({ toca: 0, si: 0 }));
+    for (const h of lista) {
+      const hechos = diasMarcados([h]);
+      for (let d = sumarDias(hoy, -89); d <= hoy; d = sumarDias(d, 1)) if (tocaEl(h, d)) {
+        const k = (new Date(d + "T12:00").getDay() + 6) % 7; // lunes = 0
+        por[k].toca++; if (hechos.has(d)) por[k].si++;
+      }
+    }
+    const pct = por.map((x) => (x.toca ? Math.round(x.si / x.toca * 100) : 0)), peor = pct.indexOf(Math.min(...pct));
+    const NOM = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    v.sub.textContent = pct.some(Boolean) ? `el que más te cuesta: ${NOM[peor].toLowerCase()}` : "últimos 90 días";
+    v.replaceChildren(v.firstChild, el("div", { className: "barras-dias" }, ...pct.map((p, i) => {
+      const b = el("div", { className: "barra-dia" + (i === peor && p < 50 ? " floja" : "") }, el("small", { textContent: p + "%" }), el("i"), el("span", { textContent: NOM[i] }));
+      b.querySelector("i").style.height = Math.max(3, p) + "%";
+      return b;
+    })));
   };
 }
 
@@ -340,24 +389,6 @@ function mapaCalor(claseDe, tituloDe) {
   return el("div", { className: "mapa-calor" }, ..."L M X J V S D".split(" ").map((t, i) => el("span", { className: "dia-calor", textContent: i % 2 ? "" : t })), ...celdas);
 }
 const dato = (nombre, color, grande, chico) => { const d = el("div", { className: "dato-salud" }, icono(nombre), el("span", {}, el("b", { textContent: grande }), el("br"), chico)); d.style.setProperty("--c", color); return d; };
-
-export function constancia(v) {
-  v.classList.add("w-salud");
-  return () => {
-    const hoy = hoyTexto(), lista = habitos(), ids = new Set(lista.map((h) => h.id)), porDia = new Map();
-    for (const r of datos.registros) if (r.clase === "habito" && ids.has(r.nodo_id)) porDia.set(dia(r.fecha), (porDia.get(dia(r.fecha)) ?? 0) + 1);
-    const mas = Math.max(1, ...porDia.values()), k = (d) => porDia.get(d) ?? 0;
-    const ultimo = [...porDia.keys()].sort().at(-1), sin = ultimo ? diasEntre(ultimo, hoy) : null, r = rachas(lista);
-    v.sub.textContent = `hábitos cumplidos por día · ${SEMANAS} semanas`;
-    v.replaceChildren(v.firstChild,
-      el("div", { className: "constancia" },
-        mapaCalor((d) => "n" + (k(d) ? Math.min(3, Math.ceil(k(d) / mas * 3)) : 0), (d) => plural(k(d), "hábito", "hábitos")),
-        el("div", { className: "lado-constancia" },
-          el("div", { className: "leyenda-calor" }, "menos", ...[0, 1, 2, 3].map((n) => el("span", { className: "celda n" + n })), "más"),
-          dato("fuego", COLOR.proteina, `${r.mejor} días`, "tu mejor racha"),
-          sin !== null && sin > 1 ? dato("reloj", "#8a5a00", `${sin} días`, "sin marcar hábitos") : dato("si", COLOR.kcal, `${r.actual} días`, "racha actual"))));
-  };
-}
 
 // ---------- Ejercicio (paso 65) ----------
 export function semanaEntreno(v) {
@@ -459,8 +490,8 @@ export function diaComida(v, ctx) {
     const falta = m.kcal - t.kcal;
     const mini = (k, nombre) => {
       const frac = Math.min(1, t[k] / (m[k] || 1));
-      const x = el("div", { className: "mini-anillo" }, svgDe("0 0 60 60", `<circle cx="30" cy="30" r="25" pathLength="100" class="pista"/>${frac ? `<circle cx="30" cy="30" r="25" pathLength="100" class="lleno" stroke-dasharray="${frac * 100} 100"/>` : ""}`, "cifra"),
-        el("div", {}, el("small", { textContent: nombre }), el("b", {}, cifra(numero(t[k]) + " g")), el("small", { textContent: `meta ${numero(m[k])} g` })));
+      const x = el("div", { className: "mini-anillo" }, svgDe("0 0 60 60", `<circle cx="30" cy="30" r="25" pathLength="100" class="pista"/>${frac ? `<circle cx="30" cy="30" r="25" pathLength="100" class="lleno" stroke-dasharray="${frac * 100} 100"/>` : ""}`),
+        el("div", {}, el("small", { textContent: nombre }), el("b", {}, String(numero(t[k]) + " g")), el("small", { textContent: `meta ${numero(m[k])} g` })));
       x.style.setProperty("--c", COLOR[k]);
       return x;
     };
@@ -469,7 +500,7 @@ export function diaComida(v, ctx) {
         d !== hoyTexto() ? el("button", { className: "ir-hoy", textContent: "Hoy", onclick: () => ctx.cambiar({ dia: null }) }) : ""),
       el("div", { className: "resumen-dia" },
         el("div", { className: "kcal-dia" }, el("small", { textContent: "Calorías del día" }),
-          el("b", {}, cifra(numero(t.kcal)), el("i", { textContent: ` de ${numero(m.kcal)} kcal` })), barraDeMacros(t),
+          el("b", {}, String(numero(t.kcal)), el("i", { textContent: ` de ${numero(m.kcal)} kcal` })), barraDeMacros(t),
           el("small", { textContent: !t.cuantas ? "Nada anotado este día." : falta > 0 ? `faltan ${numero(falta)} kcal para la meta` : `pasaste la meta por ${numero(-falta)} kcal` })),
         el("div", { className: "minis" }, mini("proteina", "Proteína"), mini("carbos", "Carbohidratos"), mini("grasa", "Grasa"))));
   };
@@ -495,7 +526,7 @@ export function comidas(v, ctx) {
           const punto = el("i");
           punto.style.background = COLOR[mayor];
           return el("li", {}, punto, el("span", { textContent: x.a?.titulo.replace(/\s+[—-]\s+estimaci[oó]n.*$/i, "").replace(/\s*\(estimad[oa]\)/i, "") ?? "(alimento borrado)" }),
-            el("small", { textContent: numero(x.g) + " g" }), el("b", {}, cifra(numero(x.kcal))),
+            el("small", { textContent: numero(x.g) + " g" }), el("b", {}, String(numero(x.kcal))),
             el("button", { className: "quitar", textContent: "×", ariaLabel: "Borrar " + (x.a?.titulo ?? ""), onclick: () => escribir(db.from("registros").delete().eq("id", x.r.id)) }));
         })),
         grupo.nombre === "Sin momento" ? el("p", { className: "vacio", textContent: "Anotadas sin desayuno, almuerzo, merienda ni cena." }) : "");
@@ -524,9 +555,9 @@ export function plato(v, ctx) {
     const consejo = [top && `Lo que más aportó: ${top.a?.titulo.replace(/\s+[—-]\s+.*$/, "")} (${numero(top.kcal)} kcal, ${Math.round(top.kcal / t.kcal * 100)}% del día).`,
       kg && t.proteina / kg < 1.6 ? `Llevas ${numero(t.proteina / kg, 1)} g de proteína por kilo; para ganar músculo conviene 1,6 a 2,2 (${Math.round(kg * 1.6)}–${Math.round(kg * 2.2)} g).` : ""].filter(Boolean).join(" ");
     v.replaceChildren(v.firstChild,
-      el("div", { className: "plato" }, svgDe("0 0 140 140", `<g transform="rotate(-90 70 70)">${tramos}</g><text x="70" y="68" class="grande">${pct(mayor)}%</text><text x="70" y="86">${mayor === "carbos" ? "carbos" : NOMBRE[mayor]}</text>`, "dona cifra"),
+      el("div", { className: "plato" }, svgDe("0 0 140 140", `<g transform="rotate(-90 70 70)">${tramos}</g><text x="70" y="68" class="grande">${pct(mayor)}%</text><text x="70" y="86">${mayor === "carbos" ? "carbos" : NOMBRE[mayor]}</text>`, "dona"),
         el("div", { className: "lista-anillos" }, ...["proteina", "carbos", "grasa"].map((k) => {
-          const f = el("div", {}, el("i"), el("span", { textContent: NOMBRE[k][0].toUpperCase() + NOMBRE[k].slice(1) }), el("b", {}, cifra(pct(k) + "%")));
+          const f = el("div", {}, el("i"), el("span", { textContent: NOMBRE[k][0].toUpperCase() + NOMBRE[k].slice(1) }), el("b", {}, String(pct(k) + "%")));
           f.style.setProperty("--c", COLOR[k]);
           return f;
         }))),
@@ -603,7 +634,7 @@ export function semanaComida(v, ctx) {
     const meta = el("i", { className: "linea-meta" });
     meta.style.bottom = m.kcal / tope * 100 + "%";
     v.replaceChildren(v.firstChild,
-      el("div", { className: "barras-semana cifra" }, meta, ...dias.map((d, i) => {
+      el("div", { className: "barras-semana" }, meta, ...dias.map((d, i) => {
         const b = el("button", { className: "dia-barra" + (d === hasta ? " elegido" : ""), title: `${nombreDelDia(d)}: ${numero(kcal[i])} kcal`, onclick: () => ctx.cambiar({ dia: d === hoyTexto() ? null : d }) },
           el("small", { textContent: kcal[i] ? numero(kcal[i] / 1000, 1) + "k" : "—" }), el("i"),
           el("span", { textContent: new Date(d + "T12:00").toLocaleDateString("es-CL", { weekday: "narrow" }) + " " + Number(d.slice(8)) }));

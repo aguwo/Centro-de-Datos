@@ -1007,10 +1007,6 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .cifra-salud b { font-size: 22px; font-variant-numeric: tabular-nums; }
 .cifra-salud b i { font-style: normal; font-size: 13px; font-weight: 500; color: var(--suave); }
 .barra-apartado:has(.cifras-salud) { align-items: stretch; }
-.privado-boton { display: flex; align-items: center; gap: 6px; background: var(--vidrio-fuerte); align-self: center; }
-.privado-boton .icono { width: 16px; height: 16px; }
-.privado .cifra { filter: blur(7px); transition: filter .2s; }
-.privado .cifra:hover { filter: none; }
 .w-salud { background: var(--vidrio-fuerte); }
 .w-salud .vacio { font-size: 12.5px; }
 /* El camino del peso */
@@ -1051,18 +1047,6 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .lista-anillos input { width: 64px; padding: 2px 6px; }
 .w-anillos > button { align-self: flex-start; margin-top: 8px; }
 /* Hábitos de hoy: un botón con ícono por hábito y su anillo de los últimos 30 días */
-.habitos-salud { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 10px; }
-.habito-salud { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 6px 2px; border-radius: 14px; font-size: 12px; line-height: 1.25; text-align: center; }
-.habito-salud:hover { background: var(--linea); }
-.habito-salud small { color: var(--suave); font-size: 11px; }
-.aro-habito { position: relative; width: 62px; height: 62px; display: grid; place-items: center; }
-.aro-habito > svg { position: absolute; inset: 0; transform: rotate(-90deg); }
-.aro-habito > svg circle { fill: none; stroke-width: 5; stroke-linecap: round; }
-.aro-habito .pista { stroke: var(--linea-salud); }
-.aro-habito .lleno { stroke: var(--c); }
-.aro-habito .insignia { width: 42px; height: 42px; border-radius: 50%; }
-.aro-habito .insignia .icono { width: 22px; height: 22px; }
-.habito-salud.hecho .insignia { background: var(--c); color: #fff; }
 /* La constancia: un cuadrito por día, columnas de lunes a domingo */
 .mapa-calor { display: grid; grid-template-rows: repeat(7, auto); grid-template-columns: 14px; grid-auto-columns: minmax(10px, 26px); grid-auto-flow: column; gap: 4px; }
 .dia-calor { font-size: 10px; color: var(--suave); display: grid; place-items: center; }
@@ -1183,3 +1167,44 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .celda.falto, .celda.toca { background: none; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--entreno, #1d4ed8) 35%, transparent); }
 .celda.toca { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--entreno, #1d4ed8) 15%, transparent); }
 @media (max-width: 700px) { .semana-entreno { gap: 2px; } .dia-entreno { padding: 8px 0; } .dia-entreno b { font-size: 11px; } .dia-entreno small { display: none; } .aro-entreno { width: 32px; height: 32px; } }
+
+/* Paso 66: Hábitos. Hoy: un anillo con cuántos llevas y una fila por hábito, agrupados por rutina. */
+.w-salud { --habitos: #7c3aed; }
+:root[data-tema="oscuro"] .w-salud { --habitos: #b49cf7; }
+.aro-hoy { position: relative; width: 150px; height: 150px; margin: 4px auto 6px; display: grid; place-items: center; align-content: center; }
+.aro-hoy > svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.aro-hoy circle { fill: none; stroke-width: 14; stroke-linecap: round; }
+.aro-hoy .pista { stroke: color-mix(in srgb, var(--habitos) 15%, transparent); }
+.aro-hoy .lleno { stroke: var(--habitos); }
+.aro-hoy b { font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; }
+.aro-hoy small { color: var(--suave); font-size: 12px; }
+.grupo-habitos { display: block; margin: 8px 0 2px; font-weight: 600; color: var(--suave); }
+.grupo-habitos:empty { display: none; }
+.fila-habito { width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 10px; margin-top: 6px; border-radius: 12px; border: 1px solid var(--borde); background: var(--vidrio-fuerte); text-align: left; font-size: 14px; }
+.fila-habito > span:nth-child(2) { flex: 1; }
+.fila-habito .insignia { width: 36px; height: 36px; border-radius: 50%; background: none; color: var(--c); border: 2px dashed color-mix(in srgb, var(--c) 45%, transparent); }
+.fila-habito .check { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--borde); display: grid; place-items: center; flex: none; }
+.fila-habito.hecho .insignia { border-style: solid; background: color-mix(in srgb, var(--c) 14%, transparent); }
+.fila-habito.hecho .check { background: var(--c); border-color: var(--c); color: #fff; }
+.fila-habito.hecho .check .icono { width: 16px; height: 16px; }
+.fila-habito:hover { border-color: color-mix(in srgb, var(--c) 50%, transparent); }
+/* Cada hábito: una raya por día (de color = cumplido, tenue = no tocaba) */
+.w-cada-habito h3 small .segmento { font-size: 12.5px; }
+.filas-habitos { display: grid; }
+.tira-habito { display: grid; grid-template-columns: 34px minmax(110px, 170px) minmax(0, 1fr) 48px 104px; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--linea); }
+.tira-habito .insignia { width: 34px; height: 34px; border-radius: 10px; }
+.tira-habito .nombre { font-weight: 500; }
+.tira-habito b { text-align: right; font-variant-numeric: tabular-nums; }
+.tira-habito small { text-align: right; color: var(--suave); font-size: 12px; }
+.rayas { display: flex; gap: 2px; height: 18px; }
+.rayas i { flex: 1; min-width: 0; border-radius: 2px; background: var(--linea-salud); }
+.rayas i.si { background: var(--c); }
+.rayas i.libre { opacity: .35; }
+/* Por día de la semana */
+.barras-dias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; height: 140px; }
+.barra-dia { display: grid; grid-template-rows: auto 1fr auto; justify-items: center; gap: 4px; min-height: 0; }
+.barra-dia i { align-self: end; width: 100%; max-width: 70px; border-radius: 8px 8px 3px 3px; background: var(--habitos); }
+.barra-dia.floja i { background: color-mix(in srgb, var(--habitos) 40%, transparent); }
+.barra-dia small { font-size: 12px; font-weight: 600; }
+.barra-dia span { font-size: 12px; color: var(--suave); }
+@media (max-width: 700px) { .tira-habito { grid-template-columns: 30px minmax(0, 1fr) 44px; } .tira-habito .rayas { grid-column: 1 / -1; order: 5; } .tira-habito small { display: none; } }

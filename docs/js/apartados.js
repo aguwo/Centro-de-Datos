@@ -64,7 +64,7 @@ export const APARTADOS = [
     id: "salud", nombre: "Salud", nuevo: ["habito", "alimento"],
     vistas: [
       { nombre: "Ejercicio", icono: "pesa", columnas: [{ ancho: 1.6, widgets: ["cifras-ejercicio", "semana-entreno", "peso"] }, { ancho: 1, widgets: ["constancia-entreno"] }] },
-      { nombre: "Hábitos", icono: "si", columnas: [{ ancho: 1, widgets: ["cifras-habitos", "habitos-hoy"] }, { ancho: 1.6, widgets: ["constancia"] }] },
+      { nombre: "Hábitos", icono: "si", columnas: [{ ancho: 1, widgets: ["cifras-habitos", "habitos-hoy"] }, { ancho: 1.9, widgets: ["cada-habito", "por-dia"] }] },
       { nombre: "Dieta", icono: "plato", columnas: [{ ancho: 1.65, widgets: ["cifras-dieta", "dia-comida", "comidas"] }, { ancho: 1, widgets: ["plato", "anotar", "semana-comida", "anillos", "despensa"] }] },
     ],
     icono: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/><path d="M3 12h4l2-3 3 6 2-3h3"/>',
