@@ -7,6 +7,7 @@
 //   progreso(fraccion, marca, nombre)  una barra delgada de avance de 0 a 1 y, si se da, una rayita en la marca (ej. el mínimo)
 //   anillo(fraccion, texto)     un anillo de avance de 0 a 1 con un texto al medio (ej. "54%")
 //   pastilla(nombre, texto)     una píldora con un ícono y un texto, para resúmenes y avisos
+//   moverConSuavidad(caja, cambiar)  hace el cambio y lo que tiene data-id viaja de su lugar viejo al nuevo
 // Agregar uno = agregarlo a ICONOS (y, si es un tema con dibujo, a DIBUJOS).
 import { el } from "./base.js";
 
@@ -111,3 +112,15 @@ export function anillo(fraccion, texto) {
 }
 
 export const pastilla = (nombre, texto, clase = "") => el("span", { className: "pastilla " + clase }, icono(nombre), texto);
+
+// Hace un cambio en la caja (cambiar) y anima lo que se movió: cada elemento con data-id viaja desde donde estaba
+// hasta donde quedó, y lo nuevo aparece. Usa View Transitions del navegador, que dibuja el viaje por encima de todo
+// (así una tarjeta cruza de una columna a otra sin cortarse). Sin soporte, con «reducir movimiento» o si la caja
+// no está a la vista, solo hace el cambio.
+export function moverConSuavidad(caja, cambiar) {
+  if (!document.startViewTransition || !caja.checkVisibility() || matchMedia("(prefers-reduced-motion: reduce)").matches) return cambiar();
+  const nombrar = (nombre) => caja.querySelectorAll("[data-id]").forEach((x) => (x.style.viewTransitionName = nombre(x)));
+  nombrar((x) => "m-" + x.dataset.id);
+  const t = document.startViewTransition(() => { cambiar(); nombrar((x) => "m-" + x.dataset.id); });
+  t.finished.finally(() => nombrar(() => ""));
+}

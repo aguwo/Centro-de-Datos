@@ -13,7 +13,7 @@ import { cambiar, cambiarProps, completar, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario, camposDe, tienePropiedad } from "./panel.js";
 import { listaDeTareas, seccion, porFecha, agregarTarea } from "./tareas.js";
 import { ocurre } from "./agenda.js";
-import { icono, portada, elegir as adivinar, progreso, anillo, pastilla } from "./dibujos.js";
+import { icono, portada, elegir as adivinar, progreso, anillo, pastilla, moverConSuavidad } from "./dibujos.js";
 
 const ESTADOS = ["Por hacer", "En curso", "Esperando", "Hecho"]; // las columnas del tablero (el Inbox son los post-its)
 const HECHAS_A_LA_VISTA = 5;
@@ -260,6 +260,7 @@ export function tablero(v, ctx) {
   const { form, cuando, campo } = agregarTarea(() => cajaDe(ctx)?.id);
   const cuerpo = el("div"); // el tablero mide lo que su contenido; cada columna se desliza por dentro si no cabe
   v.append(el("div", { className: "barra-tareas" }, vistas, form), cuando, cuerpo);
+  let antes = {}; // qué se mostraba (proyecto y vista) y qué tareas había en qué estado (paso 60)
 
   return () => {
     const n = cajaDe(ctx);
@@ -269,7 +270,12 @@ export function tablero(v, ctx) {
     v.sub.textContent = `${ts.filter(terminada).length} de ${ts.length} hechas`;
     for (const b of vistas.children) b.setAttribute("aria-pressed", b.dataset.vista === vista);
     campo.placeholder = `Agregar tarea a ${n.titulo}… (ej. «revisar el viernes 18:00»)`;
-    cuerpo.replaceChildren(vista === "lista" ? enLista(ts, n) : enTablero(ts, n, ctx));
+    // Si es el mismo proyecto y la misma vista y alguna tarea cambió de estado (o llegó o se fue), las tarjetas viajan
+    // a su lugar nuevo; si no, se dibuja de una (abrir otro proyecto o un redibujo sin cambios no anima nada).
+    const ahora = { vista: n.id + vista, firma: ts.map((t) => t.id + estadoDe(t)).join() };
+    const dibujar = () => cuerpo.replaceChildren(vista === "lista" ? enLista(ts, n) : enTablero(ts, n, ctx));
+    ahora.vista === antes.vista && ahora.firma !== antes.firma ? moverConSuavidad(cuerpo, dibujar) : dibujar();
+    antes = ahora;
   };
 }
 
@@ -285,7 +291,9 @@ function enTablero(ts, caja, ctx) {
         t.props?.prioridad ? el("b", { className: "alta", textContent: t.props.prioridad }) : "",
         d ? el("span", { className: !terminada(t) && d < hoy ? "alerta" : "", textContent: (d === hoy ? "hoy" : corto(d)) + (hora(t.fecha) ? " · " + hora(t.fecha) : "") }) : "",
         donde ? el("span", { textContent: donde }) : ""));
-    b.ondragstart = (e) => e.dataTransfer.setData("text/plain", t.id);
+    b.dataset.id = t.id; // así moverConSuavidad la reconoce antes y después de redibujar
+    b.ondragstart = (e) => { e.dataTransfer.setData("text/plain", t.id); b.classList.add("arrastrando"); };
+    b.ondragend = () => b.classList.remove("arrastrando");
     return b;
   };
   return el("div", { className: "tablero" }, ...ESTADOS.map((estado) => {
@@ -303,6 +311,9 @@ function enTablero(ts, caja, ctx) {
       col.classList.remove("soltar");
       const t = datos.nodo.get(e.dataTransfer.getData("text/plain"));
       if (t?.tipos.clave !== "tarea" || estadoDe(t) === estado) return;
+      // Se mueve al tiro, sin esperar a la base; cuando vuelven los datos, se acomoda en su lugar.
+      const tablero = col.closest(".tablero"), suya = tablero.querySelector(`[data-id="${t.id}"]`);
+      if (suya) moverConSuavidad(tablero, () => col.querySelector(".tarjetas-estado").prepend(suya));
       estado === "Hecho" ? completar(t) : cambiar(t, { estado });
     };
     return col;
