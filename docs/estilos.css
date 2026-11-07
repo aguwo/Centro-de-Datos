@@ -992,7 +992,8 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .cabeza-apartado > h2 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
 .cabeza-apartado > h2::first-letter { text-transform: uppercase; }
 .segmento.vistas { background: var(--vidrio-fuerte); border: 1px solid var(--borde); box-shadow: var(--sombra); border-radius: 999px; }
-.segmento.vistas button { border-radius: 999px; padding: 5px 14px; }
+.segmento.vistas button { border-radius: 999px; padding: 5px 14px; display: flex; align-items: center; gap: 6px; }
+.segmento.vistas .icono { width: 16px; height: 16px; }
 .segmento.vistas button[aria-pressed="true"] { background: var(--acento-fondo); color: var(--sobre-acento); box-shadow: none; }
 
 /* Salud (paso 63, salud.js). --c es el color de cada cosa: verde las calorías, naranjo la proteína, azul los carbohidratos,
@@ -1161,3 +1162,24 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .dia-barra.elegido span { color: var(--texto); font-weight: 700; }
 .dia-barra span::first-letter { text-transform: uppercase; }
 @media (max-width: 700px) { .w-comidas { grid-template-columns: 1fr; } .cambiar-dia b { min-width: 0; flex: 1; } }
+
+/* Paso 65: Salud en tres vistas. Ejercicio: la semana de entrenos (un día por columna) y su mapa de constancia. */
+.w-salud { --entreno: #1d4ed8; }
+:root[data-tema="oscuro"] .w-salud { --entreno: #7ea2f5; }
+.semana-entreno { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.dia-entreno { display: grid; justify-items: center; gap: 6px; padding: 10px 4px; border-radius: 14px; text-align: center; }
+.dia-entreno b { font-size: 13px; }
+.dia-entreno b::first-letter { text-transform: uppercase; }
+.dia-entreno small { font-size: 12px; color: var(--suave); }
+.dia-entreno.es-hoy { background: color-mix(in srgb, var(--entreno) 9%, transparent); outline: 2px solid color-mix(in srgb, var(--entreno) 35%, transparent); }
+.aro-entreno { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--linea-salud); color: var(--entreno); }
+.aro-entreno .icono { width: 20px; height: 20px; }
+.dia-entreno.toca .aro-entreno, .dia-entreno.falto .aro-entreno { background: none; border: 2px dashed color-mix(in srgb, var(--entreno) 45%, transparent); }
+.dia-entreno.falto .aro-entreno { opacity: .55; }
+.dia-entreno.hecho .aro-entreno { background: var(--entreno); color: #fff; }
+.dia-entreno.hecho small { color: var(--entreno); font-weight: 600; }
+.w-semana-entreno > button { justify-self: end; align-self: flex-end; }
+.celda.hecho { background: var(--entreno, #1d4ed8); }
+.celda.falto, .celda.toca { background: none; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--entreno, #1d4ed8) 35%, transparent); }
+.celda.toca { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--entreno, #1d4ed8) 15%, transparent); }
+@media (max-width: 700px) { .semana-entreno { gap: 2px; } .dia-entreno { padding: 8px 0; } .dia-entreno b { font-size: 11px; } .dia-entreno small { display: none; } .aro-entreno { width: 32px; height: 32px; } }

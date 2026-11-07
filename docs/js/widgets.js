@@ -5,6 +5,7 @@
 // si no tiene, vale la de apartados.js.
 // Paso 62: un apartado puede ofrecer varias "vistas" (apartados.js); arriba sale un selector y la que eliges
 // se guarda como tu disposición. La primera es la de siempre: elegirla borra lo guardado.
+// Paso 65: una vista puede llevar su ícono (un nombre de dibujos.js), que sale en su botón.
 //
 //   titulo  (opcional) lo que dice arriba de la ventana; sin título, empieza directo con su contenido
 //   crece   (opcional) ocupa el alto que sobra en su columna (las listas largas); las demás miden lo que su contenido
@@ -19,7 +20,9 @@ import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
 import { galeria, cabecera, tablero, dentro } from "./proyectos.js";
 import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { loImportante, diasDeLaSemana } from "./semana.js";
-import { cifras, peso, anillos, habitosHoy, constancia, despensa, diaComida, comidas, plato, anotar, semanaComida } from "./salud.js";
+import { cifrasEjercicio, cifrasHabitos, cifrasDieta, semanaEntreno, constanciaEntreno, peso, anillos, habitosHoy, constancia, despensa,
+  diaComida, comidas, plato, anotar, semanaComida } from "./salud.js";
+import { icono } from "./dibujos.js";
 import { modo, fondo, barra, ventanas, cuenta } from "./ajustes.js";
 
 export const WIDGETS = {
@@ -37,7 +40,11 @@ export const WIDGETS = {
   "lo-que-viene":  { titulo: "Lo que viene", crear: loQueViene },
   "lo-importante": { crear: loImportante },
   "dias":          { crece: true, crear: diasDeLaSemana },
-  "cifras":        { crear: cifras },
+  "cifras-ejercicio": { crear: cifrasEjercicio },
+  "cifras-habitos": { crear: cifrasHabitos },
+  "cifras-dieta":   { crear: cifrasDieta },
+  "semana-entreno": { titulo: "Esta semana", crear: semanaEntreno },
+  "constancia-entreno": { titulo: "Constancia", crear: constanciaEntreno },
   "peso":          { crear: peso },
   "anillos":       { titulo: "Anillos de hoy", crear: anillos },
   "habitos-hoy":   { titulo: "Hábitos de hoy", crear: habitosHoy },
@@ -81,7 +88,7 @@ function elegirVista(a, vista) {
 }
 // El selector de vistas: un botón por vista; queda marcada la que estás usando (ninguna, si armaste otra cosa).
 function selectorDeVistas(a, redibujar) {
-  const botones = a.vistas.map((vista) => el("button", { textContent: vista.nombre, onclick: () => { elegirVista(a, vista); redibujar(); } }));
+  const botones = a.vistas.map((vista) => el("button", { onclick: () => { elegirVista(a, vista); redibujar(); } }, vista.icono ? icono(vista.icono) : "", vista.nombre));
   const caja = el("div", { className: "segmento vistas", role: "group", ariaLabel: "Vista" }, ...botones);
   caja.marcar = (columnas) => a.vistas.forEach((vista, i) =>
     botones[i].setAttribute("aria-pressed", String(JSON.stringify(normal(vista.columnas)) === JSON.stringify(normal(columnas)))));
