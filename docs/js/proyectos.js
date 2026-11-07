@@ -258,7 +258,7 @@ export function tablero(v, ctx) {
       return b;
     }));
   const { form, cuando, campo } = agregarTarea(() => cajaDe(ctx)?.id);
-  const cuerpo = el("div", { className: "desliza" });
+  const cuerpo = el("div"); // el tablero mide lo que su contenido; cada columna se desliza por dentro si no cabe
   v.append(el("div", { className: "barra-tareas" }, vistas, form), cuando, cuerpo);
 
   return () => {
@@ -294,8 +294,8 @@ function enTablero(ts, caja, ctx) {
     const todas = estado !== "Hecho" || ctx.verHechas || xs.length <= HECHAS_A_LA_VISTA;
     const col = el("div", { className: "columna-estado" },
       el("header", {}, el("span", { className: "rotulo", textContent: estado }), el("span", { className: "suave", textContent: xs.length })),
-      ...(todas ? xs : xs.slice(0, HECHAS_A_LA_VISTA)).map(tarjeta),
-      todas ? "" : el("button", { className: "mas", textContent: `Ver las ${xs.length} hechas`, onclick: () => ctx.cambiar({ verHechas: true }) }));
+      el("div", { className: "tarjetas-estado" }, ...(todas ? xs : xs.slice(0, HECHAS_A_LA_VISTA)).map(tarjeta),
+        todas ? "" : el("button", { className: "mas", textContent: `Ver las ${xs.length} hechas`, onclick: () => ctx.cambiar({ verHechas: true }) })));
     col.ondragover = (e) => { e.preventDefault(); col.classList.add("soltar"); };
     col.ondragleave = () => col.classList.remove("soltar");
     col.ondrop = (e) => {
