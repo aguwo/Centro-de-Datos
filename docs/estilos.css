@@ -1034,19 +1034,6 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .anotar-peso { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .anotar-peso .vacio { flex: 1; min-width: 160px; }
 .anotar-peso input { width: 84px; }
-/* Los anillos de hoy */
-.anillos-salud { display: flex; align-items: center; gap: 18px; }
-.anillos-salud .aros { width: 168px; height: 168px; flex: none; transform: rotate(-90deg); }
-.anillos-salud circle { fill: none; stroke-width: 14; stroke-linecap: round; }
-.anillos-salud .pista { opacity: .16; }
-.lista-anillos { flex: 1; display: grid; gap: 10px; font-size: 13px; min-width: 0; }
-.lista-anillos > div { display: flex; align-items: center; gap: 8px; }
-.lista-anillos i { width: 11px; height: 11px; border-radius: 4px; background: var(--c); flex: none; }
-.lista-anillos span { flex: 1; }
-.lista-anillos b { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.lista-anillos input { width: 64px; padding: 2px 6px; }
-.w-anillos > button { align-self: flex-start; margin-top: 8px; }
-/* Hábitos de hoy: un botón con ícono por hábito y su anillo de los últimos 30 días */
 /* La constancia: un cuadrito por día, columnas de lunes a domingo */
 .mapa-calor { display: grid; grid-template-rows: repeat(7, auto); grid-template-columns: 14px; grid-auto-columns: minmax(10px, 26px); grid-auto-flow: column; gap: 4px; }
 .dia-calor { font-size: 10px; color: var(--suave); display: grid; place-items: center; }
@@ -1074,68 +1061,13 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .alimento-salud .nivel i { display: block; height: 100%; border-radius: 3px; width: 6%; background: var(--alerta); }
 .alimento-salud.bajo .nivel i { width: 30%; background: var(--aviso); }
 @media (max-width: 1100px) { .cifras-salud { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 700px) { .anillos-salud { flex-direction: column; align-items: stretch; } .anillos-salud .aros { align-self: center; } .despensa-salud { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .despensa-salud { grid-template-columns: 1fr; } }
 
-/* Salud · Diario (paso 64): las comidas de un día. */
+/* Salud · Dieta: el día que miras y la tendencia de la semana (paso 64) */
 .cambiar-dia { display: flex; align-items: center; gap: 10px; }
-.cambiar-dia b { font-size: 15px; min-width: 190px; text-align: center; }
+.cambiar-dia b { flex: 1; font-size: 15px; text-align: center; }
 .cambiar-dia b::first-letter { text-transform: uppercase; }
 .cambiar-dia .mover-dia { width: 34px; height: 34px; padding: 0; font-size: 18px; display: grid; place-items: center; line-height: 1; }
-.cambiar-dia .ir-hoy { margin-left: auto; }
-.resumen-dia { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 26px; margin-top: 12px; }
-.kcal-dia { flex: 1 1 260px; display: grid; gap: 6px; }
-.kcal-dia small { color: var(--suave); font-size: 12.5px; }
-.kcal-dia b { font-size: 30px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.kcal-dia b i { font-style: normal; font-size: 14px; font-weight: 500; color: var(--suave); letter-spacing: 0; }
-.barra-macros { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--linea-salud, var(--linea)); }
-.barra-macros i { display: block; height: 100%; }
-.minis { display: flex; flex-wrap: wrap; gap: 14px 22px; }
-.mini-anillo { display: flex; align-items: center; gap: 10px; }
-.mini-anillo svg { width: 56px; height: 56px; transform: rotate(-90deg); flex: none; }
-.mini-anillo circle { fill: none; stroke-width: 7; stroke-linecap: round; }
-.mini-anillo .pista { stroke: color-mix(in srgb, var(--c) 18%, transparent); }
-.mini-anillo .lleno { stroke: var(--c); }
-.mini-anillo div { display: grid; }
-.mini-anillo small { color: var(--suave); font-size: 11.5px; }
-.mini-anillo b { font-size: 18px; font-variant-numeric: tabular-nums; }
-/* Las comidas: una tarjeta por momento, de a dos */
-.w-comidas { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0;
-  display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; --linea-salud: color-mix(in srgb, var(--texto) 10%, transparent); }
-.tarjeta-comida { border-radius: var(--radio); padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; background: var(--vidrio-fuerte); min-width: 0; }
-.cabeza-comida { display: flex; align-items: center; gap: 12px; }
-.cabeza-comida .insignia { width: 40px; height: 40px; border-radius: 12px; }
-.cabeza-comida > div { flex: 1; display: grid; min-width: 0; }
-.cabeza-comida h4 { margin: 0; font-size: 15px; }
-.cabeza-comida small { color: var(--suave); font-size: 12.5px; }
-.cabeza-comida .agregar { width: 36px; height: 36px; padding: 0; font-size: 19px; display: grid; place-items: center; line-height: 1; }
-.tarjeta-comida .barra-macros { height: 7px; }
-.cosas-comida { list-style: none; margin: 0; padding: 0; display: grid; }
-.cosas-comida li { display: flex; align-items: center; gap: 8px; min-height: 30px; font-size: 13px; border-bottom: 1px solid var(--linea-salud); }
-.cosas-comida li:last-child { border-bottom: 0; }
-.cosas-comida li > i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
-.cosas-comida li > span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cosas-comida small { color: var(--suave); font-size: 12px; }
-.cosas-comida b { width: 44px; text-align: right; font-size: 12.5px; font-variant-numeric: tabular-nums; }
-.cosas-comida .quitar { border: 0; padding: 0 4px; color: var(--suave); opacity: 0; font-size: 16px; }
-.cosas-comida li:hover .quitar, .cosas-comida .quitar:focus-visible { opacity: 1; }
-@media (hover: none) { .cosas-comida .quitar { opacity: .6; } }
-/* Tu plato */
-.plato { display: flex; align-items: center; gap: 18px; }
-.plato .dona { width: 132px; height: 132px; flex: none; }
-.plato .dona circle { fill: none; stroke-width: 22; }
-.plato .dona text { text-anchor: middle; font: 11px var(--sans); fill: var(--suave); }
-.plato .dona .grande { font-size: 21px; font-weight: 700; fill: var(--texto); }
-.consejo { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--aviso-suave); color: var(--aviso); font-size: 12.5px; line-height: 1.45; }
-/* Anotar */
-.anotar-comida { display: grid; grid-template-columns: minmax(0, 1fr) 72px; gap: 8px; }
-.anotar-comida select { min-width: 0; }
-.anotar-comida small { grid-column: 1 / -1; }
-.anotar-comida small:empty { display: none; }
-.frecuentes { display: grid; gap: 8px; margin-top: 12px; }
-.repetir { display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 10px; border-radius: 12px; background: var(--vidrio); }
-.repetir .insignia { width: 32px; height: 32px; border-radius: 10px; }
-.repetir > span:last-child { display: grid; min-width: 0; }
-.repetir small { color: var(--suave); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* La semana */
 .barras-semana { position: relative; display: flex; align-items: stretch; gap: 8px; height: 150px; }
 .barras-semana .linea-meta { position: absolute; left: 0; right: 0; border-top: 2px dashed color-mix(in srgb, var(--bien) 70%, transparent); pointer-events: none; z-index: 1; }
@@ -1145,7 +1077,6 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .dia-barra small, .dia-barra span { font-size: 10.5px; color: var(--suave); white-space: nowrap; }
 .dia-barra.elegido span { color: var(--texto); font-weight: 700; }
 .dia-barra span::first-letter { text-transform: uppercase; }
-@media (max-width: 700px) { .w-comidas { grid-template-columns: 1fr; } .cambiar-dia b { min-width: 0; flex: 1; } }
 
 /* Paso 65: Salud en tres vistas. Ejercicio: la semana de entrenos (un día por columna) y su mapa de constancia. */
 .w-salud { --entreno: #1d4ed8; }
@@ -1208,3 +1139,88 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .barra-dia small { font-size: 12px; font-weight: 600; }
 .barra-dia span { font-size: 12px; color: var(--suave); }
 @media (max-width: 700px) { .tira-habito { grid-template-columns: 30px minmax(0, 1fr) 44px; } .tira-habito .rayas { grid-column: 1 / -1; order: 5; } .tira-habito small { display: none; } }
+
+/* Paso 67: la Dieta, como Samsung Health. */
+.barra-dieta { display: block; height: 10px; border-radius: 5px; overflow: hidden; background: color-mix(in srgb, var(--c) 16%, transparent); }
+.barra-dieta i { display: block; height: 100%; border-radius: 5px; background: var(--c); }
+.barra-dieta.pasada i { background: var(--alerta); }
+.w-calorias-dia { gap: 12px; }
+.w-calorias-dia .barra-dieta { height: 14px; border-radius: 7px; }
+.kcal-grande { display: flex; align-items: baseline; justify-content: center; gap: 8px; }
+.kcal-grande b { font-size: 44px; line-height: 1.1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kcal-grande span { color: var(--suave); font-size: 15px; }
+.pie-kcal { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; color: var(--suave); }
+.pie-kcal b { color: var(--texto); font-variant-numeric: tabular-nums; }
+.pie-kcal span:last-child b { color: var(--bien); }
+.enlace { border: 0; background: none; padding: 0; color: var(--acento); font-size: 12.5px; text-decoration: underline; }
+.metas-dieta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; font-size: 12.5px; }
+.metas-dieta label { display: grid; grid-template-columns: 1fr 72px auto; align-items: center; gap: 6px; color: var(--suave); }
+.metas-dieta button { grid-column: 1 / -1; justify-self: end; }
+/* Equilibrio de nutrientes */
+.w-equilibrio { gap: 12px; }
+.etiqueta-dieta { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--alerta-suave); color: var(--alerta); }
+.etiqueta-dieta.bien { background: color-mix(in srgb, var(--bien) 14%, transparent); color: var(--bien); }
+.proporcion { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--linea-salud); }
+.proporcion i { display: block; height: 100%; }
+.nutriente { display: grid; gap: 5px; }
+.nutriente > div { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
+.nutriente > div i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
+.nutriente > div span { flex: 1; font-weight: 500; }
+.nutriente > div b { font-variant-numeric: tabular-nums; }
+.nutriente > div b.pasada { color: var(--alerta); }
+.nutriente > div small, .nutriente > small { color: var(--suave); font-size: 11.5px; }
+.nutriente .barra-dieta { height: 8px; }
+/* Agua */
+.vasos { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.vasos > button { width: 40px; height: 40px; padding: 0; font-size: 18px; flex: none; }
+.fila-vasos { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
+.vaso { color: color-mix(in srgb, #0284c7 35%, transparent); }
+.vaso .icono { width: 28px; height: 34px; }
+.vaso.lleno { color: #0284c7; }
+.vaso.lleno .icono { fill: color-mix(in srgb, #0284c7 20%, transparent); }
+:root[data-tema="oscuro"] .vaso.lleno { color: #38bdf8; }
+/* Comidas del día: una fila por momento */
+.momento { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--linea); }
+.cabeza-momento { display: flex; align-items: center; gap: 12px; border: 0; background: none; padding: 0; text-align: left; min-width: 0; color: inherit; }
+.cabeza-momento:disabled { opacity: 1; cursor: default; }
+.cabeza-momento .insignia { width: 40px; height: 40px; border-radius: 12px; flex: none; }
+.cabeza-momento > span:nth-child(2) { flex: 1; display: grid; min-width: 0; }
+.cabeza-momento b { font-size: 14.5px; }
+.cabeza-momento small { color: var(--suave); font-size: 12.5px; }
+.cabeza-momento .kcal { font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.momento .mas { width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: var(--bien); color: #fff; font-size: 20px; line-height: 1; }
+.cosas-momento { grid-column: 1 / -1; list-style: none; margin: 4px 0 0 52px; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.cosas-momento li { display: flex; align-items: center; gap: 10px; }
+.cosas-momento li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cosas-momento small { color: var(--suave); }
+.cosas-momento b { width: 70px; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+.cosas-momento .quitar { border: 0; padding: 0 4px; color: var(--suave); opacity: 0; font-size: 16px; background: none; }
+.cosas-momento li:hover .quitar, .cosas-momento .quitar:focus-visible { opacity: 1; }
+@media (hover: none) { .cosas-momento .quitar { opacity: .6; } }
+/* Agregar comida: buscador, pestañas, opciones con casilla y lo elegido con sus gramos */
+.w-agregar-comida { gap: 12px; }
+.w-agregar-comida h3 { display: flex; align-items: center; justify-content: flex-start; gap: 6px; }
+.w-agregar-comida h3 select { width: auto; }
+.w-agregar-comida h3 select { font-weight: 600; }
+.buscar-alimento { display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid var(--borde); border-radius: 12px; background: var(--vidrio-fuerte); }
+.buscar-alimento .icono { width: 18px; height: 18px; color: var(--suave); }
+.buscar-alimento input { flex: 1; border: 0; background: none; padding: 10px 0; outline: none; }
+.pestanas-dieta { display: flex; border-bottom: 1px solid var(--linea); }
+.pestanas-dieta button { border: 0; background: none; padding: 8px 12px; border-radius: 0; color: var(--suave); border-bottom: 2.5px solid transparent; }
+.pestanas-dieta button[aria-selected="true"] { color: var(--bien); border-bottom-color: var(--bien); font-weight: 600; }
+.opciones { display: grid; overflow: auto; min-height: 0; flex: 1 1 auto; max-height: 360px; }
+.opcion-alimento { display: flex; align-items: center; gap: 12px; padding: 8px 2px; border-top: 1px solid var(--linea); cursor: pointer; text-align: left; }
+.opcion-alimento:first-child { border-top: 0; }
+.opcion-alimento input { width: 20px; height: 20px; accent-color: var(--bien); flex: none; }
+.opcion-alimento > span { display: grid; min-width: 0; font-size: 13.5px; }
+.opcion-alimento small { color: var(--suave); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.comida-guardada { border: 0; border-top: 1px solid var(--linea); background: none; border-radius: 0; }
+.lista-elegidos { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--bien) 8%, transparent); }
+.fila-elegida { display: grid; grid-template-columns: minmax(0, 1fr) 28px 64px auto 28px 64px; align-items: center; gap: 6px; font-size: 13px; }
+.fila-elegida > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fila-elegida button { width: 28px; height: 28px; padding: 0; }
+.fila-elegida input { width: 100%; padding: 3px 6px; text-align: right; }
+.fila-elegida small { color: var(--suave); }
+.fila-elegida b { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+.agregar-todo { min-height: 44px; margin-top: auto; }
+@media (max-width: 700px) { .metas-dieta { grid-template-columns: 1fr; } .kcal-grande b { font-size: 36px; } .vaso .icono { width: 20px; height: 26px; } .fila-vasos { flex-wrap: nowrap; } }

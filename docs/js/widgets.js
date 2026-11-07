@@ -20,8 +20,8 @@ import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
 import { galeria, cabecera, tablero, dentro } from "./proyectos.js";
 import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { loImportante, diasDeLaSemana } from "./semana.js";
-import { cifrasEjercicio, cifrasHabitos, cifrasDieta, semanaEntreno, constanciaEntreno, peso, anillos, habitosHoy, cadaHabito, porDiaDeSemana, despensa,
-  diaComida, comidas, plato, anotar, semanaComida } from "./salud.js";
+import { cifrasEjercicio, cifrasHabitos, semanaEntreno, constanciaEntreno, peso, habitosHoy, cadaHabito, porDiaDeSemana, despensa,
+  caloriasDia, equilibrio, agua, comidasDia, agregarComida, semanaComida } from "./salud.js";
 import { icono } from "./dibujos.js";
 import { modo, fondo, barra, ventanas, cuenta } from "./ajustes.js";
 
@@ -42,20 +42,19 @@ export const WIDGETS = {
   "dias":          { crece: true, crear: diasDeLaSemana },
   "cifras-ejercicio": { crear: cifrasEjercicio },
   "cifras-habitos": { crear: cifrasHabitos },
-  "cifras-dieta":   { crear: cifrasDieta },
   "semana-entreno": { titulo: "Esta semana", crear: semanaEntreno },
   "constancia-entreno": { titulo: "Constancia", crear: constanciaEntreno },
   "peso":          { crear: peso },
-  "anillos":       { titulo: "Anillos de hoy", crear: anillos },
   "habitos-hoy":   { titulo: "Hábitos de hoy", crear: habitosHoy },
   "cada-habito":   { titulo: "Cada hábito", crear: cadaHabito },
   "por-dia":       { titulo: "Por día de la semana", crear: porDiaDeSemana },
   "despensa":      { titulo: "Despensa", crear: despensa },
-  "dia-comida":    { crear: diaComida },
-  "comidas":       { crear: comidas },
-  "plato":         { titulo: "Tu plato", crear: plato },
-  "anotar":        { titulo: "Anotar comida", crear: anotar },
-  "semana-comida": { titulo: "La semana", crear: semanaComida },
+  "calorias-dia":  { crear: caloriasDia },
+  "equilibrio":    { titulo: "Equilibrio de nutrientes", crear: equilibrio },
+  "agua":          { titulo: "Agua", crear: agua },
+  "comidas-dia":   { titulo: "Comidas del día", crear: comidasDia },
+  "agregar-comida": { crece: true, crear: agregarComida },
+  "semana-comida": { titulo: "Tendencia de la semana", crear: semanaComida },
   "modo":          { titulo: "Modo y color", crear: modo },
   "fondo":         { titulo: "Fondo de pantalla", crear: fondo },
   "barra":         { titulo: "Barra lateral", crear: barra },
