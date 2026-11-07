@@ -25,7 +25,7 @@ import { galeria, cabecera, tablero, dentro } from "./proyectos.js";
 import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { loImportante, diasDeLaSemana } from "./semana.js";
 import { semanaEntreno, constanciaEntreno, rutina, peso, habitosHoy, cadaHabito, porDiaDeSemana, despensa,
-  caloriasDia, equilibrio, comidasDia, semanaComida } from "./salud.js";
+  caloriasDia, equilibrio, comidasDia, semanaComida, saludDeHoy, habitosRapidos, medidorPeso } from "./salud.js";
 import { icono } from "./dibujos.js";
 import { selectorDeBloques } from "./bloques.js";
 import { modo, fondo, barra, ventanas, cuenta } from "./ajustes.js";
@@ -57,6 +57,9 @@ export const WIDGETS = {
   "equilibrio":    { titulo: "Equilibrio de nutrientes", crear: equilibrio },
   "comidas-dia":   { titulo: "Comidas del día", crear: comidasDia },
   "semana-comida": { titulo: "Tendencia de la semana", crear: semanaComida },
+  "salud-de-hoy":  { titulo: "Hoy", crear: saludDeHoy },
+  "habitos-rapidos": { titulo: "Hábitos de hoy", crear: habitosRapidos },
+  "medidor-peso":  { titulo: "Peso", crear: medidorPeso },
   "modo":          { titulo: "Modo y color", crear: modo },
   "fondo":         { titulo: "Fondo de pantalla", crear: fondo },
   "barra":         { titulo: "Barra lateral", crear: barra },
@@ -137,9 +140,10 @@ export function montar(a) {
     // Paso 70: con dos o más bloques se ve uno a la vez, con su selector arriba (bloques.js).
     let grilla;
     if (grupos.length > 1 && grupos.every((g) => g.b)) {
-      const { selector, escena, redibujar: tarjetas } = selectorDeBloques(a.id, grupos.map(({ b, cols }) => ({ b, grilla: grillaDe(cols) })));
+      const { selector, escena, redibujar: tarjetas, elegir } = selectorDeBloques(a.id, grupos.map(({ b, cols }) => ({ b, grilla: grillaDe(cols) })));
       grilla = el("div", { className: "grupos-widgets" }, selector, escena);
-      redibujar.push(tarjetas);
+      // ctx.bloque (ej. irA("salud", { bloque: "Dieta" })) cambia al bloque pedido una vez.
+      redibujar.push(() => { tarjetas(); if (ctx.bloque) { elegir(ctx.bloque); ctx.bloque = null; } });
     } else grilla = grupos.length === 1 && !grupos[0].b ? grillaDe(grupos[0].cols)
       : el("div", { className: "grupos-widgets" }, ...grupos.map(({ b, cols }) => el("div", { className: "grupo-widgets" },
         b ? el("h2", { className: "titulo-bloque sobre-foto" }, b.icono ? icono(b.icono) : "", b.bloque) : "", grillaDe(cols))));

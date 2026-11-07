@@ -1274,3 +1274,27 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 /* Paso 72: lo que se encontró en Open Food Facts, bajo tus alimentos */
 .titulo-afuera { display: block; margin: 8px 0 2px; font-size: 11.5px; font-weight: 600; color: var(--suave); }
 .de-afuera:empty { display: none; }
+
+/* ---------- Paso 73: Salud en el escritorio infinito ---------- */
+.tarjetas-salud { display: grid; gap: 12px; }
+.tarjetas-salud .tarjeta-bloque { min-height: 84px; }
+.habitos-rapidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 10px 6px; }
+.habito-rapido { display: grid; justify-items: center; gap: 5px; padding: 4px 0; border: 0; background: none; color: inherit; }
+.habito-rapido .circulo { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--c);
+  border: 2px dashed color-mix(in srgb, var(--c) 50%, transparent); background: color-mix(in srgb, var(--c) 8%, transparent);
+  transition: transform .3s cubic-bezier(.22, 1, .36, 1), background-color .25s, color .25s; }
+.habito-rapido .circulo .icono { width: 22px; height: 22px; }
+.habito-rapido:hover .circulo { transform: translateY(-2px); }
+.habito-rapido:active .circulo { transform: scale(.92); }
+.habito-rapido.hecho .circulo { border-style: solid; border-color: var(--c); background: var(--c); color: #fff; }
+.habito-rapido small { font-size: 11.5px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.medidor { position: relative; display: grid; justify-items: center; }
+.medidor svg { width: min(100%, 240px); }
+.medidor path { fill: none; stroke-width: 14; stroke-linecap: round; }
+.medidor .pista { stroke: var(--linea-salud); }
+.medidor .lleno { stroke: var(--bien); }
+.medidor .punto { fill: var(--vidrio-fuerte); stroke: var(--bien); stroke-width: 4; }
+.medidor > b { margin-top: -46px; font-size: 30px; font-variant-numeric: tabular-nums; }
+.medidor > small { color: var(--suave); font-size: 12px; }
+.medidor .extremos { display: flex; justify-content: space-between; width: min(100%, 240px); color: var(--suave); }
+@media (prefers-reduced-motion: reduce) { .habito-rapido .circulo { transition: none; } }

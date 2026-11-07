@@ -77,16 +77,21 @@ export function selectorDeBloques(id, grupos) {
 
   // Al llegar datos: cada tarjeta con su dato de hoy y su anillo.
   function redibujar() {
-    grupos.forEach((g, i) => {
-      const r = g.b.resumen?.() ?? {};
-      tarjetas[i].replaceChildren(
-        el("span", { className: "marca-agua", ariaHidden: "true" }, icono(g.b.icono)),
-        el("span", { className: "insignia" }, icono(g.b.icono)),
-        el("span", { className: "texto-bloque" }, el("b", { textContent: g.b.bloque }),
-          el("span", { className: "dato-bloque", textContent: r.dato ?? "" }), el("small", { textContent: r.detalle ?? "" })),
-        r.avance === undefined ? "" : anillo(r.avance));
-    });
+    grupos.forEach((g, i) => tarjetas[i].replaceChildren(...contenidoDeTarjeta(g.b)));
     marcar();
   }
-  return { selector, escena, redibujar };
+  // Ir a un bloque por su nombre (ej. desde el resumen del escritorio: irA("salud", { bloque: "Dieta" })).
+  const elegir = (nombre) => { const i = grupos.findIndex((g) => g.b.bloque === nombre); if (i >= 0) ir(i); };
+  return { selector, escena, redibujar, elegir };
+}
+
+// Lo que va dentro de la tarjeta de un bloque: marca de agua, insignia, nombre, dato, detalle y anillo.
+// También la usa el resumen de Salud del escritorio infinito (salud.js).
+export function contenidoDeTarjeta(b) {
+  const r = b.resumen?.() ?? {};
+  return [el("span", { className: "marca-agua", ariaHidden: "true" }, icono(b.icono)),
+    el("span", { className: "insignia" }, icono(b.icono)),
+    el("span", { className: "texto-bloque" }, el("b", { textContent: b.bloque }),
+      el("span", { className: "dato-bloque", textContent: r.dato ?? "" }), el("small", { textContent: r.detalle ?? "" })),
+    r.avance === undefined ? "" : anillo(r.avance)];
 }

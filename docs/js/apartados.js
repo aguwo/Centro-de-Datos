@@ -20,13 +20,13 @@
 //   lugar     (opcional) [columna, fila] en el escritorio movible (escritorio.js). Los que tienen lugar se ven
 //             juntos en el lienzo; los demás, a pantalla completa. El plan del escritorio:
 //                            [1,0] Esta semana
-//             [0,1] Productividad   [1,1] Hoy   [2,1] Salud
+//             [0,1] Productividad   [1,1] Hoy   [2,1] Salud hoy
 //                            [1,2] Finanzas
 import { dibujarInicio } from "./inicio.js";
 import { dibujar as dibujarMapa, ajustarMapa } from "./mapa.js";
 import { dibujarCalendario, iniciarCalendario } from "./calendario.js";
 import { semestreActual } from "./universidad.js";
-import { resumenEjercicio, resumenHabitos, resumenDieta } from "./salud.js";
+import { BLOQUES } from "./salud.js";
 
 export const APARTADOS = [
   {
@@ -45,6 +45,12 @@ export const APARTADOS = [
     id: "productividad", nombre: "Productividad", lugar: [0, 1], nuevo: ["tarea", "proyecto"],
     columnas: [{ widgets: ["tareas"] }, { widgets: ["proyectos"] }],
     icono: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8.5 12.2l2.6 2.6 4.6-5.4"/>',
+  },
+  // Paso 73: lo de hoy de Salud, a la derecha de Hoy en el escritorio infinito. Tocar una tarjeta abre Salud en ese bloque.
+  {
+    id: "salud-hoy", nombre: "Salud hoy", lugar: [2, 1], nuevo: ["habito", "alimento"], titulo: () => "Salud",
+    columnas: [{ ancho: 1.15, widgets: ["salud-de-hoy"] }, { ancho: 1, widgets: ["habitos-rapidos", "medidor-peso"] }],
+    icono: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/><path d="M3 12h4l2-3 3 6 2-3h3"/>',
   },
   // Paso 35: una caja (área, ramo, proyecto...) completa, para verla entera y editarla. Va a pantalla completa.
   {
@@ -65,13 +71,13 @@ export const APARTADOS = [
   {
     id: "salud", nombre: "Salud", nuevo: ["habito", "alimento", "ejercicio", "rutina"],
     columnas: [
-      { bloque: "Ejercicio", icono: "pesa", color: "#2563eb", resumen: resumenEjercicio },
+      BLOQUES.ejercicio,
       { nombre: "Hoy", ancho: 1, widgets: ["rutina", "semana-entreno"] },
       { nombre: "Cómo vas", ancho: 1.5, widgets: ["peso", "constancia-entreno"] },
-      { bloque: "Hábitos", icono: "si", color: "#7c3aed", resumen: resumenHabitos },
+      BLOQUES.habitos,
       { nombre: "Hoy", ancho: 1, widgets: ["habitos-hoy"] },
       { nombre: "Cómo vas", ancho: 1.5, widgets: ["cada-habito", "por-dia"] },
-      { bloque: "Dieta", icono: "plato", color: "#2f7a4c", resumen: resumenDieta },
+      BLOQUES.dieta,
       { nombre: "Hoy", ancho: 1, widgets: ["calorias-dia", "comidas-dia"] },
       { nombre: "Cómo vas", ancho: 1.5, widgets: ["equilibrio", "semana-comida", "despensa"] },
     ],

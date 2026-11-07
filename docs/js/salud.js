@@ -23,11 +23,12 @@
 //   metas     las que guardes (tabla preferencias, clave "salud"); sin eso, unas sugeridas según tu peso
 // Cada hábito cae en un bloque: los de entrenar en Ejercicio, los de registrar calorías en Dieta
 // (se cumplen solos al anotar comida) y el resto en Hábitos.
-import { el, db, datos, dia, escribir, areaDe } from "./base.js";
+import { el, db, datos, dia, escribir, areaDe, irA } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes, sinHoraISO } from "./fechas.js";
 import { alternarRegistro, cambiarProps, crear, dentroDeCaja } from "./acciones.js";
 import { icono, elegir } from "./dibujos.js";
 import { formulario, mostrarPanel } from "./panel.js";
+import { contenidoDeTarjeta } from "./bloques.js";
 
 const SANO = [0.25, 0.5];   // kg por semana que se considera sano subir (o bajar)
 const SEMANAS = 13;          // cuántas semanas muestra la constancia
@@ -639,4 +640,62 @@ export function resumenHabitos() {
 export function resumenDieta() {
   const t = comidaDe(hoyTexto()), m = metas();
   return { dato: `${numero(t.kcal)} kcal`, detalle: `de ${numero(m.kcal)} · ${numero(t.proteina)} g de proteína`, avance: t.kcal / (m.kcal || 1) };
+}
+// Los tres bloques del apartado (apartados.js) con su ícono, color y resumen. Los usa también el resumen del escritorio.
+export const BLOQUES = {
+  ejercicio: { bloque: "Ejercicio", icono: "pesa", color: "#2563eb", resumen: resumenEjercicio },
+  habitos: { bloque: "Hábitos", icono: "si", color: "#7c3aed", resumen: resumenHabitos },
+  dieta: { bloque: "Dieta", icono: "plato", color: "#2f7a4c", resumen: resumenDieta },
+};
+
+// ---------- el resumen de Salud en el escritorio infinito (paso 73) ----------
+// salud-de-hoy   las tres tarjetas (Ejercicio, Hábitos, Dieta); tocar una abre Salud en ese bloque
+// habitos-rapidos los hábitos de hoy como botones redondos con su ícono: tocar marca o desmarca
+// medidor-peso   un medio círculo del peso de inicio a la meta, con el de ahora, y para anotar el de hoy
+export function saludDeHoy(v, ctx) {
+  v.querySelector("h3").append(el("button", { className: "abrir", textContent: "Abrir ↗", title: "Abrir Salud", onclick: () => irA("salud") }));
+  const tarjetas = Object.values(BLOQUES).map((b) => {
+    const t = el("button", { className: "tarjeta-bloque", onclick: () => irA("salud", { bloque: b.bloque }) });
+    t.style.setProperty("--c", b.color);
+    return [t, b];
+  });
+  v.append(el("div", { className: "tarjetas-salud" }, ...tarjetas.map(([t]) => t)));
+  return () => {
+    cargarMetas(() => ctx.cambiar({})); // la meta de calorías llega una vez, de la base
+    for (const [t, b] of tarjetas) t.replaceChildren(...contenidoDeTarjeta(b));
+  };
+}
+export function habitosRapidos(v) {
+  v.classList.add("w-salud");
+  return () => {
+    const hoy = hoyTexto(), lista = habitos().filter((h) => tocaEl(h, hoy));
+    const marcaDe = (h) => marcasDe(h).find((r) => dia(r.fecha) === hoy);
+    v.sub.textContent = lista.length ? `${lista.filter(marcaDe).length} de ${lista.length}` : "";
+    v.replaceChildren(v.firstChild, lista.length ? el("div", { className: "habitos-rapidos" }, ...lista.map((h) => {
+      const marca = marcaDe(h), [nombre, color] = temaDe(h);
+      const b = el("button", { className: "habito-rapido" + (marca ? " hecho" : ""), title: h.titulo, ariaPressed: String(!!marca), onclick: () => alternarRegistro("habito", h, marca) },
+        el("span", { className: "circulo" }, icono(marca ? "si" : nombre)), el("small", { textContent: h.titulo }));
+      b.style.setProperty("--c", color);
+      return b;
+    })) : el("p", { className: "vacio", textContent: "Hoy no te toca ningún hábito." }));
+  };
+}
+export function medidorPeso(v) {
+  v.classList.add("w-salud");
+  return () => {
+    const o = objetivoDePeso();
+    if (!o) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Crea un objetivo con unidad «kg» para ver tu peso aquí." }));
+    const { inicio = pesoActual(o).v, meta } = o.props, ahora = pesoActual(o);
+    const frac = Math.max(0, Math.min(1, (ahora.v - inicio) / ((meta - inicio) || 1)));
+    v.sub.textContent = o.titulo;
+    // Medio círculo: la pista entera y lo recorrido de 0 a frac (pathLength 100), con un punto donde vas.
+    const ang = Math.PI * (1 - frac), x = 100 + 80 * Math.cos(ang), y = 100 - 80 * Math.sin(ang);
+    v.replaceChildren(v.firstChild,
+      el("div", { className: "medidor" }, svgDe("0 0 200 112", `<path d="M20 100 A80 80 0 0 1 180 100" pathLength="100" class="pista"/>
+        <path d="M20 100 A80 80 0 0 1 180 100" pathLength="100" class="lleno" stroke-dasharray="${frac * 100} 100"/>
+        <circle cx="${x}" cy="${y}" r="7" class="punto"/>`),
+        el("b", { textContent: numero(ahora.v, 1) }), el("small", { textContent: `kg · ${Math.round(frac * 100)}% del camino` }),
+        el("span", { className: "extremos" }, el("small", { textContent: numero(inicio, 1) }), el("small", { textContent: numero(meta, 1) }))),
+      anotarPeso(o, ahora));
+  };
 }
