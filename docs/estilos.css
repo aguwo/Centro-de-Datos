@@ -1285,69 +1285,90 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .de-afuera:empty { display: none; }
 
 /* ---------- Paso 73: Salud en el escritorio infinito ---------- */
-/* Paso 78: lo clave de cada bloque (con-color-bloque = el color del bloque, lo pone salud.js). Dieta: anillo + nutrientes */
-/* Cada bloque es una columna: la última ventana se estira hasta abajo, así las tres columnas terminan parejas. */
-.columna > .con-color-bloque:last-child { flex: 1; }
-/* y lo principal de esa ventana (anillo, hábitos, medidor) queda al centro del alto que sobra */
-.con-color-bloque:last-child > :is(.resumen-dieta, .habitos-rapidos, .medidor) { flex: 1; align-content: center; }
-.con-color-bloque .anotar-peso .vacio { flex-basis: 100%; }
-.con-color-bloque .anotar-peso input { flex: 1; }
-.resumen-dieta { display: grid; justify-items: center; gap: 18px; }
-.resumen-dieta .macros-hoy { width: 100%; }
-.anillo-kcal { position: relative; width: 132px; height: 132px; display: grid; place-items: center; align-content: center; }
+/* Paso 78: lo clave de cada bloque (con-color-bloque = el color del bloque, lo pone salud.js). */
+/* Paso 81: dos vistas, Bento y Anillos. Cada ventana mide lo que su contenido; la última de la columna llega hasta abajo
+   (así no quedan columnas disparejas), y una fila de ventanas lado a lado (widgets.js) también. */
+.fila-ventanas { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 20px; }
+.fila-ventanas > .ventana { display: flex; flex-direction: column; min-width: 0; }
+.columna > :is(.con-color-bloque, .fila-ventanas):last-child { flex: 1; }
+@media (max-width: 700px) { .fila-ventanas { grid-auto-flow: row; } }
+/* Dieta: el anillo con los nutrientes al lado (si cabe), las cuatro comidas y lo que te queda al pie */
+.resumen-dieta { flex: 1; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 22px 32px; }
+.resumen-dieta .macros-hoy { flex: 1 1 200px; }
+.anillo-kcal { position: relative; width: 132px; height: 132px; display: grid; place-items: center; align-content: center; flex: none; }
+.w-dieta-hoy .anillo-kcal { width: 184px; height: 184px; }
+.w-dieta-hoy .anillo-kcal b { font-size: 32px; }
 .anillo-kcal > svg { position: absolute; inset: 0; transform: rotate(-90deg); }
 .anillo-kcal circle { fill: none; stroke-width: 11; stroke-linecap: round; }
 .anillo-kcal .pista { stroke: color-mix(in srgb, var(--bloque) 16%, transparent); }
 .anillo-kcal .lleno { stroke: var(--bloque); }
 .anillo-kcal b { font-size: 26px; line-height: 1.05; font-variant-numeric: tabular-nums; }
 .anillo-kcal small { color: var(--suave); font-size: 11.5px; }
-.macros-hoy { display: grid; gap: 12px; }
-.macro-hoy { display: grid; gap: 5px; }
+.macros-hoy { display: grid; gap: 14px; }
+.macro-hoy { display: grid; gap: 6px; }
 .macro-hoy > span { display: flex; align-items: baseline; gap: 4px; font-size: 13px; }
 .macro-hoy > span > span:first-child { flex: 1; }
 .macro-hoy b { font-variant-numeric: tabular-nums; }
 .macro-hoy small { color: var(--suave); font-size: 11.5px; }
-.macro-hoy .barra-dieta { height: 6px; }
+.macro-hoy .barra-dieta { height: 7px; }
+.momentos-hoy { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.momento-hoy { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--linea-salud); }
+.momento-hoy.lleno { border: 1px solid transparent; background: color-mix(in srgb, var(--bloque) 14%, transparent); }
+.momento-hoy small { color: var(--suave); font-size: 11.5px; }
+.momento-hoy b { font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.momento-hoy:not(.lleno) b { color: var(--suave); font-weight: 500; }
+@media (max-width: 420px) { .momentos-hoy { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .pie-resumen { margin: 0; font-size: 13px; color: var(--suave); }
 .pie-resumen b { color: var(--texto); }
-.con-color-bloque > .barra-dieta { margin-bottom: 4px; }
-/* Ejercicio: qué toca hoy y la semana en puntos */
-.hoy-entreno { display: flex; align-items: center; gap: 12px; }
-.hoy-entreno .insignia { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, var(--bloque) 16%, transparent); color: var(--bloque); }
-.hoy-entreno.hecho .insignia { background: var(--bloque); color: #fff; }
-.hoy-entreno > span:last-child { display: grid; }
-.hoy-entreno b { font-size: 16px; }
+.con-color-bloque > .barra-dieta { margin-bottom: 2px; }
+/* Ejercicio: qué toca hoy en grande y la semana en puntos al fondo */
+.w-entreno-hoy { justify-content: space-between; }
+.hoy-entreno { display: grid; gap: 2px; }
+.hoy-entreno b { font-size: 20px; letter-spacing: -.01em; }
 .hoy-entreno small { color: var(--suave); font-size: 12.5px; }
-.puntos-semana { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.punto-dia { display: grid; justify-items: center; gap: 6px; padding: 8px 0; border-radius: 12px; }
-.punto-dia i { width: 22px; height: 22px; border-radius: 50%; background: var(--linea-salud); }
-.punto-dia.libre i { transform: scale(.45); }
-.punto-dia.toca i { background: none; border: 2px dashed color-mix(in srgb, var(--bloque) 60%, transparent); }
+.puntos-semana { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.punto-dia { display: grid; justify-items: center; gap: 6px; padding: 7px 0; border-radius: 10px; }
+.punto-dia i { width: 18px; height: 18px; border-radius: 50%; background: var(--linea-salud); }
+.punto-dia.libre i { transform: scale(.4); }
+.punto-dia.toca i { background: none; border: 2px solid color-mix(in srgb, var(--bloque) 70%, transparent); }
 .punto-dia.falto i { background: none; border: 2px solid color-mix(in srgb, var(--texto) 18%, transparent); }
 .punto-dia.hecho i { background: var(--bloque); }
-.punto-dia small { font-size: 11.5px; color: var(--suave); text-transform: uppercase; }
-.punto-dia.es-hoy { background: color-mix(in srgb, var(--bloque) 10%, transparent); }
+.punto-dia small { font-size: 11px; color: var(--suave); text-transform: uppercase; }
+.punto-dia.es-hoy { background: color-mix(in srgb, var(--bloque) 14%, transparent); }
 .punto-dia.es-hoy small { color: var(--texto); font-weight: 700; }
-.habitos-rapidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 10px 6px; }
-.habito-rapido { display: grid; justify-items: center; gap: 5px; padding: 4px 0; border: 0; background: none; color: inherit; }
-.habito-rapido .circulo { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--c);
-  border: 2px dashed color-mix(in srgb, var(--c) 50%, transparent); background: color-mix(in srgb, var(--c) 8%, transparent);
-  transition: transform .3s cubic-bezier(.22, 1, .36, 1), background-color .25s, color .25s; }
-.habito-rapido .circulo .icono { width: 22px; height: 22px; }
-.habito-rapido:hover .circulo { transform: translateY(-2px); }
-.habito-rapido:active .circulo { transform: scale(.92); }
-.habito-rapido.hecho .circulo { border-style: solid; border-color: var(--c); background: var(--c); color: #fff; }
-.habito-rapido small { font-size: 11.5px; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-.medidor { position: relative; display: grid; justify-items: center; }
-.medidor svg { width: min(100%, 240px); }
-.medidor path { fill: none; stroke-width: 14; stroke-linecap: round; }
-.medidor .pista { stroke: var(--linea-salud); }
-.medidor .lleno { stroke: var(--bien); }
-.medidor .punto { fill: var(--vidrio-fuerte); stroke: var(--bien); stroke-width: 4; }
-.medidor > b { margin-top: -46px; font-size: 30px; font-variant-numeric: tabular-nums; }
-.medidor > small { color: var(--suave); font-size: 12px; }
-.medidor .extremos { display: flex; justify-content: space-between; width: min(100%, 240px); color: var(--suave); }
-@media (prefers-reduced-motion: reduce) { .habito-rapido .circulo { transition: none; } }
+/* Hábitos: una lista que se reparte en columnas si la ventana es ancha */
+.habitos-rapidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 12px; }
+.habito-rapido { display: flex; align-items: center; gap: 10px; padding: 5px 0; border: 0; background: none; color: inherit; font: inherit; font-size: 13px; text-align: left; }
+.habito-rapido .check { width: 18px; height: 18px; flex: none; border-radius: 50%; display: grid; place-items: center; color: #fff;
+  border: 2px solid color-mix(in srgb, var(--bloque) 60%, transparent); transition: transform .25s cubic-bezier(.22, 1, .36, 1), background-color .2s; }
+.habito-rapido .check .icono { width: 12px; height: 12px; stroke-width: 3; }
+.habito-rapido:hover .check { transform: scale(1.1); }
+.habito-rapido.hecho .check { background: var(--bloque); border-color: var(--bloque); }
+.habito-rapido.hecho > span:last-child { color: var(--suave); text-decoration: line-through; }
+/* Peso: el de ahora en grande y una barra del inicio a la meta */
+.w-medidor-peso { justify-content: space-between; gap: 14px; }
+.peso-ahora { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.peso-ahora b { font-size: 44px; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.peso-ahora > span { color: var(--suave); font-size: 16px; }
+.peso-ahora small { margin-left: auto; color: var(--bloque); font-size: 12.5px; font-weight: 600; }
+.medidor { display: grid; gap: 8px; }
+.pista-peso { position: relative; height: 10px; border-radius: 5px; background: var(--linea-salud); }
+.pista-peso i { position: absolute; inset: 0 auto 0 0; width: var(--avance); border-radius: 5px; background: var(--bloque); }
+.pista-peso b { position: absolute; top: 50%; left: var(--avance); width: 16px; height: 16px; translate: -50% -50%; border-radius: 50%;
+  background: var(--vidrio-fuerte); border: 3px solid var(--bloque); box-sizing: border-box; }
+.medidor .extremos { display: flex; justify-content: space-between; color: var(--suave); }
+.medidor .extremos small { font-size: 11.5px; }
+/* Anillos: los cuatro de un vistazo, cada uno con su color */
+/* En esa vista los anillos son lo principal: su ventana se lleva el alto que sobra, y el detalle de abajo mide lo suyo */
+.columna > .w-anillos-salud { flex: 1; justify-content: center; }
+.columna > .w-anillos-salud + .fila-ventanas { flex: none; }
+.anillos-salud { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px 12px; padding: 6px 0; }
+.anillo-salud { display: grid; justify-items: center; gap: 4px; text-align: center; }
+.anillo-salud .anillo-kcal { width: 168px; height: 168px; margin-bottom: 8px; }
+.anillo-salud .anillo-kcal b { font-size: 30px; }
+.anillo-salud > b { font-size: 15px; color: var(--bloque); }
+.anillo-salud > small { color: var(--suave); font-size: 12.5px; }
+@media (prefers-reduced-motion: reduce) { .habito-rapido .check { transition: none; } }
 
 /* ---------- Paso 76: ventana flotante (base.js flotante): vidrio de Ajustes, título con × y el contenido debajo ---------- */
 .flotante { width: min(540px, calc(100vw - 24px)); max-height: min(680px, calc(100dvh - 48px)); }

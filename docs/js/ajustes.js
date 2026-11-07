@@ -3,10 +3,13 @@
 //   modo      claro, oscuro o automático (como tu equipo) y el color de acento
 //   fondo     el fondo de pantalla: tu paisaje, un degradado o una foto tuya; cuánto se oscurece y si se mueve
 //   barra     la barra lateral (paso 55): uno de cinco estilos, qué botones muestra y en qué orden
+//   vistas    cómo se ve cada sección del escritorio infinito que tiene varias vistas (paso 81, ej. Salud)
 //   ventanas  qué tan transparente y difuminado es el vidrio, las esquinas y la letra
 //   cuenta    con qué correo entraste y el botón para salir
 import { db, el } from "./base.js";
-import { entradasDeLaBarra } from "./carcasa.js";
+import { entradasDeLaBarra, dibujarTodo } from "./carcasa.js";
+import { APARTADOS } from "./apartados.js";
+import { selectorDeVistas, disposicionDe } from "./widgets.js";
 import { preferencia, cambiar, TEMAS, TONOS, FONDOS, BARRAS, LETRAS, cssDelFondo, tuFoto, ponerFoto, achicar, volverALoDeSiempre } from "./apariencia.js";
 
 // Las ventanas de Ajustes se ponen al día juntas: un cambio en una (ej. el modo) se ve en las otras.
@@ -148,6 +151,15 @@ function arrastrable(li, lista, listo) {
     addEventListener("pointerup", soltar);
     addEventListener("pointercancel", soltar);
   };
+}
+
+// Las secciones del escritorio infinito con más de una vista: cuál ver se elige aquí y no en la sección,
+// para que el escritorio quede limpio. Se guarda igual que en los demás apartados (widgets.js, elegirVista).
+export function vistas(v) {
+  const conVistas = APARTADOS.filter((a) => a.lugar && a.vistas?.length > 1);
+  const selectores = conVistas.map((a) => selectorDeVistas(a, dibujarTodo));
+  v.append(...conVistas.flatMap((a, i) => [titulo(a.titulo?.() ?? a.nombre), selectores[i]]));
+  return () => conVistas.forEach((a, i) => selectores[i].marcar(disposicionDe(a)));
 }
 
 export function ventanas(v) {

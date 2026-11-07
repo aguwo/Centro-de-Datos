@@ -653,17 +653,18 @@ export function resumenEjercicio() {
   for (let d = mes; d <= hoy; d = sumarDias(d, 1)) if (tocaEntrenar(d)) tocaban++;
   const prox = proximoEntreno(), en = prox && diasEntre(hoy, prox), hora = horaDe(entrenos()[0]);
   return { dato: !prox ? "Sin días de entreno" : (en === 0 ? "Entrenas hoy" : en === 1 ? "Entrenas mañana" : "Próximo: " + diaCorto(prox)) + (prox && hora ? " · " + hora : ""),
-    detalle: `${hechos} de ${tocaban} entrenos este mes`, avance: tocaban ? hechos / tocaban : 0 };
+    detalle: `${hechos} de ${tocaban} entrenos este mes`, avance: tocaban ? hechos / tocaban : 0, cifra: `${hechos}/${tocaban}` };
 }
 export function resumenHabitos() {
   const hoy = hoyTexto(), deHoy = habitos().filter((h) => tocaEl(h, hoy));
   const hechos = deHoy.filter((h) => marcasDe(h).some((r) => dia(r.fecha) === hoy)).length;
   return { dato: deHoy.length ? `${hechos} de ${deHoy.length} hechos` : "Nada para hoy", detalle: hechos === deHoy.length && hechos ? "¡todo listo hoy!" : "los hábitos de hoy",
-    avance: deHoy.length ? hechos / deHoy.length : 0 };
+    avance: deHoy.length ? hechos / deHoy.length : 0, cifra: `${hechos}/${deHoy.length}`, faltan: deHoy.length - hechos };
 }
 export function resumenDieta() {
   const t = comidaDe(hoyTexto()), m = metas();
-  return { dato: `${numero(t.kcal)} kcal`, detalle: `de ${numero(m.kcal)} · ${numero(t.proteina)} g de proteína`, avance: t.kcal / (m.kcal || 1) };
+  return { dato: `${numero(t.kcal)} kcal`, detalle: `de ${numero(m.kcal)} · ${numero(t.proteina)} g de proteína`, avance: t.kcal / (m.kcal || 1),
+    cifra: numero(t.kcal), quedan: Math.round(m.kcal - t.kcal), meta: m.kcal };
 }
 // Los tres bloques del apartado (apartados.js) con su ícono, color y resumen. Los usa también el resumen del escritorio.
 export const BLOQUES = {
@@ -672,32 +673,45 @@ export const BLOQUES = {
   dieta: { bloque: "Dieta", icono: "plato", color: "#2f7a4c", resumen: resumenDieta },
 };
 
-// ---------- el resumen de Salud en el escritorio infinito (pasos 73 y 78) ----------
-// Lo clave de cada bloque, con su color, para ver cómo vas sin entrar a Salud:
-// dieta-hoy       un anillo con las calorías de hoy contra tu meta y cuánto llevas de cada nutriente
+// ---------- el resumen de Salud en el escritorio infinito (pasos 73, 78 y 81) ----------
+// Lo clave de cada bloque, con su color, para ver cómo vas sin entrar a Salud. Se arman en dos vistas (apartados.js):
+// dieta-hoy       el anillo de calorías de hoy contra tu meta, cuánto llevas de cada nutriente y cada comida
+// macros-hoy      solo los nutrientes (la vista Anillos ya muestra las calorías arriba)
 // entreno-hoy     qué toca hoy (o cuándo es el próximo), la semana en puntos y tu racha
-// habitos-rapidos los hábitos de hoy como botones redondos: tocar marca o desmarca
-// medidor-peso    un medio círculo del peso de inicio a la meta, con el de ahora, y para anotar el de hoy
+// habitos-rapidos los hábitos de hoy en una lista: tocar marca o desmarca
+// medidor-peso    tu peso de ahora en grande y una barra del peso de inicio a la meta; abajo, para anotar el de hoy
+// anillos-salud   cuatro anillos (dieta, hábitos, ejercicio y peso) para ver todo de un vistazo
 const conColor = (v, b) => { v.classList.add("w-salud", "con-color-bloque"); v.style.setProperty("--color-bloque", b.color); };
+const quedanTexto = (q) => (q >= 0 ? el("span", {}, "Te quedan ", el("b", { textContent: numero(q) + " kcal" })) : el("span", {}, "Te pasaste por ", el("b", { textContent: numero(-q) + " kcal" })));
+// Un anillo: lo recorrido de frac (0 a 1) y, al centro, una cifra grande con lo que es debajo.
+const anillo = (frac, grande, chico) => el("div", { className: "anillo-kcal" },
+  svgDe("0 0 120 120", `<circle cx="60" cy="60" r="50" pathLength="100" class="pista"/>${frac > 0 ? `<circle cx="60" cy="60" r="50" pathLength="100" class="lleno" stroke-dasharray="${Math.min(1, frac) * 100} 100"/>` : ""}`),
+  el("b", { textContent: grande }), el("small", { textContent: chico }));
+// Cuánto llevas de cada nutriente contra su meta, en barras.
+const macros = (t, m) => el("div", { className: "macros-hoy" }, ...[["proteina", "Proteína"], ["carbos", "Carbohidratos"], ["grasa", "Grasa"]].map(([k, nombre]) =>
+  el("div", { className: "macro-hoy" }, el("span", {}, el("span", { textContent: nombre }), el("b", { textContent: numero(t[k]) }), el("small", { textContent: " / " + numero(m[k]) + " g" })),
+    barra(t[k] / (m[k] || 1), "var(--bloque)"))));
 
 export function dietaHoy(v, ctx) {
   conColor(v, BLOQUES.dieta);
   return () => {
     cargarMetas(() => ctx.cambiar({})); // la meta de calorías llega una vez, de la base
-    const t = comidaDe(hoyTexto()), m = metas(), frac = Math.min(1, t.kcal / (m.kcal || 1)), quedan = Math.round(m.kcal - t.kcal);
-    const comidas = new Set(comidasDe(hoyTexto()).map((x) => x.momento)).size;
-    v.sub.textContent = comidas ? plural(comidas, "comida", "comidas") + " anotadas" : "nada anotado aún";
+    const hoy = hoyTexto(), t = comidaDe(hoy), m = metas(), lista = comidasDe(hoy);
+    const porMomento = MOMENTOS.map(([momento]) => [momento, lista.filter((x) => x.momento === momento)]);
+    const anotadas = porMomento.filter(([, xs]) => xs.length).length;
+    v.sub.textContent = `${anotadas} de ${MOMENTOS.length} comidas`;
     v.replaceChildren(v.firstChild,
-      el("div", { className: "resumen-dieta" },
-        el("div", { className: "anillo-kcal" }, svgDe("0 0 120 120", `<circle cx="60" cy="60" r="50" pathLength="100" class="pista"/>${frac ? `<circle cx="60" cy="60" r="50" pathLength="100" class="lleno" stroke-dasharray="${frac * 100} 100"/>` : ""}`),
-          el("b", { textContent: numero(t.kcal) }), el("small", { textContent: "de " + numero(m.kcal) + " kcal" })),
-        el("div", { className: "macros-hoy" }, ...[["proteina", "Proteína"], ["carbos", "Carbohidratos"], ["grasa", "Grasa"]].map(([k, nombre]) => {
-          const f = el("div", { className: "macro-hoy" }, el("span", {}, el("span", { textContent: nombre }), el("b", { textContent: numero(t[k]) }), el("small", { textContent: " / " + numero(m[k]) + " g" })),
-            barra(t[k] / (m[k] || 1), COLOR[k]));
-          f.style.setProperty("--c", COLOR[k]);
-          return f;
-        }))),
-      el("p", { className: "pie-resumen" }, quedan >= 0 ? el("span", {}, "Te quedan ", el("b", { textContent: numero(quedan) + " kcal" })) : el("span", {}, "Te pasaste por ", el("b", { textContent: numero(-quedan) + " kcal" }))));
+      el("div", { className: "resumen-dieta" }, anillo(t.kcal / (m.kcal || 1), numero(t.kcal), "de " + numero(m.kcal) + " kcal"), macros(t, m)),
+      el("div", { className: "momentos-hoy" }, ...porMomento.map(([momento, xs]) => el("span", { className: "momento-hoy" + (xs.length ? " lleno" : "") },
+        el("small", { textContent: momento }), el("b", { textContent: xs.length ? numero(sumar(xs).kcal) + " kcal" : "—" })))),
+      el("p", { className: "pie-resumen" }, quedanTexto(Math.round(m.kcal - t.kcal))));
+  };
+}
+export function macrosHoy(v, ctx) {
+  conColor(v, BLOQUES.dieta);
+  return () => {
+    cargarMetas(() => ctx.cambiar({}));
+    v.replaceChildren(v.firstChild, macros(comidaDe(hoyTexto()), metas()));
   };
 }
 
@@ -711,16 +725,14 @@ export function entrenoHoy(v) {
     const [titulo, detalle] = hecho ? ["Entrenaste hoy", "bien ahí"]
       : tocaEntrenar(hoy) ? ["Hoy toca entrenar", [rutinaDel(hoy)?.titulo, hora].filter(Boolean).join(" · ")]
       : ["Hoy descansas", prox ? "próximo: " + [diaCorto(prox), rutinaDel(prox)?.titulo, hora].filter(Boolean).join(" · ") : ""];
-    v.sub.textContent = r.actual ? "racha de " + plural(r.actual, "entreno", "entrenos") : "";
+    v.sub.textContent = r.actual ? "racha de " + plural(r.actual, "entreno", "entrenos") : resumenEjercicio().detalle.replace(" entrenos", "");
     v.replaceChildren(v.firstChild,
-      el("div", { className: "hoy-entreno" + (hecho ? " hecho" : "") }, el("span", { className: "insignia" }, icono(hecho ? "si" : "pesa")),
-        el("span", {}, el("b", { textContent: titulo }), el("small", { textContent: detalle }))),
+      el("div", { className: "hoy-entreno" + (hecho ? " hecho" : "") }, el("b", { textContent: titulo }), el("small", { textContent: detalle })),
       el("div", { className: "puntos-semana" }, ...Array.from({ length: 7 }, (_, i) => sumarDias(lunes(hoy), i)).map((d) => {
         const estado = entrenoDel(d) ? "hecho" : !tocaEntrenar(d) ? "libre" : d < hoy ? "falto" : "toca";
         return el("span", { className: `punto-dia ${estado}${d === hoy ? " es-hoy" : ""}`, title: `${diaCorto(d)}: ${{ hecho: "entrenaste", libre: "descanso", falto: "no fuiste", toca: "toca" }[estado]}` },
           el("i"), el("small", { textContent: new Date(d + "T12:00").toLocaleDateString("es-CL", { weekday: "narrow" }) }));
-      })),
-      el("p", { className: "pie-resumen" }, el("b", { textContent: resumenEjercicio().detalle })));
+      })));
   };
 }
 export function habitosRapidos(v) {
@@ -731,28 +743,47 @@ export function habitosRapidos(v) {
     const hechos = lista.filter(marcaDe).length;
     v.sub.textContent = lista.length ? `${hechos} de ${lista.length}` : "";
     v.replaceChildren(v.firstChild, lista.length ? barra(hechos / lista.length, "var(--bloque)") : "", lista.length ? el("div", { className: "habitos-rapidos" }, ...lista.map((h) => {
-      const marca = marcaDe(h), [nombre] = temaDe(h);
-      return el("button", { className: "habito-rapido" + (marca ? " hecho" : ""), title: h.titulo, ariaPressed: String(!!marca), onclick: () => alternarRegistro("habito", h, marca) },
-        el("span", { className: "circulo" }, icono(marca ? "si" : nombre)), el("small", { textContent: h.titulo }));
+      const marca = marcaDe(h);
+      return el("button", { className: "habito-rapido" + (marca ? " hecho" : ""), ariaPressed: String(!!marca), onclick: () => alternarRegistro("habito", h, marca) },
+        el("span", { className: "check" }, marca ? icono("si") : ""), el("span", { textContent: h.titulo }));
     })) : el("p", { className: "vacio", textContent: "Hoy no te toca ningún hábito." }));
   };
+}
+// Dónde vas en tu objetivo de peso: de dónde partiste, la meta, lo de ahora y qué parte del camino llevas (0 a 1).
+function avancePeso(o) {
+  const ahora = pesoActual(o), { inicio = ahora.v, meta } = o.props;
+  return { ahora, inicio, meta, frac: Math.max(0, Math.min(1, (ahora.v - inicio) / ((meta - inicio) || 1))) };
 }
 export function medidorPeso(v) {
   conColor(v, BLOQUES.ejercicio); // el peso vive en el bloque Ejercicio
   return () => {
     const o = objetivoDePeso();
     if (!o) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Crea un objetivo con unidad «kg» para ver tu peso aquí." }));
-    const { inicio = pesoActual(o).v, meta } = o.props, ahora = pesoActual(o);
-    const frac = Math.max(0, Math.min(1, (ahora.v - inicio) / ((meta - inicio) || 1)));
+    const { ahora, inicio, meta, frac } = avancePeso(o), cambio = ahora.v - inicio;
     v.sub.textContent = o.titulo;
-    // Medio círculo: la pista entera y lo recorrido de 0 a frac (pathLength 100), con un punto donde vas.
-    const ang = Math.PI * (1 - frac), x = 100 + 80 * Math.cos(ang), y = 100 - 80 * Math.sin(ang);
+    const pista = el("div", { className: "pista-peso" }, el("i"), el("b"));
+    pista.style.setProperty("--avance", frac * 100 + "%");
     v.replaceChildren(v.firstChild,
-      el("div", { className: "medidor" }, svgDe("0 0 200 112", `<path d="M20 100 A80 80 0 0 1 180 100" pathLength="100" class="pista"/>
-        <path d="M20 100 A80 80 0 0 1 180 100" pathLength="100" class="lleno" stroke-dasharray="${frac * 100} 100"/>
-        <circle cx="${x}" cy="${y}" r="7" class="punto"/>`),
-        el("b", { textContent: numero(ahora.v, 1) }), el("small", { textContent: `kg · ${Math.round(frac * 100)}% del camino` }),
-        el("span", { className: "extremos" }, el("small", { textContent: numero(inicio, 1) }), el("small", { textContent: numero(meta, 1) }))),
+      el("div", { className: "peso-ahora" }, el("b", { textContent: numero(ahora.v, 1) }), el("span", { textContent: "kg" }),
+        cambio ? el("small", { textContent: (cambio > 0 ? "+" : "−") + numero(Math.abs(cambio), 1) + " kg desde el inicio" }) : ""),
+      el("div", { className: "medidor" }, pista, el("span", { className: "extremos" }, el("small", { textContent: numero(inicio, 1) + " kg" }),
+        el("small", { textContent: Math.round(frac * 100) + "% del camino" }), el("small", { textContent: numero(meta, 1) + " kg" }))),
       anotarPeso(o, ahora));
+  };
+}
+export function anillosSalud(v) {
+  v.classList.add("w-salud");
+  return () => {
+    const d = resumenDieta(), h = resumenHabitos(), e = resumenEjercicio(), o = objetivoDePeso(), p = o && avancePeso(o);
+    const uno = (b, nombre, frac, grande, chico, frase) => {
+      const x = el("div", { className: "anillo-salud con-color-bloque" }, anillo(frac, grande, chico), el("b", { textContent: nombre }), el("small", { textContent: frase }));
+      x.style.setProperty("--color-bloque", b.color);
+      return x;
+    };
+    v.replaceChildren(el("div", { className: "anillos-salud" },
+      uno(BLOQUES.dieta, "Dieta", d.avance, d.cifra, "kcal", d.quedan >= 0 ? `Te quedan ${numero(d.quedan)} de ${numero(d.meta)}` : `Te pasaste por ${numero(-d.quedan)}`),
+      uno(BLOQUES.habitos, "Hábitos", h.avance, h.cifra, "hechos", h.faltan > 0 ? `Te ${h.faltan === 1 ? "falta" : "faltan"} ${h.faltan} hoy` : h.dato),
+      uno(BLOQUES.ejercicio, "Ejercicio", e.avance, e.cifra, "este mes", e.dato),
+      p ? uno(BLOQUES.ejercicio, "Peso", p.frac, numero(p.ahora.v, 1), "kg", `${Math.round(p.frac * 100)}% hacia ${numero(p.meta, 1)} kg`) : ""));
   };
 }
