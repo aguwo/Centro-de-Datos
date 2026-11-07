@@ -417,7 +417,7 @@ button.redondo:hover { background: var(--linea); color: var(--texto); }
 .chip-mes.mas:hover { color: var(--texto); }
 
 /* Un diálogo (el editor de un evento) */
-.dialogo { width: min(460px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--borde); border-radius: 18px; color: var(--texto); background: var(--vidrio-fuerte); }
+.dialogo { width: min(460px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--borde); border-radius: 18px; color: var(--texto); } /* el fondo es el .vidrio de Ajustes */
 .dialogo::backdrop { background: rgba(0,0,0,.3); }
 .dialogo form { display: grid; gap: 12px; padding: 22px; }
 .dialogo input:not([type="checkbox"]), .dialogo select, .dialogo textarea { min-width: 0; padding: 8px 10px; border: 1px solid var(--linea); border-radius: 9px; background: var(--vidrio); }
@@ -1181,8 +1181,7 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .cosas-momento li:hover .quitar, .cosas-momento .quitar:focus-visible { opacity: 1; }
 @media (hover: none) { .cosas-momento .quitar { opacity: .6; } }
 /* Paso 69: el buscador que abre el + de una comida, ahí mismo bajo su fila */
-.momento .mas.abierto { background: color-mix(in srgb, var(--texto) 6%, transparent); color: var(--texto); border: 1px solid var(--borde); }
-.buscador-comida { grid-column: 1 / -1; display: grid; gap: 6px; margin: 6px 0 2px 52px; }
+.buscador-comida { display: grid; gap: 6px; }
 .buscar-alimento { display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid var(--borde); border-radius: 12px; background: color-mix(in srgb, var(--texto) 5%, transparent); }
 .buscar-alimento .icono { width: 18px; height: 18px; color: var(--suave); }
 .buscar-alimento input { flex: 1; border: 0; background: none; padding: 10px 0; outline: none; }
@@ -1194,7 +1193,6 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .opcion-alimento small { color: var(--suave); font-size: 11.5px; }
 .opcion-alimento input { width: 100%; padding: 4px 6px; text-align: right; }
 .opcion-alimento button { width: 34px; height: 34px; padding: 0; border-radius: 50%; font-size: 18px; }
-@media (max-width: 700px) { .buscador-comida { margin-left: 0; } }
 @media (max-width: 700px) { .metas-dieta { grid-template-columns: 1fr; } .kcal-grande b { font-size: 36px; } }
 
 /* Paso 68: la rutina de entreno. Una fila por ejercicio: casilla, nombre, series × repeticiones y los kilos. */
@@ -1302,3 +1300,14 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .medidor > small { color: var(--suave); font-size: 12px; }
 .medidor .extremos { display: flex; justify-content: space-between; width: min(100%, 240px); color: var(--suave); }
 @media (prefers-reduced-motion: reduce) { .habito-rapido .circulo { transition: none; } }
+
+/* ---------- Paso 76: ventana flotante (base.js flotante): vidrio de Ajustes, título con × y el contenido debajo ---------- */
+.flotante { width: min(540px, calc(100vw - 24px)); max-height: min(680px, calc(100dvh - 48px)); }
+.flotante > .cuerpo { display: grid; gap: 12px; padding: 18px 20px 20px; }
+.flotante header { display: flex; align-items: center; gap: 10px; }
+.flotante header h3 { flex: 1; margin: 0; font-size: 18px; }
+.flotante header h3::first-letter { text-transform: uppercase; }
+.flotante .cerrar { width: 32px; height: 32px; padding: 0; border-radius: 50%; font-size: 18px; line-height: 1; }
+.flotante .opciones { max-height: 300px; }
+.agregado { margin: 0; min-height: 1.3em; font-size: 13px; font-weight: 600; color: var(--bien); }
+@media (prefers-reduced-motion: no-preference) { .flotante[open] { animation: entrar .3s var(--suave-curva) both; } }

@@ -147,10 +147,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 73 | Salud en el escritorio infinito, a la derecha de Hoy: las tarjetas de Ejercicio, Hábitos y Dieta (tocar una abre Salud en ese bloque), los hábitos de hoy como botones redondos para marcar con un toque, y un medidor de medio círculo del peso de inicio a la meta con para anotar el de hoy | — | — | `docs/js/salud.js`, `bloques.js` (`contenidoDeTarjeta`, `elegir`), `widgets.js`, `apartados.js`, `estilos.css` |
 | 74 | Salud más ordenada a la vista: un bloque, un color. Todo lo de adentro (íconos, barras, checks, gráficos y botones) usa el color del bloque elegido, en vez de un color por hábito, comida o alimento; solo los nutrientes conservan el suyo. En el selector solo el bloque elegido lleva color y los otros quedan en gris. Sin cajas dentro de cajas (hábitos, despensa, rachas y datos de la rutina van como filas simples), sin la barra que repetía los tres nutrientes y sin textos de ayuda que sobraban | — | — | `docs/js/salud.js`, `bloques.js`, `estilos.css` |
 | 75 | Salud deja editar y crear sin salir: «Editar» junto al objetivo de peso (y «Cambiar la fecha» en el aviso de ritmo) abre su formulario; sin objetivo aparece «+ Objetivo de peso». «+ Hábito» en Hábitos de hoy crea uno en el área de Salud, y tocar el nombre de un hábito en Cada hábito lo abre para editarlo | — | — | `docs/js/salud.js`, `estilos.css` |
+| 76 | El + de cada comida abre una ventana flotante (con el vidrio de Ajustes) con el buscador de alimentos: tus alimentos y Open Food Facts. Puedes agregar varias cosas seguidas y abajo dice qué agregaste; se cierra con la ×, Esc o tocando fuera. La ventana es genérica (`flotante` en base.js) y el diálogo del calendario ahora también sigue el vidrio | — | — | `docs/js/base.js` (`flotante`), `salud.js` (`agregarA`), `estilos.css` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 76, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 77, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |

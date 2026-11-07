@@ -31,6 +31,16 @@ export function escribible(tag, inicial, alTerminar, className = "") {
 }
 
 // Ir a otro apartado y, de paso, decirle qué mostrar (ej. irA("proyectos", { caja: id })). Lo atiende carcasa.js.
+// Una ventana flotante (paso 76): un <dialog> con el vidrio de Ajustes, su título y una ×. Se cierra con Esc, con la ×
+// o tocando fuera, y al cerrarse se borra sola. hijos = lo que va debajo del título.
+export function flotante(titulo, ...hijos) {
+  const d = el("dialog", { className: "dialogo flotante vidrio", onclose: () => d.remove(), onclick: (e) => { if (e.target === d) d.close(); } },
+    el("div", { className: "cuerpo" }, el("header", {}, el("h3", { textContent: titulo }),
+      el("button", { className: "cerrar", type: "button", textContent: "×", ariaLabel: "Cerrar", onclick: () => d.close() })), ...hijos));
+  document.body.append(d);
+  d.showModal();
+  return d;
+}
 export const irA = (apartado, ctx) => document.dispatchEvent(new CustomEvent("ir", { detail: { apartado, ctx } }));
 
 // Los datos cargados. Los llena recargar(); el resto de la web solo los lee.
