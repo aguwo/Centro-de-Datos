@@ -85,6 +85,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | — | Arreglo: el tablero de tareas ya no se corta. Mide lo que su contenido y cada columna (Por hacer, En curso, Esperando, Hecho) se desliza por dentro solo si no cabe, con una barra de desplazamiento delgada y discreta | — | — | `docs/js/proyectos.js` (`enTablero`), `widgets.js`, `estilos.css` |
 | 60 | El tablero de un proyecto se mueve con suavidad: al arrastrar una tarea a otra columna se cambia al tiro (sin esperar a la base) y viaja hasta su lugar; lo mismo si cambia de estado desde otro lado (el panel, Martita). Mientras la arrastras se ve más tenue. Usa View Transitions del navegador; sin soporte o con «reducir movimiento», cambia sin animación | — | — | `docs/js/dibujos.js` (`moverConSuavidad`), `proyectos.js` (`tablero`, `enTablero`), `estilos.css` |
 | — | Arreglo: el porcentaje del anillo de avance es más chico para que quede dentro del anillo (galería y tarjeta Ritmo) | — | — | `estilos.css` |
+| — | Arreglo: el anillo de las tarjetas de la galería es un poco más grande y de trazo más fino, para que el porcentaje no toque el borde | — | — | `estilos.css` |
 
 ### Objetivos
 
