@@ -1,14 +1,14 @@
-// Íconos y portadas (paso 52). Los íconos son trazos SVG escritos aquí mismo: no dependen de imágenes de afuera
-// y toman el color del texto que los rodea (currentColor), así un mismo ícono sirve para cualquier ramo o proyecto.
+// Íconos y portadas ilustradas (paso 52). Son trazos SVG escritos aquí mismo: no dependen de imágenes de afuera
+// y toman el color del texto que los rodea (currentColor), así un mismo dibujo sirve para cualquier ramo o proyecto.
 //   icono(nombre)          un ícono de línea de 24×24, ej. icono("reloj")
-//   portada(tema, color, clase, foto)  una franja del color del ramo o proyecto con el ícono de su tema encima;
-//                          con foto (el enlace a una imagen), la foto sobre el color
+//   portada(tema, color, clase, foto)  una franja con el dibujo de un tema, teñida con ese color, y su ícono encima;
+//                          con foto (el enlace a una imagen), la foto en vez del dibujo; con la clase "lisa", solo el color
 //   elegir(texto, reglas)  el primer nombre cuya palabra clave aparece en el texto (para adivinar tema o tipo)
 //   progreso(fraccion, marca, nombre)  una barra delgada de avance de 0 a 1 y, si se da, una rayita en la marca (ej. el mínimo)
 //   anillo(fraccion, texto)     un anillo de avance de 0 a 1 con un texto al medio (ej. "54%")
 //   pastilla(nombre, texto)     una píldora con un ícono y un texto, para resúmenes y avisos
 //   moverConSuavidad(caja, cambiar)  hace el cambio y lo que tiene data-id viaja de su lugar viejo al nuevo
-// Agregar uno = agregarlo a ICONOS.
+// Agregar uno = agregarlo a ICONOS (y, si es un tema con dibujo, a DIBUJOS).
 import { el } from "./base.js";
 
 const ICONOS = {
@@ -43,6 +43,19 @@ const ICONOS = {
   no: '<path d="M6 6l12 12M18 6L6 18"/>',
 };
 
+// Los dibujos de las portadas, en un lienzo de 240×80. Se dibujan con el color del tema (currentColor) a distintas opacidades.
+const DIBUJOS = {
+  chip: '<g fill="none" stroke="currentColor" stroke-width="2" opacity=".55"><path d="M0 18h56v28h44V26h70M0 62h34v14h80V48h56v32M134 8v26h62v28h44M178 0v16h62"/></g><g fill="currentColor"><circle cx="56" cy="18" r="4"/><circle cx="100" cy="26" r="4"/><circle cx="114" cy="76" r="4"/><circle cx="196" cy="34" r="4"/></g><rect x="142" y="46" width="40" height="26" rx="4" fill="currentColor" opacity=".3"/>',
+  base: '<g fill="currentColor" opacity=".35"><path d="M150 20c0-6 44-6 44 0v46c0 6-44 6-44 0z"/></g><g fill="none" stroke="currentColor" stroke-width="2" opacity=".8"><ellipse cx="172" cy="20" rx="22" ry="6"/><path d="M150 36c0 6 44 6 44 0M150 52c0 6 44 6 44 0"/></g><g stroke="currentColor" stroke-width="2" opacity=".45"><path d="M36 22h84M36 38h64M36 54h92M36 70h52"/></g><g fill="currentColor" opacity=".8"><rect x="20" y="18" width="8" height="8" rx="2"/><rect x="20" y="34" width="8" height="8" rx="2"/><rect x="20" y="50" width="8" height="8" rx="2"/></g>',
+  hoja: '<circle cx="196" cy="22" r="13" fill="currentColor" opacity=".5"/><path d="M0 64Q44 40 88 58T176 52T240 46V80H0Z" fill="currentColor" opacity=".3"/><path d="M0 74Q66 58 132 72T240 66V80H0Z" fill="currentColor" opacity=".55"/><path d="M46 52q10-24 32-26q-4 22-32 26z" fill="currentColor" opacity=".7"/><path d="M28 22h44M38 30h26M116 16h40" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".4"/>',
+  dialogo: '<path d="M124 10h82a10 10 0 0 1 10 10v24a10 10 0 0 1-10 10h-50l-16 14V54h-16a10 10 0 0 1-10-10V20a10 10 0 0 1 10-10z" fill="currentColor" opacity=".3"/><path d="M30 26h56a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8H54l-12 10V58H30a8 8 0 0 1-8-8V34a8 8 0 0 1 8-8z" fill="none" stroke="currentColor" stroke-width="2" opacity=".7"/><g fill="currentColor" opacity=".8"><circle cx="46" cy="42" r="3"/><circle cx="58" cy="42" r="3"/><circle cx="70" cy="42" r="3"/></g><path d="M140 30h52M140 40h34" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".7"/>',
+  red: '<g fill="none" stroke="currentColor" stroke-width="2" opacity=".5"><path d="M44 24L108 44L172 18M108 44L140 70M108 44L66 68M172 18L212 50L140 70"/></g><g fill="currentColor"><circle cx="44" cy="24" r="7" opacity=".7"/><circle cx="108" cy="44" r="11" opacity=".85"/><circle cx="172" cy="18" r="7" opacity=".7"/><circle cx="140" cy="70" r="6" opacity=".6"/><circle cx="66" cy="68" r="5" opacity=".6"/><circle cx="212" cy="50" r="6" opacity=".6"/></g>',
+  libro: '<g fill="currentColor"><rect x="150" y="16" width="14" height="56" rx="2" opacity=".6"/><rect x="168" y="22" width="12" height="50" rx="2" opacity=".4"/><rect x="184" y="12" width="16" height="60" rx="2" opacity=".7"/><rect x="204" y="26" width="10" height="46" rx="2" opacity=".35"/></g><path d="M24 28h80M24 42h96M24 56h60" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".4"/>',
+  web: '<g fill="none" stroke="currentColor" stroke-width="2" opacity=".7"><rect x="126" y="10" width="100" height="62" rx="6"/><path d="M126 23h100"/></g><g fill="currentColor"><circle cx="135" cy="16.5" r="2.5" opacity=".8"/><circle cx="143" cy="16.5" r="2.5" opacity=".8"/><circle cx="151" cy="16.5" r="2.5" opacity=".8"/><rect x="136" y="32" width="52" height="8" rx="3" opacity=".55"/><rect x="136" y="46" width="80" height="5" rx="2" opacity=".35"/><rect x="136" y="56" width="64" height="5" rx="2" opacity=".35"/><rect x="196" y="32" width="20" height="8" rx="3" opacity=".7"/></g><path d="M0 76Q40 54 80 66T160 62T240 58V80H0Z" fill="currentColor" opacity=".25"/>',
+  bloques: '<g fill="currentColor"><rect x="150" y="42" width="22" height="22" opacity=".55"/><rect x="172" y="42" width="22" height="22" opacity=".35"/><rect x="194" y="42" width="22" height="22" opacity=".55"/><rect x="161" y="20" width="22" height="22" opacity=".75"/><rect x="183" y="20" width="22" height="22" opacity=".45"/><rect x="172" y="-2" width="22" height="22" opacity=".3"/><rect x="0" y="64" width="240" height="16" opacity=".25"/><rect x="0" y="64" width="240" height="4" opacity=".45"/><rect x="40" y="38" width="9" height="26" opacity=".5"/><rect x="28" y="20" width="33" height="22" opacity=".35"/></g>',
+  proyecto: '<g fill="currentColor"><rect x="136" y="16" width="44" height="54" rx="5" opacity=".3"/><rect x="186" y="16" width="44" height="40" rx="5" opacity=".3"/></g><g fill="currentColor" opacity=".8"><rect x="142" y="24" width="32" height="10" rx="3"/><rect x="142" y="40" width="32" height="10" rx="3" opacity=".6"/><rect x="192" y="24" width="32" height="10" rx="3"/></g><path d="M24 30h80M24 44h60M24 58h88" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".4"/>',
+};
+
 const svg = (viewBox, trazos, clase) => {
   const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   s.setAttribute("viewBox", viewBox);
@@ -62,14 +75,15 @@ export function insignia(nombre, color, clase = "") {
 }
 
 export function portada(tema, color, clase = "", foto) {
-  const p = el("div", { className: "portada " + clase }, insignia(tema, color, "grande"));
+  const p = el("div", { className: "portada " + clase }, svg("0 0 240 80", DIBUJOS[tema] ?? DIBUJOS.libro, "dibujo"), insignia(tema, color, "grande"));
   p.style.setProperty("--c", color);
-  if (/^https?:\/\//.test(foto ?? "")) { // la foto encima del color; si no carga, queda el color
+  if (/^https?:\/\//.test(foto ?? "")) { // la foto va encima del dibujo; si no carga, se sigue viendo el dibujo
     const img = el("img", { className: "foto", src: foto, alt: "", loading: "lazy", decoding: "async" });
-    img.onerror = () => { img.remove(); p.classList.remove("con-foto"); };
-    p.prepend(img);
+    img.onerror = () => img.remove();
+    p.querySelector(".dibujo").after(img);
     p.classList.add("con-foto");
   }
+  p.querySelector(".dibujo").setAttribute("preserveAspectRatio", "xMidYMid slice");
   return p;
 }
 

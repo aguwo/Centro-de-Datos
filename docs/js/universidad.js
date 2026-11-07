@@ -6,7 +6,7 @@
 //
 // Un ramo es un tópico con semestre (se muestran los del semestre más reciente). Sus evaluaciones son los eventos
 // que tiene adentro y no se repiten (las clases sí se repiten). Las cuentas están en notas.js.
-// Paso 52: cada ramo tiene su tema (ícono y portada de su color, de dibujos.js) y cada evaluación su ícono según el tipo.
+// Paso 52: cada ramo tiene su tema (ícono y portada, de dibujos.js; sin dibujo, solo su color: clase "lisa") y cada evaluación su ícono según el tipo.
 import { el, db, datos, dia, hora, cajasDe, colorDeProyecto, escribir, escribiendoEn, avisar, fijas, FIJA } from "./base.js";
 import { hoyTexto, diasEntre, corto } from "./fechas.js";
 import { cambiarProps, dentroDeCaja } from "./acciones.js";
@@ -45,7 +45,7 @@ function cuando(n) {
   return h ? `${texto} ${h}` : texto;
 }
 
-// El tema de un ramo (su ícono): el que le pongas en props.icono o, si no, uno adivinado por su nombre.
+// El tema de un ramo (su ícono y su dibujo): el que le pongas en props.icono o, si no, uno adivinado por su nombre.
 const TEMAS = [[/arquitect|comput|electr|circuit/i, "chip"], [/dato|sql/i, "base"], [/ambient|energ|ecolog|biolog|quím/i, "hoja"],
   [/ingl|idioma|franc|alem|portug|comunica/i, "dialogo"], [/sistema|red(es)?\b/i, "red"]];
 const temaDe = (ramo) => ramo.props?.icono ?? elegir(ramo.titulo, TEMAS, "libro");
@@ -97,7 +97,7 @@ export function tarjetasDeRamos(v, ctx) {
     grilla.replaceChildren(...lista.map((r) => {
       const c = evaluar(evaluacionesDe(r)), a = asistencia(asistenciasDe(r)), prox = queViene(r)[0], color = colorDeProyecto(r.id);
       const como = r.estado === "Hecho" ? (r.props?.resultado === "Reprobado" ? "No alcanza" : "Seguro") : estado(c);
-      const tapa = portada(temaDe(r), color);
+      const tapa = portada(temaDe(r), color, "lisa");
       if (r.estado !== "Hecho" && bajo(a, r)) tapa.append(pastilla("alerta", "Asistencia", "aviso"));
       else if (como === "En riesgo" || como === "No alcanza") tapa.append(pastilla("alerta", como, "aviso"));
       const t = el("button", { className: "tarjeta-ramo", onclick: () => ctx.cambiar({ ramo: r.id }) }, tapa,
@@ -133,7 +133,7 @@ export function paginaDeRamo(v, ctx) {
     // Un dato de la cabeza: su ícono, qué es y cuánto. alerta: se pinta de advertencia.
     const dato = (nombre, etiqueta, valor, detalle, alerta) => el("div", { className: "dato" + (alerta ? " alerta" : "") },
       insignia(nombre, alerta ? "var(--alerta)" : color), el("span", {}, el("small", { textContent: etiqueta }), el("strong", { textContent: valor }), el("small", { textContent: detalle })));
-    const cabeza = el("section", { className: "ventana vidrio cabeza-ramo" }, portada(temaDe(ramo), color, "ancha"),
+    const cabeza = el("section", { className: "ventana vidrio cabeza-ramo" }, portada(temaDe(ramo), color, "ancha lisa"),
       el("div", { className: "titulo" },
         el("button", { className: "volver", textContent: "‹ Todos los ramos", onclick: () => ctx.cambiar({ ramo: null }) }),
         el("h3", {}, ramo.titulo, chip(estado(c))),

@@ -165,7 +165,7 @@ export function cabecera(v, ctx) {
       placeholder: `¿De qué se trata ${n.titulo}? La idea, con quién, links…` });
     descripcion.onchange = () => cambiar(n, { contenido: descripcion.value.trim() || null });
 
-    // Arriba, la portada (paso 58) a todo el ancho: su foto o su color. Encima, volver y las acciones;
+    // Arriba, la portada (paso 58) a todo el ancho: su foto o el dibujo de su tema. Encima, volver y las acciones;
     // abajo, dónde está, el título y sus datos.
     const volver = el("button", { className: "volver", textContent: "‹ Proyectos", onclick: () => ctx.cambiar({ caja: null }) });
     const heroe = portada(temaDe(n), colorDeProyecto(n.id), "heroe" + (animar ? " animar" : ""), n.props?.portada);
@@ -175,7 +175,7 @@ export function cabecera(v, ctx) {
   };
 }
 
-// El cuadro para cambiar la portada: pegar el enlace de una foto, o quitarla (vuelve el color). Parte escondido.
+// El cuadro para cambiar la portada: pegar el enlace de una foto, o quitarla (vuelve el dibujo). Parte escondido.
 function elegirFoto(n) {
   const campo = el("input", { type: "url", value: n.props?.portada ?? "", placeholder: "Pega el enlace de una foto (https://…)", ariaLabel: "Enlace de la foto de portada" });
   const quitar = el("button", { type: "button", textContent: "Quitar foto", hidden: !n.props?.portada, onclick: () => cambiarProps(n, { portada: null }) });
