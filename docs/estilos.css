@@ -998,15 +998,15 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 
 /* Salud (paso 63, salud.js). --c es el color de cada cosa: verde las calorías, naranjo la proteína, azul los carbohidratos,
    ámbar la grasa, y uno por hábito. Las ventanas siguen el vidrio de Ajustes (opacidad y desenfoque), como todas. */
-.w-salud { --linea-salud: color-mix(in srgb, var(--texto) 10%, transparent); }
+.w-salud, .w-finanzas { --linea-salud: color-mix(in srgb, var(--texto) 10%, transparent); }
 /* Paso 74: un bloque, un color. Todo lo de adentro (íconos, barras, checks, gráficos) usa el color del bloque elegido
    (--color-bloque, lo pone bloques.js), aclarado en modo oscuro igual que el acento. Solo los nutrientes tienen color propio. */
 .escena-bloques, .con-color-bloque { --bloque: var(--color-bloque, var(--acento)); }
 :root[data-tema="oscuro"] :is(.escena-bloques, .con-color-bloque) { --bloque: color-mix(in oklch, var(--color-bloque, var(--tono)) 55%, #fff); }
-.w-salud { --c: var(--bloque, var(--acento)); --entreno: var(--bloque, var(--acento)); --habitos: var(--bloque, var(--acento)); }
-.escena-bloques .w-salud, .w-salud.con-color-bloque { --bien: var(--bloque); }
-.w-salud .principal { background: var(--c); border-color: var(--c); }
-.w-salud .vacio { font-size: 12.5px; }
+.w-salud, .w-finanzas { --c: var(--bloque, var(--acento)); --entreno: var(--bloque, var(--acento)); --habitos: var(--bloque, var(--acento)); }
+.escena-bloques :is(.w-salud, .w-finanzas), :is(.w-salud, .w-finanzas).con-color-bloque { --bien: var(--bloque); }
+.w-salud .principal, .w-finanzas .principal { background: var(--c); border-color: var(--c); }
+:is(.w-salud, .w-finanzas) .vacio { font-size: 12.5px; }
 /* El camino del peso */
 .w-peso { gap: 10px; }
 .w-peso > h3 { margin: 0; }
@@ -1380,3 +1380,51 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .flotante .opciones { max-height: 300px; }
 .agregado { margin: 0; min-height: 1.3em; font-size: 13px; font-weight: 600; color: var(--bien); }
 @media (prefers-reduced-motion: no-preference) { .flotante[open] { animation: entrar .3s var(--suave-curva) both; } }
+
+/* Paso 83: Finanzas. Usa lo mismo que la Dieta (cambiar-dia, kcal-grande, barra-dieta, barras-semana) con el color del bloque. */
+.w-semana-gasto .barra-dieta { position: relative; height: 14px; border-radius: 7px; overflow: visible; }
+.w-semana-gasto .barra-dieta i { border-radius: 7px; }
+.marca-hoy { position: absolute; top: -5px; bottom: -5px; left: var(--hoy); width: 2px; border-radius: 1px; background: var(--texto); }
+.kcal-grande b.pasada, .categoria b.pasada, .categoria small.pasada { color: var(--alerta); }
+.w-semana-gasto .kcal-grande b { color: var(--bien); }
+.w-semana-gasto .kcal-grande b.pasada { color: var(--alerta); }
+.frase-finanzas { margin: 0; padding: 9px 12px; border-radius: 10px; font-size: 12.5px; background: color-mix(in srgb, var(--bien) 12%, transparent); }
+.frase-finanzas.mal { background: var(--alerta-suave); }
+.movimientos { list-style: none; margin: 0; padding: 0; }
+.movimiento { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; padding: 10px 0; border-top: 1px solid var(--linea); }
+.movimiento > span:nth-child(2) { display: grid; min-width: 0; }
+.movimiento > span:nth-child(2) b { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.movimiento small { color: var(--suave); font-size: 12px; }
+.movimiento small::first-letter { text-transform: uppercase; }
+.movimiento .monto { font-variant-numeric: tabular-nums; }
+.movimiento.entra .monto { color: var(--bien); }
+.movimiento .insignia { background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--c); }
+.movimiento.por-revisar .insignia { background: none; border: 1.5px dashed color-mix(in srgb, var(--aviso) 70%, transparent); color: var(--aviso); }
+.insignia.letra { font-weight: 700; font-size: 15px; }
+.elegir-categoria { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+.elegir-categoria button { border-radius: 999px; padding: 4px 11px; font-size: 12px; min-height: 30px; }
+.elegir-categoria button:hover { border-color: var(--c); color: var(--c); }
+.categorias { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px 24px; }
+.categoria { display: grid; gap: 6px; }
+.categoria > div { display: flex; align-items: center; gap: 9px; font-size: 13.5px; }
+.categoria > div > span:nth-child(2) { flex: 1; font-weight: 500; min-width: 0; }
+.categoria > div b { font-variant-numeric: tabular-nums; }
+.categoria > div small, .categoria > small { color: var(--suave); font-size: 11.5px; }
+.categoria .insignia { width: 28px; height: 28px; border-radius: 8px; background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--c); }
+.categoria .insignia .icono { width: 15px; height: 15px; }
+.categoria .barra-dieta { height: 8px; }
+.categoria.sin .insignia { background: none; border: 1.5px dashed var(--linea-salud); color: var(--suave); }
+.barra-dieta.vacia { height: 8px; background: none; border: 1.5px dashed var(--linea-salud); box-sizing: border-box; }
+.dia-barra.pasada i { background: color-mix(in srgb, var(--alerta) 55%, transparent); }
+.dia-barra.pasada.elegido i { background: var(--alerta); }
+.entra-sale { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 10px; font-size: 13px; }
+.entra-sale span:first-child { color: var(--suave); }
+.entra-sale b { font-variant-numeric: tabular-nums; min-width: 84px; text-align: right; }
+.entra-sale.sale .barra-dieta i { background: var(--alerta); }
+.cuentas { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.cuenta { display: grid; gap: 8px; padding: 14px; border-radius: 14px; background: var(--linea-salud); }
+.cuenta .insignia { background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); }
+.cuenta .monto { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.w-semana-gasto { gap: 12px; }
+.w-semana-gasto .pie-kcal { margin-top: 4px; }

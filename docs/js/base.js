@@ -51,12 +51,14 @@ export const datos = {
   nodo: new Map(),        // id -> nodo
   conexiones: [],
   padre: new Map(),       // id -> id de la caja donde está (lo calcula la vista "arbol" de la base, paso 19)
-  registros: [],          // lo que pasó en los últimos DIAS_REGISTROS días (gastos, hábitos, riegos...) y toda la asistencia, del más viejo al más nuevo
+  registros: [],          // lo que pasó en los últimos DIAS_REGISTROS días (hábitos, comida, riegos...), más toda la asistencia y la plata, del más viejo al más nuevo
   disposiciones: new Map(), // id del apartado -> sus columnas de widgets, si las cambiaste (paso 34b)
 };
 
 // Cuántos días de registros se traen. Alcanza para rachas, el gasto del mes y las plantas.
 const DIAS_REGISTROS = 98; // 14 semanas: la constancia de Salud muestra 13 enteras
+// Estos se traen completos, de siempre: la asistencia de todo el semestre y la plata (el saldo de una cuenta suma todo, paso 83).
+const DE_SIEMPRE = "asistencia,gasto,ingreso,transferencia";
 
 // El día de una fecha, como texto "2026-11-01".
 // Las fechas sin hora (las de Notion, guardadas a medianoche UTC) se leen tal cual, sin zona horaria,
@@ -147,7 +149,7 @@ export async function recargar(enfocarId) {
     db.from("conexiones").select("id, origen_id, relacion, destino_id").is("valido_hasta", null),
     db.from("tipos").select("id, owner_id, clave, nombre, modulo, orden, color, nivel, subcaja, propiedades, conexiones").order("orden"),
     db.from("arbol").select("id, padre_id"),
-    db.from("registros").select("id, fecha, clase, valor, unidad, nodo_id, otro_id, props").or(`fecha.gte.${desde},clase.eq.asistencia`).order("fecha"), // la asistencia de todo el semestre
+    db.from("registros").select("id, fecha, clase, titulo, valor, unidad, nodo_id, otro_id, props").or(`fecha.gte.${desde},clase.in.(${DE_SIEMPRE})`).order("fecha"),
     db.from("disposiciones").select("apartado, columnas"),
   ]);
   const error = nodos.error || conexiones.error || tipos.error || arbol.error || registros.error;
