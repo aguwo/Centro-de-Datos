@@ -43,12 +43,12 @@ const TEMAS = [[/robot|agente|asistente|inteligencia artificial/i, "chip"], [/mi
 const temaDe = (n) => n.props?.icono ?? adivinar(`${n.titulo} ${n.contenido ?? ""}`, TEMAS, "proyecto");
 
 // Cómo va un proyecto: cuánto lleva hecho, cuánto de su plazo ya pasó y, con eso, un veredicto (salud).
-// tiempo: de 0 (empezó) a 1 (vence hoy); null si no tiene fecha de inicio y de fin.
+// tiempo: de 0 (empezó) a 1 (vence hoy); null si no tiene fecha de fin.
 export function ritmo(n) {
   const hoy = hoyTexto(), ts = de("tarea", n.id), hechas = ts.filter(terminada).length;
   const pendientes = ts.filter((t) => !terminada(t)).sort(porCercania);
   const atrasadas = pendientes.filter((t) => dia(t.fecha) && dia(t.fecha) < hoy);
-  const ini = dia(n.fecha), fin = dia(n.props?.fecha_fin);
+  const ini = dia(n.fecha) ?? dia(n.creado_en), fin = dia(n.props?.fecha_fin); // sin fecha de inicio, cuenta desde que lo creaste
   const hecho = ts.length ? hechas / ts.length : 0;
   const quedan = fin ? diasEntre(hoy, fin) : null;
   const tiempo = ini && fin ? Math.max(0, Math.min(1, diasEntre(ini, hoy) / Math.max(1, diasEntre(ini, fin)))) : null;
@@ -187,24 +187,62 @@ function elegirFoto(n) {
   return f;
 }
 
-// Tres datos: cuánto va hecho, cuánto queda del plazo y qué está atrasado (las cuentas, en ritmo).
+// Tres tarjetas bajo la portada (paso 59): lo siguiente que toca, cómo vas (hecho vs plazo) y la línea del plazo.
 function avance(n) {
-  const r = ritmo(n);
-  const barra = (pct, color) => {
-    const b = el("span", { className: "barra-p" }, el("span", { style: `width: ${Math.max(0, Math.min(100, pct))}%` }));
-    if (color) b.style.setProperty("--c", color);
-    return b;
-  };
-  const dato = (etiqueta, valor, ...resto) => el("div", { className: "dato" }, el("span", { className: "rotulo", textContent: etiqueta }), valor, ...resto);
-  const plazo = r.fin
-    ? dato("Plazo", el("b", { className: r.quedan < 0 ? "alerta" : "", textContent: r.quedan > 0 ? `Faltan ${r.quedan} días` : r.quedan === 0 ? "Vence hoy" : `Venció hace ${-r.quedan} días` }),
-      r.tiempo !== null ? barra(r.tiempo * 100, "var(--suave)") : el("small", { className: "suave", textContent: "hasta el " + corto(r.fin) }))
-    : dato("Plazo", el("b", { textContent: "Sin plazo" }), el("small", { className: "suave", textContent: "Ponle una fecha de fin en «Editar todo»." }));
-  return el("div", { className: "avance" },
-    dato("Tareas hechas", el("b", { textContent: `${r.hechas} de ${r.ts.length}` }), barra(r.hecho * 100, colorDeProyecto(n.id))),
-    plazo,
-    dato("Atrasadas", el("b", { className: r.atrasadas.length ? "alerta" : "", textContent: String(r.atrasadas.length) }),
-      el("small", { className: "suave", textContent: r.atrasadas.length ? "la más vieja, del " + corto(dia(r.atrasadas[0].fecha)) : "Vas al día." })));
+  const r = ritmo(n), color = colorDeProyecto(n.id);
+  const tarjeta = (titulo, ...cosas) => el("section", { className: "tarjeta-avance" }, el("span", { className: "rotulo", textContent: titulo }), ...cosas);
+  const caja = el("div", { className: "avance" }, siguientePaso(r, tarjeta), ritmoDe(r, tarjeta), plazoDe(n, r, tarjeta));
+  caja.style.setProperty("--c", color);
+  return caja;
+}
+
+// Lo siguiente que toca: la tarea pendiente más cercana, para marcarla de una. Tocar su nombre abre todos sus datos.
+function siguientePaso(r, tarjeta) {
+  const [sig, despues] = r.pendientes;
+  if (!sig) return tarjeta("Siguiente paso", el("p", { className: "vacio", textContent: r.ts.length ? "Todo hecho. ¡Bien!" : "Sin tareas todavía: agrega la primera abajo." }));
+  const cuando = cuandoToca(sig);
+  return tarjeta("Siguiente paso",
+    el("div", { className: "sig" },
+      el("button", { className: "marcar", title: "Marcar como hecha", ariaLabel: "Marcar «" + sig.titulo + "» como hecha", onclick: (e) => {
+        e.currentTarget.classList.add("hecha"); // el ✓ se ve al tiro, antes de que vuelvan los datos
+        completar(sig);
+      } }, icono("si")),
+      el("button", { className: "nombre", onclick: () => mostrarPanel(sig.id) },
+        el("b", { textContent: sig.titulo }),
+        el("small", { className: cuando === "atrasada" ? "alerta" : "suave", textContent: cuando ? (cuando === "atrasada" ? "Atrasada, era para el " + corto(dia(sig.fecha)) : "Para " + (cuando === "hoy" ? "hoy" : "el " + cuando)) : "Sin fecha" }))),
+    despues ? el("small", { className: "despues suave", textContent: "Después: " + despues.titulo }) : "");
+}
+
+// Cómo vas: el anillo con lo hecho, el veredicto y lo que lo explica.
+function ritmoDe(r, tarjeta) {
+  const pct = (x) => Math.round(x * 100) + "%";
+  const texto = r.tiempo === null ? "Ponle fecha de fin y te digo si vas a tiempo."
+    : `Llevas ${pct(r.hecho)} hecho y pasó ${pct(r.tiempo)} del plazo.` + (r.atrasadas.length ? ` ${r.atrasadas.length} ${r.atrasadas.length === 1 ? "tarea atrasada" : "tareas atrasadas"}.` : "");
+  return tarjeta("Ritmo", el("div", { className: "ritmo-caja" }, anillo(r.hecho),
+    el("div", {}, el("span", { className: "como " + r.salud.clase, textContent: r.salud.texto }),
+      el("p", { textContent: texto }), el("small", { className: "suave", textContent: `${r.hechas} de ${r.ts.length} tareas hechas` }))));
+}
+
+// El plazo como una línea del inicio al fin: lo que ya pasó, la marca de hoy y un punto por cada tarea con fecha
+// (de su color si está hecha, de aviso si falta y de alerta si se atrasó). Pasar encima de un punto dice cuál es.
+function plazoDe(n, r, tarjeta) {
+  if (!r.fin) return tarjeta("Plazo", el("b", { className: "grande", textContent: "Sin plazo" }),
+    el("button", { textContent: "Poner fecha de fin", onclick: () => formulario(n) }));
+  const quedan = r.quedan > 0 ? `Faltan ${r.quedan} días` : r.quedan === 0 ? "Vence hoy" : `Venció hace ${-r.quedan} días`;
+  if (r.tiempo === null) return tarjeta("Plazo", el("b", { className: "grande" + (r.quedan < 0 ? " alerta" : ""), textContent: quedan }), el("small", { className: "suave", textContent: "hasta el " + corto(r.fin) }));
+  const lugar = (d) => Math.max(0, Math.min(1, diasEntre(r.ini, d) / Math.max(1, diasEntre(r.ini, r.fin)))) * 100 + "%";
+  const hoy = hoyTexto();
+  const puntos = r.ts.filter((t) => dia(t.fecha)).map((t) => {
+    const d = dia(t.fecha), clase = terminada(t) ? "hecha" : d < hoy ? "atrasada" : "falta";
+    const p = el("i", { className: "hito " + clase, title: `${t.titulo} · ${corto(d)}` });
+    p.style.left = lugar(d);
+    return p;
+  });
+  const pasado = el("span", { className: "pasado" }), marca = el("b", { className: "hoy", title: "Hoy" });
+  pasado.style.width = marca.style.left = r.tiempo * 100 + "%";
+  return tarjeta("Plazo", el("b", { className: "grande" + (r.quedan < 0 ? " alerta" : ""), textContent: quedan }),
+    el("div", { className: "linea-plazo" }, pasado, ...puntos, marca),
+    el("div", { className: "extremos suave" }, el("span", { textContent: corto(r.ini) }), el("span", { textContent: corto(r.fin) })));
 }
 
 // ---------- tareas ----------

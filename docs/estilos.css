@@ -615,10 +615,42 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .descripcion { width: 100%; resize: vertical; padding: 8px 10px; margin: 0 -10px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: inherit; font: inherit; }
 .descripcion:hover, .descripcion:focus { border-color: var(--linea); }
 .avance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.dato { display: grid; gap: 6px; align-content: start; padding: 10px 14px; border: 1px solid var(--linea); border-radius: 12px; }
-.dato b { font-size: 20px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.dato small { font-size: 12.5px; }
-.dato .barra-p span { background: var(--c, var(--acento-fondo)); }
+/* Siguiente paso, Ritmo y Plazo (paso 59): tres tarjetas bajo la portada. --c es el color del proyecto. */
+.tarjeta-avance { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border: 1px solid var(--linea); border-radius: 14px;
+                  background: color-mix(in srgb, var(--texto) 3%, transparent); animation: entrar .45s var(--suave-curva) both; }
+.tarjeta-avance:nth-child(2) { animation-delay: 60ms; }
+.tarjeta-avance:nth-child(3) { animation-delay: 120ms; }
+.tarjeta-avance .grande { font-size: 20px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.tarjeta-avance > button { align-self: flex-start; }
+.avance .sig { display: flex; align-items: flex-start; gap: 12px; }
+.avance .marcar { flex: none; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid var(--suave); color: transparent;
+                  transition: background .2s, border-color .2s, color .2s, transform .15s; }
+.avance .marcar .icono { width: 16px; height: 16px; }
+.avance .marcar:hover { border-color: var(--bien); color: var(--bien); }
+.avance .marcar:active { transform: scale(.92); }
+.avance .marcar.hecha { background: var(--bien); border-color: var(--bien); color: #fff; }
+.avance .sig .nombre { display: flex; flex-direction: column; min-width: 0; padding: 0; border: 0; text-align: left; }
+.avance .sig .nombre b { font-size: 16px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.avance .sig .nombre:hover b { text-decoration: underline; text-underline-offset: 3px; }
+.avance .despues { border-top: 1px solid var(--linea); padding-top: 8px; margin-top: auto; }
+.ritmo-caja { display: flex; align-items: center; gap: 16px; }
+.ritmo-caja .anillo-avance { width: 84px; height: 84px; }
+.ritmo-caja .anillo-avance circle { stroke-width: 4.5; }
+.ritmo-caja .anillo-avance b { font-size: 18px; }
+.ritmo-caja > div { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.ritmo-caja p { margin: 0; font-size: 13px; }
+.ritmo-caja .como { font-size: 13px; padding: 3px 11px; }
+.linea-plazo { position: relative; height: 34px; margin: 6px 6px 0; }
+.linea-plazo::before, .linea-plazo .pasado { content: ""; position: absolute; left: 0; top: 10px; height: 6px; border-radius: 3px; }
+.linea-plazo::before { right: 0; background: var(--linea); }
+.linea-plazo .pasado { background: color-mix(in srgb, var(--c) 55%, transparent); animation: crecer .9s var(--suave-curva) both .15s; }
+.linea-plazo .hito { position: absolute; top: 7px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; border: 2px solid var(--vidrio-fuerte); background: var(--aviso); }
+.linea-plazo .hito.hecha { background: var(--c); }
+.linea-plazo .hito.atrasada { background: var(--alerta); }
+.linea-plazo .hoy { position: absolute; top: 0; height: 24px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--texto); font-size: 0; }
+.linea-plazo .hoy::after { content: "hoy"; position: absolute; top: 24px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; }
+.extremos { display: flex; justify-content: space-between; font-size: 12px; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .tarjeta-avance, .linea-plazo .pasado { animation: none; } .avance .marcar { transition: none; } }
 /* Las tareas: tablero por estado o lista */
 .barra-tareas { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .barra-tareas .agregar { flex: 1; min-width: min(100%, 260px); margin: 0; }
