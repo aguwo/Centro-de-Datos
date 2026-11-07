@@ -6,6 +6,8 @@
 // Paso 62: un apartado puede ofrecer varias "vistas" (apartados.js); arriba sale un selector y la que eliges
 // se guarda como tu disposición. La primera es la de siempre: elegirla borra lo guardado.
 // Paso 65: una vista puede llevar su ícono (un nombre de dibujos.js), que sale en su botón.
+// Paso 69: las columnas se pueden partir en bloques: { bloque: "Dieta", icono: "plato" } abre una fila nueva con
+// ese título, y las columnas que siguen van en ella. Una columna con nombre lo muestra arriba (ej. "Hoy", "Cómo vas").
 //
 //   titulo  (opcional) lo que dice arriba de la ventana; sin título, empieza directo con su contenido
 //   crece   (opcional) ocupa el alto que sobra en su columna (las listas largas); las demás miden lo que su contenido
@@ -20,8 +22,8 @@ import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
 import { galeria, cabecera, tablero, dentro } from "./proyectos.js";
 import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { loImportante, diasDeLaSemana } from "./semana.js";
-import { cifrasEjercicio, cifrasHabitos, semanaEntreno, constanciaEntreno, rutina, peso, habitosHoy, cadaHabito, porDiaDeSemana, despensa,
-  caloriasDia, equilibrio, agua, comidasDia, agregarComida, semanaComida } from "./salud.js";
+import { semanaEntreno, constanciaEntreno, rutina, peso, habitosHoy, cadaHabito, porDiaDeSemana, despensa,
+  caloriasDia, equilibrio, comidasDia, semanaComida } from "./salud.js";
 import { icono } from "./dibujos.js";
 import { modo, fondo, barra, ventanas, cuenta } from "./ajustes.js";
 
@@ -40,8 +42,6 @@ export const WIDGETS = {
   "lo-que-viene":  { titulo: "Lo que viene", crear: loQueViene },
   "lo-importante": { crear: loImportante },
   "dias":          { crece: true, crear: diasDeLaSemana },
-  "cifras-ejercicio": { crear: cifrasEjercicio },
-  "cifras-habitos": { crear: cifrasHabitos },
   "semana-entreno": { titulo: "Esta semana", crear: semanaEntreno },
   "constancia-entreno": { titulo: "Constancia", crear: constanciaEntreno },
   "rutina":        { titulo: "Rutina", crear: rutina },
@@ -52,9 +52,7 @@ export const WIDGETS = {
   "despensa":      { titulo: "Despensa", crear: despensa },
   "calorias-dia":  { crear: caloriasDia },
   "equilibrio":    { titulo: "Equilibrio de nutrientes", crear: equilibrio },
-  "agua":          { titulo: "Agua", crear: agua },
   "comidas-dia":   { titulo: "Comidas del día", crear: comidasDia },
-  "agregar-comida": { crece: true, crear: agregarComida },
   "semana-comida": { titulo: "Tendencia de la semana", crear: semanaComida },
   "modo":          { titulo: "Modo y color", crear: modo },
   "fondo":         { titulo: "Fondo de pantalla", crear: fondo },
@@ -66,14 +64,17 @@ export const WIDGETS = {
 // Las columnas de un apartado: las tuyas, si las guardaste, o las de siempre.
 // Lo guardado se revisa antes de usarlo: los widgets que no existen se saltan, las columnas vacías
 // se quitan y, si no queda nada, vale la de siempre. Así un dato raro nunca deja un apartado en blanco.
+// Por ahora lo único que se guarda es la vista elegida, así que un apartado sin vistas usa siempre la suya
+// (Salud tuvo vistas hasta el paso 69: lo que quedó guardado de entonces no cuenta).
 export function disposicionDe(a) {
-  const tuya = normal(datos.disposiciones.get(a.id));
+  const tuya = a.vistas ? normal(datos.disposiciones.get(a.id)) : [];
   return tuya.length ? tuya : columnasDe(a);
 }
 const lista = (x) => (Array.isArray(x) ? x : []);
 const normal = (columnas) => lista(columnas)
-  .map((c) => ({ ancho: Number(c?.ancho) > 0 ? Number(c.ancho) : 1, costado: c?.costado === true, widgets: lista(c?.widgets).filter((id) => WIDGETS[id]) }))
-  .filter((c) => c.widgets.length);
+  .map((c) => (c?.bloque ? { bloque: String(c.bloque), icono: c.icono }
+    : { ancho: Number(c?.ancho) > 0 ? Number(c.ancho) : 1, costado: c?.costado === true, nombre: c?.nombre, widgets: lista(c?.widgets).filter((id) => WIDGETS[id]) }))
+  .filter((c) => c.bloque || c.widgets.length);
 // Las columnas de siempre: las de su primera vista, si tiene vistas.
 const columnasDe = (a) => a.vistas?.[0].columnas ?? a.columnas;
 
@@ -122,8 +123,17 @@ export function montar(a) {
       return v;
     };
     const centro = columnas.filter((c) => !c.costado), lado = columnas.filter((c) => c.costado);
-    const grilla = el("div", { className: "columnas" }, ...centro.map((c) => el("div", { className: "columna" }, ...c.widgets.map(ventana))));
-    grilla.style.setProperty("--columnas", centro.map((c) => `minmax(0, ${c.ancho ?? 1}fr)`).join(" "));
+    // Los bloques (paso 69): cada marca { bloque } abre una fila nueva con su título y sus propias columnas.
+    const grupos = [];
+    for (const c of centro) if (c.bloque || !grupos.length) grupos.push({ b: c.bloque ? c : null, cols: c.bloque ? [] : [c] }); else grupos.at(-1).cols.push(c);
+    const grillaDe = (cols) => {
+      const g = el("div", { className: "columnas" }, ...cols.map((c) => el("div", { className: "columna" }, c.nombre ? el("h2", { textContent: c.nombre }) : "", ...c.widgets.map(ventana))));
+      g.style.setProperty("--columnas", cols.map((c) => `minmax(0, ${c.ancho ?? 1}fr)`).join(" "));
+      return g;
+    };
+    const grilla = grupos.length === 1 && !grupos[0].b ? grillaDe(grupos[0].cols)
+      : el("div", { className: "grupos-widgets" }, ...grupos.map(({ b, cols }) => el("div", { className: "grupo-widgets" },
+        b ? el("h2", { className: "titulo-bloque sobre-foto" }, b.icono ? icono(b.icono) : "", b.bloque) : "", grillaDe(cols))));
     const costado = lado.length ? el("aside", { className: "costado vidrio" }, botonCostado(), ...lado.flatMap((c) => c.widgets.map(ventana))) : null;
     barra.replaceChildren(); // lo que puso la disposición anterior (ej. otra vista) no se queda
     armada.costado?.remove();
