@@ -1486,3 +1486,25 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .pie-anotar { display: flex; gap: 10px; align-items: center; }
 .pie-anotar .anotar-boton { flex: 1; min-height: 44px; border-radius: 12px; font-size: 15px; }
 .anotar-boton:disabled { opacity: .55; }
+/* Paso 87: Finanzas en el escritorio infinito */
+.w-finanzas-semana { justify-content: space-between; gap: 14px; }
+.medio-anillo { position: relative; width: min(100%, 360px); aspect-ratio: 240 / 130; margin: 0 auto; display: grid; place-items: end center; padding-bottom: 4px; }
+.medio-anillo > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.medio-anillo path { fill: none; stroke-width: 18; stroke-linecap: round; }
+.medio-anillo .pista { stroke: color-mix(in srgb, var(--bloque) 16%, transparent); }
+.medio-anillo .lleno { stroke: var(--bloque); }
+.medio-anillo b { position: relative; font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; margin-bottom: 22px; }
+.medio-anillo small { position: absolute; bottom: 4px; color: var(--suave); font-size: 12.5px; }
+.w-finanzas-semana .barras-semana { height: 84px; }
+.w-finanzas-semana .dia-barra i { background: color-mix(in srgb, var(--bloque) 60%, transparent); min-height: 3px; border-radius: 5px; }
+.w-finanzas-semana .dia-barra.hoy i { background: var(--bloque); }
+.w-finanzas-semana .dia-barra.hoy small { color: var(--texto); font-weight: 700; }
+.w-finanzas-semana .dia-barra.futuro i { background: none; border-top: 1.5px dashed var(--linea); border-radius: 0; }
+.w-finanzas-semana .pie-kcal { padding-top: 12px; border-top: 1px solid var(--linea-salud); }
+.dato-grande { display: grid; gap: 2px; }
+.dato-grande b { font-size: 20px; }
+.dato-grande small { color: var(--suave); font-size: 12.5px; }
+.monto-color, .pie-kcal .monto-color { color: var(--bloque); font-size: 22px; font-variant-numeric: tabular-nums; }
+.monto-grande-chico { font-size: 22px; font-variant-numeric: tabular-nums; }
+:is(.w-proximo-cobro, .w-meta-ahorro) { justify-content: space-between; gap: 10px; }
+.w-meta-ahorro .barra-dieta i { background: var(--bloque); }

@@ -59,6 +59,13 @@ export const APARTADOS = [
     ],
     icono: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/><path d="M3 12h4l2-3 3 6 2-3h3"/>',
   },
+  // Paso 87: Finanzas de un vistazo, abajo de Hoy en el escritorio infinito: la semana a la izquierda; a la derecha
+  // las categorías y, debajo, el próximo cobro y tu objetivo de ahorro lado a lado.
+  {
+    id: "finanzas-hoy", nombre: "Finanzas hoy", lugar: [1, 2], nuevo: ["categoria", "cuenta"], titulo: () => "Finanzas",
+    columnas: [{ widgets: ["finanzas-semana"] }, { ancho: 1.15, widgets: ["por-categoria", ["proximo-cobro", "meta-ahorro"]] }],
+    icono: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>',
+  },
   // Paso 35: una caja (área, ramo, proyecto...) completa, para verla entera y editarla. Va a pantalla completa.
   {
     id: "proyectos", nombre: "Proyectos", nuevo: ["proyecto", "tarea", "nota", "evento"],
