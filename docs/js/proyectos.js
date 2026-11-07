@@ -76,6 +76,9 @@ export function galeria(v, ctx) {
   return dibujar;
 
   function dibujar() {
+    // Las tarjetas entran animadas solo si la galería no estaba a la vista (al llegar al apartado o al volver de un proyecto).
+    // Si ya se ve, un redibujo (ej. al volver a la pestaña llegan los datos de nuevo) no repite la animación.
+    grilla.classList.toggle("animar", !v.checkVisibility());
     v.hidden = !!cajaDe(ctx);
     if (v.hidden) return ctx.barra.replaceChildren(); // el resumen es de la galería: con un proyecto abierto no se ve
     const todas = datos.nodos.filter(esCaja), ritmos = new Map(todas.map((n) => [n.id, ritmo(n)]));
@@ -127,10 +130,11 @@ export function galeria(v, ctx) {
 export function cabecera(v, ctx) {
   return () => {
     const n = cajaDe(ctx);
+    // Recién abierto (otro proyecto, o no estaba a la vista): la portada y las tarjetas entran animadas; un redibujo no las repite.
+    const animar = v.dataset.id !== n?.id || !v.checkVisibility();
     v.hidden = !n;
     if (!n) return;
     if (escribiendoEn(v) && v.dataset.id === n.id) return; // estás escribiendo aquí: no se pisa
-    const recien = v.dataset.id !== n.id; // recién abierto: la portada entra con un zoom suave (no en cada redibujo)
     v.dataset.id = n.id;
 
     const titulo = escribible("h2", n.titulo, (t) => (t && t !== n.titulo ? cambiar(n, { titulo: t }) : (titulo.textContent = n.titulo)), "titulo-caja");
@@ -164,10 +168,10 @@ export function cabecera(v, ctx) {
     // Arriba, la portada (paso 58) a todo el ancho: su foto o el dibujo de su tema. Encima, volver y las acciones;
     // abajo, dónde está, el título y sus datos.
     const volver = el("button", { className: "volver", textContent: "‹ Proyectos", onclick: () => ctx.cambiar({ caja: null }) });
-    const heroe = portada(temaDe(n), colorDeProyecto(n.id), "heroe" + (recien ? " recien" : ""), n.props?.portada);
+    const heroe = portada(temaDe(n), colorDeProyecto(n.id), "heroe" + (animar ? " animar" : ""), n.props?.portada);
     heroe.append(el("div", { className: "arriba" }, volver, acciones),
       el("div", { className: "pie" }, el("span", { className: "ruta", textContent: ruta ? "en " + ruta : "Sin área" }), titulo, fichas));
-    v.replaceChildren(heroe, foto, descripcion, avance(n));
+    v.replaceChildren(heroe, foto, descripcion, avance(n, animar));
   };
 }
 
@@ -188,10 +192,10 @@ function elegirFoto(n) {
 }
 
 // Tres tarjetas bajo la portada (paso 59): lo siguiente que toca, cómo vas (hecho vs plazo) y la línea del plazo.
-function avance(n) {
+function avance(n, animar) {
   const r = ritmo(n), color = colorDeProyecto(n.id);
   const tarjeta = (titulo, ...cosas) => el("section", { className: "tarjeta-avance" }, el("span", { className: "rotulo", textContent: titulo }), ...cosas);
-  const caja = el("div", { className: "avance" }, siguientePaso(r, tarjeta), ritmoDe(r, tarjeta), plazoDe(n, r, tarjeta));
+  const caja = el("div", { className: "avance" + (animar ? " animar" : "") }, siguientePaso(r, tarjeta), ritmoDe(r, tarjeta), plazoDe(n, r, tarjeta));
   caja.style.setProperty("--c", color);
   return caja;
 }
