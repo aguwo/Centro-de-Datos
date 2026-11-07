@@ -46,7 +46,7 @@ export const datos = {
 };
 
 // Cuántos días de registros se traen. Alcanza para rachas, el gasto del mes y las plantas.
-const DIAS_REGISTROS = 90;
+const DIAS_REGISTROS = 98; // 14 semanas: la constancia de Salud muestra 13 enteras
 
 // El día de una fecha, como texto "2026-11-01".
 // Las fechas sin hora (las de Notion, guardadas a medianoche UTC) se leen tal cual, sin zona horaria,
@@ -137,7 +137,7 @@ export async function recargar(enfocarId) {
     db.from("conexiones").select("id, origen_id, relacion, destino_id").is("valido_hasta", null),
     db.from("tipos").select("id, owner_id, clave, nombre, modulo, orden, color, nivel, subcaja, propiedades, conexiones").order("orden"),
     db.from("arbol").select("id, padre_id"),
-    db.from("registros").select("id, fecha, clase, valor, nodo_id, otro_id").or(`fecha.gte.${desde},clase.eq.asistencia`).order("fecha"), // la asistencia de todo el semestre
+    db.from("registros").select("id, fecha, clase, valor, unidad, nodo_id, otro_id").or(`fecha.gte.${desde},clase.eq.asistencia`).order("fecha"), // la asistencia de todo el semestre
     db.from("disposiciones").select("apartado, columnas"),
   ]);
   const error = nodos.error || conexiones.error || tipos.error || arbol.error || registros.error;

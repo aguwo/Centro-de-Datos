@@ -130,15 +130,21 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | — | Revisión del escritorio infinito: al volver de otro apartado la cámara se enfocaba dos veces (ir() con viaje y el ResizeObserver de golpe, que cortaba el viaje); ahora el observador solo reacciona a cambios de tamaño reales. Se quita la transición duplicada de `main` | — | — | `escritorio.js`, `estilos.css` |
 | 56 | EV@ automático: dos veces al día (8:00 y 20:00) la base llama sola a la función `eva`, que copia tus entregas de EV@ como tareas dentro de cada ramo, mueve la fecha si la cambian y las marca «Hecho» cuando entregas. Solo lee EV@. Cada ramo dice su curso en la propiedad «Curso en EV@» | #53 | 15 | `supabase/functions/eva/`, `supabase/migrations/0019_eva.sql`, `tests/eva.test.ts` |
 
+### Salud
+
+| Paso | Qué agrega | PR | SQL | Archivo |
+| --- | --- | --- | --- | --- |
+| 63 | El apartado Salud en la barra lateral, con gráficos: arriba tu peso, calorías y proteína de hoy y hábitos de hoy; el camino a tu meta de peso (tu línea, lo que pide la fecha y la franja del ritmo sano, con aviso si la fecha pide demasiado y un campo para anotar el peso); anillos de hoy (calorías, proteína, carbohidratos y grasa contra tus metas, que se cambian ahí); tus hábitos de hoy como botones con ícono y su anillo de los últimos 30 días (tocar marca); la constancia de 13 semanas con tu mejor racha; y la despensa (lo agotado o bajo; tocar sube el nivel). «Ocultar números» difumina las cifras (datos de salud, Ley 21.719) | — | — | `docs/js/salud.js` (nuevo), `dibujos.js` (íconos de salud), `widgets.js`, `apartados.js`, `base.js` (registros con unidad, 14 semanas), `estilos.css` |
+
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 63, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 64, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
 | Ahora | Respaldos semanales de la base |
 | Siguiente | EV@: material de cada ramo (lista con enlaces) y cuestionarios con fecha |
-| Siguiente | Salud con Dieta |
+| Ahora | Salud con Dieta: falta la pestaña Diario (comidas del día, anotar con Martita) y el resumen en el escritorio infinito |
 | Siguiente | Finanzas |
 | Después | Chat con Martita en la web |
 | Después | Google Calendar en los dos sentidos |

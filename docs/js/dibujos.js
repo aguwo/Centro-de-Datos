@@ -41,6 +41,22 @@ const ICONOS = {
   si: '<path d="M5 12l5 5 9-10"/>',
   flecha: '<path d="M5 12h14M13 6l6 6-6 6"/>',
   no: '<path d="M6 6l12 12M18 6L6 18"/>',
+  ojo: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  // salud (paso 63): hábitos, comida y macros
+  balanza: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 10a3.5 3.5 0 0 1 7 0M12 10l1.6-2"/>',
+  fuego: '<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-9z"/>',
+  carne: '<path d="M14.5 4a5.5 5.5 0 0 1 5.5 5.5c0 3-2.5 5.5-5.5 5.5-1 0-2-.3-2.7-.8l-3.6 3.6a2 2 0 1 1-2.8 2.8 2 2 0 1 1 2.8-2.8l3.6-3.6c-.5-.8-.8-1.7-.8-2.7A5.5 5.5 0 0 1 14.5 4z"/>',
+  grano: '<path d="M12 21V8M12 8c-3 0-4-3-4-5 3 0 4 2 4 5zM12 8c3 0 4-3 4-5-3 0-4 2-4 5zM12 14c-3 0-4-3-4-5 3 0 4 2 4 5zM12 14c3 0 4-3 4-5-3 0-4 2-4 5z"/>',
+  gota: '<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
+  plato: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/>',
+  pildora: '<path d="M10.5 3.5a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7zM7 10l7 7"/>',
+  caja: '<path d="M4 8h16M6 8v11h12V8M9 4h6v4"/>',
+  lista: '<path d="M4 6h9M4 12h9M4 18h6M15 15l2.5 2.5L22 13"/>',
+  loto: '<circle cx="12" cy="5" r="2"/><path d="M5 20c2-5 12-5 14 0M8 13.5l4-3 4 3"/>',
+  sol: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  luna: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
+  pesa: '<path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/>',
+  corazon: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/>',
 };
 
 // Los dibujos de las portadas, en un lienzo de 240×80. Se dibujan con el color del tema (currentColor) a distintas opacidades.
