@@ -59,6 +59,9 @@ const ICONOS = {
   taza: '<path d="M4 9h12v5a5 5 0 0 1-10 0zM16 10h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3"/>',
   manzana: '<path d="M12 7c-4-2-8 1-7 6 1 5 4 8 7 6 3 2 6-1 7-6 1-5-3-8-7-6zM12 7c0-2 1-3 3-4"/>',
   corazon: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/>',
+  galleta: '<path d="M12 3a9 9 0 1 0 9 9 3 3 0 0 1-3-3 3 3 0 0 1-3-3 3 3 0 0 1-3-3z"/><path d="M9 10h.01M14 15h.01M9 15h.01"/>',
+  lupa: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/>',
+  vaso: '<path d="M6 4h12l-1.5 16h-9zM7 9h10"/>',
 };
 
 // Los dibujos de las portadas, en un lienzo de 240×80. Se dibujan con el color del tema (currentColor) a distintas opacidades.

@@ -59,13 +59,13 @@ export const APARTADOS = [
     icono: '<path d="M2.5 9L12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c0 1.4 2.5 3 5.5 3s5.5-1.6 5.5-3V11M21.5 9v5"/>',
   },
   // Paso 63: tu salud completa (salud.js). Va a pantalla completa.
-  // Paso 65: tres vistas separadas: Ejercicio (entrenos y peso), Hábitos y Dieta (las comidas de un día).
+  // Paso 65: tres vistas separadas: Ejercicio (entrenos y peso), Hábitos y Dieta (las comidas de un día; paso 67, como Samsung Health).
   {
     id: "salud", nombre: "Salud", nuevo: ["habito", "alimento"],
     vistas: [
       { nombre: "Ejercicio", icono: "pesa", columnas: [{ ancho: 1.6, widgets: ["cifras-ejercicio", "semana-entreno", "peso"] }, { ancho: 1, widgets: ["constancia-entreno"] }] },
       { nombre: "Hábitos", icono: "si", columnas: [{ ancho: 1, widgets: ["cifras-habitos", "habitos-hoy"] }, { ancho: 1.9, widgets: ["cada-habito", "por-dia"] }] },
-      { nombre: "Dieta", icono: "plato", columnas: [{ ancho: 1.65, widgets: ["cifras-dieta", "dia-comida", "comidas"] }, { ancho: 1, widgets: ["plato", "anotar", "semana-comida", "anillos", "despensa"] }] },
+      { nombre: "Dieta", icono: "plato", columnas: [{ ancho: 1.1, widgets: ["calorias-dia", "equilibrio", "agua", "despensa"] }, { ancho: 1, widgets: ["comidas-dia", "semana-comida"] }, { ancho: 0.95, widgets: ["agregar-comida"] }] },
     ],
     icono: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/><path d="M3 12h4l2-3 3 6 2-3h3"/>',
   },
