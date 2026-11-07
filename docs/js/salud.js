@@ -226,7 +226,7 @@ function anotarPeso(o, ahora) {
     e.preventDefault();
     const valor = Number(campo.value.replace(",", "."));
     if (valor > 0) escribir(db.from("registros").insert({ clase: "medida", nodo_id: o.id, valor, unidad: "kg", titulo: "Peso" }));
-  } }, el("span", { className: "vacio", textContent: hace === null ? "Aún no te pesas." : hace === 0 ? "Te pesaste hoy." : `Tu última pesada fue hace ${hace} días.` }),
+  } }, el("span", { className: "vacio", textContent: hace === null ? "Aún no te pesas." : hace === 0 ? "Te pesaste hoy." : hace === 1 ? "Te pesaste ayer." : `Tu última pesada fue hace ${hace} días.` }),
   campo, el("span", { textContent: "kg" }), el("button", { className: "principal", textContent: "Anotar peso" }));
 }
 

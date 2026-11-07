@@ -1286,7 +1286,14 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 
 /* ---------- Paso 73: Salud en el escritorio infinito ---------- */
 /* Paso 78: lo clave de cada bloque (con-color-bloque = el color del bloque, lo pone salud.js). Dieta: anillo + nutrientes */
-.resumen-dieta { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 22px; }
+/* Cada bloque es una columna: la última ventana se estira hasta abajo, así las tres columnas terminan parejas. */
+.columna > .con-color-bloque:last-child { flex: 1; }
+/* y lo principal de esa ventana (anillo, hábitos, medidor) queda al centro del alto que sobra */
+.con-color-bloque:last-child > :is(.resumen-dieta, .habitos-rapidos, .medidor) { flex: 1; align-content: center; }
+.con-color-bloque .anotar-peso .vacio { flex-basis: 100%; }
+.con-color-bloque .anotar-peso input { flex: 1; }
+.resumen-dieta { display: grid; justify-items: center; gap: 18px; }
+.resumen-dieta .macros-hoy { width: 100%; }
 .anillo-kcal { position: relative; width: 132px; height: 132px; display: grid; place-items: center; align-content: center; }
 .anillo-kcal > svg { position: absolute; inset: 0; transform: rotate(-90deg); }
 .anillo-kcal circle { fill: none; stroke-width: 11; stroke-linecap: round; }
@@ -1321,7 +1328,6 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .punto-dia small { font-size: 11.5px; color: var(--suave); text-transform: uppercase; }
 .punto-dia.es-hoy { background: color-mix(in srgb, var(--bloque) 10%, transparent); }
 .punto-dia.es-hoy small { color: var(--texto); font-weight: 700; }
-@media (max-width: 700px) { .resumen-dieta { grid-template-columns: 1fr; justify-items: center; } .macros-hoy { width: 100%; } }
 .habitos-rapidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 10px 6px; }
 .habito-rapido { display: grid; justify-items: center; gap: 5px; padding: 4px 0; border: 0; background: none; color: inherit; }
 .habito-rapido .circulo { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: var(--c);
