@@ -930,3 +930,57 @@ button.chico { padding: 1px 8px; font-size: 11.5px; border-radius: 99px; }
 .w-cuenta .correo { margin: 0 0 12px; color: var(--suave); overflow-wrap: anywhere; }
 .w-cuenta .peligro { align-self: flex-start; }
 @media (max-width: 700px) { .con-widgets, #inicio { padding-bottom: 96px; } } /* que «+ Nuevo» no tape lo último */
+
+/* Esta semana (paso 61, semana.js): arriba una franja con lo que más pesa, abajo una columna por día */
+.columna > .w-lo-importante { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; padding: 0;
+  background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.tarjeta-semana { display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: var(--radio); text-align: left; font: inherit; color: inherit;
+  background: var(--vidrio-fuerte); border: 1px solid var(--borde); box-shadow: var(--sombra); min-width: 0; }
+button.tarjeta-semana { cursor: pointer; transition: transform .15s; }
+button.tarjeta-semana:hover { transform: translateY(-2px); }
+.tarjeta-semana .texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tarjeta-semana .texto small { font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--suave); }
+.tarjeta-semana .texto b { font-size: 15.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tarjeta-semana .texto span { font-size: 12.5px; color: var(--suave); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tarjeta-semana.principal:not(.tranquila) { background: var(--c); border-color: transparent; color: #0d1620; }
+.tarjeta-semana.principal:not(.tranquila) .texto small, .tarjeta-semana.principal:not(.tranquila) .texto span { color: rgba(13,22,32,.75); }
+.tarjeta-semana.principal .texto b { font-size: 19px; font-weight: 700; }
+.tarjeta-semana.aviso .texto small { color: var(--aviso); }
+.cuenta-grande { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 68px; height: 68px; border-radius: 14px; background: rgba(13,22,32,.12); }
+.cuenta-grande b { font-size: 30px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.cuenta-grande small { font-size: 11.5px; font-weight: 600; }
+
+.w-dias { padding: 0; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.dias-semana { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, .75fr); gap: 10px; }
+.dias-semana .finde { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.dias-semana .finde > .dia-semana { flex: 1; }
+.dia-semana { display: flex; flex-direction: column; gap: 7px; padding: 12px; border-radius: var(--radio); min-width: 0; min-height: 0; overflow-y: auto; scrollbar-width: thin;
+  background: var(--vidrio); backdrop-filter: blur(var(--desenfoque)) saturate(170%); -webkit-backdrop-filter: blur(var(--desenfoque)) saturate(170%); border: 1px solid var(--borde); }
+.dia-semana.es-hoy { background: var(--vidrio-fuerte); border-color: color-mix(in srgb, var(--acento) 55%, transparent); }
+.dia-semana.pasado > * { opacity: .55; }
+.dia-semana .cabeza { display: flex; align-items: baseline; justify-content: space-between; }
+.dia-semana .cabeza span { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--suave); }
+.dia-semana .cabeza b { font-size: 21px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.dia-semana.es-hoy .cabeza b { color: var(--acento); }
+.dia-semana h4 { margin: 4px 0 0; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
+.dia-semana .vacio { font-size: 12.5px; }
+.carga { display: block; flex: none; height: 4px; border-radius: 2px; background: var(--linea); overflow: hidden; }
+.carga > i { display: block; height: 100%; border-radius: 2px; background: var(--suave); opacity: .7; }
+.carga.pesada > i { background: var(--aviso); opacity: 1; }
+.dia-semana .unico { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; border: 0; border-radius: 10px; text-align: left; font: inherit; line-height: 1.3;
+  background: var(--c); color: #0d1620; }
+.dia-semana .unico b { font-size: 13px; font-weight: 600; }
+.dia-semana .unico small { font-size: 11.5px; opacity: .8; }
+.dia-semana .fijo { display: flex; gap: 8px; align-items: flex-start; padding: 0; border: 0; text-align: left; font: inherit; font-size: 12.5px; line-height: 1.3; }
+.dia-semana .fijo > i { flex: none; width: 8px; height: 8px; margin-top: 4px; border-radius: 50%; background: var(--c); }
+.dia-semana .fijo small, .tarea-dia small { display: block; font-size: 11.5px; color: var(--suave); }
+.tarea-dia { display: flex; gap: 8px; align-items: flex-start; padding: 7px 8px; border-radius: 10px; background: var(--linea); font-size: 12.5px; line-height: 1.3; }
+.tarea-dia .caja { margin: 1px 0 0; flex: none; }
+.tarea-dia a { cursor: pointer; }
+.mover-semana { display: inline-flex; gap: 4px; }
+.mover-semana button { border-radius: 999px; background: var(--vidrio-fuerte); }
+.mover-semana button[aria-pressed="true"] { background: var(--acento-fondo); border-color: var(--acento-fondo); color: var(--sobre-acento); }
+@media (max-width: 899px) {
+  .columna > .w-lo-importante, .dias-semana { grid-template-columns: minmax(0, 1fr); }
+  .dia-semana { overflow: visible; }
+}

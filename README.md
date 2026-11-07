@@ -64,6 +64,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 25 | Inicio por tarjetas (Hacer · Cuidarme · Mi vida) con señales arriba, y la web en tiempo real: se actualiza sola cuando algo cambia (tú, otra pestaña o el agente) | — | SQL 5 | `supabase/migrations/0009_tiempo_real.sql`, `docs/js/tarjetas.js` |
 | 27 | Hoy: tus 3 prioridades destacadas, lo demás de hoy y lo atrasado (Hoy / Mañana / Soltar); el tiempo con un consejo; y "Tu día" por horas, donde arrastrar una tarea le reserva esa hora. Las tarjetas de antes quedan en "Resumen" | #3 | SQL 6 | `supabase/migrations/0010_prioridad_del_dia.sql`, `docs/js/hoy.js`, `docs/js/agenda.js` |
 | 30 | El calendario: un cajón al final del dock con vista de día, semana y mes. Tocar un hueco crea un evento; los eventos se repiten (cada día, semana, días hábiles, mes o año, con fecha de término) y se borran "solo este" o "todos". "Mis calendarios" son tus áreas. "Tu día" también muestra las repeticiones | #8 | SQL 7 | `supabase/migrations/0011_eventos_repetidos.sql`, `docs/js/calendario.js`, `docs/js/agenda.js` |
+| 61 | Esta semana: una sección nueva del escritorio infinito, arriba de Hoy. Arriba, lo que más pesa en la semana con los días que faltan, lo que viene después y un aviso si la semana siguiente viene pesada. Abajo, una columna por día con cuánto tiene, las evaluaciones pintadas del color de su ramo, el horario y las tareas (se marcan ahí mismo). ‹ › cambia de semana | — | — | `docs/js/semana.js`, `docs/js/apartados.js`, `estilos.css` |
 
 ### Productividad y Proyectos
 
@@ -128,13 +129,13 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 57, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 62, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
 | Ahora | Respaldos semanales de la base |
 | Siguiente | EV@: material de cada ramo (lista con enlaces) y cuestionarios con fecha |
-| Siguiente | Esta semana: 7 días con horario y evaluaciones con cuenta regresiva |
+| Ahora | Esta semana: la vista «Horario» (por horas, con cuenta regresiva) y elegir la vista de cada apartado |
 | Siguiente | Salud con Dieta |
 | Siguiente | Finanzas |
 | Después | Chat con Martita en la web |
