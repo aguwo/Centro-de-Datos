@@ -26,7 +26,7 @@ export const WIDGETS = {
   "proyectos":     { crece: true, filtra: true, crear: areasYProyectos },
   "galeria":       { crear: galeria },
   "caja":          { crear: cabecera },
-  "tablero":       { titulo: "Tareas", crece: true, crear: tablero },
+  "tablero":       { titulo: "Tareas", crear: tablero },
   "dentro":        { crear: dentro },
   "ramos":         { crear: tarjetasDeRamos },
   "ramo":          { crear: paginaDeRamo },
