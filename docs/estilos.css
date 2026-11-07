@@ -665,6 +665,11 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .columna-estado { display: flex; flex-direction: column; gap: 6px; min-height: 120px; padding: 8px; border-radius: 12px; background: color-mix(in srgb, var(--texto) 4%, transparent); }
 .columna-estado header { display: flex; justify-content: space-between; padding: 2px 4px 4px; }
 .columna-estado .tarjetas-estado { display: grid; gap: 6px; align-content: start; max-height: min(56vh, 480px); overflow-y: auto; margin-right: -4px; padding-right: 4px; }
+.tarjeta.arrastrando { opacity: .4; }
+/* Paso 60: cuando una tarea cambia de columna viaja hasta su lugar nuevo (dibujos.js: moverConSuavidad).
+   El resto de la página no se anima: solo lo que tiene nombre de viaje (m-…). */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-group(*) { animation-duration: .38s; animation-timing-function: var(--suave-curva); }
 .columna-estado.soltar { outline: 2px dashed var(--acento); outline-offset: -2px; }
 .tarjeta { display: grid; gap: 4px; width: 100%; padding: 9px 11px; border-color: var(--linea); border-radius: 10px; background: var(--vidrio-fuerte); text-align: left; cursor: grab; }
 .tarjeta .t { font-weight: 500; overflow-wrap: anywhere; }
