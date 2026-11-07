@@ -589,3 +589,24 @@ export function semanaComida(v, ctx) {
       el("p", { className: "vacio", textContent: "La línea es tu meta. Para subir de peso importa el promedio de la semana." }));
   };
 }
+
+// ---------- las tarjetas de los bloques (paso 70) ----------
+// Lo que dice cada tarjeta del selector: un dato de hoy, un detalle y el avance para su anillo.
+export function resumenEjercicio() {
+  const hoy = hoyTexto(), mes = hoy.slice(0, 8) + "01", hechos = [...diasMarcados(entrenos())].filter((d) => d >= mes && d <= hoy).length;
+  let tocaban = 0;
+  for (let d = mes; d <= hoy; d = sumarDias(d, 1)) if (tocaEntrenar(d)) tocaban++;
+  const prox = proximoEntreno(), en = prox && diasEntre(hoy, prox), hora = horaDe(entrenos()[0]);
+  return { dato: !prox ? "Sin días de entreno" : (en === 0 ? "Entrenas hoy" : en === 1 ? "Entrenas mañana" : "Próximo: " + diaCorto(prox)) + (prox && hora ? " · " + hora : ""),
+    detalle: `${hechos} de ${tocaban} entrenos este mes`, avance: tocaban ? hechos / tocaban : 0 };
+}
+export function resumenHabitos() {
+  const hoy = hoyTexto(), deHoy = habitos().filter((h) => tocaEl(h, hoy));
+  const hechos = deHoy.filter((h) => marcasDe(h).some((r) => dia(r.fecha) === hoy)).length;
+  return { dato: deHoy.length ? `${hechos} de ${deHoy.length} hechos` : "Nada para hoy", detalle: hechos === deHoy.length && hechos ? "¡todo listo hoy!" : "los hábitos de hoy",
+    avance: deHoy.length ? hechos / deHoy.length : 0 };
+}
+export function resumenDieta() {
+  const t = comidaDe(hoyTexto()), m = metas();
+  return { dato: `${numero(t.kcal)} kcal`, detalle: `de ${numero(m.kcal)} · ${numero(t.proteina)} g de proteína`, avance: t.kcal / (m.kcal || 1) };
+}

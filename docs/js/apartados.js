@@ -26,6 +26,7 @@ import { dibujarInicio } from "./inicio.js";
 import { dibujar as dibujarMapa, ajustarMapa } from "./mapa.js";
 import { dibujarCalendario, iniciarCalendario } from "./calendario.js";
 import { semestreActual } from "./universidad.js";
+import { resumenEjercicio, resumenHabitos, resumenDieta } from "./salud.js";
 
 export const APARTADOS = [
   {
@@ -59,18 +60,18 @@ export const APARTADOS = [
     icono: '<path d="M2.5 9L12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c0 1.4 2.5 3 5.5 3s5.5-1.6 5.5-3V11M21.5 9v5"/>',
   },
   // Paso 63: tu salud completa (salud.js). Va a pantalla completa.
-  // Paso 69: una sola página en tres bloques, Ejercicio, Hábitos y Dieta (paso 67, como Samsung Health); en cada uno,
-  // lo de hoy a la izquierda y cómo vas a la derecha.
+  // Paso 69: tres bloques, Ejercicio, Hábitos y Dieta (paso 67, como Samsung Health); en cada uno, lo de hoy a la
+  // izquierda y cómo vas a la derecha. Paso 70: se ve uno a la vez y se cambia con sus tarjetas (bloques.js).
   {
     id: "salud", nombre: "Salud", nuevo: ["habito", "alimento", "ejercicio", "rutina"],
     columnas: [
-      { bloque: "Ejercicio", icono: "pesa" },
+      { bloque: "Ejercicio", icono: "pesa", color: "#2563eb", resumen: resumenEjercicio },
       { nombre: "Hoy", ancho: 1, widgets: ["rutina", "semana-entreno"] },
       { nombre: "Cómo vas", ancho: 1.5, widgets: ["peso", "constancia-entreno"] },
-      { bloque: "Hábitos", icono: "si" },
+      { bloque: "Hábitos", icono: "si", color: "#7c3aed", resumen: resumenHabitos },
       { nombre: "Hoy", ancho: 1, widgets: ["habitos-hoy"] },
       { nombre: "Cómo vas", ancho: 1.5, widgets: ["cada-habito", "por-dia"] },
-      { bloque: "Dieta", icono: "plato" },
+      { bloque: "Dieta", icono: "plato", color: "#2f7a4c", resumen: resumenDieta },
       { nombre: "Hoy", ancho: 1, widgets: ["calorias-dia", "comidas-dia"] },
       { nombre: "Cómo vas", ancho: 1.5, widgets: ["equilibrio", "semana-comida", "despensa"] },
     ],
