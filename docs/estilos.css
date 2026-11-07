@@ -1466,3 +1466,23 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .leyenda-partes { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--suave); }
 .leyenda-partes span { display: flex; align-items: center; gap: 6px; }
 .leyenda-partes i { width: 10px; height: 10px; border-radius: 3px; }
+/* Paso 86: la ventana «Anotar» */
+.anotar { display: grid; gap: 16px; }
+.tipos-anotar button { flex: 1; min-height: 36px; }
+.tipos-anotar button[aria-pressed="true"] { background: var(--c); color: #fff; }
+.monto-grande { display: grid; justify-items: center; gap: 2px; }
+.monto-grande span { font-size: 12.5px; color: var(--suave); }
+.dialogo .monto-grande input { padding: 0; width: 100%; border: 0; background: none; color: inherit; text-align: center; font-family: inherit; font-size: 44px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.dialogo .monto-grande input:focus { outline: none; }
+.grupo-anotar { display: grid; gap: 8px; }
+.grupo-anotar > b { font-size: 12.5px; }
+.grupo-anotar > b small { color: var(--suave); font-weight: 400; }
+.dialogo .grupo-anotar input { min-height: 40px; padding: 0 12px; background: none; border-radius: 10px; border: 1px solid var(--linea); background: none; color: inherit; font: inherit; }
+.baldosas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.baldosas button { display: grid; justify-items: center; gap: 6px; padding: 12px 4px; border-radius: 12px; font-size: 12.5px; }
+.baldosas .icono { width: 20px; height: 20px; }
+.baldosas button[aria-pressed="true"] { border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--texto); }
+.baldosas button[aria-pressed="true"] .icono { color: var(--c); }
+.pie-anotar { display: flex; gap: 10px; align-items: center; }
+.pie-anotar .anotar-boton { flex: 1; min-height: 44px; border-radius: 12px; font-size: 15px; }
+.anotar-boton:disabled { opacity: .55; }
