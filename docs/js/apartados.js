@@ -9,6 +9,8 @@
 //   icono     los trazos del ícono (SVG de 24 × 24, una sola línea)
 //   columnas  (con widgets) [{ ancho, widgets: [...] }, ...]: las columnas de izquierda a derecha, cada una con
 //             los widgets de arriba abajo. ancho es la proporción (3 y 2 = la primera un poco más ancha)
+//   vistas    (con widgets, en vez de columnas) [{ nombre, columnas }, ...]: formas de ver el apartado entre las que
+//             eliges arriba (paso 62). La primera es la de siempre
 //   titulo    (con widgets, opcional) qué dice arriba de la sección; sin esto, su nombre
 //   dibujar   (a mano) se llama cada vez que llegan datos nuevos
 //   alMostrar (opcional) se llama al entrar al apartado
@@ -33,9 +35,13 @@ export const APARTADOS = [
     icono: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   },
   // Paso 61: tus 7 días de un vistazo (semana.js), arriba de Hoy en el escritorio infinito.
+  // Paso 62: en columnas por día o por horas, como prefieras.
   {
     id: "semana", nombre: "Esta semana", lugar: [1, 0], nuevo: ["evento", "tarea"],
-    columnas: [{ widgets: ["lo-importante", "dias"] }],
+    vistas: [
+      { nombre: "Columnas", columnas: [{ widgets: ["lo-importante", "dias"] }] },
+      { nombre: "Horario", columnas: [{ ancho: 3, widgets: ["horario"] }, { ancho: 1.3, widgets: ["cuenta-regresiva", "con-plazo"] }] },
+    ],
     icono: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/>',
   },
   {

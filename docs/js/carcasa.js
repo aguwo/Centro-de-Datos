@@ -43,7 +43,7 @@ function marcar() {
 const redibujar = new Map(); // id del apartado -> cómo se redibuja
 const contextos = new Map(); // id del apartado -> lo que comparten sus ventanas (ctx)
 function montarApartados() {
-  for (const a of APARTADOS.filter((a) => a.columnas)) {
+  for (const a of APARTADOS.filter((a) => a.columnas || a.vistas)) {
     const { seccion, dibujar, ctx } = montar(a);
     $("panel").before(seccion);
     redibujar.set(a.id, dibujar);
