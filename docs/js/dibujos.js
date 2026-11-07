@@ -105,7 +105,7 @@ export function progreso(fraccion, marca, nombre = "Mínimo") {
 export function anillo(fraccion, texto) {
   const pct = Math.round(Math.max(0, Math.min(1, fraccion ?? 0)) * 100);
   const a = el("span", { className: "anillo-avance" }, svg("0 0 44 44",
-    `<circle cx="22" cy="22" r="18" pathLength="100" class="pista"/><circle cx="22" cy="22" r="18" pathLength="100" class="lleno" stroke-dasharray="100" stroke-dashoffset="${100 - pct}"/>`, "aro"),
+    `<circle cx="22" cy="22" r="18" pathLength="100" class="pista"/>${pct ? `<circle cx="22" cy="22" r="18" pathLength="100" class="lleno" stroke-dasharray="100" stroke-dashoffset="${100 - pct}"/>` : ""}`, "aro"),
     el("b", { textContent: texto ?? pct + "%" }));
   return a;
 }
