@@ -397,7 +397,7 @@ export function rutina(v, ctx) {
       const filas = [...hechos].map(([id, kg]) => ({ e: datos.nodo.get(id), kg })).filter((x) => x.e);
       const h = entrenos()[0], marcar = h && !entrenoDel(hoyTexto()) ? [{ clase: "habito", nodo_id: h.id }] : [];
       escribir(db.from("registros").insert([...filas.map(({ e, kg }) => ({ clase: "medida", nodo_id: e.id, valor: kg, unidad: "kg", titulo: e.titulo,
-        props: { series: e.props?.series ?? null, reps: e.props?.reps ?? null } })), ...marcar]));
+        props: { series: e.props?.series ?? null, reps: e.props?.reps ?? null } })), ...marcar], SIN_NULOS));
       hechos.clear();
     };
     v.replaceChildren(v.firstChild,
@@ -460,11 +460,14 @@ const habitoDe = (palabras) => habitos("dieta").find((h) => palabras.test(h.titu
 const REGISTRAR = /calor[ií]as|kcal/i;
 // Anotar cosas comidas ([{ a, g }]) en un momento del día d: hoy con la hora de ahora; otro día, sin hora.
 // También cumple ese día el hábito de registrar calorías, si lo tienes y aún no está marcado.
+// Al guardar varias filas de una vez, las que no traen una columna (ej. la marca del hábito, sin props) toman el valor
+// por defecto de la tabla en vez de null (props no acepta null).
+const SIN_NULOS = { defaultToNull: false };
 function anotarComida(cosas, momento, d) {
   const fecha = d === hoyTexto() ? {} : { fecha: sinHoraISO(d) }, h = habitoDe(REGISTRAR);
   const marcar = h && !marcasDe(h).some((r) => dia(r.fecha) === d) ? [{ clase: "habito", nodo_id: h.id, ...fecha }] : [];
   return escribir(db.from("registros").insert([...cosas.map(({ a, g }) => ({ clase: "comida", nodo_id: a.id, valor: g, unidad: "g",
-    titulo: a.titulo, props: { comida: momento }, ...fecha })), ...marcar]));
+    titulo: a.titulo, props: { comida: momento }, ...fecha })), ...marcar], SIN_NULOS));
 }
 const sinEstimacion = (t) => t.replace(/\s+[—-]\s+estimaci[oó]n.*$/i, "").replace(/\s*\(estimad[oa]\)/i, "");
 const barra = (frac, color, pasada) => { const b = el("span", { className: "barra-dieta" + (pasada ? " pasada" : "") }, el("i")); b.style.setProperty("--c", color); b.firstChild.style.width = Math.min(100, frac * 100) + "%"; return b; };

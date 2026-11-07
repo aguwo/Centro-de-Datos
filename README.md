@@ -150,10 +150,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 76 | El + de cada comida abre una ventana flotante (con el vidrio de Ajustes) con el buscador de alimentos: tus alimentos y Open Food Facts. Puedes agregar varias cosas seguidas y abajo dice qué agregaste; se cierra con la ×, Esc o tocando fuera. La ventana es genérica (`flotante` en base.js) y el diálogo del calendario ahora también sigue el vidrio | — | — | `docs/js/base.js` (`flotante`), `salud.js` (`agregarA`), `estilos.css` |
 | 77 | «Tus pesadas» bajo el camino del peso: una fila por pesada (de la más nueva a la más vieja) con su fecha, el peso para corregirlo ahí mismo y × para borrarla. Va plegada y se queda abierta si la abriste | — | — | `docs/js/salud.js` (`tusPesadas`), `estilos.css` |
 | 78 | Salud en el escritorio infinito muestra lo clave de cada bloque, con su color, en vez de tarjetas que solo llevaban a Salud: **Dieta**, un anillo con las kcal de hoy contra tu meta y cuánto llevas de proteína, carbohidratos y grasa, y cuánto te queda; **Ejercicio**, qué toca hoy o cuándo es el próximo (con su rutina y hora), la semana en puntos, tu racha y los entrenos del mes; **Hábitos de hoy** con barra de avance, todos del mismo color; y **Peso** | — | — | `docs/js/salud.js` (`dietaHoy`, `entrenoHoy`), `widgets.js`, `apartados.js`, `bloques.js`, `estilos.css` |
+| 79 | Arreglo: el primer alimento del día (y terminar un entreno) daba «null value in column props». Al guardar varias filas juntas, la marca del hábito (sin props) iba con null; ahora toma el valor por defecto de la tabla | — | — | `docs/js/salud.js` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 79, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 80, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
