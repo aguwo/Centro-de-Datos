@@ -568,9 +568,9 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .animar .tarjeta-avance { animation: entrar .45s var(--suave-curva) both; }
 .tarjeta-proyecto .progreso > b { top: -3px; height: 12px; }
 /* El anillo de avance (dibujos.js: anillo) */
-.anillo-avance { position: relative; flex: none; display: grid; place-items: center; width: 48px; height: 48px; }
+.anillo-avance { position: relative; flex: none; display: grid; place-items: center; width: 56px; height: 56px; }
 .anillo-avance .aro { position: absolute; inset: 0; transform: rotate(-90deg); }
-.anillo-avance circle { fill: none; stroke-width: 5; }
+.anillo-avance circle { fill: none; stroke-width: 4; }
 .anillo-avance .pista { stroke: var(--linea); }
 .anillo-avance .lleno { stroke: var(--c, var(--acento)); stroke-linecap: round; }
 .anillo-avance b { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
