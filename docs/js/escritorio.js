@@ -1,8 +1,8 @@
 // El escritorio movible (paso 28): los apartados que tienen "lugar" (apartados.js) quedan juntos en un
 // lienzo más grande que la pantalla. Se arrastra para moverse, la rueda con Ctrl acerca o aleja,
 // y el minimapa de la esquina salta de una sección a otra.
-// Paso 35c: el escritorio se recorre con lo suyo, no con el dock: las flechas ← → pasan de una sección
-// a otra, Esc aleja para ver todo (o vuelve) y, de lejos, un clic en una sección te lleva a ella.
+// Paso 35c: el escritorio se recorre con lo suyo, no con el dock: las flechas pasan de una sección
+// a la de al lado (paso 82: ← → ↑ ↓ según el plano), Esc aleja para ver todo (o vuelve) y, de lejos, un clic en una sección te lleva a ella.
 // Paso 35d: sin nada más en pantalla que el minimapa.
 // En pantallas angostas no hay lienzo: cada apartado se ve a pantalla completa, como los demás.
 import { $, el } from "./base.js";
@@ -175,7 +175,7 @@ function controles(ir) {
     if (s) { e.preventDefault(); e.stopPropagation(); ir(s.id); }
   }, true);
 
-  // Teclado: ← → la sección anterior o la siguiente; Esc ver todo (o volver).
+  // Teclado: las flechas llevan a la sección de al lado en el plano (paso 82); Esc ver todo (o volver).
   // Va antes que los demás (captura) para saber si había algo abierto que Esc deba cerrar primero.
   addEventListener("keydown", (e) => {
     if (!escritorioActivo() || vista.classList.contains("oculto") || e.target.closest("input, textarea, select, [contenteditable]")) return;
@@ -183,12 +183,24 @@ function controles(ir) {
       if (document.querySelector(".cajon.abierto, dialog[open], #panel:not(.oculto), #menu-nuevo:not([hidden])")) return;
       return lejos ? ir(mirando) : verTodo();
     }
-    const paso = { ArrowLeft: -1, ArrowRight: 1 }[e.key];
-    if (!paso) return;
+    const hacia = FLECHAS[e.key];
+    if (!hacia) return;
     e.preventDefault();
-    const i = enLienzo.findIndex((a) => a.id === mirando);
-    ir(enLienzo[(i + paso + enLienzo.length) % enLienzo.length].id);
+    const otra = vecina(enLienzo.find((a) => a.id === mirando), hacia);
+    if (otra) ir(otra.id);
   }, true);
+}
+
+// Paso 82: las flechas se mueven por el plano del escritorio (el lugar [columna, fila] de cada sección).
+// La vecina es la más cercana hacia ese lado: primero la que está más derecho, después la más cerca.
+// Si hacia ese lado no hay nada, no pasa nada (no da la vuelta).
+const FLECHAS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+function vecina(desde, [dx, dy]) {
+  if (!desde) return enLienzo[0];
+  const [x, y] = desde.lugar, eje = dx ? 0 : 1, signo = dx || dy;
+  const distancia = (a) => { const d = [a.lugar[0] - x, a.lugar[1] - y]; return [Math.abs(d[1 - eje]), d[eje] * signo]; };
+  return enLienzo.filter((a) => (a.lugar[eje] - desde.lugar[eje]) * signo > 0)
+    .sort((a, b) => { const [ca, la] = distancia(a), [cb, lb] = distancia(b); return ca - cb || la - lb; })[0];
 }
 
 // ir(id) es el de la carcasa: cambia de apartado (y la cámara viaja si está en el escritorio).
