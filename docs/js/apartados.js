@@ -59,9 +59,13 @@ export const APARTADOS = [
     icono: '<path d="M2.5 9L12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c0 1.4 2.5 3 5.5 3s5.5-1.6 5.5-3V11M21.5 9v5"/>',
   },
   // Paso 63: tu salud completa (salud.js): peso, comida de hoy, hábitos y despensa. Va a pantalla completa.
+  // Paso 64: dos vistas, Panel y Diario.
   {
     id: "salud", nombre: "Salud", nuevo: ["habito", "alimento"],
-    columnas: [{ ancho: 1.7, widgets: ["cifras", "peso", "constancia"] }, { ancho: 1, widgets: ["anillos", "habitos-hoy", "despensa"] }],
+    vistas: [ // paso 64: el Panel (todo de un vistazo) o el Diario (las comidas de un día)
+      { nombre: "Panel", columnas: [{ ancho: 1.7, widgets: ["cifras", "peso", "constancia"] }, { ancho: 1, widgets: ["anillos", "habitos-hoy", "despensa"] }] },
+      { nombre: "Diario", columnas: [{ ancho: 1.65, widgets: ["dia-comida", "comidas"] }, { ancho: 1, widgets: ["plato", "anotar", "semana-comida"] }] },
+    ],
     icono: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/><path d="M3 12h4l2-3 3 6 2-3h3"/>',
   },
   // Las tarjetas de antes (hábitos, gastos, plantas...). Se quedan hasta que cada una tenga su apartado (paso 32).

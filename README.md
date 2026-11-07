@@ -135,16 +135,17 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | Paso | Qué agrega | PR | SQL | Archivo |
 | --- | --- | --- | --- | --- |
 | 63 | El apartado Salud en la barra lateral, con gráficos: arriba tu peso, calorías y proteína de hoy y hábitos de hoy; el camino a tu meta de peso (tu línea, lo que pide la fecha y la franja del ritmo sano, con aviso si la fecha pide demasiado y un campo para anotar el peso); anillos de hoy (calorías, proteína, carbohidratos y grasa contra tus metas, que se cambian ahí); tus hábitos de hoy como botones con ícono y su anillo de los últimos 30 días (tocar marca); la constancia de 13 semanas con tu mejor racha; y la despensa (lo agotado o bajo; tocar sube el nivel). «Ocultar números» difumina las cifras (datos de salud, Ley 21.719) | — | — | `docs/js/salud.js` (nuevo), `dibujos.js` (íconos de salud), `widgets.js`, `apartados.js`, `base.js` (registros con unidad, 14 semanas), `estilos.css` |
+| 64 | Salud tiene dos vistas, Panel y Diario (se elige arriba a la derecha). El Diario mira un día (‹ › para cambiarlo): sus calorías con una barra por macro y anillos de proteína, carbohidratos y grasa; una tarjeta por desayuno, almuerzo, merienda y cena con lo que comiste y sus kcal (× borra); «Tu plato», de dónde vienen las calorías y qué aportó más; «Anotar comida» (alimento, gramos y momento) y «… de siempre», que repite de un toque lo que más comes; y la semana contra tu meta | — | — | `docs/js/salud.js`, `apartados.js` (`vistas`), `widgets.js` (la barra se limpia al cambiar de vista), `base.js` (registros con `props`), `dibujos.js`, `estilos.css` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 64, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 65, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
 | Ahora | Respaldos semanales de la base |
 | Siguiente | EV@: material de cada ramo (lista con enlaces) y cuestionarios con fecha |
-| Ahora | Salud con Dieta: falta la pestaña Diario (comidas del día, anotar con Martita) y el resumen en el escritorio infinito |
+| Ahora | Salud con Dieta: falta el resumen en el escritorio infinito |
 | Siguiente | Finanzas |
 | Después | Chat con Martita en la web |
 | Después | Google Calendar en los dos sentidos |
