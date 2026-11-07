@@ -10,6 +10,8 @@
 // ese título, y las columnas que siguen van en ella. Una columna con nombre lo muestra arriba (ej. "Hoy", "Cómo vas").
 // Paso 70: si todo va en bloques, se ve uno a la vez y se cambia con tarjetas animadas (bloques.js); la marca puede
 // llevar color y resumen() para su tarjeta.
+// Paso 81: en una columna, una lista de widgets (ej. ["entreno-hoy", "habitos-rapidos"]) va en una fila, lado a lado.
+// Las vistas de un apartado del escritorio infinito (con lugar) no se eligen arriba sino en Ajustes.
 //
 //   titulo  (opcional) lo que dice arriba de la ventana; sin título, empieza directo con su contenido
 //   crece   (opcional) ocupa el alto que sobra en su columna (las listas largas); las demás miden lo que su contenido
@@ -25,10 +27,10 @@ import { galeria, cabecera, tablero, dentro } from "./proyectos.js";
 import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { loImportante, diasDeLaSemana } from "./semana.js";
 import { semanaEntreno, constanciaEntreno, rutina, peso, habitosHoy, cadaHabito, porDiaDeSemana, despensa,
-  caloriasDia, equilibrio, comidasDia, semanaComida, dietaHoy, entrenoHoy, habitosRapidos, medidorPeso } from "./salud.js";
+  caloriasDia, equilibrio, comidasDia, semanaComida, dietaHoy, entrenoHoy, habitosRapidos, medidorPeso, anillosSalud, macrosHoy } from "./salud.js";
 import { icono } from "./dibujos.js";
 import { selectorDeBloques } from "./bloques.js";
-import { modo, fondo, barra, ventanas, cuenta } from "./ajustes.js";
+import { modo, fondo, barra, vistas, ventanas, cuenta } from "./ajustes.js";
 
 export const WIDGETS = {
   "tareas-de-hoy": { titulo: "Tareas de hoy", crece: true, crear: tareasDeHoy },
@@ -61,9 +63,12 @@ export const WIDGETS = {
   "entreno-hoy":   { titulo: "Ejercicio", crear: entrenoHoy },
   "habitos-rapidos": { titulo: "Hábitos de hoy", crear: habitosRapidos },
   "medidor-peso":  { titulo: "Peso", crear: medidorPeso },
+  "anillos-salud": { crear: anillosSalud },
+  "macros-hoy":    { titulo: "Macros", crear: macrosHoy },
   "modo":          { titulo: "Modo y color", crear: modo },
   "fondo":         { titulo: "Fondo de pantalla", crear: fondo },
   "barra":         { titulo: "Barra lateral", crear: barra },
+  "vistas":        { titulo: "Escritorio infinito", crear: vistas },
   "ventanas":      { titulo: "Ventanas y letra", crear: ventanas },
   "cuenta":        { titulo: "Tu cuenta", crear: cuenta },
 };
@@ -78,9 +83,12 @@ export function disposicionDe(a) {
   return tuya.length ? tuya : columnasDe(a);
 }
 const lista = (x) => (Array.isArray(x) ? x : []);
+// Los widgets de una columna: cada uno es un id o una fila de ids (paso 81). Los que no existen se saltan.
+const piezas = (ws) => lista(ws).map((w) => (Array.isArray(w) ? w.filter((id) => WIDGETS[id]) : w))
+  .filter((w) => (Array.isArray(w) ? w.length : WIDGETS[w]));
 const normal = (columnas) => lista(columnas)
   .map((c) => (c?.bloque ? { ...c, bloque: String(c.bloque) }
-    : { ancho: Number(c?.ancho) > 0 ? Number(c.ancho) : 1, costado: c?.costado === true, nombre: c?.nombre, widgets: lista(c?.widgets).filter((id) => WIDGETS[id]) }))
+    : { ancho: Number(c?.ancho) > 0 ? Number(c.ancho) : 1, costado: c?.costado === true, nombre: c?.nombre, widgets: piezas(c?.widgets) }))
   .filter((c) => c.bloque || c.widgets.length);
 // Las columnas de siempre: las de su primera vista, si tiene vistas.
 const columnasDe = (a) => a.vistas?.[0].columnas ?? a.columnas;
@@ -96,7 +104,8 @@ function elegirVista(a, vista) {
     : db.from("disposiciones").upsert({ apartado: a.id, columnas: vista.columnas }, { onConflict: "owner_id,apartado" }));
 }
 // El selector de vistas: un botón por vista; queda marcada la que estás usando (ninguna, si armaste otra cosa).
-function selectorDeVistas(a, redibujar) {
+// Lo usa también Ajustes (paso 81), para los apartados del escritorio infinito.
+export function selectorDeVistas(a, redibujar) {
   const botones = a.vistas.map((vista) => el("button", { onclick: () => { elegirVista(a, vista); redibujar(); } }, vista.icono ? icono(vista.icono) : "", vista.nombre));
   const caja = el("div", { className: "segmento vistas", role: "group", ariaLabel: "Vista" }, ...botones);
   caja.marcar = (columnas) => a.vistas.forEach((vista, i) =>
@@ -113,7 +122,7 @@ export function montar(a) {
   const titulo = el("h2", { className: "sobre-foto", id: a.id + "-titulo" });
   // La barra: una fila bajo el título, a todo el ancho, para pastillas o avisos de un widget (vacía no se ve).
   const barra = el("div", { className: "barra-apartado" });
-  const vistas = a.vistas?.length > 1 ? selectorDeVistas(a, () => dibujar()) : null;
+  const vistas = a.vistas?.length > 1 && !a.lugar ? selectorDeVistas(a, () => dibujar()) : null;
   const cabeza = vistas ? el("div", { className: "cabeza-apartado" }, titulo, vistas) : titulo;
   const seccion = el("section", { id: a.id, className: "apartado con-widgets oculto" }, cabeza, barra);
   const ctx = { barra, cambiar(campos) { Object.assign(ctx, campos); dibujar(); } };
@@ -134,7 +143,8 @@ export function montar(a) {
     const grupos = [];
     for (const c of centro) if (c.bloque || !grupos.length) grupos.push({ b: c.bloque ? c : null, cols: c.bloque ? [] : [c] }); else grupos.at(-1).cols.push(c);
     const grillaDe = (cols) => {
-      const g = el("div", { className: "columnas" }, ...cols.map((c) => el("div", { className: "columna" }, c.nombre ? el("h2", { textContent: c.nombre }) : "", ...c.widgets.map(ventana))));
+      const pieza = (w) => (Array.isArray(w) ? el("div", { className: "fila-ventanas" }, ...w.map(ventana)) : ventana(w));
+      const g = el("div", { className: "columnas" }, ...cols.map((c) => el("div", { className: "columna" }, c.nombre ? el("h2", { textContent: c.nombre }) : "", ...c.widgets.map(pieza))));
       g.style.setProperty("--columnas", cols.map((c) => `minmax(0, ${c.ancho ?? 1}fr)`).join(" "));
       return g;
     };
@@ -147,7 +157,7 @@ export function montar(a) {
     } else grilla = grupos.length === 1 && !grupos[0].b ? grillaDe(grupos[0].cols)
       : el("div", { className: "grupos-widgets" }, ...grupos.map(({ b, cols }) => el("div", { className: "grupo-widgets" },
         b ? el("h2", { className: "titulo-bloque sobre-foto" }, b.icono ? icono(b.icono) : "", b.bloque) : "", grillaDe(cols))));
-    const costado = lado.length ? el("aside", { className: "costado vidrio" }, botonCostado(), ...lado.flatMap((c) => c.widgets.map(ventana))) : null;
+    const costado = lado.length ? el("aside", { className: "costado vidrio" }, botonCostado(), ...lado.flatMap((c) => c.widgets.flat().map(ventana))) : null;
     barra.replaceChildren(); // lo que puso la disposición anterior (ej. otra vista) no se queda
     armada.costado?.remove();
     if (armada.grilla) armada.grilla.replaceWith(grilla);

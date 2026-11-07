@@ -152,10 +152,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 78 | Salud en el escritorio infinito muestra lo clave de cada bloque, con su color, en vez de tarjetas que solo llevaban a Salud: **Dieta**, un anillo con las kcal de hoy contra tu meta y cuánto llevas de proteína, carbohidratos y grasa, y cuánto te queda; **Ejercicio**, qué toca hoy o cuándo es el próximo (con su rutina y hora), la semana en puntos, tu racha y los entrenos del mes; **Hábitos de hoy** con barra de avance, todos del mismo color; y **Peso** | — | — | `docs/js/salud.js` (`dietaHoy`, `entrenoHoy`), `widgets.js`, `apartados.js`, `bloques.js`, `estilos.css` |
 | 79 | Arreglo: el primer alimento del día (y terminar un entreno) daba «null value in column props». Al guardar varias filas juntas, la marca del hábito (sin props) iba con null; ahora toma el valor por defecto de la tabla | — | — | `docs/js/salud.js` |
 | 80 | Salud en el escritorio infinito, ordenado: una columna por bloque, en el mismo orden que la página Salud (Ejercicio con el peso, Hábitos, Dieta). Las tres terminan parejas y lo principal de cada una queda centrado. «Te pesaste ayer» en vez de «hace 1 días» | — | — | `docs/js/apartados.js`, `salud.js`, `estilos.css` |
+| 81 | Salud en el escritorio infinito con dos vistas que se eligen en Ajustes → Escritorio infinito: **Bento** (Dieta grande con anillo, nutrientes y las 4 comidas; peso con barra de inicio a meta; Ejercicio y Hábitos lado a lado) y **Anillos** (dieta, hábitos, ejercicio y peso de un vistazo, y el detalle abajo). En una columna, una lista de widgets va en una fila; las secciones del escritorio no muestran selector de vistas | — | — | `docs/js/apartados.js`, `widgets.js`, `ajustes.js`, `salud.js`, `estilos.css` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 81, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 82, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |

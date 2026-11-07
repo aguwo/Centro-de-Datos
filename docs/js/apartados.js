@@ -10,7 +10,8 @@
 //   columnas  (con widgets) [{ ancho, widgets: [...] }, ...]: las columnas de izquierda a derecha, cada una con
 //             los widgets de arriba abajo. ancho es la proporción (3 y 2 = la primera un poco más ancha)
 //   vistas    (con widgets, en vez de columnas) [{ nombre, columnas }, ...]: formas de ver el apartado entre las que
-//             eliges arriba (paso 62). La primera es la de siempre
+//             eliges arriba (paso 62). La primera es la de siempre. En el escritorio infinito (con lugar) se elige
+//             en Ajustes (paso 81). En una columna, una lista de widgets va en una fila: ["a", ["b", "c"]]
 //   titulo    (con widgets, opcional) qué dice arriba de la sección; sin esto, su nombre
 //   dibujar   (a mano) se llama cada vez que llegan datos nuevos
 //   alMostrar (opcional) se llama al entrar al apartado
@@ -49,8 +50,12 @@ export const APARTADOS = [
   // Paso 73: lo de hoy de Salud, a la derecha de Hoy en el escritorio infinito. Tocar una tarjeta abre Salud en ese bloque.
   {
     id: "salud-hoy", nombre: "Salud hoy", lugar: [2, 1], nuevo: ["habito", "alimento"], titulo: () => "Salud",
-    // Una columna por bloque, en el mismo orden que la página Salud: Ejercicio (con el peso), Hábitos y Dieta.
-    columnas: [{ widgets: ["entreno-hoy", "medidor-peso"] }, { widgets: ["habitos-rapidos"] }, { widgets: ["dieta-hoy"] }],
+    // Paso 81: dos vistas, que se eligen en Ajustes. Bento: Dieta grande a la izquierda; a la derecha el peso y,
+    // debajo, Ejercicio y Hábitos lado a lado. Anillos: los cuatro de un vistazo arriba y el detalle abajo.
+    vistas: [
+      { nombre: "Bento", icono: "bloques", columnas: [{ widgets: ["dieta-hoy"] }, { widgets: ["medidor-peso", ["entreno-hoy", "habitos-rapidos"]] }] },
+      { nombre: "Anillos", icono: "objetivo", columnas: [{ widgets: ["anillos-salud", ["habitos-rapidos", "macros-hoy", "entreno-hoy"]] }] },
+    ],
     icono: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/><path d="M3 12h4l2-3 3 6 2-3h3"/>',
   },
   // Paso 35: una caja (área, ramo, proyecto...) completa, para verla entera y editarla. Va a pantalla completa.
@@ -96,7 +101,7 @@ export const APARTADOS = [
   // Paso 53: cómo se ve la web (modo, color, fondo, vidrio, letra) y tu cuenta (ajustes.js y apariencia.js).
   {
     id: "ajustes", nombre: "Ajustes", abajo: true,
-    columnas: [{ ancho: 3, widgets: ["modo", "fondo"] }, { ancho: 2, widgets: ["barra", "ventanas", "cuenta"] }],
+    columnas: [{ ancho: 3, widgets: ["modo", "fondo"] }, { ancho: 2, widgets: ["barra", "vistas", "ventanas", "cuenta"] }],
     icono: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
   },
 ];
