@@ -1090,3 +1090,74 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .alimento-salud.bajo .nivel i { width: 30%; background: var(--aviso); }
 @media (max-width: 1100px) { .cifras-salud { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .anillos-salud { flex-direction: column; align-items: stretch; } .anillos-salud .aros { align-self: center; } .despensa-salud { grid-template-columns: 1fr; } }
+
+/* Salud · Diario (paso 64): las comidas de un día. */
+.cambiar-dia { display: flex; align-items: center; gap: 10px; }
+.cambiar-dia b { font-size: 15px; min-width: 190px; text-align: center; }
+.cambiar-dia b::first-letter { text-transform: uppercase; }
+.cambiar-dia .mover-dia { width: 34px; height: 34px; padding: 0; font-size: 18px; display: grid; place-items: center; line-height: 1; }
+.cambiar-dia .ir-hoy { margin-left: auto; }
+.resumen-dia { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 26px; margin-top: 12px; }
+.kcal-dia { flex: 1 1 260px; display: grid; gap: 6px; }
+.kcal-dia small { color: var(--suave); font-size: 12.5px; }
+.kcal-dia b { font-size: 30px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kcal-dia b i { font-style: normal; font-size: 14px; font-weight: 500; color: var(--suave); letter-spacing: 0; }
+.barra-macros { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--linea-salud, var(--linea)); }
+.barra-macros i { display: block; height: 100%; }
+.minis { display: flex; flex-wrap: wrap; gap: 14px 22px; }
+.mini-anillo { display: flex; align-items: center; gap: 10px; }
+.mini-anillo svg { width: 56px; height: 56px; transform: rotate(-90deg); flex: none; }
+.mini-anillo circle { fill: none; stroke-width: 7; stroke-linecap: round; }
+.mini-anillo .pista { stroke: color-mix(in srgb, var(--c) 18%, transparent); }
+.mini-anillo .lleno { stroke: var(--c); }
+.mini-anillo div { display: grid; }
+.mini-anillo small { color: var(--suave); font-size: 11.5px; }
+.mini-anillo b { font-size: 18px; font-variant-numeric: tabular-nums; }
+/* Las comidas: una tarjeta por momento, de a dos */
+.w-comidas { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0;
+  display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; --linea-salud: color-mix(in srgb, var(--texto) 10%, transparent); }
+.tarjeta-comida { border-radius: var(--radio); padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; background: var(--vidrio-fuerte); min-width: 0; }
+.cabeza-comida { display: flex; align-items: center; gap: 12px; }
+.cabeza-comida .insignia { width: 40px; height: 40px; border-radius: 12px; }
+.cabeza-comida > div { flex: 1; display: grid; min-width: 0; }
+.cabeza-comida h4 { margin: 0; font-size: 15px; }
+.cabeza-comida small { color: var(--suave); font-size: 12.5px; }
+.cabeza-comida .agregar { width: 36px; height: 36px; padding: 0; font-size: 19px; display: grid; place-items: center; line-height: 1; }
+.tarjeta-comida .barra-macros { height: 7px; }
+.cosas-comida { list-style: none; margin: 0; padding: 0; display: grid; }
+.cosas-comida li { display: flex; align-items: center; gap: 8px; min-height: 30px; font-size: 13px; border-bottom: 1px solid var(--linea-salud); }
+.cosas-comida li:last-child { border-bottom: 0; }
+.cosas-comida li > i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.cosas-comida li > span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cosas-comida small { color: var(--suave); font-size: 12px; }
+.cosas-comida b { width: 44px; text-align: right; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.cosas-comida .quitar { border: 0; padding: 0 4px; color: var(--suave); opacity: 0; font-size: 16px; }
+.cosas-comida li:hover .quitar, .cosas-comida .quitar:focus-visible { opacity: 1; }
+@media (hover: none) { .cosas-comida .quitar { opacity: .6; } }
+/* Tu plato */
+.plato { display: flex; align-items: center; gap: 18px; }
+.plato .dona { width: 132px; height: 132px; flex: none; }
+.plato .dona circle { fill: none; stroke-width: 22; }
+.plato .dona text { text-anchor: middle; font: 11px var(--sans); fill: var(--suave); }
+.plato .dona .grande { font-size: 21px; font-weight: 700; fill: var(--texto); }
+.consejo { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--aviso-suave); color: var(--aviso); font-size: 12.5px; line-height: 1.45; }
+/* Anotar */
+.anotar-comida { display: grid; grid-template-columns: minmax(0, 1fr) 72px; gap: 8px; }
+.anotar-comida select { min-width: 0; }
+.anotar-comida small { grid-column: 1 / -1; }
+.anotar-comida small:empty { display: none; }
+.frecuentes { display: grid; gap: 8px; margin-top: 12px; }
+.repetir { display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 10px; border-radius: 12px; background: var(--vidrio); }
+.repetir .insignia { width: 32px; height: 32px; border-radius: 10px; }
+.repetir > span:last-child { display: grid; min-width: 0; }
+.repetir small { color: var(--suave); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* La semana */
+.barras-semana { position: relative; display: flex; align-items: stretch; gap: 8px; height: 150px; }
+.barras-semana .linea-meta { position: absolute; left: 0; right: 0; border-top: 2px dashed color-mix(in srgb, var(--bien) 70%, transparent); pointer-events: none; z-index: 1; }
+.dia-barra { flex: 1; border: 0; padding: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 3px; background: none; min-width: 0; }
+.dia-barra i { width: 100%; border-radius: 6px 6px 0 0; background: color-mix(in srgb, var(--bien) 55%, transparent); }
+.dia-barra.elegido i { background: var(--bien); }
+.dia-barra small, .dia-barra span { font-size: 10.5px; color: var(--suave); white-space: nowrap; }
+.dia-barra.elegido span { color: var(--texto); font-weight: 700; }
+.dia-barra span::first-letter { text-transform: uppercase; }
+@media (max-width: 700px) { .w-comidas { grid-template-columns: 1fr; } .cambiar-dia b { min-width: 0; flex: 1; } }

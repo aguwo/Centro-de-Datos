@@ -19,7 +19,7 @@ import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
 import { galeria, cabecera, tablero, dentro } from "./proyectos.js";
 import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { loImportante, diasDeLaSemana } from "./semana.js";
-import { cifras, peso, anillos, habitosHoy, constancia, despensa } from "./salud.js";
+import { cifras, peso, anillos, habitosHoy, constancia, despensa, diaComida, comidas, plato, anotar, semanaComida } from "./salud.js";
 import { modo, fondo, barra, ventanas, cuenta } from "./ajustes.js";
 
 export const WIDGETS = {
@@ -43,6 +43,11 @@ export const WIDGETS = {
   "habitos-hoy":   { titulo: "Hábitos de hoy", crear: habitosHoy },
   "constancia":    { titulo: "Constancia", crear: constancia },
   "despensa":      { titulo: "Despensa", crear: despensa },
+  "dia-comida":    { crear: diaComida },
+  "comidas":       { crear: comidas },
+  "plato":         { titulo: "Tu plato", crear: plato },
+  "anotar":        { titulo: "Anotar comida", crear: anotar },
+  "semana-comida": { titulo: "La semana", crear: semanaComida },
   "modo":          { titulo: "Modo y color", crear: modo },
   "fondo":         { titulo: "Fondo de pantalla", crear: fondo },
   "barra":         { titulo: "Barra lateral", crear: barra },
@@ -112,6 +117,7 @@ export function montar(a) {
     const grilla = el("div", { className: "columnas" }, ...centro.map((c) => el("div", { className: "columna" }, ...c.widgets.map(ventana))));
     grilla.style.setProperty("--columnas", centro.map((c) => `minmax(0, ${c.ancho ?? 1}fr)`).join(" "));
     const costado = lado.length ? el("aside", { className: "costado vidrio" }, botonCostado(), ...lado.flatMap((c) => c.widgets.map(ventana))) : null;
+    barra.replaceChildren(); // lo que puso la disposición anterior (ej. otra vista) no se queda
     armada.costado?.remove();
     if (armada.grilla) armada.grilla.replaceWith(grilla);
     else seccion.append(grilla);
