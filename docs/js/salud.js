@@ -23,7 +23,7 @@
 //   metas     las que guardes (tabla preferencias, clave "salud"); sin eso, unas sugeridas según tu peso
 // Cada hábito cae en un bloque: los de entrenar en Ejercicio, los de registrar calorías en Dieta
 // (se cumplen solos al anotar comida) y el resto en Hábitos.
-import { el, db, datos, dia, escribir, areaDe, irA } from "./base.js";
+import { el, db, datos, dia, escribir, areaDe, irA, flotante } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes, sinHoraISO } from "./fechas.js";
 import { alternarRegistro, cambiarProps, crear, dentroDeCaja } from "./acciones.js";
 import { icono, elegir } from "./dibujos.js";
@@ -435,7 +435,7 @@ export function despensa(v) {
 
 // ---------- la Dieta (paso 67, como Samsung Health) ----------
 // Toda la vista mira un día (ctx.dia; sin nada, hoy). Paso 69: solo las cuatro comidas, y se agrega con el + de cada una.
-const MOMENTOS = [["Desayuno", "taza"], ["Almuerzo", "plato"], ["Merienda", "manzana"], ["Cena", "luna"]];
+const MOMENTOS = [["Desayuno", "taza", "al desayuno"], ["Almuerzo", "plato", "al almuerzo"], ["Merienda", "manzana", "a la merienda"], ["Cena", "luna", "a la cena"]];
 const diaDe = (ctx) => ctx.dia ?? hoyTexto();
 const nombreDelDia = (d) => {
   const f = diasEntre(hoyTexto(), d), largo = new Date(d + "T12:00").toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" });
@@ -508,27 +508,24 @@ export function equilibrio(v, ctx) {
 }
 
 // Las comidas del día, una fila por comida con sus kcal y su +. Tocar una fila la abre para ver qué comiste (× lo borra).
-// El + abre ahí mismo el buscador de alimentos (ctx.agregando = la comida).
+// El + abre una ventana flotante con el buscador de alimentos (paso 76).
 export function comidasDia(v, ctx) {
   v.classList.add("w-salud");
   return () => {
     const lista = comidasDe(diaDe(ctx)), sueltas = lista.filter((x) => !MOMENTOS.some(([n]) => n === x.momento));
     const grupos = [...MOMENTOS, ...(sueltas.length ? [["Sin comida asignada", "reloj"]] : [])];
-    v.replaceChildren(v.firstChild, ...grupos.map(([nombre, ic]) => {
+    v.replaceChildren(v.firstChild, ...grupos.map(([nombre, ic, alMomento]) => {
       const cosas = nombre === "Sin comida asignada" ? sueltas : lista.filter((x) => x.momento === nombre), t = sumar(cosas);
-      const abierta = ctx.abierta === nombre && cosas.length, agregando = ctx.agregando === nombre;
+      const abierta = ctx.abierta === nombre && cosas.length;
       const fila = el("div", { className: "momento" + (abierta ? " abierta" : "") },
         el("button", { className: "cabeza-momento", ariaExpanded: String(!!abierta), disabled: !cosas.length, onclick: () => ctx.cambiar({ abierta: abierta ? null : nombre }) },
           el("span", { className: "insignia" }, icono(ic)),
           el("span", {}, el("b", { textContent: nombre }), el("small", { textContent: cosas.length ? plural(cosas.length, "alimento", "alimentos") : "sin registro" })),
           cosas.length ? el("b", { className: "kcal", textContent: numero(t.kcal) + " kcal" }) : ""),
-        nombre !== "Sin comida asignada" ? el("button", { className: "mas" + (agregando ? " abierto" : ""), textContent: agregando ? "×" : "+",
-          ariaLabel: agregando ? "Cerrar el buscador" : "Agregar a " + nombre.toLowerCase(), ariaExpanded: String(agregando),
-          onclick: () => ctx.cambiar({ agregando: agregando ? null : nombre, texto: "" }) }) : "",
+        alMomento ? el("button", { className: "mas", textContent: "+", ariaLabel: "Agregar " + alMomento, ariaHasPopup: "dialog", onclick: () => agregarA(nombre, alMomento, ctx) }) : "",
         abierta ? el("ul", { className: "cosas-momento" }, ...cosas.sort((a, b) => b.kcal - a.kcal).map((x) => el("li", {},
           el("span", { textContent: x.a ? sinEstimacion(x.a.titulo) : "(alimento borrado)" }), el("small", { textContent: numero(x.g) + " g" }), el("b", { textContent: numero(x.kcal) + " kcal" }),
-          el("button", { className: "quitar", textContent: "×", ariaLabel: "Borrar " + (x.a?.titulo ?? ""), onclick: () => escribir(db.from("registros").delete().eq("id", x.r.id)) })))) : "",
-        agregando ? buscador(nombre, ctx) : "");
+          el("button", { className: "quitar", textContent: "×", ariaLabel: "Borrar " + (x.a?.titulo ?? ""), onclick: () => escribir(db.from("registros").delete().eq("id", x.r.id)) })))) : "");
       return fila;
     }));
   };
@@ -546,16 +543,25 @@ function gramosDeSiempre(a) {
   return Math.round(r ? gramos(r, a) : a.props?.porcion_g ?? 100);
 }
 
+// Paso 76: el + de una comida abre una ventana flotante con el buscador. Lo que agregas queda anotado y la ventana sigue
+// abierta (abajo dice qué agregaste), para sumar varias cosas seguidas; se cierra con la ×, Esc o tocando fuera.
+function agregarA(momento, alMomento, ctx) {
+  ctx.texto = "";
+  const listo = el("p", { className: "agregado", ariaLive: "polite" });
+  const d = flotante("Agregar " + alMomento, buscador(momento, ctx, (nombre, g) => { listo.textContent = `✓ ${nombre} · ${numero(g)} g`; }), listo);
+  d.querySelector(".buscar-alimento input").focus();
+}
+
 // El buscador de una comida: escribes y salen tus alimentos (sin escribir, los que más anotas primero).
 // Cada uno con sus gramos de siempre, que puedes cambiar, y su +. Lo que agregas queda en la comida y el buscador sigue abierto.
 // Paso 72: desde 3 letras también busca en Open Food Facts (la función "alimentos" de Supabase); tocar el + de uno de esos
 // lo guarda como alimento tuyo, con sus macros, y lo anota.
 const RESULTADOS = 8;
-function buscador(momento, ctx) {
+function buscador(momento, ctx, alAgregar) {
   const tuyos = el("div", { className: "opciones" }), deAfuera = el("div", { className: "opciones de-afuera" });
   const campo = el("input", { type: "search", placeholder: "Buscar alimento", ariaLabel: "Buscar alimento", value: ctx.texto ?? "",
     oninput: () => { ctx.texto = campo.value; mostrar(); } }); // solo cambian las listas: el campo no pierde el foco
-  const anotar = (a, g) => { anotarComida([{ a, g }], momento, diaDe(ctx)); ctx.abierta = momento; };
+  const anotar = (a, g) => { anotarComida([{ a, g }], momento, diaDe(ctx)); ctx.abierta = momento; alAgregar?.(sinEstimacion(a.titulo), g); };
   let espera;
   const mostrar = () => {
     const texto = sinTildes(campo.value.trim()), alimentos = datos.nodos.filter((n) => n.tipos.clave === "alimento");
@@ -573,7 +579,6 @@ function buscador(momento, ctx) {
     }, () => deAfuera.replaceChildren(el("small", { className: "titulo-afuera", textContent: "No se pudo buscar en Open Food Facts." }))), 400);
   };
   mostrar();
-  requestAnimationFrame(() => { if (!document.activeElement || document.activeElement === document.body) campo.focus(); });
   return el("div", { className: "buscador-comida" }, el("div", { className: "buscar-alimento" }, icono("lupa"), campo), tuyos, deAfuera);
 }
 // Una fila del buscador: nombre, marca, kcal de esos gramos, los gramos y su +. macros = { kcal_100g, ... }.
