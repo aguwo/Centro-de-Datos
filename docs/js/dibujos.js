@@ -3,7 +3,9 @@
 //   icono(nombre)          un ícono de línea de 24×24, ej. icono("reloj")
 //   portada(tema, color)   una franja con el dibujo de un tema, teñida con ese color, y su ícono encima
 //   elegir(texto, reglas)  el primer nombre cuya palabra clave aparece en el texto (para adivinar tema o tipo)
-//   progreso(fraccion, minimo)  una barra delgada de avance de 0 a 1 y, si se da, la rayita del mínimo
+//   progreso(fraccion, marca, nombre)  una barra delgada de avance de 0 a 1 y, si se da, una rayita en la marca (ej. el mínimo)
+//   anillo(fraccion, texto)     un anillo de avance de 0 a 1 con un texto al medio (ej. "54%")
+//   pastilla(nombre, texto)     una píldora con un ícono y un texto, para resúmenes y avisos
 // Agregar uno = agregarlo a ICONOS (y, si es un tema con dibujo, a DIBUJOS).
 import { el } from "./base.js";
 
@@ -15,6 +17,8 @@ const ICONOS = {
   dialogo: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/>',
   red: '<circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="12" cy="20" r="2"/><path d="M6.5 6.5l3.5 3.5M17.5 6.5L14 10M12 15v3"/>',
   libro: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/>',
+  web: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/>',
+  bloques: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
   // tipos de evaluación
   certamen: '<path d="M14 4l6 6-10 10H4v-6zM12 6l6 6"/>',
   lab: '<path d="M9 3h6M10 3v6L4 19a1.5 1.5 0 0 0 1.3 2h13.4A1.5 1.5 0 0 0 20 19l-6-10V3"/>',
@@ -33,6 +37,7 @@ const ICONOS = {
   estrella: '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>',
   idea: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z"/>',
   si: '<path d="M5 12l5 5 9-10"/>',
+  flecha: '<path d="M5 12h14M13 6l6 6-6 6"/>',
   no: '<path d="M6 6l12 12M18 6L6 18"/>',
 };
 
@@ -44,6 +49,9 @@ const DIBUJOS = {
   dialogo: '<path d="M124 10h82a10 10 0 0 1 10 10v24a10 10 0 0 1-10 10h-50l-16 14V54h-16a10 10 0 0 1-10-10V20a10 10 0 0 1 10-10z" fill="currentColor" opacity=".3"/><path d="M30 26h56a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8H54l-12 10V58H30a8 8 0 0 1-8-8V34a8 8 0 0 1 8-8z" fill="none" stroke="currentColor" stroke-width="2" opacity=".7"/><g fill="currentColor" opacity=".8"><circle cx="46" cy="42" r="3"/><circle cx="58" cy="42" r="3"/><circle cx="70" cy="42" r="3"/></g><path d="M140 30h52M140 40h34" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".7"/>',
   red: '<g fill="none" stroke="currentColor" stroke-width="2" opacity=".5"><path d="M44 24L108 44L172 18M108 44L140 70M108 44L66 68M172 18L212 50L140 70"/></g><g fill="currentColor"><circle cx="44" cy="24" r="7" opacity=".7"/><circle cx="108" cy="44" r="11" opacity=".85"/><circle cx="172" cy="18" r="7" opacity=".7"/><circle cx="140" cy="70" r="6" opacity=".6"/><circle cx="66" cy="68" r="5" opacity=".6"/><circle cx="212" cy="50" r="6" opacity=".6"/></g>',
   libro: '<g fill="currentColor"><rect x="150" y="16" width="14" height="56" rx="2" opacity=".6"/><rect x="168" y="22" width="12" height="50" rx="2" opacity=".4"/><rect x="184" y="12" width="16" height="60" rx="2" opacity=".7"/><rect x="204" y="26" width="10" height="46" rx="2" opacity=".35"/></g><path d="M24 28h80M24 42h96M24 56h60" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".4"/>',
+  web: '<g fill="none" stroke="currentColor" stroke-width="2" opacity=".7"><rect x="126" y="10" width="100" height="62" rx="6"/><path d="M126 23h100"/></g><g fill="currentColor"><circle cx="135" cy="16.5" r="2.5" opacity=".8"/><circle cx="143" cy="16.5" r="2.5" opacity=".8"/><circle cx="151" cy="16.5" r="2.5" opacity=".8"/><rect x="136" y="32" width="52" height="8" rx="3" opacity=".55"/><rect x="136" y="46" width="80" height="5" rx="2" opacity=".35"/><rect x="136" y="56" width="64" height="5" rx="2" opacity=".35"/><rect x="196" y="32" width="20" height="8" rx="3" opacity=".7"/></g><path d="M0 76Q40 54 80 66T160 62T240 58V80H0Z" fill="currentColor" opacity=".25"/>',
+  bloques: '<g fill="currentColor"><rect x="150" y="42" width="22" height="22" opacity=".55"/><rect x="172" y="42" width="22" height="22" opacity=".35"/><rect x="194" y="42" width="22" height="22" opacity=".55"/><rect x="161" y="20" width="22" height="22" opacity=".75"/><rect x="183" y="20" width="22" height="22" opacity=".45"/><rect x="172" y="-2" width="22" height="22" opacity=".3"/><rect x="0" y="64" width="240" height="16" opacity=".25"/><rect x="0" y="64" width="240" height="4" opacity=".45"/><rect x="40" y="38" width="9" height="26" opacity=".5"/><rect x="28" y="20" width="33" height="22" opacity=".35"/></g>',
+  proyecto: '<g fill="currentColor"><rect x="136" y="16" width="44" height="54" rx="5" opacity=".3"/><rect x="186" y="16" width="44" height="40" rx="5" opacity=".3"/></g><g fill="currentColor" opacity=".8"><rect x="142" y="24" width="32" height="10" rx="3"/><rect x="142" y="40" width="32" height="10" rx="3" opacity=".6"/><rect x="192" y="24" width="32" height="10" rx="3"/></g><path d="M24 30h80M24 44h60M24 58h88" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".4"/>',
 };
 
 const svg = (viewBox, trazos, clase) => {
@@ -73,15 +81,26 @@ export function portada(tema, color, clase = "") {
 
 export const elegir = (texto, reglas, porDefecto) => reglas.find(([palabras]) => palabras.test(texto ?? ""))?.[1] ?? porDefecto;
 
-// Una barra delgada de avance (0 a 1), con el color --c de lo que la rodea. minimo (0 a 1, opcional): una rayita ahí.
-export function progreso(fraccion, minimo) {
+// Una barra delgada de avance (0 a 1), con el color --c de lo que la rodea. marca (0 a 1, opcional): una rayita ahí; nombre: lo que dice al pasar encima.
+export function progreso(fraccion, marca, nombre = "Mínimo") {
   const relleno = el("i");
   relleno.style.width = Math.max(0, Math.min(1, fraccion ?? 0)) * 100 + "%";
   const b = el("span", { className: "progreso" }, relleno);
-  if (minimo != null) {
-    const raya = el("b", { title: `Mínimo: ${Math.round(minimo * 100)}%` });
-    raya.style.left = minimo * 100 + "%";
+  if (marca != null) {
+    const raya = el("b", { title: `${nombre}: ${Math.round(marca * 100)}%` });
+    raya.style.left = marca * 100 + "%";
     b.append(raya);
   }
   return b;
 }
+
+// Un anillo de avance (0 a 1) con un texto al medio. pathLength=100 deja escribir el avance como porcentaje directo.
+export function anillo(fraccion, texto) {
+  const pct = Math.round(Math.max(0, Math.min(1, fraccion ?? 0)) * 100);
+  const a = el("span", { className: "anillo-avance" }, svg("0 0 44 44",
+    `<circle cx="22" cy="22" r="18" pathLength="100" class="pista"/><circle cx="22" cy="22" r="18" pathLength="100" class="lleno" stroke-dasharray="100" stroke-dashoffset="${100 - pct}"/>`, "aro"),
+    el("b", { textContent: texto ?? pct + "%" }));
+  return a;
+}
+
+export const pastilla = (nombre, texto, clase = "") => el("span", { className: "pastilla " + clase }, icono(nombre), texto);

@@ -1,22 +1,23 @@
 // El apartado Proyectos (paso 35): un proyecto completo en una página, para verlo entero y crear o cambiar
 // lo que sea. El escritorio infinito queda para mirar y marcar avances.
-// Sus widgets comparten ctx.caja (widgets.js): el proyecto que elegiste en el índice.
-//   indice   tus proyectos agrupados por área, con buscador; los terminados, plegados
+// Sus widgets comparten ctx.caja (widgets.js): el proyecto abierto, o nada para ver la galería.
+//   galeria  (paso 57) una tarjeta por proyecto: su portada, cuánto lleva, si va al día y su siguiente tarea
 //   caja     la cabecera: dónde está, el título (se escribe encima), sus datos, la descripción y el avance
 //   tablero  sus tareas por estado (arrastrar una a otra columna le cambia el estado) o en lista
 //   dentro   sus notas y próximos eventos
 // Solo muestra proyectos (paso 35b): los ramos y los objetivos tendrán su propia vista, con su propio diseño.
 // Los widgets no saben de proyectos más allá de MUESTRA: otra vista puede reusarlos con otro tipo.
-import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, areaDe, areasEnOrden, dentroDe, escribible, escribiendoEn } from "./base.js";
-import { hoyTexto, corto } from "./fechas.js";
+import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, areaDe, dentroDe, escribible, escribiendoEn } from "./base.js";
+import { hoyTexto, diasEntre, corto } from "./fechas.js";
 import { cambiar, completar, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario, camposDe, tienePropiedad } from "./panel.js";
 import { listaDeTareas, seccion, porFecha, agregarTarea } from "./tareas.js";
 import { ocurre } from "./agenda.js";
+import { icono, portada, elegir as adivinar, progreso, anillo, pastilla } from "./dibujos.js";
 
 const ESTADOS = ["Por hacer", "En curso", "Esperando", "Hecho"]; // las columnas del tablero (el Inbox son los post-its)
 const HECHAS_A_LA_VISTA = 5;
-const DIA = 864e5;
+const HOLGURA = 0.1; // cuánto puedes ir detrás del plazo (en fracción) antes de que diga «Atrasado»
 const MUESTRA = "proyecto"; // el tipo de caja que muestra esta página
 
 const esCaja = (n) => n?.tipos.clave === MUESTRA;
@@ -24,6 +25,7 @@ const terminada = (n) => n.estado === "Hecho";
 const estadoDe = (t) => t.estado ?? "Por hacer";
 const sinTildes = (s) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 const porNombre = (a, b) => a.titulo.localeCompare(b.titulo, "es");
+const porCercania = (a, b) => (dia(a.fecha) || "9999").localeCompare(dia(b.fecha) || "9999"); // las con fecha primero, la más cercana arriba
 const de = (clave, caja) => datos.nodos.filter((n) => n.tipos.clave === clave && n.estado !== "Inbox" && cajasDe(n.id).includes(caja));
 const punto = (n) => {
   const i = el("i", { className: "punto" });
@@ -32,61 +34,101 @@ const punto = (n) => {
 };
 const elegir = (ctx, caja) => ctx.cambiar({ caja });
 
-// La caja elegida; si no hay (o ya no existe), la primera activa, o la primera.
-function cajaDe(ctx) {
-  const n = datos.nodo.get(ctx.caja);
-  if (esCaja(n)) return n;
-  const cajas = datos.nodos.filter(esCaja).sort(porNombre);
-  return cajas.find((c) => !terminada(c)) ?? cajas[0];
-}
+// El proyecto abierto, o nada (entonces se ve la galería).
+const cajaDe = (ctx) => (esCaja(datos.nodo.get(ctx.caja)) ? datos.nodo.get(ctx.caja) : null);
 
-// ---------- índice ----------
-export function indice(v, ctx) {
-  const buscar = el("input", { type: "search", placeholder: "Buscar…", ariaLabel: "Buscar un proyecto, ramo o área" });
-  const arbol = el("nav", { className: "desliza arbol", ariaLabel: "Tus cajas" });
-  const nueva = el("button", { className: "nueva", textContent: "+ Nuevo proyecto",
-    onclick: () => formulario(null, { tipos: [MUESTRA] }) });
-  v.append(buscar, arbol, nueva);
+// El tema de su portada (dibujos.js): el que le pusiste (props.icono) o uno adivinado por su nombre y descripción.
+const TEMAS = [[/robot|agente|asistente|inteligencia artificial/i, "chip"], [/minecraft|roblox|juego|servidor/i, "bloques"],
+  [/web|p[áa]gina|sitio|tienda|app/i, "web"], [/datos|sql/i, "base"]];
+const temaDe = (n) => n.props?.icono ?? adivinar(`${n.titulo} ${n.contenido ?? ""}`, TEMAS, "proyecto");
+
+// Cómo va un proyecto: cuánto lleva hecho, cuánto de su plazo ya pasó y, con eso, un veredicto (salud).
+// tiempo: de 0 (empezó) a 1 (vence hoy); null si no tiene fecha de inicio y de fin.
+export function ritmo(n) {
+  const hoy = hoyTexto(), ts = de("tarea", n.id), hechas = ts.filter(terminada).length;
+  const pendientes = ts.filter((t) => !terminada(t)).sort(porCercania);
+  const atrasadas = pendientes.filter((t) => dia(t.fecha) && dia(t.fecha) < hoy);
+  const ini = dia(n.fecha), fin = dia(n.props?.fecha_fin);
+  const hecho = ts.length ? hechas / ts.length : 0;
+  const quedan = fin ? diasEntre(hoy, fin) : null;
+  const tiempo = ini && fin ? Math.max(0, Math.min(1, diasEntre(ini, hoy) / Math.max(1, diasEntre(ini, fin)))) : null;
+  const [texto, clase] = terminada(n) ? ["Terminado", "va"] : n.estado === "Esperando" ? ["En pausa", "nada"] : !fin ? ["Sin plazo", "nada"]
+    : atrasadas.length || quedan < 0 || hecho + HOLGURA < tiempo ? ["Atrasado", "riesgo"] : ["Al día", "bien"];
+  return { ts, hechas, hecho, pendientes, atrasadas, ini, fin, quedan, tiempo, salud: { texto, clase } };
+}
+// Cuándo toca una tarea, corto: "hoy", "atrasada" o el día.
+const cuandoToca = (t) => { const d = dia(t.fecha), hoy = hoyTexto(); return !d ? "" : d < hoy ? "atrasada" : d === hoy ? "hoy" : corto(d); };
+
+// ---------- galería ----------
+// Arriba, en la barra del apartado, un resumen en pastillas. Debajo, buscador, filtros y una tarjeta por proyecto:
+// los activos primero, luego los en pausa y al final los terminados. Tocar una tarjeta abre el proyecto.
+const FILTROS = [["todos", "Todos", () => true], ["curso", "En curso", (n) => !terminada(n) && n.estado !== "Esperando"],
+  ["pausa", "En pausa", (n) => n.estado === "Esperando"], ["terminados", "Terminados", terminada]];
+const orden = (n) => (terminada(n) ? 2 : n.estado === "Esperando" ? 1 : 0);
+
+export function galeria(v, ctx) {
+  const buscar = el("input", { type: "search", placeholder: "Buscar un proyecto…", ariaLabel: "Buscar un proyecto" });
+  const filtros = el("div", { className: "segmento", role: "group", ariaLabel: "Mostrar" });
+  const grilla = el("div", { className: "tarjetas-proyectos" });
+  v.append(el("div", { className: "barra-galeria" }, buscar, filtros,
+    el("button", { className: "principal", textContent: "+ Nuevo proyecto", onclick: () => formulario(null, { tipos: [MUESTRA] }) })), grilla);
+  buscar.oninput = () => dibujar();
+  return dibujar;
 
   function dibujar() {
-    const elegida = cajaDe(ctx)?.id, cajas = datos.nodos.filter(esCaja);
-    // Cuántas tareas pendientes hay en cada caja (contando las de sus cajas de adentro).
-    const pendientes = new Map();
-    for (const t of datos.nodos) if (t.tipos.clave === "tarea" && t.estado !== "Hecho" && t.estado !== "Inbox")
-      for (const c of cajasDe(t.id)) pendientes.set(c, (pendientes.get(c) ?? 0) + 1);
-    const item = (n) => {
-      const b = el("button", { className: "item", ariaCurrent: n.id === elegida ? "page" : "false",
-        onclick: () => elegir(ctx, n.id) }, punto(n), el("span", { className: "nombre", textContent: n.titulo }),
-        pendientes.get(n.id) ? el("span", { className: "n", textContent: pendientes.get(n.id) }) : "");
-      return b;
-    };
-    const texto = sinTildes(buscar.value.trim());
-    if (texto) { // buscando: una lista simple con lo que coincide
-      const hay = cajas.filter((n) => sinTildes(n.titulo).includes(texto)).sort(porNombre);
-      return arbol.replaceChildren(...(hay.length ? hay.map((n) => item(n)) : [el("p", { className: "vacio", textContent: "Nada con ese nombre." })]));
-    }
-    // Los activos, agrupados por área (en tu orden; los sin área, al final). Los terminados, al final y plegados.
-    const grupos = new Map();
-    for (const c of cajas.filter((c) => !terminada(c)).sort(porNombre)) {
-      const a = areaDe(c.id) ?? "";
-      grupos.set(a, [...(grupos.get(a) ?? []), c]);
-    }
-    const nombre = (area) => datos.nodo.get(area)?.titulo ?? "Sin área";
-    const areas = [...areasEnOrden().map((a) => a.id), ""].filter((a) => grupos.has(a)); // en tu orden; "Sin área" al final
-    const hechas = cajas.filter(terminada).sort(porNombre);
-    arbol.replaceChildren(...areas.flatMap((a) => [el("h4", { className: "grupo", textContent: nombre(a) }), ...grupos.get(a).map((n) => item(n))]),
-      hechas.length ? el("details", { className: "terminadas", open: hechas.some((h) => h.id === elegida) },
-        el("summary", { textContent: `Terminadas (${hechas.length})` }), ...hechas.map((n) => item(n))) : "");
+    v.hidden = !!cajaDe(ctx);
+    if (v.hidden) return ctx.barra.replaceChildren(); // el resumen es de la galería: con un proyecto abierto no se ve
+    const todas = datos.nodos.filter(esCaja), ritmos = new Map(todas.map((n) => [n.id, ritmo(n)]));
+    const activas = todas.filter((n) => !terminada(n) && n.estado !== "Esperando");
+    const pendientes = activas.flatMap((n) => ritmos.get(n.id).pendientes);
+    const semana = pendientes.filter((t) => dia(t.fecha) && diasEntre(hoyTexto(), dia(t.fecha)) >= 0 && diasEntre(hoyTexto(), dia(t.fecha)) <= 7).sort(porCercania);
+    const atrasados = activas.filter((n) => ritmos.get(n.id).salud.texto === "Atrasado").length;
+    ctx.barra.replaceChildren(...[
+      pastilla("proyecto", `${activas.length} en curso`),
+      pastilla("test", `${pendientes.length} tareas pendientes`),
+      semana.length && pastilla("calendario", `Esta semana: ${semana[0].titulo}` + (semana.length > 1 ? ` y ${semana.length - 1} más` : "")),
+      atrasados && pastilla("alerta", `${atrasados} ${atrasados === 1 ? "atrasado" : "atrasados"}`, "alerta"),
+    ].filter(Boolean));
+
+    const filtro = ctx.ver ?? "todos";
+    filtros.replaceChildren(...FILTROS.map(([id, texto, pasa]) => el("button", { type: "button", textContent: `${texto} ${todas.filter(pasa).length}`,
+      ariaPressed: String(id === filtro), onclick: () => ctx.cambiar({ ver: id }) })));
+    const texto = sinTildes(buscar.value.trim()), pasa = FILTROS.find(([id]) => id === filtro)[2];
+    const lista = todas.filter((n) => pasa(n) && sinTildes(n.titulo).includes(texto)).sort((a, b) => orden(a) - orden(b) || porNombre(a, b));
+    grilla.replaceChildren(...(lista.length ? lista.map((n, i) => tarjeta(n, ritmos.get(n.id), i))
+      : [el("p", { className: "vacio vidrio ventana", textContent: todas.length ? "Ningún proyecto con ese nombre." : "Todavía no tienes proyectos. Crea el primero con «+ Nuevo proyecto»." })]));
   }
-  buscar.oninput = dibujar;
-  return dibujar;
+
+  // Una tarjeta: portada con su veredicto, nombre y anillo de avance, su siguiente tarea y la barra de lo hecho
+  // con una rayita donde debería ir según el plazo.
+  function tarjeta(n, r, i) {
+    const color = colorDeProyecto(n.id), sig = r.pendientes[0], area = datos.nodo.get(areaDe(n.id))?.titulo;
+    const tapa = portada(temaDe(n), color);
+    tapa.append(el("span", { className: "como " + r.salud.clase, textContent: r.salud.texto }));
+    const t = el("button", { className: "tarjeta-proyecto", onclick: () => elegir(ctx, n.id) }, tapa,
+      el("span", { className: "cuerpo" },
+        el("span", { className: "nombre" },
+          el("span", {}, el("small", { textContent: [area, n.estado].filter(Boolean).join(" · ") }), el("b", { textContent: n.titulo })),
+          anillo(r.hecho)),
+        el("span", { className: "sigue" }, icono("flecha"),
+          el("span", { textContent: sig?.titulo ?? (r.ts.length ? "Todo hecho" : "Sin tareas todavía") }),
+          sig && dia(sig.fecha) ? el("span", { className: "cuenta" + (cuandoToca(sig) === "atrasada" ? " atrasada" : ""), textContent: cuandoToca(sig) }) : ""),
+        el("span", { className: "ritmo" },
+          el("span", {}, el("span", { textContent: `${r.hechas} de ${r.ts.length} hechas` }),
+            el("span", { textContent: r.tiempo !== null ? `plazo ${Math.round(r.tiempo * 100)}%` : r.quedan !== null ? `vence ${corto(r.fin)}` : "sin plazo" })),
+          progreso(r.hecho, r.tiempo, "Dónde deberías ir según el plazo"))));
+    t.style.setProperty("--c", color);
+    t.style.setProperty("--i", i);
+    return t;
+  }
 }
 
 // ---------- cabecera ----------
 export function cabecera(v, ctx) {
   return () => {
     const n = cajaDe(ctx);
-    if (!n) return v.replaceChildren(el("p", { className: "vacio", textContent: "Todavía no tienes proyectos. Crea el primero con «+ Nuevo proyecto»." }));
+    v.hidden = !n;
+    if (!n) return;
     if (escribiendoEn(v) && v.dataset.id === n.id) return; // estás escribiendo aquí: no se pisa
     v.dataset.id = n.id;
 
@@ -111,35 +153,30 @@ export function cabecera(v, ctx) {
       placeholder: `¿De qué se trata ${n.titulo}? La idea, con quién, links…` });
     descripcion.onchange = () => cambiar(n, { contenido: descripcion.value.trim() || null });
 
-    v.replaceChildren(el("div", { className: "arriba" }, el("span", { className: "suave" }, ruta ? "en " + ruta : "Sin área"), acciones),
+    const volver = el("button", { className: "volver", textContent: "‹ Proyectos", onclick: () => ctx.cambiar({ caja: null }) });
+    v.replaceChildren(el("div", { className: "arriba" }, volver, el("span", { className: "suave" }, ruta ? "en " + ruta : "Sin área"), acciones),
       el("div", { className: "nombre-caja" }, punto(n), titulo), fichas, descripcion, avance(n));
   };
 }
 
-// Tres datos: cuánto va hecho, cuánto queda del plazo y qué está atrasado.
+// Tres datos: cuánto va hecho, cuánto queda del plazo y qué está atrasado (las cuentas, en ritmo).
 function avance(n) {
-  const hoy = hoyTexto(), ts = de("tarea", n.id), hechas = ts.filter(terminada).length;
-  const atrasadas = ts.filter((t) => !terminada(t) && dia(t.fecha) && dia(t.fecha) < hoy).sort(porFecha);
+  const r = ritmo(n);
   const barra = (pct, color) => {
     const b = el("span", { className: "barra-p" }, el("span", { style: `width: ${Math.max(0, Math.min(100, pct))}%` }));
     if (color) b.style.setProperty("--c", color);
     return b;
   };
   const dato = (etiqueta, valor, ...resto) => el("div", { className: "dato" }, el("span", { className: "rotulo", textContent: etiqueta }), valor, ...resto);
-  // El plazo: de la fecha de inicio a la de fin (si las tiene).
-  const ini = dia(n.fecha), fin = dia(n.props?.fecha_fin);
-  let plazo = dato("Plazo", el("b", { textContent: "Sin plazo" }), el("small", { className: "suave", textContent: "Ponle una fecha de fin en «Editar todo»." }));
-  if (fin) {
-    const quedan = Math.round((new Date(fin) - new Date(hoy)) / DIA);
-    const total = ini ? Math.max(1, (new Date(fin) - new Date(ini)) / DIA) : null;
-    plazo = dato("Plazo", el("b", { className: quedan < 0 ? "alerta" : "", textContent: quedan > 0 ? `Faltan ${quedan} días` : quedan === 0 ? "Vence hoy" : `Venció hace ${-quedan} días` }),
-      total ? barra(((total - quedan) / total) * 100, "var(--suave)") : el("small", { className: "suave", textContent: "hasta el " + corto(fin) }));
-  }
+  const plazo = r.fin
+    ? dato("Plazo", el("b", { className: r.quedan < 0 ? "alerta" : "", textContent: r.quedan > 0 ? `Faltan ${r.quedan} días` : r.quedan === 0 ? "Vence hoy" : `Venció hace ${-r.quedan} días` }),
+      r.tiempo !== null ? barra(r.tiempo * 100, "var(--suave)") : el("small", { className: "suave", textContent: "hasta el " + corto(r.fin) }))
+    : dato("Plazo", el("b", { textContent: "Sin plazo" }), el("small", { className: "suave", textContent: "Ponle una fecha de fin en «Editar todo»." }));
   return el("div", { className: "avance" },
-    dato("Tareas hechas", el("b", { textContent: `${hechas} de ${ts.length}` }), barra(ts.length ? (hechas / ts.length) * 100 : 0, n.tipos.clave === "proyecto" ? colorDeProyecto(n.id) : null)),
+    dato("Tareas hechas", el("b", { textContent: `${r.hechas} de ${r.ts.length}` }), barra(r.hecho * 100, colorDeProyecto(n.id))),
     plazo,
-    dato("Atrasadas", el("b", { className: atrasadas.length ? "alerta" : "", textContent: String(atrasadas.length) }),
-      el("small", { className: "suave", textContent: atrasadas.length ? "la más vieja, del " + corto(dia(atrasadas[0].fecha)) : "Vas al día." })));
+    dato("Atrasadas", el("b", { className: r.atrasadas.length ? "alerta" : "", textContent: String(r.atrasadas.length) }),
+      el("small", { className: "suave", textContent: r.atrasadas.length ? "la más vieja, del " + corto(dia(r.atrasadas[0].fecha)) : "Vas al día." })));
 }
 
 // ---------- tareas ----------
@@ -156,7 +193,8 @@ export function tablero(v, ctx) {
 
   return () => {
     const n = cajaDe(ctx);
-    if (!n) return cuerpo.replaceChildren();
+    v.hidden = !n;
+    if (!n) return;
     const ts = de("tarea", n.id), vista = ctx.vista ?? "tablero";
     v.sub.textContent = `${ts.filter(terminada).length} de ${ts.length} hechas`;
     for (const b of vistas.children) b.setAttribute("aria-pressed", b.dataset.vista === vista);
@@ -211,7 +249,8 @@ function enLista(ts, caja) {
 export function dentro(v, ctx) {
   return () => {
     const n = cajaDe(ctx);
-    if (!n) return v.replaceChildren();
+    v.hidden = !n;
+    if (!n) return;
     const hoy = hoyTexto();
     const notas = de("nota", n.id).sort(porNombre);
     const eventos = de("evento", n.id).map((e) => ({ e, d: proximo(e, hoy) })).filter((x) => x.d).sort((a, b) => a.d.localeCompare(b.d)).slice(0, 5);

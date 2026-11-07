@@ -78,6 +78,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 38a | Tus áreas en tu orden: los chips de Productividad empiezan por tu primera área (Todas y Sin proyecto al final) y se reordenan arrastrando; Proyectos agrupa en ese mismo orden | #22 | — | `docs/js/productividad.js`, `docs/js/base.js` |
 | 38b | El índice de Proyectos pegado al costado, a todo el alto, y escondible con su botón ‹ › (se acuerda de cómo lo dejaste). Sirve para cualquier apartado: una columna con `costado: true` | #23 | — | `docs/js/widgets.js`, `docs/js/apartados.js` |
 | 38c | Cada proyecto puede llevar el enlace a su proyecto en Claude: en la página Proyectos aparece «Proyecto en Claude ↗». Cualquier propiedad de tipo enlace se muestra así, como botón | #25 | SQL 11 | `supabase/migrations/0015_proyecto_en_claude.sql`, `docs/js/proyectos.js` |
+| 57 | Proyectos se abre con una galería: una tarjeta por proyecto con su portada ilustrada (adivinada por el nombre), si va «Al día», «Atrasado», «Sin plazo» o «En pausa», un anillo con lo hecho, su siguiente tarea y una barra con la rayita de dónde deberías ir según el plazo. Arriba, un resumen en pastillas, buscador y filtros. Tocar una tarjeta abre el proyecto (con «‹ Proyectos» para volver). Animaciones suaves al entrar, al pasar el mouse y al abrir; se apagan si tu equipo pide menos movimiento. El índice del costado ya no está | — | — | `docs/js/proyectos.js` (`galeria`, `ritmo`), `dibujos.js` (`anillo`, `pastilla`), `apartados.js`, `widgets.js`, `estilos.css` |
 
 ### Objetivos
 

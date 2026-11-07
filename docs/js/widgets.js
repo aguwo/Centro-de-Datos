@@ -14,7 +14,7 @@
 import { el, datos } from "./base.js";
 import { tareasDeHoy, elTiempo, tuDia } from "./hoy.js";
 import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
-import { indice, cabecera, tablero, dentro } from "./proyectos.js";
+import { galeria, cabecera, tablero, dentro } from "./proyectos.js";
 import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { modo, fondo, barra, ventanas, cuenta } from "./ajustes.js";
 
@@ -24,7 +24,7 @@ export const WIDGETS = {
   "tu-dia":        { titulo: "Tu día", crece: true, crear: tuDia },
   "tareas":        { titulo: "Tareas", crece: true, crear: tareasDelFiltro },
   "proyectos":     { crece: true, filtra: true, crear: areasYProyectos },
-  "indice":        { crece: true, filtra: true, crear: indice },
+  "galeria":       { crear: galeria },
   "caja":          { crear: cabecera },
   "tablero":       { titulo: "Tareas", crece: true, crear: tablero },
   "dentro":        { crear: dentro },

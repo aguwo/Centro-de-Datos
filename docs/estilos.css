@@ -521,25 +521,62 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .punto { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: var(--c); vertical-align: 1px; }
 .cuando { display: block; min-height: 18px; color: var(--acento); font-size: 12.5px; }
 
-/* Proyectos (proyectos.js, paso 35): una caja completa. Índice a la izquierda; cabecera, tareas y lo demás a la derecha. */
+/* Proyectos (proyectos.js, paso 35): la galería de proyectos o, si abriste uno, su cabecera, sus tareas y lo demás. */
 .suave { color: var(--suave); }
 .alerta { color: var(--alerta); }
 .rotulo { font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
 .ventana > h3 > small { margin-left: auto; }
 .ventana > h3 .abrir { padding: 1px 8px; font-size: 12px; }
-/* El índice: un árbol con sangría por nivel */
-.w-indice input[type="search"] { width: 100%; padding: 7px 11px; border: 1px solid var(--linea); border-radius: 10px; background: transparent; color: inherit; font: inherit; margin-bottom: 6px; }
-.arbol { display: grid; gap: 1px; align-content: start; margin: 0 -8px; }
-.arbol .item { display: flex; align-items: center; gap: 0; width: 100%; padding: 6px 8px; border: 0; border-radius: 9px; text-align: left; }
-.arbol .item:hover { background: color-mix(in srgb, var(--texto) 6%, transparent); }
-.arbol .item[aria-current="page"] { background: color-mix(in srgb, var(--acento) 14%, transparent); font-weight: 600; }
-.arbol .item .nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.arbol .item .n { margin-left: 8px; font-size: 12px; color: var(--suave); font-variant-numeric: tabular-nums; }
-.arbol .grupo { margin: 12px 8px 2px; font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
-.arbol .grupo:first-child { margin-top: 0; }
-.arbol .terminadas { margin-top: 12px; padding: 0 8px; }
-.arbol .terminadas summary { cursor: pointer; font-size: 12.5px; color: var(--suave); padding: 4px 0; }
-.w-indice .nueva { margin-top: 10px; }
+/* La galería (paso 57): una tarjeta por proyecto. --c es su color, --i su lugar (para que entren de a una).
+   Las animaciones son cortas y con la misma curva que la barra lateral; con «reducir movimiento» no hay ninguna. */
+.w-galeria { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; gap: 16px; }
+.barra-galeria { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.barra-galeria input[type="search"] { flex: 0 1 260px; min-width: 0; height: 38px; padding: 0 14px; border: 1px solid var(--borde); border-radius: 11px; background: var(--vidrio-fuerte); }
+.barra-galeria .segmento { background: var(--vidrio-fuerte); border: 1px solid var(--borde); }
+.barra-galeria .segmento button[aria-pressed="true"] { background: color-mix(in srgb, var(--acento) 18%, transparent); box-shadow: none; }
+.barra-galeria .principal { margin-left: auto; height: 38px; padding: 0 16px; border-radius: 11px; }
+.tarjetas-proyectos { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 18px; }
+.tarjeta-proyecto { display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: calc(var(--radio) + 4px); text-align: left; font: inherit; color: inherit;
+                    background: var(--vidrio-fuerte); border: 1px solid var(--borde); box-shadow: var(--sombra);
+                    animation: entrar .5s var(--suave-curva) both; animation-delay: calc(var(--i, 0) * 60ms);
+                    transition: transform .25s var(--suave-curva), box-shadow .25s var(--suave-curva); }
+.tarjeta-proyecto:hover { transform: translateY(-4px); box-shadow: 0 22px 48px rgba(0,0,0,.24); }
+.tarjeta-proyecto:active { transform: translateY(-1px) scale(.99); }
+.tarjeta-proyecto .portada { height: 118px; }
+.tarjeta-proyecto .portada > .como { position: absolute; right: 12px; top: 12px; background: var(--vidrio-fuerte); box-shadow: 0 2px 8px rgba(0,0,0,.12); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.tarjeta-proyecto .cuerpo { display: flex; flex-direction: column; gap: 14px; padding: 28px 18px 16px; flex: 1; }
+.tarjeta-proyecto .nombre { display: flex; align-items: center; gap: 12px; }
+.tarjeta-proyecto .nombre > span:first-child { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.tarjeta-proyecto .nombre small { color: var(--suave); font-size: 12px; }
+.tarjeta-proyecto .nombre b { font-size: 17px; font-weight: 650; letter-spacing: -.01em; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tarjeta-proyecto .sigue { display: flex; align-items: center; gap: 9px; padding: 9px 11px; border-radius: 11px; font-size: 13px; background: color-mix(in srgb, var(--texto) 5%, transparent); }
+.tarjeta-proyecto .sigue .icono { flex: none; width: 15px; height: 15px; color: var(--suave); }
+.tarjeta-proyecto .sigue > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cuenta.atrasada { color: var(--alerta); background: var(--alerta-suave); }
+.tarjeta-proyecto .ritmo { display: flex; flex-direction: column; gap: 7px; margin-top: auto; }
+.tarjeta-proyecto .ritmo > span:first-child { display: flex; justify-content: space-between; color: var(--suave); font-size: 12px; font-variant-numeric: tabular-nums; }
+.tarjeta-proyecto .progreso { height: 6px; border-radius: 3px; }
+.tarjeta-proyecto .progreso > i { border-radius: 3px; opacity: 1; animation: crecer .9s var(--suave-curva) both .15s; }
+.tarjeta-proyecto .progreso > b { top: -3px; height: 12px; }
+/* El anillo de avance (dibujos.js: anillo) */
+.anillo-avance { position: relative; flex: none; display: grid; place-items: center; width: 48px; height: 48px; }
+.anillo-avance .aro { position: absolute; inset: 0; transform: rotate(-90deg); }
+.anillo-avance circle { fill: none; stroke-width: 5; }
+.anillo-avance .pista { stroke: var(--linea); }
+.anillo-avance .lleno { stroke: var(--c, var(--acento)); stroke-linecap: round; animation: llenar 1s var(--suave-curva) both .2s; }
+.anillo-avance b { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Al abrir un proyecto (o volver a la galería) sus ventanas entran de a una */
+.w-caja, .w-tablero, .w-dentro { animation: entrar .45s var(--suave-curva) both; }
+.w-tablero { animation-delay: 60ms; }
+.w-dentro { animation-delay: 120ms; }
+.volver { border: 0; padding: 0; color: var(--suave); }
+.volver:hover { color: var(--texto); }
+@keyframes entrar { from { opacity: 0; transform: translateY(12px); } }
+@keyframes crecer { from { width: 0; } }
+@keyframes llenar { from { stroke-dashoffset: 100; } }
+@media (prefers-reduced-motion: reduce) {
+  .tarjeta-proyecto, .tarjeta-proyecto .progreso > i, .anillo-avance .lleno, .w-caja, .w-tablero, .w-dentro { animation: none; transition: none; }
+}
 /* La cabecera */
 .columna > .w-caja { display: grid; gap: 12px; }
 .w-caja .arriba { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
@@ -617,7 +654,6 @@ form.nodo .conexion select + select { margin-top: 6px; }
   .postits { margin: 0 -16px; padding: 2px 16px 8px; } /* la fila llega al borde de la pantalla */
   .con-widgets > h2 { font-size: 24px; }
   .w-tu-dia .agenda { max-height: 480px; }
-  .w-indice .arbol { max-height: 40vh; }
   .avance, .columna > .w-dentro { grid-template-columns: minmax(0, 1fr); }
   .tablero { grid-template-columns: repeat(4, minmax(220px, 80%)); }
   /* El calendario ocupa el ancho; el costado se esconde */
