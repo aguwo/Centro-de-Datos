@@ -59,6 +59,7 @@ export const reabrir = (n) => cambiar(n, { estado: "Por hacer" });
 export const archivar = (n) => cambiar(n, { archivado: true });
 
 // Anotar que algo pasó hoy (un hábito cumplido, una planta regada), o borrar esa anotación si ya estaba.
-export const alternarRegistro = (clase, nodo, deHoy) => deHoy
+// Paso 90: fecha (ej. { fecha: sinHoraISO("2026-11-08") }) lo anota en otro día; sin nada, ahora.
+export const alternarRegistro = (clase, nodo, deHoy, fecha = {}) => deHoy
   ? escribir(db.from("registros").delete().eq("id", deHoy.id))
-  : escribir(db.from("registros").insert({ clase, nodo_id: nodo.id }));
+  : escribir(db.from("registros").insert({ clase, nodo_id: nodo.id, ...fecha }));
