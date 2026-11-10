@@ -6,7 +6,8 @@
 //   constancia-entreno 13 semanas de entrenos: lo que hiciste, lo que tocaba y lo que no
 //   rutina       la rutina del próximo entreno: marcas cada ejercicio, anotas los kilos y ves cómo vas subiendo (paso 68)
 //   peso         el camino a tu meta de peso: tu línea, lo que pide la fecha y el ritmo sano
-//   habitos-hoy  los hábitos que tocan hoy, en una lista por rutina con un anillo de cuántos llevas: tocar marca o desmarca
+//   habitos-hoy  los hábitos que tocan un día (ctx.diaHabitos; sin nada, hoy), en una lista por rutina con un anillo
+//                de cuántos llevas: ‹ › cambia de día (paso 90) y tocar marca o desmarca
 //   cada-habito  una fila por hábito con una raya por día (30 o 90), su porcentaje y su mejor racha
 //   por-dia      qué días de la semana cumples más tus hábitos
 // La Dieta (paso 67, como Samsung Health) mira un día (ctx.dia; sin nada, hoy):
@@ -230,14 +231,31 @@ function anotarPeso(o, ahora) {
   campo, el("span", { textContent: "kg" }), el("button", { className: "principal", textContent: "Anotar peso" }));
 }
 
+// ---------- mirar otro día (paso 90) ----------
+// La Dieta y los Hábitos miran un día guardado en ctx[clave] (sin nada, hoy). Cada bloque tiene su clave, así
+// retroceder en Hábitos no mueve la Dieta.
+const nombreDelDia = (d) => {
+  const f = diasEntre(hoyTexto(), d), largo = new Date(d + "T12:00").toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" });
+  return f === 0 ? "Hoy, " + largo : f === -1 ? "Ayer, " + largo : largo;
+};
+// Las flechas ‹ día › para cambiar ese día; no deja pasar de hoy.
+function cambiarDia(ctx, clave = "dia") {
+  const d = ctx[clave] ?? hoyTexto();
+  const mover = (n) => el("button", { className: "mover-dia", textContent: n < 0 ? "‹" : "›", ariaLabel: n < 0 ? "Día anterior" : "Día siguiente",
+    disabled: n > 0 && d >= hoyTexto(), onclick: () => { const otro = sumarDias(d, n); ctx.cambiar({ [clave]: otro === hoyTexto() ? null : otro }); } });
+  return el("div", { className: "cambiar-dia" }, mover(-1), el("b", { textContent: nombreDelDia(d) }), mover(1));
+}
+// Para guardar algo en el día d: hoy, con la hora de ahora; otro día, sin hora.
+const fechaDe = (d) => (d === hoyTexto() ? {} : { fecha: sinHoraISO(d) });
+
 // Paso 66: los hábitos de hoy en una lista, agrupados por su rutina (la caja donde están), con un anillo de cuántos llevas.
-export function habitosHoy(v) {
+export function habitosHoy(v, ctx) {
   v.classList.add("w-salud");
   return () => {
-    const hoy = hoyTexto(), lista = habitos().filter((h) => tocaEl(h, hoy));
+    const d = ctx.diaHabitos ?? hoyTexto(), lista = habitos().filter((h) => tocaEl(h, d)), selector = cambiarDia(ctx, "diaHabitos");
     v.sub.replaceChildren(nuevoHabito());
-    if (!lista.length) return v.replaceChildren(v.firstChild, el("p", { className: "vacio", textContent: "Hoy no te toca ningún hábito." }));
-    const deHoy = (h) => marcasDe(h).find((r) => dia(r.fecha) === hoy), hechos = lista.filter(deHoy).length;
+    if (!lista.length) return v.replaceChildren(v.firstChild, selector, el("p", { className: "vacio", textContent: d === hoyTexto() ? "Hoy no te toca ningún hábito." : "Ese día no te tocaba ningún hábito." }));
+    const deHoy = (h) => marcasDe(h).find((r) => dia(r.fecha) === d), hechos = lista.filter(deHoy).length;
     // Los grupos: una rutina por caja (ej. «Mañana»); los que no están en una rutina van al final.
     const rutinaDe = (h) => { const p = datos.nodo.get(datos.padre.get(h.id)); return p?.tipos.clave === "rutina" ? p : null; };
     const grupos = new Map();
@@ -245,10 +263,10 @@ export function habitosHoy(v) {
     const orden = [...grupos.values()].sort((a, b) => !a.r - !b.r);
     const fila = (h) => {
       const marca = deHoy(h), [nombre] = temaDe(h);
-      return el("button", { className: "fila-habito" + (marca ? " hecho" : ""), ariaPressed: String(!!marca), onclick: () => alternarRegistro("habito", h, marca) },
+      return el("button", { className: "fila-habito" + (marca ? " hecho" : ""), ariaPressed: String(!!marca), onclick: () => alternarRegistro("habito", h, marca, fechaDe(d)) },
         el("span", { className: "insignia" }, icono(nombre)), el("span", { textContent: h.titulo }), el("span", { className: "check" }, marca ? icono("si") : ""));
     };
-    v.replaceChildren(v.firstChild,
+    v.replaceChildren(v.firstChild, selector,
       el("div", { className: "aro-hoy" }, svgDe("0 0 160 160", `<circle cx="80" cy="80" r="64" pathLength="100" class="pista"/>${hechos ? `<circle cx="80" cy="80" r="64" pathLength="100" class="lleno" stroke-dasharray="${hechos / lista.length * 100} 100"/>` : ""}`),
         el("b", { textContent: `${hechos}/${lista.length}` }), el("small", { textContent: hechos === lista.length ? "¡todo listo!" : "hechos" })),
       ...orden.flatMap(({ r, hs }) => [el("small", { className: "grupo-habitos", textContent: r ? "Rutina " + r.titulo.toLowerCase() : orden.length > 1 ? "Sin rutina" : "" }), ...hs.map(fila)]));
@@ -451,10 +469,6 @@ export function despensa(v) {
 // Toda la vista mira un día (ctx.dia; sin nada, hoy). Paso 69: solo las cuatro comidas, y se agrega con el + de cada una.
 const MOMENTOS = [["Desayuno", "taza", "al desayuno"], ["Almuerzo", "plato", "al almuerzo"], ["Merienda", "manzana", "a la merienda"], ["Cena", "luna", "a la cena"]];
 const diaDe = (ctx) => ctx.dia ?? hoyTexto();
-const nombreDelDia = (d) => {
-  const f = diasEntre(hoyTexto(), d), largo = new Date(d + "T12:00").toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" });
-  return f === 0 ? "Hoy, " + largo : f === -1 ? "Ayer, " + largo : largo;
-};
 // El hábito de Dieta que se cumple solo: registrar calorías (al anotar comida).
 const habitoDe = (palabras) => habitos("dieta").find((h) => palabras.test(h.titulo));
 const REGISTRAR = /calor[ií]as|kcal/i;
@@ -464,7 +478,7 @@ const REGISTRAR = /calor[ií]as|kcal/i;
 // por defecto de la tabla en vez de null (props no acepta null).
 const SIN_NULOS = { defaultToNull: false };
 function anotarComida(cosas, momento, d) {
-  const fecha = d === hoyTexto() ? {} : { fecha: sinHoraISO(d) }, h = habitoDe(REGISTRAR);
+  const fecha = fechaDe(d), h = habitoDe(REGISTRAR);
   const marcar = h && !marcasDe(h).some((r) => dia(r.fecha) === d) ? [{ clase: "habito", nodo_id: h.id, ...fecha }] : [];
   return escribir(db.from("registros").insert([...cosas.map(({ a, g }) => ({ clase: "comida", nodo_id: a.id, valor: g, unidad: "g",
     titulo: a.titulo, props: { comida: momento }, ...fecha })), ...marcar], SIN_NULOS));
@@ -479,8 +493,6 @@ export function caloriasDia(v, ctx) {
   return () => {
     cargarMetas(() => ctx.cambiar({}));
     const d = diaDe(ctx), t = comidaDe(d), m = metas(), falta = m.kcal - t.kcal;
-    const mover = (n) => el("button", { className: "mover-dia", textContent: n < 0 ? "‹" : "›", ariaLabel: n < 0 ? "Día anterior" : "Día siguiente",
-      disabled: n > 0 && d >= hoyTexto(), onclick: () => ctx.cambiar({ dia: sumarDias(d, n) }) });
     const filas = [["kcal", "Calorías", "kcal"], ["proteina", "Proteína", "g"], ["carbos", "Carbohidratos", "g"], ["grasa", "Grasa", "g"]];
     const form = el("form", { className: "metas-dieta", onsubmit: (e) => {
       e.preventDefault();
@@ -489,7 +501,7 @@ export function caloriasDia(v, ctx) {
     } }, ...filas.map(([k, nombre, u]) => el("label", {}, nombre, el("input", { type: "number", name: k, value: m[k], min: "0" }), u)),
       el("button", { className: "principal", textContent: "Guardar" }));
     v.replaceChildren(
-      el("div", { className: "cambiar-dia" }, mover(-1), el("b", { textContent: nombreDelDia(d) }), mover(1)),
+      cambiarDia(ctx),
       el("div", { className: "kcal-grande" }, el("b", { textContent: numero(t.kcal) }), el("span", { textContent: `/ ${numero(m.kcal)} kcal` })),
       barra(t.kcal / (m.kcal || 1), COLOR.kcal, t.kcal > m.kcal * 1.1),
       el("div", { className: "pie-kcal" }, el("span", {}, "Comidas ", el("b", { textContent: numero(t.kcal) })),

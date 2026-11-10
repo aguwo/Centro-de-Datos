@@ -74,5 +74,5 @@ export const borrarRegistro = (r) =>
   escribir(db.from("registros").delete().eq("id", r.id), () => (datos.registros = datos.registros.filter((x) => x.id !== r.id)));
 
 // Anotar que algo pasó hoy (un hábito cumplido, una planta regada), o borrar esa anotación si ya estaba.
-// fecha (opcional): { fecha } para anotarlo otro día.
+// fecha (opcional, paso 90): ej. { fecha: sinHoraISO("2026-11-08") } lo anota en otro día; sin nada, ahora.
 export const alternarRegistro = (clase, nodo, deHoy, fecha) => deHoy ? borrarRegistro(deHoy) : anotar({ clase, nodo_id: nodo.id, ...fecha });
