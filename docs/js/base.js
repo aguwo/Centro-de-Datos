@@ -144,6 +144,7 @@ export function colorDeProyecto(id) {
 export async function recargar(enfocarId) {
   if (!datos.nodos.length) avisar("Cargando tu grafo…"); // solo la primera vez; después se actualiza sin parpadear
   const desde = new Date(Date.now() - DIAS_REGISTROS * 864e5).toISOString();
+  const vuelta = escrituras;
   const [nodos, conexiones, tipos, arbol, registros, disposiciones] = await Promise.all([
     db.from("nodos").select("id, titulo, contenido, estado, fecha, props, creado_en, tipos!inner(clave, nombre)").eq("archivado", false),
     db.from("conexiones").select("id, origen_id, relacion, destino_id").is("valido_hasta", null),
@@ -154,6 +155,9 @@ export async function recargar(enfocarId) {
   ]);
   const error = nodos.error || conexiones.error || tipos.error || arbol.error || registros.error;
   if (error) return avisar(error.message);
+  // Si mientras se leía escribiste algo (otro clic), esto ya viene viejo: se bota, y la recarga de esa escritura trae lo nuevo.
+  // Así un hábito recién marcado no se desmarca un instante.
+  if (enCamino || vuelta !== escrituras) return;
 
   datos.tipo = new Map();
   for (const t of tipos.data) if (!datos.tipo.has(t.clave) || t.owner_id) datos.tipo.set(t.clave, t);
@@ -180,11 +184,24 @@ export function pedirRecarga() {
 
 // Escribe en la base y, si salió bien, pide recargar. Lo usan los botones del Inicio.
 // consulta: cualquier db.from(...).insert/update/delete(...).
-export async function escribir(consulta) {
+// alTiro (paso 89, opcional): cambia los datos cargados como van a quedar, y se redibuja YA, sin esperar a la base
+// ("actualización optimista"). Si la base dice que no, se avisa y se recarga: vuelve a como estaba.
+let enCamino = 0, escrituras = 0; // escrituras sin respuesta todavía, y cuántas van en total
+export async function escribir(consulta, alTiro) {
+  if (alTiro) { alTiro(); redibujarYa(); }
+  enCamino++; escrituras++;
   const { error } = await consulta;
-  if (error) avisar(error.message);
+  enCamino--;
+  if (error) { avisar(error.message); if (alTiro) recargar(); }
   else pedirRecarga();
   return !error;
+}
+// Redibuja todo con los datos como están ahora. Las listas se copian para que lo que se calcula
+// una vez por carga (como los colores) se vuelva a calcular.
+function redibujarYa() {
+  datos.nodos = [...datos.nodos];
+  datos.registros = [...datos.registros];
+  document.dispatchEvent(new CustomEvent("datos", { detail: {} }));
 }
 
 // Tiempo real (paso 25): Supabase avisa cada vez que cambia una de estas tablas, venga el cambio

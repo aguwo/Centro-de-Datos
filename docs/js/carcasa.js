@@ -28,6 +28,7 @@ export function ir(id) {
   document.title = actual.nombre + " · Martita";
   // La dirección no se toca si trae la respuesta del inicio de sesión (#access_token=...): la lee Supabase.
   if (location.hash.slice(1) !== actual.id && !location.hash.includes("=")) history.replaceState(null, "", "#" + actual.id);
+  for (const a of APARTADOS) if (atrasados.has(a.id) && !$(a.id).classList.contains("oculto")) dibujarApartado(a);
   if (juntos) mirar(actual.id);
   actual.alMostrar?.();
 }
@@ -55,9 +56,15 @@ function montarApartados() {
     ir(apartado);
   });
 }
-// Cuando llegan datos se dibuja todo (así cambiar de apartado es instantáneo); los cajones cerrados no hacen nada.
+// Cuando llegan datos se dibuja lo que se ve; los cajones cerrados no hacen nada. Paso 89: lo escondido (el mapa,
+// otro apartado) queda "atrasado" y se dibuja al ir a él, así marcar una tarea no rearma el mapa entero por detrás.
+const atrasados = new Set();
+function dibujarApartado(a) {
+  atrasados.delete(a.id);
+  (redibujar.get(a.id) ?? a.dibujar)();
+}
 export function dibujarTodo() {
-  for (const a of APARTADOS) (redibujar.get(a.id) ?? a.dibujar)();
+  for (const a of APARTADOS) $(a.id).classList.contains("oculto") ? atrasados.add(a.id) : dibujarApartado(a);
   for (const c of CAJONES) c.dibujar();
 }
 

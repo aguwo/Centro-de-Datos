@@ -1,5 +1,6 @@
 // Lo que la web le cambia a tus datos. Todas escriben en la base y el tiempo real redibuja todo solo.
 // Así cada vista solo dice QUÉ hacer (completar, posponer...) y nunca cómo se escribe.
+// Paso 89: cambiar un nodo y anotar o borrar un registro se ven al instante (escribir con alTiro, base.js).
 import { db, escribir, datos, avisar, recargar } from "./base.js";
 import { conHoraISO } from "./fechas.js";
 
@@ -36,7 +37,11 @@ export async function mover(n, destino_id, relacion = "pertenece_a") {
   if (error) return avisar(error.message);
   return escribir(db.from("conexiones").insert({ origen_id: n.id, relacion, destino_id }));
 }
-export const cambiar = (n, cambios) => escribir(nodos().update(cambios).eq("id", n.id));
+export const cambiar = (n, cambios) => escribir(nodos().update(cambios).eq("id", n.id), () => {
+  if (!cambios.archivado) return Object.assign(datos.nodo.get(n.id) ?? n, cambios);
+  datos.nodos = datos.nodos.filter((x) => x.id !== n.id); // archivado: deja de verse
+  datos.nodo.delete(n.id);
+});
 
 // Cambia solo algunas propiedades (props) y deja las demás. Un valor null borra esa propiedad.
 export function cambiarProps(n, cambios) {
@@ -58,7 +63,16 @@ export const reabrir = (n) => cambiar(n, { estado: "Por hacer" });
 // Soltar = archivar: deja de aparecer, pero se puede recuperar (el agente sabe hacerlo).
 export const archivar = (n) => cambiar(n, { archivado: true });
 
+// Anotar un registro (fila = { clase, nodo_id, fecha?, ... }) o borrarlo, al instante.
+// El id se inventa aquí (como lo haría la base) para poder borrarlo aunque la base todavía no conteste.
+export function anotar(fila) {
+  const r = { id: crypto.randomUUID(), fecha: new Date().toISOString(), ...fila };
+  return escribir(db.from("registros").insert(r), () =>
+    datos.registros.splice(datos.registros.findLastIndex((x) => x.fecha <= r.fecha) + 1, 0, r)); // en su lugar: van del más viejo al más nuevo
+}
+export const borrarRegistro = (r) =>
+  escribir(db.from("registros").delete().eq("id", r.id), () => (datos.registros = datos.registros.filter((x) => x.id !== r.id)));
+
 // Anotar que algo pasó hoy (un hábito cumplido, una planta regada), o borrar esa anotación si ya estaba.
-export const alternarRegistro = (clase, nodo, deHoy) => deHoy
-  ? escribir(db.from("registros").delete().eq("id", deHoy.id))
-  : escribir(db.from("registros").insert({ clase, nodo_id: nodo.id }));
+// fecha (opcional): { fecha } para anotarlo otro día.
+export const alternarRegistro = (clase, nodo, deHoy, fecha) => deHoy ? borrarRegistro(deHoy) : anotar({ clase, nodo_id: nodo.id, ...fecha });
