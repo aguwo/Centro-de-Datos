@@ -129,6 +129,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | — | Arreglo: la cámara del escritorio infinito se mueve en píxeles enteros de la pantalla (con medio píxel Chromium dibujaba mal el vidrio); se quita el redibujo forzado, que no servía | — | — | `escritorio.js` |
 | — | Revisión del escritorio infinito: al volver de otro apartado la cámara se enfocaba dos veces (ir() con viaje y el ResizeObserver de golpe, que cortaba el viaje); ahora el observador solo reacciona a cambios de tamaño reales. Se quita la transición duplicada de `main` | — | — | `escritorio.js`, `estilos.css` |
 | 56 | EV@ automático: dos veces al día (8:00 y 20:00) la base llama sola a la función `eva`, que copia tus entregas de EV@ como tareas dentro de cada ramo, mueve la fecha si la cambian y las marca «Hecho» cuando entregas. Solo lee EV@. Cada ramo dice su curso en la propiedad «Curso en EV@» | #53 | 15 | `supabase/functions/eva/`, `supabase/migrations/0019_eva.sql`, `tests/eva.test.ts` |
+| 95 | La asistencia y las notas de la U se suben solas cada 3 horas con el PC prendido (tarea del Programador de tareas de Windows), no solo al reiniciar: si el PC se suspendía, pasaba días sin subirse. Si estaba apagado a esa hora, corre apenas vuelve. Se activa corriendo `instalar.ps1` otra vez | — | — | `universidad-pc/instalar.ps1`, `correr.ps1` |
 
 ### Salud
 
@@ -173,7 +174,7 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 89, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 96, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
