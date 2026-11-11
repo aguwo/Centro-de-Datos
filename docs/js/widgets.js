@@ -80,7 +80,7 @@ export const WIDGETS = {
   "detectadas":    { titulo: "¿Son suscripciones?", crear: suscripcionesDetectadas },
   "en-un-ano":     { titulo: "En un año", crear: enUnAno },
   "pausadas":      { titulo: "Pausadas", crear: suscripcionesPausadas },
-  "finanzas-semana": { titulo: "Esta semana", crear: finanzasSemana },
+  "finanzas-semana": { titulo: "Gastos", crear: finanzasSemana },
   "proximo-cobro": { titulo: "Próximo cobro", crear: proximoCobro },
   "meta-ahorro":   { titulo: "Ahorro", crear: metaAhorro },
   "modo":          { titulo: "Modo y color", crear: modo },

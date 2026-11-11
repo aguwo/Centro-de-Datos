@@ -8,6 +8,7 @@
 //   anillo(fraccion, texto)     un anillo de avance de 0 a 1 con un texto al medio (ej. "54%")
 //   pastilla(nombre, texto)     una píldora con un ícono y un texto, para resúmenes y avisos
 //   moverConSuavidad(caja, cambiar)  hace el cambio y lo que tiene data-id viaja de su lugar viejo al nuevo
+//   resorte(x, vel, meta, rigidez, dt)  un paso de un resorte suave: dónde queda x y con qué velocidad (paso 92)
 // Agregar uno = agregarlo a ICONOS (y, si es un tema con dibujo, a DIBUJOS).
 import { el } from "./base.js";
 
@@ -151,4 +152,13 @@ export function moverConSuavidad(caja, cambiar) {
   nombrar((x) => "m-" + x.dataset.id);
   const t = document.startViewTransition(() => { cambiar(); nombrar((x) => "m-" + x.dataset.id); });
   t.finished.finally(() => nombrar(() => ""));
+}
+
+// Un paso de un resorte amortiguado justo para no pasarse ni rebotar (paso 92, sacado de la cámara del paso 91):
+// dónde queda x, y con qué velocidad, dt segundos después, si lo empuja hacia meta con esa rigidez (más rígido =
+// llega más rápido). Es la fórmula exacta, así no se descontrola aunque un cuadro tarde. Lo usan la cámara del
+// escritorio y la dona de Finanzas; cualquier cosa que deba moverse suave puede usarlo.
+export function resorte(x, vel, meta, rigidez, dt) {
+  const x0 = x - meta, a = vel + rigidez * x0, e = Math.exp(-rigidez * dt);
+  return [meta + (x0 + a * dt) * e, (vel - rigidez * a * dt) * e];
 }
