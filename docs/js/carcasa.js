@@ -7,7 +7,7 @@ import { $, el } from "./base.js";
 import { APARTADOS, CAJONES } from "./apartados.js";
 import { iniciarEscritorio, enEscritorio, mirar } from "./escritorio.js";
 import { montar } from "./widgets.js";
-import { preferencia, cambiar } from "./apariencia.js";
+import { preferencia, cambiar, tuCara } from "./apariencia.js";
 
 let actual = APARTADOS[0];
 let enElEscritorio = APARTADOS.find((a) => a.lugar); // la última sección del escritorio que viste: "Escritorio" vuelve ahí
@@ -38,6 +38,18 @@ function marcar() {
   for (const b of $("dock").querySelectorAll("[data-apartado]")) b.setAttribute("aria-current", b.dataset.apartado === actual.id ? "page" : "false");
   $("dock").querySelector("[data-escritorio]")?.setAttribute("aria-current", actual.lugar ? "page" : "false");
   for (const b of $("dock").querySelectorAll("[data-cajon]")) b.setAttribute("aria-expanded", $(b.dataset.cajon).classList.contains("abierto"));
+  moverMarca();
+}
+// Paso 93: el fondo del elegido es una sola pieza (.marca) que viaja de un botón al otro en vez de apagarse
+// en uno y prenderse en otro. Se pone sobre el botón elegido que se ve (offsetParent es null si está escondido).
+// La primera vez llega sin viajar (clase "nueva"). Si no se usa en este estilo, estilos.css la esconde.
+function moverMarca() {
+  const dock = $("dock"), marca = dock.querySelector(".marca");
+  const b = [...dock.querySelectorAll('[aria-current="page"]')].find((b) => b.offsetParent);
+  if (!marca || !b) return marca?.classList.add("sin-elegido");
+  marca.classList.remove("sin-elegido");
+  for (const [k, v] of Object.entries({ x: b.offsetLeft, y: b.offsetTop, w: b.offsetWidth, h: b.offsetHeight })) marca.style.setProperty("--" + k, v + "px");
+  if (marca.classList.contains("nueva")) { marca.offsetWidth; marca.classList.remove("nueva"); } // offsetWidth: que se ubique antes de animar
 }
 
 // Los apartados con widgets se arman aquí (widgets.js) y se ponen en la página.
@@ -79,24 +91,49 @@ export function entradasDeLaBarra() {
   return lista.map((e, i) => [puesto(e, i), e]).sort((a, b) => !!a[1].x.abajo - !!b[1].x.abajo || a[0] - b[0]).map(([, e]) => e);
 }
 
-// El dock: un botón por entrada, con su ícono y su nombre. Los que escondiste en Ajustes no salen;
-// el que tiene "abajo" (Ajustes) va al pie de la barra, junto al botón para retraerla, y no se puede esconder.
+// Paso 93: atajos de teclado. Alt + número (en Mac, ⌥ + número) aprieta el botón de ese puesto en la barra.
+const EN_MAC = /Mac|iPhone|iPad/.test(navigator.platform);
+const atajo = (n) => (EN_MAC ? "⌥" : "Alt ") + n; // cómo se lee en el globo
+
+// El dock: un botón por entrada, con su ícono y su nombre (y su atajo, que se ve en el globo). Los que escondiste en
+// Ajustes no salen; el que tiene "abajo" (Ajustes) va al pie de la barra, con tu foto y el botón para retraerla.
 function armarDock() {
   const { ocultos } = preferencia();
+  let puesto = 0; // los atajos cuentan lo que se ve en el computador: sin lo escondido ni lo que va junto en "Escritorio"
   const botones = entradasDeLaBarra().map(({ x, clase, accion }, i) => {
-    const b = el("button", { title: x.nombre, onclick: accion }, el("span", { className: "etiqueta", textContent: x.nombre }));
+    const escondido = !x.abajo && ocultos.includes(x.id);
+    const numero = !escondido && !x.lugar && puesto < 9 ? ++puesto : null;
+    const b = boton(x.nombre, x.icono, accion, numero && atajo(numero));
     b.dataset[clase] = x.id;
-    b.insertAdjacentHTML("afterbegin", `<svg class="icono" viewBox="0 0 24 24" aria-hidden="true">${x.icono}</svg>`);
-    b.setAttribute("aria-label", x.nombre);
+    if (numero) { b.dataset.atajo = numero; b.setAttribute("aria-keyshortcuts", "Alt+" + numero); }
     if (x.lugar) b.classList.add("en-lienzo"); // en el computador se juntan en "Escritorio"
-    b.hidden = !x.abajo && ocultos.includes(x.id);
+    b.hidden = escondido;
     b.style.setProperty("--i", i); // su turno al aparecer (estilos.css: aparecen uno tras otro)
     b.abajo = x.abajo;
     return b;
   });
+  const perfil = boton("Tu cuenta", null, () => ir("ajustes"));
+  perfil.classList.add("perfil");
+  perfil.prepend(tuCara());
   const retraer = el("button", { className: "retraer", textContent: "‹", title: "Retraer la barra", ariaLabel: "Retraer la barra", onclick: () => cambiar({ retraida: true }) });
-  $("dock").replaceChildren(...botones.filter((b) => !b.abajo), el("div", { className: "pie" }, ...botones.filter((b) => b.abajo), retraer));
+  $("dock").replaceChildren(el("div", { className: "marca nueva", ariaHidden: "true" }),
+    ...botones.filter((b) => !b.abajo), el("div", { className: "pie" }, ...botones.filter((b) => b.abajo), perfil, retraer));
   marcar();
+}
+// Un botón de la barra: su ícono (trazos SVG) y el globo con su nombre y, si tiene, su atajo.
+function boton(nombre, icono, accion, tecla) {
+  const b = el("button", { ariaLabel: nombre, onclick: accion },
+    el("span", { className: "etiqueta" }, nombre, tecla ? el("kbd", { textContent: tecla }) : ""));
+  if (icono) b.insertAdjacentHTML("afterbegin", `<svg class="icono" viewBox="0 0 24 24" aria-hidden="true">${icono}</svg>`);
+  return b;
+}
+// Alt + 1…9 (e.code dice la tecla de verdad: sirve con el teclado numérico y en Mac, donde ⌥ cambia la letra).
+function atajos() {
+  addEventListener("keydown", (e) => {
+    const n = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && /^(?:Digit|Numpad)([1-9])$/.exec(e.code)?.[1];
+    const b = n && $("dock").querySelector(`[data-atajo="${n}"]`);
+    if (b) { e.preventDefault(); b.click(); }
+  });
 }
 
 // Abre o cierra un cajón (si = true / false; sin decir, lo alterna). Se ve uno a la vez.
@@ -138,6 +175,8 @@ export function iniciarCarcasa() {
   montarApartados();
   armarDock();
   document.addEventListener("barra", armarDock); // cambiaste la barra en Ajustes (apariencia.js avisa)
+  new ResizeObserver(moverMarca).observe($("dock")); // cambió el estilo o el tamaño: la marca se acomoda
+  atajos();
   // Con la barra retraída queda esta pestaña en el borde izquierdo para volver a sacarla.
   document.body.append(el("button", { className: "sacar-barra", textContent: "›", title: "Mostrar la barra", ariaLabel: "Mostrar la barra", onclick: () => cambiar({ retraida: false }) }));
   for (const a of APARTADOS) a.iniciar?.();
