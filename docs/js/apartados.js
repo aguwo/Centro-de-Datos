@@ -34,7 +34,12 @@ export const APARTADOS = [
   {
     id: "hoy", nombre: "Hoy", lugar: [1, 1], nuevo: ["tarea", "evento"],
     titulo: () => new Date().toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" }),
-    columnas: [{ ancho: 3, widgets: ["tareas-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }],
+    // Paso 94: dos vistas, que se eligen en Ajustes. Clásica: prioridades, también hoy y atrasadas. Plan: tu semana en
+    // anillos y lo de hoy en tarjetas que, al marcarlas, bajan al final. A la derecha, en las dos, el tiempo y tu día.
+    vistas: [
+      { nombre: "Clásica", icono: "bloques", columnas: [{ ancho: 3, widgets: ["tareas-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }] },
+      { nombre: "Plan", icono: "lista", columnas: [{ ancho: 3, widgets: ["plan-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }] },
+    ],
     icono: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   },
   // Paso 61: tus 7 días de un vistazo (semana.js), arriba de Hoy en el escritorio infinito.
