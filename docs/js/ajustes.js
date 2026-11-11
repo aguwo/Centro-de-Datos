@@ -158,7 +158,7 @@ function arrastrable(li, lista, listo) {
 export function vistas(v) {
   const conVistas = APARTADOS.filter((a) => a.lugar && a.vistas?.length > 1);
   const selectores = conVistas.map((a) => selectorDeVistas(a, dibujarTodo));
-  v.append(...conVistas.flatMap((a, i) => [titulo(a.titulo?.() ?? a.nombre), selectores[i]]));
+  v.append(...conVistas.flatMap((a, i) => [titulo(a.nombre), selectores[i]]));
   return () => conVistas.forEach((a, i) => selectores[i].marcar(disposicionDe(a)));
 }
 
