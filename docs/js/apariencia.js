@@ -3,11 +3,11 @@
 // Lo que eliges en Ajustes se aplica al tiro poniendo encima las variables de estilos.css (en el <html>),
 // se guarda en este navegador (para que la web abra ya con tu estilo) y en la base, en la tabla
 // preferencias (para que te siga al celular u otro computador). Si la base dice otra cosa, gana la base.
-import { db, avisar } from "./base.js";
+import { db, avisar, el } from "./base.js";
 
 // Lo de siempre: cómo se ve si nunca tocaste nada. null = lo decide el modo (ej. cuánto se oscurece la foto).
 export const DE_SIEMPRE = { tema: "auto", tono: null, fondo: "paisaje", oscurecer: null, mover: true, opacidad: 1, desenfoque: 28, radio: 16, letra: "Inter",
-  barra: "clasica", ocultos: [], orden: [], retraida: false };
+  barra: "iconos", ocultos: [], orden: [], retraida: false };
 
 export const TEMAS = { auto: "Automático", claro: "Claro", oscuro: "Oscuro" };
 // Los colores de acento (todos se leen bien con letra blanca encima). También se puede elegir cualquier otro.
@@ -16,7 +16,7 @@ export const TONOS = { "#2f7a4c": "Verde", "#2563a8": "Azul", "#0f7a7a": "Turque
 // Los estilos de la barra lateral del computador (estilos.css, :root[data-barra]). En el teléfono el dock no cambia.
 export const BARRAS = {
   clasica:  { nombre: "Clásica", detalle: "Ícono y nombre debajo" },
-  iconos:   { nombre: "Solo íconos", detalle: "Angosta; el nombre al pasar el mouse" },
+  iconos:   { nombre: "Solo íconos", detalle: "Angosta y limpia; el nombre y su atajo (Alt + número) al pasar el mouse" },
   ancha:    { nombre: "Ancha", detalle: "Ícono y nombre en una fila" },
   flotante: { nombre: "Flotante", detalle: "Una tarjeta de vidrio separada del borde" },
   isla:     { nombre: "Isla", detalle: "Una píldora corta al centro, solo íconos" },
@@ -37,8 +37,10 @@ export const LETRAS = {
   "Atkinson Hyperlegible": "Atkinson Hyperlegible", "Del sistema": null,
 };
 
-const LOCAL = { visual: "apariencia", foto: "apariencia-foto" }; // dónde queda en este navegador
-const BASE = { visual: "visual", foto: "foto-de-fondo" };        // y en la tabla preferencias
+// Dónde queda cada cosa: en este navegador (local) y en la tabla preferencias (base).
+const VISUAL = { local: "apariencia", base: "visual" };
+// Tus fotos: la del fondo (paso 53) y la de perfil, que sale al pie de la barra (paso 93).
+const FOTOS = { fondo: { local: "apariencia-foto", base: "foto-de-fondo" }, perfil: { local: "apariencia-perfil", base: "foto-de-perfil" } };
 
 // Lo guardado se revisa antes de usarlo: lo que no se entiende vuelve a lo de siempre.
 // Así un dato raro (o de una versión vieja) nunca deja la web rota.
@@ -56,12 +58,19 @@ function limpiar(x) {
 const leer = (llave) => { try { return localStorage.getItem(llave); } catch { return null; } };
 const anotar = (llave, valor) => { try { valor == null ? localStorage.removeItem(llave) : localStorage.setItem(llave, valor); } catch {} };
 
-let elegido = limpiar(JSON.parse(leer(LOCAL.visual) || "null"));
-let foto = leer(LOCAL.foto); // la foto propia, como texto data:image/jpeg;base64,...
+let elegido = limpiar(JSON.parse(leer(VISUAL.local) || "null"));
+const fotos = Object.fromEntries(Object.entries(FOTOS).map(([cual, f]) => [cual, leer(f.local)])); // como texto data:image/jpeg;base64,...
 
 export const preferencia = () => elegido;
-export const tuFoto = () => foto;
-export const cssDelFondo = (id) => (id === "propia" ? (foto ? `url("${foto}")` : null) : FONDOS[id]?.css);
+export const tuFoto = (cual) => fotos[cual];
+export const cssDelFondo = (id) => (id === "propia" ? (fotos.fondo ? `url("${fotos.fondo}")` : null) : FONDOS[id]?.css);
+// Tu cara para la barra y Ajustes: tu foto de perfil o, si no hay, un monito.
+export function tuCara() {
+  if (fotos.perfil) return el("img", { className: "cara", src: fotos.perfil, alt: "" });
+  const c = el("span", { className: "cara sin-foto" });
+  c.innerHTML = '<svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19.5c1.2-3 3.7-4.5 6.5-4.5s5.3 1.5 6.5 4.5"/></svg>';
+  return c;
+}
 
 // Pone en el <html> lo que elegiste. Lo que está como siempre se quita, y vale lo de estilos.css.
 const sistemaOscuro = matchMedia("(prefers-color-scheme: dark)");
@@ -98,15 +107,17 @@ aplicar();
 export function cambiar(campos) {
   elegido = limpiar({ ...elegido, ...campos });
   aplicar();
-  anotar(LOCAL.visual, JSON.stringify(elegido));
-  guardarEnLaBase(BASE.visual, elegido);
+  anotar(VISUAL.local, JSON.stringify(elegido));
+  guardarEnLaBase(VISUAL.base, elegido);
 }
-// La foto propia (o null para quitarla). Si la quitas estando en uso, vuelve el paisaje.
-export function ponerFoto(dataUrl) {
-  foto = dataUrl;
-  anotar(LOCAL.foto, dataUrl);
-  guardarEnLaBase(BASE.foto, dataUrl);
-  cambiar({ fondo: dataUrl ? "propia" : elegido.fondo === "propia" ? "paisaje" : elegido.fondo });
+// Poner una de tus fotos (cual = "fondo" o "perfil"), o null para quitarla. La del fondo se usa al tiro;
+// si la quitas estando en uso, vuelve el paisaje. La de perfil se ve al volver a armar la barra.
+export function ponerFoto(cual, dataUrl) {
+  fotos[cual] = dataUrl;
+  anotar(FOTOS[cual].local, dataUrl);
+  guardarEnLaBase(FOTOS[cual].base, dataUrl);
+  if (cual === "fondo") cambiar({ fondo: dataUrl ? "propia" : elegido.fondo === "propia" ? "paisaje" : elegido.fondo });
+  else aplicar();
 }
 export const volverALoDeSiempre = () => cambiar(DE_SIEMPRE);
 
@@ -146,11 +157,11 @@ function guardarEnLaBase(clave, valor) {
 }
 // Al entrar: trae lo guardado en la base (si hay) y lo aplica. Se llama una vez por inicio de sesión.
 export async function traerDeLaBase() {
-  const { data, error } = await db.from("preferencias").select("clave, valor").in("clave", Object.values(BASE));
+  const { data, error } = await db.from("preferencias").select("clave, valor").in("clave", [VISUAL.base, ...Object.values(FOTOS).map((f) => f.base)]);
   if (error || !data.length) return;
   const de = Object.fromEntries(data.map((f) => [f.clave, f.valor]));
-  if (typeof de[BASE.foto] === "string") { foto = de[BASE.foto]; anotar(LOCAL.foto, foto); }
-  if (de[BASE.visual]) { elegido = limpiar(de[BASE.visual]); anotar(LOCAL.visual, JSON.stringify(elegido)); }
+  for (const [cual, f] of Object.entries(FOTOS)) if (typeof de[f.base] === "string") { fotos[cual] = de[f.base]; anotar(f.local, fotos[cual]); }
+  if (de[VISUAL.base]) { elegido = limpiar(de[VISUAL.base]); anotar(VISUAL.local, JSON.stringify(elegido)); }
   aplicar();
   document.dispatchEvent(new Event("apariencia"));
 }

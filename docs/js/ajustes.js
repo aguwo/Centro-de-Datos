@@ -10,7 +10,7 @@ import { db, el } from "./base.js";
 import { entradasDeLaBarra, dibujarTodo } from "./carcasa.js";
 import { APARTADOS } from "./apartados.js";
 import { selectorDeVistas, disposicionDe } from "./widgets.js";
-import { preferencia, cambiar, TEMAS, TONOS, FONDOS, BARRAS, LETRAS, cssDelFondo, tuFoto, ponerFoto, achicar, volverALoDeSiempre } from "./apariencia.js";
+import { preferencia, cambiar, TEMAS, TONOS, FONDOS, BARRAS, LETRAS, cssDelFondo, tuFoto, tuCara, ponerFoto, achicar, volverALoDeSiempre } from "./apariencia.js";
 
 // Las ventanas de Ajustes se ponen al día juntas: un cambio en una (ej. el modo) se ve en las otras.
 const ponerAlDia = new Set();
@@ -62,7 +62,7 @@ export function fondo(v) {
   const subir = el("input", { type: "file", accept: "image/*", hidden: true, onchange: async () => {
     const archivo = subir.files[0];
     subir.value = "";
-    if (archivo) ponerFoto(await achicar(archivo));
+    if (archivo) ponerFoto("fondo", await achicar(archivo));
     for (const f of ponerAlDia) f();
   } });
   const oscurecer = deslizador("Oscurecer el fondo", "oscurecer", { min: 0, max: 0.8, paso: 0.05, mostrar: (x) => Math.round(x * 100) + " %" });
@@ -79,12 +79,12 @@ export function fondo(v) {
       b.style.backgroundImage = cssDelFondo(id);
       return b;
     };
-    const quitar = el("i", { className: "quitar", title: "Quitar tu foto", textContent: "×", onclick: (e) => { e.stopPropagation(); ponerFoto(null); for (const f of ponerAlDia) f(); } });
+    const quitar = el("i", { className: "quitar", title: "Quitar tu foto", textContent: "×", onclick: (e) => { e.stopPropagation(); ponerFoto("fondo", null); for (const f of ponerAlDia) f(); } });
     tiles.replaceChildren(
       ...Object.entries(FONDOS).filter(([id]) => id !== "propia").map(([id, f]) => tile(id, f.nombre)),
-      tuFoto() ? tile("propia", FONDOS.propia.nombre, quitar) : "",
+      tuFoto("fondo") ? tile("propia", FONDOS.propia.nombre, quitar) : "",
       el("button", { type: "button", className: "fondo-tile subir", onclick: () => subir.click() },
-        el("b", { textContent: "+" }), el("span", { textContent: tuFoto() ? "Cambiar tu foto" : "Subir una foto" })));
+        el("b", { textContent: "+" }), el("span", { textContent: tuFoto("fondo") ? "Cambiar tu foto" : "Subir una foto" })));
     const efectivo = p.oscurecer ?? (document.documentElement.dataset.tema === "oscuro" ? 0.45 : 0);
     oscurecer.poner(efectivo);
     auto.hidden = p.oscurecer === null;
@@ -158,7 +158,7 @@ function arrastrable(li, lista, listo) {
 export function vistas(v) {
   const conVistas = APARTADOS.filter((a) => a.lugar && a.vistas?.length > 1);
   const selectores = conVistas.map((a) => selectorDeVistas(a, dibujarTodo));
-  v.append(...conVistas.flatMap((a, i) => [titulo(a.titulo?.() ?? a.nombre), selectores[i]]));
+  v.append(...conVistas.flatMap((a, i) => [titulo(a.nombre), selectores[i]]));
   return () => conVistas.forEach((a, i) => selectores[i].marcar(disposicionDe(a)));
 }
 
@@ -180,10 +180,22 @@ export function ventanas(v) {
   });
 }
 
+// Paso 93: también tu foto de perfil (la que sale al pie de la barra). Se achica a 256 px: es chica y pesa poco.
 export function cuenta(v) {
   const correo = el("p", { className: "correo" });
-  v.append(correo, el("button", { type: "button", className: "peligro", textContent: "Salir de la cuenta", onclick: () => db.auth.signOut() }));
+  const subir = el("input", { type: "file", accept: "image/*", hidden: true, onchange: async () => {
+    const archivo = subir.files[0];
+    subir.value = "";
+    if (archivo) ponerFoto("perfil", await achicar(archivo, 256));
+    ponerCara();
+  } });
+  const cara = el("button", { type: "button", className: "cambiar-cara", title: "Cambiar tu foto de perfil", onclick: () => subir.click() });
+  const quitar = el("button", { type: "button", className: "chico", textContent: "Quitar la foto", onclick: () => { ponerFoto("perfil", null); ponerCara(); } });
+  const ponerCara = () => { cara.replaceChildren(tuCara()); quitar.hidden = !tuFoto("perfil"); };
+  v.append(el("div", { className: "tu-cara" }, cara, el("div", {}, correo, quitar)), subir,
+    el("button", { type: "button", className: "peligro", textContent: "Salir de la cuenta", onclick: () => db.auth.signOut() }));
   return async () => {
+    ponerCara();
     const { data } = await db.auth.getSession();
     correo.textContent = data.session ? "Entraste como " + data.session.user.email : "";
   };

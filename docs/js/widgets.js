@@ -21,7 +21,7 @@
 //           ctx es lo que comparten las ventanas de un mismo apartado (ej. ctx.filtro: el área o proyecto elegido).
 //           ctx.cambiar({ ... }) lo cambia y redibuja todas las ventanas del apartado.
 import { el, db, datos, escribir } from "./base.js";
-import { tareasDeHoy, elTiempo, tuDia } from "./hoy.js";
+import { tareasDeHoy, elTiempo, tuDia, planDeHoy } from "./hoy.js";
 import { tareasDelFiltro, areasYProyectos } from "./productividad.js";
 import { galeria, cabecera, tablero, dentro } from "./proyectos.js";
 import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
@@ -37,6 +37,7 @@ export const WIDGETS = {
   "tareas-de-hoy": { titulo: "Tareas de hoy", crece: true, crear: tareasDeHoy },
   "el-tiempo":     { titulo: "El tiempo", crear: elTiempo },
   "tu-dia":        { titulo: "Tu día", crece: true, crear: tuDia },
+  "plan-de-hoy":   { crece: true, crear: planDeHoy },
   "tareas":        { titulo: "Tareas", crece: true, crear: tareasDelFiltro },
   "proyectos":     { crece: true, filtra: true, crear: areasYProyectos },
   "galeria":       { crear: galeria },

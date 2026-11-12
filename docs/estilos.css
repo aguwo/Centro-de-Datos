@@ -81,20 +81,34 @@ main { position: fixed; inset: 0; }
 
 /* Dock: escondido abajo; aparece al acercarse (carcasa.js) */
 .dock { position: fixed; bottom: 12px; left: 50%; z-index: 10; display: flex; gap: 4px; padding: 8px; border-radius: 20px;
-        max-width: calc(100vw - 24px); transform: translate(-50%, calc(100% + 28px)); transition: transform .28s cubic-bezier(.2,.7,.2,1); }
+        max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none; /* en el teléfono, si no caben, se desliza */
+        transform: translate(-50%, calc(100% + 28px)); transition: transform .28s cubic-bezier(.2,.7,.2,1); }
 .dock.visible, .dock:focus-within { transform: translateX(-50%); }
-.dock button { position: relative; width: 50px; height: 50px; padding: 0; border: 0; border-radius: 14px; background: var(--vidrio-fuerte);
-               display: grid; place-items: center; transition: transform .15s; }
-.dock button:hover { transform: translateY(-4px) scale(1.06); }
-.dock button[aria-current="page"] { background: var(--acento-fondo); color: var(--sobre-acento); }
-.dock .icono { width: 24px; height: 24px; }
-.dock .etiqueta { position: absolute; bottom: 62px; padding: 3px 8px; border-radius: 7px; background: var(--vidrio-fuerte); color: var(--texto);
-                  font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; }
+/* Paso 93: botones limpios, como la barra «Solo íconos» del computador: el ícono de línea y nada más. Al pasar el mouse,
+   un cuadrado translúcido (--resalte); el elegido lo lleva .marca, una sola pieza que viaja de un botón a otro (carcasa.js) */
+:root { --resalte: color-mix(in srgb, var(--texto) 12%, transparent); --globo: rgba(24,24,28,.94); /* el globo con el nombre: oscuro en claro y en oscuro */ }
+.dock button { position: relative; flex: none; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 14px; background: none; color: var(--texto);
+               display: grid; place-items: center; transition: background-color .2s ease; }
+.dock button:hover { background: var(--resalte); }
+.dock .icono { width: 24px; height: 24px; stroke-width: 1.6; }
+.marca { position: absolute; left: 0; top: 0; width: var(--w, 0); height: var(--h, 0); transform: translate(var(--x, 0), var(--y, 0)); border-radius: 14px;
+         background: var(--resalte); pointer-events: none; transition: transform .45s var(--suave-curva), width .45s var(--suave-curva), height .45s var(--suave-curva), opacity .2s ease; }
+.marca.nueva { transition: none; }
+.marca.sin-elegido { opacity: 0; }
+/* El globo: una píldora oscura con el nombre y, en gris, su atajo de teclado */
+.dock .etiqueta { position: absolute; bottom: calc(100% + 10px); display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 99px;
+                  background: var(--globo); color: #fff; font-size: 13px; font-weight: 500; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.28);
+                  opacity: 0; pointer-events: none; transition: opacity .15s; }
+.dock .etiqueta kbd { font: inherit; color: rgba(255,255,255,.5); }
 .dock button:hover .etiqueta { opacity: 1; }
+.dock .perfil { display: none; } /* tu foto: solo en las barras de íconos del computador (abajo) */
+.cara { display: block; width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.cara.sin-foto { display: grid; place-items: center; background: var(--resalte); }
+.cara.sin-foto .icono { width: 20px; height: 20px; }
 .asa { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 9; width: 240px; height: 18px; padding: 0; border: 0; display: grid; place-items: center; }
 .asa::before { content: ""; width: 96px; height: 5px; border-radius: 99px; background: rgba(255,255,255,.6); box-shadow: 0 1px 6px rgba(0,0,0,.35); transition: opacity .2s; }
 .dock.visible ~ .asa::before { opacity: 0; }
-@media (prefers-reduced-motion: reduce) { .dock, .dock button { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .dock, .dock button, .marca { transition: none; } }
 .dock [data-escritorio] { display: none; } /* en el teléfono cada sección tiene su botón */
 
 /* Paso 35c: en el computador el dock es una barra lateral fija, pegada al borde izquierdo,
@@ -115,7 +129,9 @@ main { position: fixed; inset: 0; }
 .con-escritorio .dock button::before { content: ""; position: absolute; left: -8px; top: 22%; bottom: 22%; width: 3px; border-radius: 0 3px 3px 0; background: var(--acento); transform: scaleY(0); }
 .con-escritorio .dock button[aria-current="page"]::before { transform: scaleY(1); }
 .con-escritorio .dock .icono { width: 22px; height: 22px; }
-.con-escritorio .dock .etiqueta { position: static; max-width: 100%; overflow: hidden; text-overflow: ellipsis; opacity: 1; padding: 0; background: none; color: inherit; font-size: 11px; }
+.con-escritorio .dock .etiqueta { position: static; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; opacity: 1; padding: 0; border-radius: 0;
+  background: none; box-shadow: none; color: inherit; font-size: 11px; font-weight: inherit; }
+.con-escritorio .dock .etiqueta kbd, .con-escritorio .dock .marca { display: none; } /* el atajo y la marca, solo donde hay globo (abajo) */
 /* El pie: Ajustes y, a su lado, el botón para retraer la barra; pegado abajo del todo */
 .pie { display: contents; }
 .con-escritorio .dock .pie { display: flex; align-items: stretch; gap: 2px; margin-top: auto; }
@@ -126,11 +142,24 @@ main { position: fixed; inset: 0; }
 /* Solo íconos e Isla: el nombre sale como globo al pasar el mouse */
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock { overflow: visible; }
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock button { padding: 11px 0; }
-:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta { position: absolute; left: calc(100% + 12px); top: 50%; bottom: auto; white-space: nowrap; overflow: visible; transform: translateY(-50%);
-  max-width: none; padding: 4px 10px; border-radius: 8px; background: var(--vidrio-fuerte); color: var(--texto); font-size: 12.5px; font-weight: 500;
-  box-shadow: var(--sombra); opacity: 0; pointer-events: none; transition: opacity .12s; }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta { position: absolute; left: calc(100% + 14px); top: 50%; bottom: auto; display: flex;
+  overflow: visible; transform: translateY(-50%); max-width: none; padding: 7px 13px; border-radius: 99px; background: var(--globo); color: #fff;
+  font-size: 13.5px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,.28); opacity: 0; pointer-events: none; }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta kbd { display: inline; }
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock button:is(:hover, :focus-visible) .etiqueta { opacity: 1; }
-[data-barra="iconos"] .con-escritorio { --barra: 64px; }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .perfil { display: grid; }
+/* Paso 93: Solo íconos, limpia: una columna centrada en alto de íconos de línea en cuadrados de 44 px, sin nombres.
+   El que tiene el mouse y el elegido llevan el cuadrado translúcido (el del elegido es la .marca que viaja). Al final, tu foto */
+[data-barra="iconos"] .con-escritorio { --barra: 72px; }
+[data-barra="iconos"] .con-escritorio .dock { align-items: center; justify-content: safe center; gap: 8px; padding: 16px 0; }
+[data-barra="iconos"] .con-escritorio .dock .pie { flex-direction: column; align-items: center; gap: 8px; margin-top: 0; }
+[data-barra="iconos"] .con-escritorio .dock button, [data-barra="iconos"] .con-escritorio .dock .pie > * { flex: none; width: 44px; height: 44px; padding: 0; }
+[data-barra="iconos"] .con-escritorio .dock button { color: var(--texto); }
+[data-barra="iconos"] .con-escritorio .dock button:hover { background: var(--resalte); }
+[data-barra="iconos"] .con-escritorio .dock button[aria-current="page"] { background: none; color: var(--texto); font-weight: inherit; }
+[data-barra="iconos"] .con-escritorio .dock button::before { display: none; }
+[data-barra="iconos"] .con-escritorio .dock .marca { display: block; border-radius: 12px; }
+[data-barra="iconos"] .con-escritorio .dock .pie > .retraer { height: 22px; }
 /* Ancha: ícono y nombre en una fila, con el nombre de la web arriba */
 [data-barra="ancha"] .con-escritorio { --barra: 212px; }
 [data-barra="ancha"] .con-escritorio .dock { padding: 16px 12px; }
@@ -186,6 +215,7 @@ main { position: fixed; inset: 0; }
 .con-escritorio .dock .icono { transition: transform .25s var(--suave-curva); }
 .con-escritorio .dock button:hover .icono { transform: translateY(-1.5px) scale(1.06); }
 .con-escritorio .dock button:active .icono { transform: scale(.92); transition-duration: .08s; }
+.barra-retraida .con-escritorio .dock .marca { opacity: 0; }
 .barra-retraida .con-escritorio .dock button { opacity: 0; transform: translateX(-10px); transition-delay: 0s; }
 .con-escritorio .sacar-barra { transition: transform .35s var(--suave-curva) .15s, opacity .25s ease .15s, width .2s var(--suave-curva), color .2s ease; }
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta { transform: translate(-6px, -50%); transition: opacity .18s ease, transform .25s var(--suave-curva); }
@@ -317,6 +347,38 @@ main { position: fixed; inset: 0; }
 .caja { appearance: none; flex: none; width: 18px; height: 18px; margin: 0; border-radius: 50%; border: 1.5px solid var(--suave); cursor: pointer; display: grid; place-items: center; }
 .caja:checked { background: var(--acento-fondo); border-color: var(--acento-fondo); }
 .caja:checked::after { content: ""; width: 4px; height: 8px; border: solid var(--sobre-acento); border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+/* Paso 94: Plan de hoy (hoy.js), la otra vista de Hoy. Arriba la semana en anillos; abajo una tarjeta por tarea.
+   Al marcarla, el ✓ se pone verde con un saltito, la tarjeta se apaga y después viaja al final (moverConSuavidad). */
+.semana-anillos { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; margin-bottom: 18px; }
+.dia-anillo { display: grid; justify-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.dia-anillo small { min-width: 22px; padding: 0 6px; border-radius: 999px; color: var(--suave); font-size: 11.5px; font-weight: 600; }
+.dia-anillo > b { font-size: 12.5px; font-weight: 500; color: var(--suave); }
+.dia-anillo.actual small { background: var(--linea); color: var(--texto); }
+.dia-anillo.actual > b { color: var(--texto); font-weight: 700; }
+.dia-anillo.futuro { opacity: .45; }
+.dia-anillo .anillo-avance { width: 30px; height: 30px; }
+.dia-anillo .anillo-avance circle { stroke-width: 6; }
+.dia-anillo .anillo-avance b { display: none; }
+.plan-cabeza { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.plan-cabeza h4 { margin: 0; font-size: 17px; letter-spacing: -.01em; }
+.pildora { padding: 4px 12px; border: 0; border-radius: 999px; background: var(--linea); color: var(--suave); font-size: 12.5px; }
+.pildora:hover { color: var(--texto); }
+.plan { list-style: none; margin: 0; padding: 0 0 2px; display: grid; gap: 8px; align-content: start; }
+.plan li { display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; border-radius: 16px; background: var(--vidrio-fuerte);
+           box-shadow: 0 1px 2px rgba(0,0,0,.05); transition: opacity .25s ease; }
+.plan li[draggable="true"] { cursor: grab; }
+.plan .insignia { width: 40px; height: 40px; border-radius: 12px; transition: filter .25s ease; }
+.plan .que { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.plan .nombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.plan .meta { display: flex; align-items: center; gap: 4px; }
+.plan .meta .icono { width: 13px; height: 13px; }
+.plan .caja { width: 22px; height: 22px; border-color: color-mix(in srgb, var(--suave) 60%, transparent); }
+.plan .caja:checked { background: var(--bien); border-color: var(--bien); }
+.plan .caja.recien:checked { animation: marcar .32s var(--suave-curva); } /* solo al marcarla tú, no cada vez que se redibuja */
+.plan li.hecha { opacity: .45; }
+.plan li.hecha .insignia { filter: grayscale(1); }
+@keyframes marcar { 0% { transform: scale(.6); } 60% { transform: scale(1.15); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .plan li, .plan .insignia { transition: none; } .plan .caja.recien { animation: none; } }
 /* El tiempo */
 .clima-ahora { display: flex; align-items: center; gap: 14px; }
 .clima-ahora .icono { width: 42px; height: 42px; stroke-width: 1.5; color: var(--aviso); }
@@ -1517,3 +1579,10 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .monto-grande-chico { font-size: 22px; font-variant-numeric: tabular-nums; }
 :is(.w-proximo-cobro, .w-meta-ahorro) { justify-content: space-between; gap: 10px; }
 .w-meta-ahorro .barra-dieta i { background: var(--bloque); }
+
+/* Paso 93: tu foto de perfil en Ajustes › Cuenta (tócala para cambiarla) */
+.tu-cara { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.tu-cara .cambiar-cara { padding: 0; border: 0; border-radius: 50%; }
+.tu-cara .cara { width: 56px; height: 56px; }
+.tu-cara .cara.sin-foto .icono { width: 30px; height: 30px; }
+.tu-cara .correo { margin: 0 0 4px; }
