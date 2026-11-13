@@ -26,6 +26,7 @@ import { hoyTexto, sumarDias, diasEntre, lunes } from "./fechas.js";
 import { icono, elegir } from "./dibujos.js";
 import { cambiar, cambiarProps, dentroDeCaja } from "./acciones.js";
 import { formulario } from "./panel.js";
+import { dona } from "./dona.js";
 
 const BLOQUE_GASTOS = "#0d9488", BLOQUE_AHORRO = "#d97706", BLOQUE_SUSCRIPCIONES = "#7c3aed";
 const SEMANAS = 8; // cuántas semanas muestra «Últimas 8 semanas»
@@ -496,18 +497,28 @@ export function suscripcionesPausadas(v) {
 }
 
 // ---------- en el escritorio infinito (paso 87) ----------
-// Finanzas de un vistazo, abajo de Hoy: la semana en un medio anillo con el gasto de cada día, las categorías
-// (el mismo widget de Gastos), el próximo cobro y tu objetivo de ahorro. Cada uno con el color de su bloque.
+// Finanzas de un vistazo, abajo de Hoy: la semana en una dona con lo gastado en cada categoría (paso 92) y el gasto
+// de cada día, las categorías (el mismo widget de Gastos), el próximo cobro y tu objetivo de ahorro. Cada uno con
+// el color de su bloque.
 const conColor = (v, color) => { v.classList.add("w-finanzas", "con-color-bloque"); v.style.setProperty("--color-bloque", color); };
-const medioAnillo = (frac, grande, chico) => el("div", { className: "medio-anillo" },
-  svgDe("0 0 240 130", `<path d="M20 120a100 100 0 0 1 200 0" pathLength="100" class="pista"/>${frac > 0 ? `<path d="M20 120a100 100 0 0 1 200 0" pathLength="100" class="lleno" stroke-dasharray="${Math.min(1, frac) * 100} 100"/>` : ""}`),
-  el("b", { textContent: grande }), el("small", { textContent: chico }));
-const svgDe = (caja, dentro) => { const x = document.createElementNS("http://www.w3.org/2000/svg", "svg"); x.setAttribute("viewBox", caja); x.setAttribute("aria-hidden", "true"); x.innerHTML = dentro; return x; };
+// Cada categoría con su color fijo (sale de su lugar en la lista, que no cambia de semana a semana).
+const COLORES = ["#f97316", "#fbbf24", "#c084fc", "#a8a29e", "#16a34a", "#2563eb", "#ca8a04", "#f472b6"], SIN_CATEGORIA = "#78716c";
+const colorDe = (c) => (c ? COLORES[categorias().indexOf(c) % COLORES.length] : SIN_CATEGORIA);
+// Un monto corto para que quepa dentro de un segmento: $800, $2,7k, $13k.
+const corto = (x) => "$" + (x < 1000 ? Math.round(x) : (x / 1000).toLocaleString("es-CL", { maximumFractionDigits: x < 10000 ? 1 : 0 }) + "k");
 
 export function finanzasSemana(v) {
   conColor(v, BLOQUE_GASTOS);
+  let s = null; // la semana dibujada, para lo que dice el centro de la dona
+  const rueda = dona((elegida) => elegida
+    ? [elegida.nombre, elegida.valor, `${Math.round(elegida.valor / s.gastado * 100)}% del total`]
+    : ["Esta semana", s.gastado, s.tope ? "gastado de " + plata(s.tope) : "gastado"], plata);
   return () => {
-    const s = semana(lunes(hoyTexto())), hoy = hoyTexto();
+    s = semana(lunes(hoyTexto()));
+    const hoy = hoyTexto(), suma = new Map();
+    for (const r of s.gastos) { const c = categoriaDe(r); suma.set(c, (suma.get(c) ?? 0) + valor(r)); }
+    rueda.poner([...suma].sort((a, b) => b[1] - a[1]).map(([c, x]) =>
+      ({ id: c?.id ?? "sin", valor: x, color: colorDe(c), icono: iconoDe(c), nombre: c?.titulo ?? "Sin categoría", corto: corto(x) })));
     const porDia = Array.from({ length: 7 }, (_, i) => sumarDias(s.desde, i)).map((d) => [d, sumar(s.gastos.filter((r) => dia(r.fecha) === d))]);
     const mayor = Math.max(1, ...porDia.map(([, x]) => x));
     v.sub.textContent = `${Number(s.desde.slice(8))} al ${new Date(s.hasta + "T12:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" })}`;
@@ -518,9 +529,10 @@ export function finanzasSemana(v) {
         return b;
       }));
     v.replaceChildren(v.firstChild,
-      medioAnillo(s.gastado / (s.tope || 1), s.quedan < 0 ? "−" + plata(-s.quedan) : plata(s.quedan), s.quedan < 0 ? "te pasaste" : `te quedan de ${plata(s.tope)}`),
+      rueda.caja,
       dias,
-      el("div", { className: "pie-kcal" }, s.quedan > 0 && s.dias ? el("span", {}, s.dias === 1 ? "Para hoy " : `Para ${s.dias} días `, el("b", { textContent: plata(s.quedan / s.dias) + (s.dias === 1 ? "" : " al día") })) : el("span", { textContent: `Gastado ${plata(s.gastado)}` }),
+      el("div", { className: "pie-kcal" }, s.quedan < 0 ? el("span", { className: "pasada" }, "Te pasaste ", el("b", { textContent: plata(-s.quedan) }))
+        : el("span", {}, "Te quedan ", el("b", { textContent: plata(s.quedan) }), s.dias ? ` · ${plata(s.quedan / s.dias)}${s.dias === 1 ? " hoy" : " al día"}` : ""),
         el("button", { className: "enlace", textContent: "+ Anotar", ariaHasPopup: "dialog", onclick: () => anotar("gasto") })));
   };
 }

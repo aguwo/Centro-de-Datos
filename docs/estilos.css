@@ -1447,7 +1447,7 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .w-semana-gasto .barra-dieta { position: relative; height: 14px; border-radius: 7px; overflow: visible; }
 .w-semana-gasto .barra-dieta i { border-radius: 7px; }
 .marca-hoy { position: absolute; top: -5px; bottom: -5px; left: var(--hoy); width: 2px; border-radius: 1px; background: var(--texto); }
-.kcal-grande b.pasada, .categoria b.pasada, .categoria small.pasada { color: var(--alerta); }
+.kcal-grande b.pasada, .categoria b.pasada, .categoria small.pasada, .pie-kcal .pasada b { color: var(--alerta); }
 .w-semana-gasto .kcal-grande b { color: var(--bien); }
 .w-semana-gasto .kcal-grande b.pasada { color: var(--alerta); }
 .frase-finanzas { margin: 0; padding: 9px 12px; border-radius: 10px; font-size: 12.5px; background: color-mix(in srgb, var(--bien) 12%, transparent); }
@@ -1550,13 +1550,22 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .anotar-boton:disabled { opacity: .55; }
 /* Paso 87: Finanzas en el escritorio infinito */
 .w-finanzas-semana { justify-content: space-between; gap: 14px; }
-.medio-anillo { position: relative; width: min(100%, 360px); aspect-ratio: 240 / 130; margin: 0 auto; display: grid; place-items: end center; padding-bottom: 4px; }
-.medio-anillo > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.medio-anillo path { fill: none; stroke-width: 18; stroke-linecap: round; }
-.medio-anillo .pista { stroke: color-mix(in srgb, var(--bloque) 16%, transparent); }
-.medio-anillo .lleno { stroke: var(--bloque); }
-.medio-anillo b { position: relative; font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; margin-bottom: 22px; }
-.medio-anillo small { position: absolute; bottom: 4px; color: var(--suave); font-size: 12.5px; }
+.dona { position: relative; width: min(100%, 264px); aspect-ratio: 1; margin: 0 auto; container-type: inline-size; }
+.dona > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.dona .pista { fill: none; stroke: color-mix(in srgb, var(--texto) 8%, transparent); stroke-width: 26; opacity: 0; transition: opacity .4s; }
+.dona.vacia .pista { opacity: 1; }
+.dona .parte { cursor: pointer; outline: none; transition: opacity .3s var(--suave-curva), filter .2s; }
+.dona .parte > path { fill: none; stroke: var(--color); stroke-linecap: round; }
+.dona .parte text { fill: var(--tinta); font-size: 12px; font-weight: 700; text-anchor: middle; dominant-baseline: central; font-variant-numeric: tabular-nums; pointer-events: none; }
+.dona .parte .icono { color: var(--tinta); stroke-width: 2; pointer-events: none; }
+.dona .parte:hover { filter: brightness(1.08); }
+.dona .parte:focus-visible > path { stroke: color-mix(in srgb, var(--color) 80%, var(--texto)); }
+.dona.con-elegida .parte:not(.elegida) { opacity: .35; }
+.dona .parte.sale { opacity: 0; pointer-events: none; }
+.dona-centro { position: absolute; inset: 22%; border-radius: 50%; display: grid; place-content: center; gap: 1px; text-align: center; background: none; border: 0; color: inherit; font: inherit; cursor: default; }
+.dona.con-elegida .dona-centro { cursor: pointer; }
+.dona-centro b { font-size: 12.5cqw; line-height: 1.05; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.dona-centro small { color: var(--suave); font-size: 4.8cqw; }
 .w-finanzas-semana .barras-semana { height: 84px; }
 .w-finanzas-semana .dia-barra i { background: color-mix(in srgb, var(--bloque) 60%, transparent); min-height: 3px; border-radius: 5px; }
 .w-finanzas-semana .dia-barra.hoy i { background: var(--bloque); }

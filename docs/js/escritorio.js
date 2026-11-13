@@ -9,6 +9,7 @@
 // En pantallas angostas no hay lienzo: cada apartado se ve a pantalla completa, como los demás.
 import { $, el } from "./base.js";
 import { APARTADOS } from "./apartados.js";
+import { resorte } from "./dibujos.js";
 
 // Cada sección mide lo mismo (16:10) y se ubican en una grilla; lugar [columna, fila].
 const SECCION = { ancho: 1280, alto: 800, espacio: 160 };
@@ -103,13 +104,11 @@ function detener() {
 
 // Un cuadro de la animación: la fórmula exacta del resorte amortiguado (no se descontrola aunque un cuadro tarde).
 function avanzar(t) {
-  const dt = Math.min(0.064, Math.max(0, t - ultimo) / 1000), l = libre(), p = aCentro(cam, l), e = Math.exp(-rigidez * dt);
+  const dt = Math.min(0.064, Math.max(0, t - ultimo) / 1000), l = libre(), p = aCentro(cam, l);
   ultimo = t;
   let falta = false;
   for (const k of ["cx", "cy", "lz"]) {
-    const x0 = p[k] - meta[k], v0 = vel[k], a = v0 + rigidez * x0;
-    p[k] = meta[k] + (x0 + a * dt) * e;
-    vel[k] = (v0 - rigidez * a * dt) * e;
+    [p[k], vel[k]] = resorte(p[k], vel[k], meta[k], rigidez, dt);
     // Llegó cuando le falta menos de un cuarto de píxel en pantalla (o una milésima de zoom) y casi no se mueve.
     const casi = k === "lz" ? 1e-3 : 0.25 / cam.z;
     if (Math.abs(p[k] - meta[k]) > casi || Math.abs(vel[k]) > casi * 4) falta = true;
