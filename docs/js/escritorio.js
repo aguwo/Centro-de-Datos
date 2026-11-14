@@ -163,8 +163,15 @@ function armarMinimapa(ir) {
   }), el("i", { className: "vista" }));
 }
 function dibujarMinimapa() {
-  const mini = $("minimapa"), k = Math.min(mini.clientWidth / mundo.w, mini.clientHeight / mundo.h);
-  const caja = (x, y, w, h) => ({ left: x * k + "px", top: y * k + "px", width: w * k + "px", height: h * k + "px" });
+  // Paso 107: el mundo va centrado y con un margen, y el cuadro de lo que ves no se sale del minimapa (antes, en las
+  // secciones de la orilla, quedaba cortado y parecía corrido).
+  const mini = $("minimapa"), M = 6, ancho = mini.clientWidth, alto = mini.clientHeight;
+  const k = Math.min((ancho - 2 * M) / mundo.w, (alto - 2 * M) / mundo.h), ox = (ancho - mundo.w * k) / 2, oy = (alto - mundo.h * k) / 2;
+  const caja = (x, y, w, h) => {
+    const izq = Math.max(2, ox + x * k), arriba = Math.max(2, oy + y * k);
+    const der = Math.min(ancho - 2, ox + (x + w) * k), abajo = Math.min(alto - 2, oy + (y + h) * k);
+    return { left: izq + "px", top: arriba + "px", width: Math.max(0, der - izq) + "px", height: Math.max(0, abajo - arriba) + "px" };
+  };
   for (const b of mini.querySelectorAll("button")) {
     const s = $(b.dataset.id);
     Object.assign(b.style, caja(s.offsetLeft, s.offsetTop, SECCION.ancho, SECCION.alto));

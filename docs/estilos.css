@@ -90,8 +90,9 @@ main { position: fixed; inset: 0; }
 .dock button { -webkit-tap-highlight-color: transparent; position: relative; flex: none; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 14px; background: none; color: var(--texto);
                display: grid; place-items: center; transition: background-color .2s ease; }
 .dock button:hover { background: var(--resalte); }
-.dock .icono { width: 24px; height: 24px; transition: transform .25s var(--resorte); }
-.dock button:active .icono { transform: scale(.9); transition-duration: .08s; } /* al apretar se hunde, al soltar vuelve con el resorte */
+.dock .icono { width: 24px; height: 24px; }
+/* Paso 107: el imán (movimiento.js): cada ícono se corre y se infla con sus resortes, en vez de transiciones de CSS */
+.dock button > :is(.icono, .cara) { transform: translate(var(--iman-x, 0px), var(--iman-y, 0px)) scale(var(--iman-s, 1)); }
 .marca { position: absolute; left: 0; top: 0; width: var(--w, 0); height: var(--h, 0); transform: translate(var(--x, 0), var(--y, 0)); border-radius: 14px;
          background: var(--resalte); pointer-events: none; transition: opacity .2s ease; } /* viaja con resortes (carcasa.js), no con CSS */
 .marca.sin-elegido { opacity: 0; }
@@ -215,8 +216,6 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 .con-escritorio .dock button { transition: background-color .2s ease, color .2s ease, opacity .3s ease, transform var(--resorte-t) var(--resorte);
   transition-delay: 0s, 0s, calc(var(--i, 0) * 28ms + 60ms), calc(var(--i, 0) * 28ms + 60ms); }
 .con-escritorio .dock button::before { transition: transform .3s var(--resorte); }
-.con-escritorio .dock button:hover .icono { transform: translateY(-1.5px) scale(1.06); }
-.con-escritorio .dock button:active .icono { transform: scale(.9); }
 .barra-retraida .con-escritorio .dock .marca { opacity: 0; }
 .barra-retraida .con-escritorio .dock button { opacity: 0; transform: translateX(-10px); transition-delay: 0s; }
 .con-escritorio .sacar-barra { transition: transform var(--resorte-t) var(--resorte) .15s, opacity .25s ease .15s, width .2s var(--resorte), color .2s ease; }
@@ -1418,15 +1417,15 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 @media (prefers-reduced-motion: reduce) { .habito-rapido .check { transition: none; } }
 
 /* ---------- Paso 76: ventana flotante (base.js flotante): vidrio de Ajustes, título con × y el contenido debajo ---------- */
-.flotante { width: min(540px, calc(100vw - 24px)); max-height: min(680px, calc(100dvh - 48px)); }
-.flotante > .cuerpo { display: grid; gap: 12px; padding: 18px 20px 20px; }
-.flotante header { display: flex; align-items: center; gap: 10px; }
-.flotante header h3 { flex: 1; margin: 0; font-size: 18px; }
-.flotante header h3::first-letter { text-transform: uppercase; }
-.flotante .cerrar { width: 32px; height: 32px; padding: 0; border-radius: 50%; font-size: 18px; line-height: 1; }
-.flotante .opciones { max-height: 300px; }
+dialog.flotante { width: min(540px, calc(100vw - 24px)); max-height: min(680px, calc(100dvh - 48px)); }
+dialog.flotante > .cuerpo { display: grid; gap: 12px; padding: 18px 20px 20px; }
+dialog.flotante header { display: flex; align-items: center; gap: 10px; }
+dialog.flotante header h3 { flex: 1; margin: 0; font-size: 18px; }
+dialog.flotante header h3::first-letter { text-transform: uppercase; }
+dialog.flotante .cerrar { width: 32px; height: 32px; padding: 0; border-radius: 50%; font-size: 18px; line-height: 1; }
+dialog.flotante .opciones { max-height: 300px; }
 .agregado { margin: 0; min-height: 1.3em; font-size: 13px; font-weight: 600; color: var(--bien); }
-@media (prefers-reduced-motion: no-preference) { .flotante[open] { animation: entrar .3s var(--suave-curva) both; } }
+@media (prefers-reduced-motion: no-preference) { dialog.flotante[open] { animation: entrar .3s var(--suave-curva) both; } }
 
 /* Paso 83: Finanzas. Usa lo mismo que la Dieta (cambiar-dia, kcal-grande, barra-dieta, barras-semana) con el color del bloque. */
 .w-semana-gasto .barra-dieta { position: relative; height: 14px; border-radius: 7px; overflow: visible; }
@@ -1844,8 +1843,17 @@ body:not(.con-escritorio) .estado-carpeta small { display: none; }
 .notas-ficha { min-height: 130px; resize: vertical; padding: 10px 12px; border: 1px solid var(--linea); border-radius: 12px; background: var(--vidrio-fuerte); color: var(--texto); font: inherit; font-size: 13.5px; }
 .titulo-conexiones { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 /* El grafo: las líneas en un svg y cada cosa como un botón encima, en el mismo plano (600 × 520). */
-.plano-grafo { position: relative; width: 100%; aspect-ratio: 600 / 520; }
-.plano-grafo > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.plano-grafo { position: relative; width: 100%; aspect-ratio: 600 / 520; overflow: hidden; border-radius: 14px; touch-action: none; cursor: grab; user-select: none; }
+.plano-grafo.moviendo { cursor: grabbing; }
+/* Paso 107: lo que se mueve al recorrer el grafo (ficha.js le pone translate y scale) */
+.mundo-grafo { position: absolute; inset: 0; transform-origin: 0 0; }
+.mundo-grafo.viajando { transition: transform .35s var(--suave-curva); }
+.mundo-grafo > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.controles-grafo { position: absolute; right: 8px; top: 8px; display: flex; gap: 4px; }
+.controles-grafo button { width: 30px; height: 30px; padding: 0; border: 1px solid var(--linea); border-radius: 9px; background: var(--vidrio-fuerte); color: var(--texto); font-size: 16px; line-height: 1; }
+.controles-grafo button:hover { background: var(--resalte); }
+.plano-grafo .nodo-grafo { cursor: pointer; }
+.plano-grafo.moviendo .nodo-grafo { cursor: grabbing; }
 .plano-grafo line { stroke: var(--suave); stroke-width: 2; opacity: .7; }
 .plano-grafo line.suave { stroke-width: 1.5; stroke-dasharray: 5 5; opacity: .45; }
 .plano-grafo marker path { fill: var(--suave); }
@@ -1886,7 +1894,7 @@ button.nodo-grafo:hover .insignia { transform: scale(1.12); }
   .datos-ficha { border-right: 0; border-bottom: 1px solid var(--linea); }
   .nodo-grafo { width: 96px; font-size: 11.5px; }
 }
-@media (prefers-reduced-motion: reduce) { .nodo-grafo .insignia { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .nodo-grafo .insignia, .mundo-grafo.viajando { transition: none; } }
 
 /* Paso 105: los bordes de columnas que se arrastran (widgets.js, apartados con ajustable) */
 .borde-columna { display: none; }
@@ -1905,3 +1913,8 @@ button.nodo-grafo:hover .insignia { transform: scale(1.12); }
 /* Paso 106: los tamaños de la web en Ajustes (ajustes.js) */
 .zooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; }
 .zooms button { padding: 8px 4px; font-size: 13px; }
+/* Paso 107: el fondo de la opción elegida de una .segmento viaja a la nueva (movimiento.js) */
+.segmento { position: relative; isolation: isolate; }
+.segmento > button { position: relative; z-index: 1; transition: color .2s ease; }
+.segmento > .pildora { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; }
+.segmento > button.llegando { background: transparent !important; box-shadow: none !important; }

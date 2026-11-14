@@ -13,6 +13,7 @@ import { iniciarEscritorio, enEscritorio, escritorioActivo, alCambiarDeModo, mir
 import { montar } from "./widgets.js";
 import { preferencia, cambiar, tuCara } from "./apariencia.js";
 import { conResorte, curvaDeResorte } from "./dibujos.js";
+import { iman } from "./movimiento.js";
 
 let actual = APARTADOS[0];
 let enElEscritorio = APARTADOS.find((a) => a.lugar); // la última sección del escritorio que viste: "Escritorio" vuelve ahí
@@ -46,7 +47,10 @@ function marcar() {
   $("dock").querySelector("[data-escritorio]")?.setAttribute("aria-current", actual.lugar ? "page" : "false");
   for (const b of $("dock").querySelectorAll("[data-cajon]")) b.setAttribute("aria-expanded", $(b.dataset.cajon).classList.contains("abierto"));
   moverMarca();
+  moverIman();
 }
+// Paso 107: los íconos de la barra como un imán (movimiento.js): el elegido se infla y los vecinos le hacen lugar.
+let moverIman = () => {};
 // Paso 93: el fondo del elegido es una sola pieza (.marca) que viaja de un botón al otro en vez de apagarse
 // en uno y prenderse en otro. Se pone sobre el botón elegido que se ve (offsetParent es null si está escondido).
 // Si no se usa en este estilo, estilos.css la esconde.
@@ -272,7 +276,8 @@ export function iniciarCarcasa() {
   new ResizeObserver(pastillas).observe($("pastillas")); // al aparecer la app (entraste) o girar el teléfono, la elegida vuelve al medio
   deslizar();
   document.addEventListener("barra", armarDock); // cambiaste la barra en Ajustes (apariencia.js avisa)
-  new ResizeObserver(moverMarca).observe($("dock")); // cambió el estilo o el tamaño: la marca se acomoda
+  moverIman = iman($("dock"));
+  new ResizeObserver(() => { moverMarca(); moverIman(); }).observe($("dock")); // cambió el estilo o el tamaño: la marca se acomoda
   atajos();
   globos();
   // Con la barra retraída queda esta pestaña en el borde izquierdo para volver a sacarla.
