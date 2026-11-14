@@ -580,7 +580,8 @@ form.nodo .conexion select + select { margin-top: 6px; }
    Las animaciones son cortas y con la misma curva que la barra lateral; con «reducir movimiento» no hay ninguna. */
 .w-galeria { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; gap: 16px; }
 .barra-galeria { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.barra-galeria input[type="search"] { flex: 0 1 260px; min-width: 0; height: 38px; padding: 0 14px; border: 1px solid var(--borde); border-radius: 11px; background: var(--vidrio-fuerte); }
+.barra-galeria input[type="search"] { flex: 0 1 260px; }
+:is(.barra-galeria, .herramientas-carpeta) input[type="search"] { min-width: 0; height: 38px; padding: 0 14px; border: 1px solid var(--borde); border-radius: 11px; background: var(--vidrio-fuerte); }
 .barra-galeria .segmento { background: var(--vidrio-fuerte); border: 1px solid var(--borde); }
 .barra-galeria .segmento button[aria-pressed="true"] { background: color-mix(in srgb, var(--acento) 18%, transparent); box-shadow: none; }
 .barra-galeria .principal { margin-left: auto; height: 38px; padding: 0 16px; border-radius: 11px; }
@@ -1647,3 +1648,58 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 [data-entra="izquierda"] { animation: entra-de-lado .32s var(--suave-curva); --desde: -40px; }
 @keyframes entra-de-lado { from { opacity: 0; transform: translateX(var(--desde)); } }
 @media (prefers-reduced-motion: reduce) { [data-entra] { animation: none; } .abrir-apartado, .pastillas button { transition: none; } }
+
+/* Paso 101: Archivos (archivos.js). A la izquierda el árbol de carpetas (va en el costado); a la derecha la carpeta abierta.
+   --c es el color de la carpeta (el de su proyecto o ramo). Las carpetas son tarjetas teñidas con su ícono grande;
+   los archivos, tarjetas claras con el ícono de su tipo: así se distingue de un vistazo qué se abre y qué se edita. */
+.arbol-carpetas { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; overflow-y: auto; }
+.fila-arbol { display: flex; align-items: center; padding-left: calc(var(--nivel, 0) * 14px); }
+.flecha-arbol { flex: none; width: 22px; height: 28px; padding: 0; border: 0; border-radius: 6px; color: var(--suave); display: grid; place-items: center; }
+.flecha-arbol::before { content: ""; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.6px 1.6px 0; transform: rotate(-45deg); transition: transform .2s var(--suave-curva); }
+span.flecha-arbol::before { display: none; }
+.flecha-arbol[aria-expanded="true"]::before { transform: rotate(45deg); }
+.nombre-arbol { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 0; border-radius: 8px; text-align: left; font-weight: 400; }
+.nombre-arbol .icono { width: 18px; height: 18px; flex: none; color: var(--c, var(--suave)); }
+.nombre-arbol span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nombre-arbol:hover { background: var(--resalte); }
+.nombre-arbol[aria-current="true"] { background: color-mix(in srgb, var(--acento) 15%, transparent); color: var(--acento); font-weight: 600; }
+.nombre-arbol.raiz { font-weight: 600; }
+.nombre-arbol.raiz .icono { color: var(--acento); }
+
+.w-carpeta { gap: 16px; }
+.ruta-carpeta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 13px; color: var(--suave); }
+.ruta-carpeta button { border: 0; padding: 2px 6px; border-radius: 6px; color: inherit; font-weight: 400; }
+.ruta-carpeta button:hover { background: var(--resalte); color: var(--texto); }
+.ruta-carpeta b { color: var(--texto); font-weight: 600; padding: 2px 6px; }
+.cabeza-carpeta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.cabeza-carpeta .volver { font-size: 26px; line-height: 1; padding: 0 4px; }
+.nombre-carpeta { flex: 1; min-width: 160px; }
+.nombre-carpeta h3 { margin: 0; font-size: 22px; letter-spacing: -.01em; text-transform: none; color: var(--texto); }
+.nombre-carpeta small { color: var(--suave); font-size: 13px; }
+.acciones-carpeta { display: flex; flex-wrap: wrap; gap: 8px; }
+.herramientas-carpeta input[type="search"] { width: 100%; }
+.cuerpo-carpeta { display: grid; gap: 20px; }
+.grupo-carpeta { display: grid; gap: 10px; }
+.grupo-carpeta h4 { display: flex; align-items: baseline; gap: 8px; margin: 0; font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
+.grupo-carpeta h4 small { font-weight: 400; letter-spacing: 0; }
+.carpetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.tarjeta-carpeta { display: grid; gap: 6px; align-content: start; justify-items: start; padding: 14px; border-radius: 14px; text-align: left; font-weight: 400;
+  background: color-mix(in srgb, var(--c) 14%, var(--vidrio-fuerte)); border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+  transition: transform .2s var(--suave-curva), box-shadow .2s var(--suave-curva); }
+.tarjeta-carpeta > .icono { width: 30px; height: 30px; color: var(--c); }
+.tarjeta-carpeta b { font-size: 14.5px; line-height: 1.25; }
+.tarjeta-carpeta small { color: var(--suave); font-size: 12.5px; }
+.tarjeta-carpeta:hover { transform: translateY(-2px); box-shadow: var(--sombra); }
+.archivos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.tarjeta-archivo { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 10px; border-radius: 12px; text-align: left; font-weight: 400; background: var(--vidrio-fuerte); }
+.tarjeta-archivo > span { min-width: 0; display: grid; }
+.tarjeta-archivo b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tarjeta-archivo small { color: var(--suave); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tarjeta-archivo:hover { border-color: color-mix(in srgb, var(--acento) 45%, transparent); }
+/* La ficha (el panel) sale a la derecha: la carpeta se corre para que no la tape. */
+.con-escritorio.con-panel #archivos .columnas { margin-right: 352px; }
+#archivos .columnas { transition: margin-right .3s var(--suave-curva); }
+/* En el celular el árbol no se ve: se navega tocando carpetas y volviendo con «‹» o con la ruta de arriba. */
+body:not(.con-escritorio) #archivos > .costado { display: none; }
+@media (max-width: 700px) { .carpetas { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; } .nombre-carpeta h3 { font-size: 19px; } }
+@media (prefers-reduced-motion: reduce) { .tarjeta-carpeta, .flecha-arbol::before, #archivos .columnas { transition: none; } }

@@ -79,6 +79,9 @@ export const hora = (fecha) => {
 export const fijas = (n) => (n?.props?.portal ? ["nota"] : []);
 export const FIJA = "Viene del portal de la U: se actualiza sola";
 
+// Un texto sin tildes y en minúsculas, para buscar: «Botánica» se encuentra escribiendo «botanica».
+export const sinTildes = (t) => (t ?? "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+
 export const colorDe = (clave) => datos.tipo.get(clave)?.color ?? "#78716c";
 // Dentro de qué proyecto, área o materia está un nodo (su caja), para mostrarlo al lado.
 export const dentroDe = (id) => datos.nodo.get(datos.padre.get(id))?.titulo;

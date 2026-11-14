@@ -122,6 +122,13 @@ export const APARTADOS = [
     ],
     icono: "billetera",
   },
+  // Paso 101: todo tu árbol como carpetas (archivos.js), para llegar a cualquier rama aunque no tenga apartado propio.
+  // A la izquierda el árbol de carpetas (en el celular se esconde y se navega con «‹»); a la derecha la carpeta abierta.
+  {
+    id: "archivos", nombre: "Archivos",
+    columnas: [{ costado: true, widgets: ["arbol-carpetas"] }, { widgets: ["carpeta"] }],
+    icono: "carpeta",
+  },
   {
     id: "mapa", nombre: "Mapa", dibujar: dibujarMapa, alMostrar: () => ajustarMapa(true),
     icono: "red",
