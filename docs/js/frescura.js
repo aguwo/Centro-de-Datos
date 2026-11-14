@@ -1,11 +1,11 @@
-// Paso 114: avisos de datos viejos. Lo que llega solo (los gastos del banco, la asistencia del portal de la U) puede
+// Paso 114: avisos de datos viejos. Lo que llega solo (los gastos del banco, la asistencia del portal de la U, EV@) puede
 // dejar de llegar sin que nadie se entere: un secreto que falta, el PC apagado, una clave que cambió. Aquí se mira
 // cuándo llegó lo último de cada fuente y, si pasó más de lo normal, arriba de Hoy sale un aviso con qué revisar.
 //
 // Las fuentes están en FUENTES: agregar una = agregar un objeto ahí. Cada fuente tiene:
 //   nombre      cómo se llama en el aviso («Los gastos del banco»)
 //   icono       su dibujo (dibujos.js)
-//   llega(r)    si un registro vino de esta fuente (ej. los gastos que anotó la función correos traen props.correo)
+//   ultimo()    el día de lo último que llegó (AAAA-MM-DD), o nada si nunca llegó nada
 //   dias        cuántos días sin nada nuevo todavía es normal
 //   aplica()    (opcional) si ahora tiene sentido esperarla (ej. la asistencia, solo con ramos en curso)
 //   revisar     qué hacer para que vuelva a llegar, en pasos cortos
@@ -13,10 +13,14 @@ import { el, datos, dia, flotante } from "./base.js";
 import { hoyTexto, diasEntre, corto } from "./fechas.js";
 import { insignia } from "./dibujos.js";
 
+// El día del registro más nuevo que cumple filtro (ej. los gastos que anotó la función correos traen props.correo).
+const ultimoRegistro = (filtro) => datos.registros.filter(filtro).map((r) => dia(r.fecha)).sort().at(-1);
+const ramosEnCurso = () => datos.nodos.filter((n) => n.tipos.clave === "ramo" && n.estado !== "Hecho");
+
 export const FUENTES = [
   {
     id: "banco", nombre: "Los gastos del banco", icono: "billetera", dias: 7,
-    llega: (r) => ["gasto", "ingreso"].includes(r.clase) && r.props?.correo,
+    ultimo: () => ultimoRegistro((r) => ["gasto", "ingreso"].includes(r.clase) && r.props?.correo),
     revisar: [
       "En GitHub, revisa que la acción «Publicar agente» termine bien (necesita el secreto SUPABASE_ACCESS_TOKEN).",
       "En Supabase, la función «correos» necesita su secreto CORREOS_CLAVE.",
@@ -25,12 +29,23 @@ export const FUENTES = [
   },
   {
     id: "portal", nombre: "La asistencia de la U", icono: "persona", dias: 4,
-    llega: (r) => r.clase === "asistencia" && r.props?.portal,
-    aplica: () => datos.nodos.some((n) => n.tipos.clave === "ramo" && n.estado !== "Hecho"),
+    ultimo: () => ultimoRegistro((r) => r.clase === "asistencia" && r.props?.portal),
+    aplica: () => ramosEnCurso().length > 0,
     revisar: [
       "Prende el PC: universidad-pc sube la asistencia cada 3 horas mientras está prendido.",
       "Si sigue sin llegar, corre otra vez instalar.ps1 en la carpeta universidad-pc.",
       "Si cambiaste tu clave de la U, guárdala de nuevo con guardar-clave.ps1.",
+    ],
+  },
+  {
+    // Paso 115: la copia de EV@ corre dos veces al día y deja en cada ramo cuándo fue (props.eva_al_dia).
+    id: "eva", nombre: "La copia de EV@", icono: "libro", dias: 2,
+    ultimo: () => ramosEnCurso().map((n) => n.props?.eva_al_dia && dia(n.props.eva_al_dia)).filter(Boolean).sort().at(-1),
+    aplica: () => ramosEnCurso().some((n) => n.props?.eva),
+    revisar: [
+      "Publica la función «eva» de nuevo (la acción «Publicar agente» de GitHub, o a mano con supabase functions deploy eva).",
+      "Si cambiaste tu clave de EV@, el token EVA_TOKEN de Supabase deja de servir: saca uno nuevo y guárdalo como secreto.",
+      "En Supabase, revisa que la tarea programada de la copia (pg_cron) siga activa.",
     ],
   },
 ];
@@ -46,7 +61,7 @@ function ocultar(id, hasta) {
 export function viejas(hoy = hoyTexto()) {
   const callados = ocultos();
   return FUENTES.filter((f) => !f.aplica || f.aplica()).map((fuente) => {
-    const ultimo = datos.registros.filter(fuente.llega).map((r) => dia(r.fecha)).sort().at(-1) ?? null;
+    const ultimo = fuente.ultimo() ?? null;
     return { fuente, ultimo, hace: ultimo && diasEntre(ultimo, hoy) };
   }).filter((v) => (!v.ultimo || v.hace > v.fuente.dias) && !(callados[v.fuente.id] >= hoy));
 }
