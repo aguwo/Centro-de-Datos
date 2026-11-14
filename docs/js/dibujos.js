@@ -9,6 +9,8 @@
 //   pastilla(nombre, texto)     una píldora con un ícono y un texto, para resúmenes y avisos
 //   moverConSuavidad(caja, cambiar)  hace el cambio y lo que tiene data-id viaja de su lugar viejo al nuevo
 //   resorte(x, vel, meta, rigidez, dt)  un paso de un resorte suave: dónde queda x y con qué velocidad (paso 92)
+//   conResorte(dibujar)    mueve unos números hacia sus metas con resortes y dibuja cada cuadro (paso 98)
+//   curvaDeResorte(rigidez)  el mismo resorte como curva de CSS, para las transiciones (paso 98)
 // Agregar uno = agregarlo a ICONOS (y, si es un tema con dibujo, a DIBUJOS).
 import { el } from "./base.js";
 
@@ -161,4 +163,46 @@ export function moverConSuavidad(caja, cambiar) {
 export function resorte(x, vel, meta, rigidez, dt) {
   const x0 = x - meta, a = vel + rigidez * x0, e = Math.exp(-rigidez * dt);
   return [meta + (x0 + a * dt) * e, (vel - rigidez * a * dt) * e];
+}
+
+// Paso 98: el resorte listo para usar. conResorte(dibujar) devuelve ir(metas, rigidez): cada número de «metas»
+// (ej. { x: 120, ancho: 48 }) viaja hacia su meta con su resorte y en cada cuadro se llama dibujar(valores).
+// «rigidez» es un número para todos o uno por número (ej. { x: 30, ancho: 16 }). La primera vez cada número
+// aparece ya en su meta; si le cambias la meta a medio camino sigue desde donde iba, sin tirones. Sin animar
+// (o con «reducir movimiento») llega de una. Se detiene solo cuando a todos les falta menos de una décima.
+const sinMovimiento = matchMedia("(prefers-reduced-motion: reduce)");
+export function conResorte(dibujar) {
+  const ahora = {}, vel = {}, meta = {}, rigidez = {};
+  let cuadro = 0, ultimo = 0;
+  const llegar = () => { cancelAnimationFrame(cuadro); cuadro = 0; Object.assign(ahora, meta); for (const k in vel) vel[k] = 0; dibujar(ahora); };
+  const avanzar = (t) => {
+    const dt = Math.min(0.064, Math.max(0, t - ultimo) / 1000);
+    ultimo = t;
+    let falta = false;
+    for (const k in meta) {
+      [ahora[k], vel[k]] = resorte(ahora[k], vel[k], meta[k], rigidez[k], dt);
+      if (Math.abs(ahora[k] - meta[k]) > 0.1 || Math.abs(vel[k]) > 1) falta = true;
+    }
+    if (!falta) return llegar();
+    dibujar(ahora);
+    cuadro = requestAnimationFrame(avanzar);
+  };
+  return (metas, fuerza, animar = true) => {
+    for (const k in metas) {
+      if (!(k in ahora)) { ahora[k] = metas[k]; vel[k] = 0; }
+      meta[k] = metas[k];
+      rigidez[k] = fuerza[k] ?? fuerza;
+    }
+    if (!animar || sinMovimiento.matches) return llegar();
+    if (!cuadro) { ultimo = performance.now(); cuadro = requestAnimationFrame(avanzar); }
+  };
+}
+
+// Paso 98: el mismo resorte, escrito como curva de CSS (linear() con 40 puntos) y cuánto dura, para que las
+// transiciones de CSS se muevan igual que lo que anima conResorte. Dura hasta que le falta una milésima.
+export function curvaDeResorte(rigidez) {
+  const tiempo = 9.23 / rigidez, puntos = [];
+  for (let i = 0; i <= 40; i++) puntos.push(+(1 - resorte(1, 0, 0, rigidez, (tiempo * i) / 40)[0]).toFixed(4));
+  puntos[40] = 1;
+  return { curva: `linear(${puntos.join(", ")})`, tiempo: tiempo.toFixed(2) + "s" };
 }
