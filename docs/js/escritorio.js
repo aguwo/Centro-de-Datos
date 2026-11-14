@@ -10,7 +10,6 @@
 import { $, el, enLaWeb } from "./base.js";
 import { APARTADOS } from "./apartados.js";
 import { resorte } from "./dibujos.js";
-import { iman } from "./movimiento.js";
 
 // Cada sección mide lo mismo (16:10) y se ubican en una grilla; lugar [columna, fila].
 const SECCION = { ancho: 1280, alto: 800, espacio: 160 };
@@ -155,37 +154,34 @@ function armarMundo() {
   $("mundo").style.setProperty("--alto", SECCION.alto + "px");
 }
 
-// Minimapa (paso 111, como un «magnetic select»): cada sección es un punto en su lugar del mundo; la que estás
-// mirando es una bolita de color inflada y las de al lado se corren para hacerle espacio. Al pasar el mouse, el punto
-// se estira hacia el puntero; al apretarlo se infla más, y el clic te lleva ahí. Todo con los resortes de movimiento.js.
-let moverMinimapa = () => {}, enMinimapa = null;
+// Minimapa (paso 113): el escritorio en miniatura. Cada sección es un rectángulo con borde fino, en su lugar y de
+// su tamaño; la que estás mirando va rellena. Clic en una y la cámara viaja ahí.
+let enMinimapa = null;
 function armarMinimapa(ir) {
-  const mini = $("minimapa");
-  mini.replaceChildren(...enLienzo.map((a) => {
-    const b = el("button", { title: a.nombre, ariaLabel: a.nombre, onclick: () => ir(a.id) }, el("i"));
+  $("minimapa").replaceChildren(...enLienzo.map((a) => {
+    const b = el("button", { title: a.nombre, ariaLabel: a.nombre, onclick: () => ir(a.id) });
     b.dataset.id = a.id;
     return b;
   }));
-  moverMinimapa = iman(mini, { crece: { elegido: 1.9, cerca: 1.25, apretado: 2.3 }, empuja: { elegido: 4, apretado: 7 }, alcance: 60 });
 }
 function dibujarMinimapa() {
-  // Cada punto va al centro de su sección, con el mundo centrado en el minimapa.
-  const mini = $("minimapa"), M = 12, ancho = mini.clientWidth, alto = mini.clientHeight;
-  const k = Math.min((ancho - 2 * M) / mundo.w, (alto - 2 * M) / mundo.h), ox = (ancho - mundo.w * k) / 2, oy = (alto - mundo.h * k) / 2;
+  // El mundo entero a escala, centrado en el minimapa; cada sección deja 1,5 px de aire con sus vecinas.
+  const mini = $("minimapa"), ancho = mini.clientWidth, alto = mini.clientHeight, AIRE = 1.5;
+  const k = Math.min(ancho / mundo.w, alto / mundo.h), ox = (ancho - mundo.w * k) / 2, oy = (alto - mundo.h * k) / 2;
   // La que estás mirando: la sección más cerca del centro de lo que ves (de lejos, ninguna).
   const { izq, W, H } = libre(), cx = (izq + W / 2 - cam.x) / cam.z, cy = (H / 2 - cam.y) / cam.z;
   let cerca = null, mejor = Infinity;
   for (const b of mini.querySelectorAll("button")) {
-    const s = $(b.dataset.id), x = s.offsetLeft + SECCION.ancho / 2, y = s.offsetTop + SECCION.alto / 2;
-    Object.assign(b.style, { left: ox + x * k + "px", top: oy + y * k + "px" });
-    const d = Math.hypot(x - cx, y - cy);
+    const s = $(b.dataset.id);
+    Object.assign(b.style, { left: ox + s.offsetLeft * k + AIRE + "px", top: oy + s.offsetTop * k + AIRE + "px",
+      width: SECCION.ancho * k - 2 * AIRE + "px", height: SECCION.alto * k - 2 * AIRE + "px" });
+    const d = Math.hypot(s.offsetLeft + SECCION.ancho / 2 - cx, s.offsetTop + SECCION.alto / 2 - cy);
     if (d < mejor) { mejor = d; cerca = b; }
   }
   const actual = lejos ? null : cerca;
-  if (actual === enMinimapa) return; // solo cuando cambia la elegida (esto corre en cada cuadro de la cámara)
+  if (actual === enMinimapa) return; // solo cuando cambia (esto corre en cada cuadro de la cámara)
   enMinimapa = actual;
   for (const b of mini.querySelectorAll("button")) b.setAttribute("aria-current", b === actual ? "page" : "false");
-  moverMinimapa();
 }
 
 // Lo que tiene su propio desplazamiento (una lista larga, la agenda) y todavía tiene para dónde moverse.

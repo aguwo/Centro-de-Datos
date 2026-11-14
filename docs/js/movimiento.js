@@ -13,7 +13,7 @@ import { enLaWeb, zoomDeLaWeb } from "./base.js";
 const sinMovimiento = matchMedia("(prefers-reduced-motion: reduce)");
 
 // ---------- El imán ----------
-// Lo de siempre (la barra); otro imán puede pedir lo suyo (ej. el minimapa infla mucho más su punto elegido).
+// Lo de siempre (la barra); otro imán puede pedir lo suyo (cuánto crece, empuja y hasta dónde llega).
 const CRECE = { elegido: 1.18, cerca: 1.08, apretado: 1.4 }; // cuánto se infla cada uno
 const EMPUJA = { elegido: 5, apretado: 11 }; // cuántos px corre a los vecinos (los que están pegados; más lejos, menos)
 const ALCANCE = 110; // hasta qué distancia (px) llega el empujón
