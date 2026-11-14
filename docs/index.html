@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <!-- ?v= cambia cuando cambian los estilos: así el navegador no usa los de antes que tenía guardados -->
-  <link rel="stylesheet" href="estilos.css?v=102">
+  <link rel="stylesheet" href="estilos.css?v=104">
 </head>
 <body>
   <div class="fondo" aria-hidden="true"></div>
@@ -37,6 +37,8 @@
   <!-- Paso 53: sin barra arriba. «Salir» está en Ajustes y «+ Nuevo» abajo a la derecha -->
   <button id="nuevo" class="nuevo principal oculto" aria-haspopup="menu" aria-expanded="false" title="Crear algo nuevo"><span class="mas" aria-hidden="true">+</span><span class="etiqueta">Nuevo</span></button>
   <div id="menu-nuevo" class="menu vidrio" role="menu" hidden></div>
+  <!-- Paso 97: la revisión de la noche (revision.js). Aparece desde las 21:00, sobre «+ Nuevo» -->
+  <button id="revisar" class="revisar oculto" hidden><span class="etiqueta">Revisar el día</span></button>
 
   <main id="app" class="oculto">
     <div id="escritorio" class="escritorio">

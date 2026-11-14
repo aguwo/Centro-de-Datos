@@ -122,6 +122,10 @@ const TEMAS = [[/creatina|vitamina|pastilla|remedio/i, ["pildora", "#7c3aed"]], 
   [/mañana|piel|sol/i, ["sol", "#c2410c"]], [/noche|dormir/i, ["luna", "#4338ca"]], [/entren|gim|ejercicio|correr/i, ["pesa", "#2f7a4c"]],
   [/le(er|ctura)|libro/i, ["libro", "#a16207"]], [/estudi/i, ["examen", "#0f766e"]], [/calor|comida|kcal/i, ["fuego", "#c2410c"]]];
 const temaDe = (h) => elegir(h.titulo, TEMAS, ["si", "#2f7a4c"]).map((x, i) => (i === 0 ? h.props?.icono ?? x : x));
+// Paso 96: los hábitos que tocan el día d, de cualquier bloque (los usa Hoy). De cada uno: su marca de ese día (o nada),
+// su ícono y color, y su hora si «Días» la dice (ej. Entrenar a las 08:00; si no, "").
+export const habitosDelDia = (d) => datos.nodos.filter((n) => n.tipos.clave === "habito" && tocaEl(n, d))
+  .map((h) => ({ h, marca: marcasDe(h).find((r) => dia(r.fecha) === d), tema: temaDe(h), hora: horaDe(h) }));
 // ---------- los entrenos (paso 65) ----------
 // Tus entrenos son los hábitos de Ejercicio (ej. «Entrenar», con Días «Lunes, martes, miércoles y viernes, 08:00 a 09:00»).
 const entrenos = () => habitos("ejercicio");
