@@ -192,15 +192,16 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 112 | **Minimapa sin caja.** Se fue el recuadro: ahora son puntitos de vidrio que flotan sobre el fondo, y la sección donde estás es una bolita iridiscente (rosado, menta y durazno) que cambia de tono despacito. Se siguen moviendo con el imán del paso 111. Sin SQL. |
 | 113 | **Minimapa a elegir.** Fuera la bolita: en Ajustes → Escritorio infinito → Minimapa eliges entre 4 estilos sobrios, todos sin caja: **Miniatura** (el escritorio en chico, rectángulos de borde fino y el tuyo relleno; viene así), **Puntos** (el tuyo con un anillo fino), **Punto con nombre** (el nombre de la sección debajo) y **Lista** (los nombres en columna, con una rayita que baja hasta el tuyo). Sin SQL. |
 | 114 | **Aviso de datos viejos.** Arriba de Hoy (en las dos vistas) sale un aviso cuando algo que llega solo dejó de llegar: los gastos del banco (más de 7 días sin un correo nuevo) o la asistencia del portal de la U (más de 4 días, solo con ramos en curso). Dice cuándo llegó lo último, «¿Qué reviso?» abre los pasos para arreglarlo y «Ya sé» lo calla por 7 días en ese navegador. Las fuentes viven en una lista (`FUENTES`): sumar otra es agregar un objeto | — | — | `docs/js/frescura.js` (nuevo), `docs/js/hoy.js`, `estilos.css` |
+| 115 | **EV@ completo.** La copia de EV@ (dos veces al día) ahora también trae los **cuestionarios**: cada uno con fecha es una tarea «Responder …» dentro de su ramo, que pasa a Hecho cuando terminas un intento (EV@ solo muestra los de tu sección). Y guarda en cada ramo su **material** (`props.material`): en la página del ramo, «Material de EV@» lo lista por sección, plegable, con enlaces que abren EV@ en otra pestaña (no se copia ningún archivo). La copia deja la hora en `props.eva_al_dia`, y el aviso de datos viejos del paso 114 suma «La copia de EV@» (más de 2 días). Hay que volver a publicar la función `eva` | — | — | `supabase/functions/eva/plan.ts` (`material`, `Pendiente`), `eva/index.ts`, `docs/js/universidad.js`, `docs/js/frescura.js` (`ultimo()` por fuente), `supabase/functions/mcp/servidor.ts`, `tests/eva.test.ts`, `estilos.css` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 115, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 116, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
 | Hecho | Aviso de datos viejos (paso 114) |
-| Ahora | EV@: material de cada ramo (lista con enlaces) y cuestionarios con fecha |
+| Hecho | EV@: material de cada ramo y cuestionarios con fecha (paso 115) |
 | Más adelante | Respaldos semanales de la base |
 | Hecho | Finanzas (pasos 83 a 87) |
 | Después | Chat con Martita en la web |

@@ -214,9 +214,24 @@ export function paginaDeRamo(v, ctx) {
       el("div", { className: "lado" },
         el("section", { className: "ventana vidrio" }, el("h3", {}, "Evaluaciones", nueva),
           evals.length ? tabla : el("p", { className: "vacio", textContent: "Sin evaluaciones. Agrégalas con «+ Evaluación»." }), simulador),
-        syllabus),
+        materialDe(ramo, color), syllabus),
       el("div", { className: "lado" }, asis, tareas)));
   }
+}
+
+// Paso 115: el material del ramo en EV@ (lo guarda la copia de EV@ en props.material, dos veces al día): una lista
+// por sección con enlaces que abren EV@ en otra pestaña, con tu sesión. No se copia ningún archivo.
+const DIBUJO_MATERIAL = { resource: "libro", folder: "carpeta", url: "web", page: "lista", book: "libro" };
+function materialDe(ramo, color) {
+  const secciones = ramo.props?.material;
+  if (!secciones?.length) return "";
+  const total = secciones.reduce((s, x) => s + x.cosas.length, 0), al = ramo.props.eva_al_dia;
+  return el("section", { className: "ventana vidrio material" },
+    el("h3", {}, "Material de EV@", el("small", { textContent: `${total} ${total === 1 ? "cosa" : "cosas"}` + (al ? ` · copiado el ${corto(dia(al))} ${hora(al)}` : "") })),
+    ...secciones.map((s, i) => el("details", { open: i === secciones.length - 1 }, // la última sección suele ser lo más nuevo
+      el("summary", {}, el("span", { textContent: s.seccion || "Sin nombre" }), el("small", { textContent: s.cosas.length })),
+      el("ul", {}, ...s.cosas.map((c) => el("li", {}, insignia(DIBUJO_MATERIAL[c.tipo] ?? "libro", color, "chica"),
+        el("a", { href: c.enlace, target: "_blank", rel: "noopener", textContent: c.nombre })))))));
 }
 
 // ---------- lo que viene ----------
