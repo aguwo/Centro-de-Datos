@@ -6,7 +6,7 @@
 //
 //   id        el id de su <section> (y lo que aparece en la dirección: ...#mapa)
 //   nombre    lo que dice la barra de arriba y la etiqueta del dock
-//   icono     los trazos del ícono (SVG de 24 × 24, una sola línea)
+//   icono     el nombre de su ícono en dibujos.js (ej. "salud")
 //   columnas  (con widgets) [{ ancho, widgets: [...] }, ...]: las columnas de izquierda a derecha, cada una con
 //             los widgets de arriba abajo. ancho es la proporción (3 y 2 = la primera un poco más ancha)
 //   vistas    (con widgets, en vez de columnas) [{ nombre, columnas }, ...]: formas de ver el apartado entre las que
@@ -41,18 +41,18 @@ export const APARTADOS = [
       { nombre: "Plan", icono: "lista", columnas: [{ ancho: 3, widgets: ["plan-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }] },
       { nombre: "Clásica", icono: "bloques", columnas: [{ ancho: 3, widgets: ["tareas-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }] },
     ],
-    icono: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    icono: "sol",
   },
   // Paso 61: tus 7 días de un vistazo (semana.js), arriba de Hoy en el escritorio infinito.
   {
     id: "semana", nombre: "Esta semana", lugar: [1, 0], nuevo: ["evento", "tarea"],
     columnas: [{ widgets: ["lo-importante", "dias"] }],
-    icono: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/>',
+    icono: "semana",
   },
   {
     id: "productividad", nombre: "Productividad", lugar: [0, 1], nuevo: ["tarea", "proyecto"],
     columnas: [{ widgets: ["tareas"] }, { widgets: ["proyectos"] }],
-    icono: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8.5 12.2l2.6 2.6 4.6-5.4"/>',
+    icono: "test",
   },
   // Paso 73: lo de hoy de Salud, a la derecha de Hoy en el escritorio infinito. Tocar una tarjeta abre Salud en ese bloque.
   {
@@ -63,27 +63,27 @@ export const APARTADOS = [
       { nombre: "Bento", icono: "bloques", columnas: [{ widgets: ["dieta-hoy"] }, { widgets: ["medidor-peso", ["entreno-hoy", "habitos-rapidos"]] }] },
       { nombre: "Anillos", icono: "objetivo", columnas: [{ widgets: ["anillos-salud", ["habitos-rapidos", "macros-hoy", "entreno-hoy"]] }] },
     ],
-    icono: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/><path d="M3 12h4l2-3 3 6 2-3h3"/>',
+    icono: "salud",
   },
   // Paso 87: Finanzas de un vistazo, abajo de Hoy en el escritorio infinito: la semana a la izquierda; a la derecha
   // las categorías y, debajo, el próximo cobro y tu objetivo de ahorro lado a lado.
   {
     id: "finanzas-hoy", nombre: "Finanzas hoy", lugar: [1, 2], nuevo: ["categoria", "cuenta"], titulo: () => "Finanzas",
     columnas: [{ widgets: ["finanzas-semana"] }, { ancho: 1.15, widgets: ["por-categoria", ["proximo-cobro", "meta-ahorro"]] }],
-    icono: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>',
+    icono: "billetera",
   },
   // Paso 35: una caja (área, ramo, proyecto...) completa, para verla entera y editarla. Va a pantalla completa.
   {
     id: "proyectos", nombre: "Proyectos", nuevo: ["proyecto", "tarea", "nota", "evento"],
     columnas: [{ widgets: ["galeria", "caja", "tablero", "dentro"] }], // la galería o, si abriste uno, el proyecto (paso 57)
-    icono: '<path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+    icono: "proyecto",
   },
   // Paso 46a: tus ramos del semestre (universidad.js). Las tarjetas; al tocar una, la página de ese ramo.
   {
     id: "universidad", nombre: "Universidad", nuevo: ["evento", "tarea", "nota"],
     titulo: () => ["Universidad", semestreActual()].filter(Boolean).join(" · "),
     columnas: [{ ancho: 3, widgets: ["ramos", "ramo"] }, { ancho: 1.1, widgets: ["lo-que-viene"] }],
-    icono: '<path d="M2.5 9L12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c0 1.4 2.5 3 5.5 3s5.5-1.6 5.5-3V11M21.5 9v5"/>',
+    icono: "examen",
   },
   // Paso 63: tu salud completa (salud.js). Va a pantalla completa.
   // Paso 69: tres bloques, Ejercicio, Hábitos y Dieta (paso 67, como Samsung Health); en cada uno, lo de hoy a la
@@ -101,7 +101,7 @@ export const APARTADOS = [
       { nombre: "Hoy", ancho: 1, widgets: ["calorias-dia", "comidas-dia"] },
       { nombre: "Cómo vas", ancho: 1.5, widgets: ["equilibrio", "semana-comida", "despensa"] },
     ],
-    icono: '<path d="M20.8 5.6a5 5 0 0 0-7.6-.6L12 6.2l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 20.4l8.3-8.3a5 5 0 0 0 .5-6.5z"/><path d="M3 12h4l2-3 3 6 2-3h3"/>',
+    icono: "salud",
   },
   // Paso 83: tu plata (finanzas.js), como Salud: tres bloques, Gastos, Ahorro y Suscripciones, con lo de ahora a la
   // izquierda y cómo vas a la derecha. Va a pantalla completa.
@@ -118,22 +118,22 @@ export const APARTADOS = [
       { nombre: "Este mes", ancho: 1, widgets: ["este-mes", "suscripciones"] },
       { nombre: "Cómo vas", ancho: 1.25, widgets: ["detectadas", "en-un-ano", "pausadas"] },
     ],
-    icono: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>',
+    icono: "billetera",
   },
   // Las tarjetas de antes (hábitos, gastos, plantas...). Se quedan hasta que cada una tenga su apartado (paso 32).
   {
     id: "inicio", nombre: "Resumen", dibujar: dibujarInicio,
-    icono: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+    icono: "resumen",
   },
   {
     id: "mapa", nombre: "Mapa", dibujar: dibujarMapa, alMostrar: () => ajustarMapa(true),
-    icono: '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="10" cy="18" r="2.5"/><path d="M8.3 7l7.3.8M7 8.3l2.2 7.3M16.3 10l-4.6 6"/>',
+    icono: "red",
   },
   // Paso 53: cómo se ve la web (modo, color, fondo, vidrio, letra) y tu cuenta (ajustes.js y apariencia.js).
   {
     id: "ajustes", nombre: "Ajustes", abajo: true,
     columnas: [{ ancho: 3, widgets: ["modo", "fondo"] }, { ancho: 2, widgets: ["barra", "vistas", "ventanas", "cuenta"] }],
-    icono: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+    icono: "ajustes",
   },
 ];
 
@@ -144,6 +144,6 @@ export const APARTADOS = [
 export const CAJONES = [
   {
     id: "calendario", nombre: "Calendario", iniciar: iniciarCalendario, dibujar: dibujarCalendario,
-    icono: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+    icono: "calendario",
   },
 ];

@@ -4,6 +4,7 @@
 // se guarda en este navegador (para que la web abra ya con tu estilo) y en la base, en la tabla
 // preferencias (para que te siga al celular u otro computador). Si la base dice otra cosa, gana la base.
 import { db, avisar, el } from "./base.js";
+import { icono } from "./dibujos.js";
 
 // Lo de siempre: cómo se ve si nunca tocaste nada. null = lo decide el modo (ej. cuánto se oscurece la foto).
 export const DE_SIEMPRE = { tema: "auto", tono: null, fondo: "paisaje", oscurecer: null, mover: true, opacidad: 1, desenfoque: 28, radio: 16, letra: "Inter",
@@ -67,9 +68,7 @@ export const cssDelFondo = (id) => (id === "propia" ? (fotos.fondo ? `url("${fot
 // Tu cara para la barra y Ajustes: tu foto de perfil o, si no hay, un monito.
 export function tuCara() {
   if (fotos.perfil) return el("img", { className: "cara", src: fotos.perfil, alt: "" });
-  const c = el("span", { className: "cara sin-foto" });
-  c.innerHTML = '<svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19.5c1.2-3 3.7-4.5 6.5-4.5s5.3 1.5 6.5 4.5"/></svg>';
-  return c;
+  return el("span", { className: "cara sin-foto" }, icono("persona"));
 }
 
 // Pone en el <html> lo que elegiste. Lo que está como siempre se quita, y vale lo de estilos.css.
