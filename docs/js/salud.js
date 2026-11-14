@@ -43,9 +43,9 @@ const svgDe = (viewBox, trazos, clase = "") => {
 };
 
 // ---------- el peso ----------
-const objetivoDePeso = () => datos.nodos.find((n) => n.tipos.clave === "objetivo" && n.estado !== "Hecho" && n.props?.unidad === "kg" && typeof n.props?.meta === "number");
+export const objetivoDePeso = () => datos.nodos.find((n) => n.tipos.clave === "objetivo" && n.estado !== "Hecho" && n.props?.unidad === "kg" && typeof n.props?.meta === "number");
 const pesadas = (o) => datos.registros.filter((r) => r.clase === "medida" && r.nodo_id === o.id).map((r) => ({ d: dia(r.fecha), v: Number(r.valor) }));
-function pesoActual(o) {
+export function pesoActual(o) {
   const u = pesadas(o).at(-1);
   return u ?? { d: null, v: Number(o.props.actual ?? o.props.inicio) };
 }
@@ -250,7 +250,7 @@ function cambiarDia(ctx, clave = "dia") {
   return el("div", { className: "cambiar-dia" }, mover(-1), el("b", { textContent: nombreDelDia(d) }), mover(1));
 }
 // Para guardar algo en el día d: hoy, con la hora de ahora; otro día, sin hora.
-const fechaDe = (d) => (d === hoyTexto() ? {} : { fecha: sinHoraISO(d) });
+export const fechaDe = (d) => (d === hoyTexto() ? {} : { fecha: sinHoraISO(d) });
 
 // Paso 66: los hábitos de hoy en una lista, agrupados por su rutina (la caja donde están), con un anillo de cuántos llevas.
 export function habitosHoy(v, ctx) {
@@ -471,7 +471,7 @@ export function despensa(v) {
 
 // ---------- la Dieta (paso 67, como Samsung Health) ----------
 // Toda la vista mira un día (ctx.dia; sin nada, hoy). Paso 69: solo las cuatro comidas, y se agrega con el + de cada una.
-const MOMENTOS = [["Desayuno", "taza", "al desayuno"], ["Almuerzo", "plato", "al almuerzo"], ["Merienda", "manzana", "a la merienda"], ["Cena", "luna", "a la cena"]];
+export const MOMENTOS = [["Desayuno", "taza", "al desayuno"], ["Almuerzo", "plato", "al almuerzo"], ["Merienda", "manzana", "a la merienda"], ["Cena", "luna", "a la cena"]];
 const diaDe = (ctx) => ctx.dia ?? hoyTexto();
 // El hábito de Dieta que se cumple solo: registrar calorías (al anotar comida).
 const habitoDe = (palabras) => habitos("dieta").find((h) => palabras.test(h.titulo));
@@ -578,11 +578,13 @@ function gramosDeSiempre(a) {
 
 // Paso 76: el + de una comida abre una ventana flotante con el buscador. Lo que agregas queda anotado y la ventana sigue
 // abierta (abajo dice qué agregaste), para sumar varias cosas seguidas; se cierra con la ×, Esc o tocando fuera.
-function agregarA(momento, alMomento, ctx) {
+// Devuelve la ventana (la revisión de la noche, paso 97, mira cuándo se cierra).
+export function agregarA(momento, alMomento, ctx) {
   ctx.texto = "";
   const listo = el("p", { className: "agregado", ariaLive: "polite" });
   const d = flotante("Agregar " + alMomento, buscador(momento, ctx, (nombre, g) => { listo.textContent = `✓ ${nombre} · ${numero(g)} g`; }), listo);
   d.querySelector(".buscar-alimento input").focus();
+  return d;
 }
 
 // El buscador de una comida: escribes y salen tus alimentos (sin escribir, los que más anotas primero).

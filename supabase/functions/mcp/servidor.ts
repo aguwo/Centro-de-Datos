@@ -125,14 +125,18 @@ export function agenda(nodos: Nodo[], desde: string, dias: number): { atrasadas:
 }
 
 // Lo que Martita hace en el cierre del día. Va dentro de la respuesta de cierre_del_dia, así cualquier cliente lo sigue.
+// Paso 97: el mismo orden que la revisión de la noche de la web (docs/js/revision.js). Un paso sin nada que revisar se salta.
 export const PASOS_CIERRE = [
   "Habla como Martita: corto, cercano, en español de Chile, una pregunta a la vez. Empieza preguntando cómo estuvo el día.",
-  "Por cada clase con asistencia null, pregunta si fue y anótalo con anotar_registro (clase asistencia, nodo_id = ramo_id, valor 1 si fue y 0 si faltó, fecha = dia).",
-  "Repasa tareas_de_hoy y atrasadas: lo que hizo pásalo a Hecho con actualizar_nodo; para lo que no, pregunta si lo mueve a mañana, a otro día o lo suelta.",
-  "Pregunta si salió alguna nota de evaluaciones_sin_nota (puede estar en Ucampus o EV@) y guárdala en props.nota del evento con actualizar_nodo.",
-  "Si cuenta algo más que vale la pena guardar (un gasto, una comida, un hábito, una idea), búscalo y anótalo como registro o nodo.",
-  "Planifica mañana con lo que viene en manana y proximas_evaluaciones: propón hasta 3 prioridades y, si está de acuerdo, ponles props.prioridad_dia = la fecha de mañana.",
-  "Termina con un resumen de tres líneas de lo que quedó anotado y lo importante de mañana.",
+  "Lo de hoy: repasa tareas_de_hoy y atrasadas. Lo que hizo pásalo a Hecho con actualizar_nodo; lo demás, pregunta si va a mañana, a otro día o lo suelta (archivado).",
+  "Asistencia: por cada clase con asistencia null, pregunta si fue y anótalo con anotar_registro (clase asistencia, nodo_id = ramo_id, valor 1 si fue y 0 si faltó, fecha = dia).",
+  "Hábitos: pregunta cuáles de los hábitos que tocan hoy hizo (búscalos con buscar_nodos tipo habito) y anótalos con anotar_registro (clase habito).",
+  "Comidas y gastos: pregunta qué comió y si gastó plata hoy; anota cada cosa como registro (clase comida o gasto). Si no gastó nada, sigue.",
+  "Peso: si lleva 7 días o más sin pesarse (consultar_registros clase medida), pregunta cuánto pesa y anótalo.",
+  "Notas: pregunta si salió alguna de evaluaciones_sin_nota (puede estar en EV@ o el portal) y guárdala en props.nota del evento con actualizar_nodo.",
+  "Inbox: si hay cosas en estado Inbox (buscar_nodos estado Inbox), pregunta si van para mañana, algún día, ya están hechas o se sueltan.",
+  "Mañana: con lo que viene en manana y proximas_evaluaciones, propón hasta 3 prioridades y, si está de acuerdo, ponles props.prioridad_dia = la fecha de mañana.",
+  "Termina con un resumen de tres líneas de lo que quedó anotado y lo importante de mañana, y marca su hábito de revisar (el que tenga «revis» en el nombre) con anotar_registro.",
 ];
 
 const RAMO = "topico"; // los ramos son tópicos: sus clases son los eventos que se repiten y sus evaluaciones los que no

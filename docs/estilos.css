@@ -1632,9 +1632,10 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .tarjeta-revision .que { flex: 1 1 200px; min-width: 0; display: grid; }
 .tarjeta-revision .que b { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
 .tarjeta-revision .que small { color: var(--suave); font-size: 12.5px; }
-.opciones-revision { flex: 1 1 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.opciones-revision > * { min-width: 0; padding: 9px 4px; font-size: 14px; border-radius: 10px; }
-.opciones-revision input[type="date"] { border: 1px solid var(--acento); background: var(--vidrio); color: inherit; font: inherit; }
+.opciones-revision { flex: 1 1 100%; display: flex; gap: 8px; }
+.opciones-revision > * { flex: 1 1 0; min-width: 0; padding: 9px 4px; font-size: 14px; border-radius: 10px; }
+.opciones-revision input[type="date"], .tarjeta-revision > input { padding: 9px 12px; border-radius: 10px; border: 1px solid var(--acento); background: var(--vidrio); color: inherit; font: inherit; }
+.tarjeta-revision > input { flex: 0 1 120px; min-width: 0; font-size: 16px; text-align: center; }
 .tarjeta-revision .estrella { width: 44px; height: 44px; border-radius: 50%; font-size: 24px; }
 .tarjeta-revision .estrella:disabled { opacity: .3; cursor: default; }
 .tarjeta-revision:has(.estrella.puesta) { border-color: var(--aviso); background: var(--aviso-suave); }

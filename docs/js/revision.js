@@ -10,14 +10,20 @@
 //   fila(cosa, r)     la tarjeta de una cosa. r.listo(cosa, frase) la saca de la lista y la cuenta en el resumen
 //                     con esa frase (ver FRASES); r.pintar() la vuelve a dibujar. Cuando no queda ninguna, sigue solo
 //   cuerpo(r)         (en vez de cosas y fila) lo que se muestra; este paso nunca se salta
+// Lo que se anota usa lo mismo que el resto de la web: la ventana de comida de Salud, la de «Anotar» de Finanzas...
+// Al cerrarse esas ventanas, la revisión mira si quedó anotado y sigue.
 import { $, el, datos, dia, hora, dentroDe, flotante } from "./base.js";
-import { hoyTexto, sumarDias, sinHoraISO, corto } from "./fechas.js";
+import { hoyTexto, sumarDias, diasEntre, sinHoraISO, corto, ocurreEl } from "./fechas.js";
 import { cambiar, cambiarProps, completar, archivar, anotar } from "./acciones.js";
 import { MAX_PRIORIDADES, porFecha } from "./tareas.js";
+import { habitosDelDia, comidasDe, MOMENTOS, agregarA, objetivoDePeso, pesoActual, fechaDe } from "./salud.js";
+import { anotar as anotarPlata, plata } from "./finanzas.js";
 import { icono } from "./dibujos.js";
 
 const DESDE = 21, HASTA = 5;     // a qué hora aparece el botón y hasta qué hora de la madrugada sigue contando el día anterior
 const VIENE = 7;                  // cuántos días hacia adelante se miran para elegir las prioridades de mañana
+const PESARSE = 7;                // cada cuántos días se pide el peso
+const NOTAS = 14;                 // cuántos días atrás se buscan evaluaciones sin nota
 const diaDeRevision = () => (new Date().getHours() < HASTA ? sumarDias(hoyTexto(), -1) : hoyTexto());
 const esDeNoche = () => { const h = new Date().getHours(); return h >= DESDE || h < HASTA; };
 
@@ -32,13 +38,34 @@ function racha(h, d) {
 }
 
 // Lo que se cuenta en el resumen, en singular y plural.
-const FRASES = { hecha: ["tarea hecha", "tareas hechas"], movida: ["tarea movida", "tareas movidas"], soltada: ["tarea soltada", "tareas soltadas"] };
+const FRASES = { hecha: ["tarea hecha", "tareas hechas"], movida: ["tarea movida", "tareas movidas"], soltada: ["tarea soltada", "tareas soltadas"],
+  asistencia: ["clase anotada", "clases anotadas"], habito: ["hábito cumplido", "hábitos cumplidos"], comida: ["comida anotada", "comidas anotadas"],
+  gasto: ["gasto anotado", "gastos anotados"], peso: ["pesada", "pesadas"], nota: ["nota nueva", "notas nuevas"], ordenada: ["post-it ordenado", "post-its ordenados"] };
 const contar = (n, [uno, varios]) => `${n} ${n === 1 ? uno : varios}`;
 
 // De qué se trata una tarea: dónde está, qué día y a qué hora (lo que tenga).
 const detalle = (n) => [dentroDe(n.id), dia(n.fecha) && corto(dia(n.fecha)), hora(n.fecha)].filter(Boolean).join(" · ");
-const tarjeta = (n, ...lado) => el("li", { className: "tarjeta-revision" },
-  el("div", { className: "que" }, el("b", { textContent: n.titulo }), el("small", { textContent: detalle(n) })), ...lado);
+// Una tarjeta: qué es (título y una línea chica) y, al lado o debajo, lo que se puede hacer con ella.
+const tarjeta = (titulo, sub, ...lado) => el("li", { className: "tarjeta-revision" },
+  el("div", { className: "que" }, el("b", { textContent: titulo }), sub ? el("small", { textContent: sub }) : ""), ...lado);
+const deNodo = (n, ...lado) => tarjeta(n.titulo, detalle(n), ...lado);
+// Una fila de botones: [texto, qué hace]. El primero es el principal.
+const botones = (...lista) => el("div", { className: "opciones-revision" },
+  ...lista.map(([texto, hacer], i) => (texto instanceof Node ? texto : el("button", { className: i ? "" : "principal", textContent: texto, onclick: hacer }))));
+// Abre otra ventana (la de comida, la de gastos) y, cuando se cierra, llama a despues.
+const yDespues = (ventana, despues) => ventana.addEventListener("close", despues, { once: true });
+// Un número escrito con coma o punto; null si no es un número.
+const numero = (campo) => { const x = Number(campo.value.replace(",", ".")); return campo.value && x > 0 ? x : null; };
+
+// Las clases del día d: los eventos que se repiten dentro de un ramo (tópico), uno por ramo.
+const ramoDe = (e) => { const r = datos.nodo.get(datos.padre.get(e.id)); return r?.tipos.clave === "topico" ? r : null; };
+function clasesDel(d) {
+  const ramos = new Map();
+  for (const e of datos.nodos) if (e.tipos.clave === "evento" && e.props?.repite && e.fecha && ramoDe(e) && ocurreEl(dia(e.fecha), e.props, d)) ramos.set(ramoDe(e).id, { e, ramo: ramoDe(e) });
+  return [...ramos.values()];
+}
+const gastosDel = (d) => datos.registros.filter((r) => r.clase === "gasto" && dia(r.fecha) === d);
+const anotadoEl = (clase, d, nodo_id) => datos.registros.some((r) => r.clase === clase && dia(r.fecha) === d && (!nodo_id || r.nodo_id === nodo_id));
 
 // «Otro día»: el botón se vuelve un calendario; al elegir el día, la tarea se mueve ahí.
 function otroDia(n, d, listo) {
@@ -57,11 +84,76 @@ export const PASOS = [
   {
     titulo: "Lo de hoy", pregunta: "¿Qué pasó con estas tareas?",
     cosas: (d) => abiertas().filter((n) => dia(n.fecha) && dia(n.fecha) <= d),
-    fila: (n, { d, listo }) => tarjeta(n, el("div", { className: "opciones-revision" },
-      el("button", { className: "principal", textContent: "Hecha", onclick: () => { completar(n); listo(n, "hecha"); } }),
-      el("button", { textContent: "Mañana", onclick: () => { cambiar(n, { fecha: sinHoraISO(sumarDias(d, 1)) }); listo(n, "movida"); } }),
-      otroDia(n, d, listo),
-      el("button", { textContent: "Soltar", title: "Archivarla: deja de aparecer, pero se puede recuperar", onclick: () => { archivar(n); listo(n, "soltada"); } }))),
+    fila: (n, { d, listo }) => deNodo(n, botones(
+      ["Hecha", () => { completar(n); listo(n, "hecha"); }],
+      ["Mañana", () => { cambiar(n, { fecha: sinHoraISO(sumarDias(d, 1)) }); listo(n, "movida"); }],
+      [otroDia(n, d, listo)],
+      ["Soltar", () => { archivar(n); listo(n, "soltada"); }])),
+  },
+  {
+    titulo: "Asistencia", pregunta: "¿Fuiste a estas clases?",
+    cosas: (d) => clasesDel(d).filter(({ ramo }) => !anotadoEl("asistencia", d, ramo.id)),
+    fila: (c, { d, listo }) => {
+      const fue = (valor) => () => { anotar({ clase: "asistencia", nodo_id: c.ramo.id, valor, fecha: sinHoraISO(d) }); listo(c, "asistencia"); };
+      return tarjeta(c.ramo.titulo, [c.e.titulo, hora(c.e.fecha)].join(" · "), botones(["Fui", fue(1)], ["Falté", fue(0)]));
+    },
+  },
+  {
+    titulo: "Hábitos", pregunta: "¿Cuáles hiciste hoy?",
+    cosas: (d) => habitosDelDia(d).filter((x) => !x.marca && x.h !== habitoDeRevisar()),
+    fila: (x, { d, listo }) => tarjeta(x.h.titulo, x.hora, botones(
+      ["Lo hice", () => { anotar({ clase: "habito", nodo_id: x.h.id, ...fechaDe(d) }); listo(x, "habito"); }],
+      ["Hoy no", () => listo(x)])),
+  },
+  {
+    titulo: "Comidas", pregunta: "¿Qué comiste? Anota lo que falte.",
+    cosas: (d) => MOMENTOS.filter(([nombre]) => !comidasDe(d).some((x) => x.momento === nombre)),
+    fila: (m, { d, listo }) => {
+      const [nombre, , alMomento] = m;
+      return tarjeta(nombre, "sin registro", botones(
+        ["Anotar", () => yDespues(agregarA(nombre, alMomento, { dia: d }), () => comidasDe(d).some((x) => x.momento === nombre) && listo(m, "comida"))],
+        ["No comí", () => listo(m)]));
+    },
+  },
+  {
+    titulo: "Gastos", pregunta: "¿Gastaste plata hoy?",
+    cosas: (d) => [d],
+    fila: (_, { d, listo, pintar, cuenta }) => {
+      const hoy = gastosDel(d), total = hoy.reduce((t, g) => t + Number(g.valor), 0);
+      return tarjeta(hoy.length ? `Llevas ${plata(total)} hoy` : "Nada anotado hoy", hoy.map((g) => g.titulo).join(", "), botones(
+        ["Anotar un gasto", () => yDespues(anotarPlata("gasto"), () => { cuenta.gasto = (cuenta.gasto ?? 0) + gastosDel(d).length - hoy.length; pintar(); })],
+        [hoy.length ? "Eso es todo" : "Nada hoy", () => listo(d)]));
+    },
+  },
+  {
+    titulo: "Peso", pregunta: `Hace más de ${PESARSE} días que no te pesas.`,
+    cosas: (d) => { const o = objetivoDePeso(), u = o && pesoActual(o); return o && (!u.d || diasEntre(u.d, d) >= PESARSE) ? [o] : []; },
+    fila: (o, { listo }) => {
+      const campo = el("input", { type: "text", inputMode: "decimal", placeholder: String(pesoActual(o).v || ""), ariaLabel: "Tu peso en kg" });
+      return tarjeta(o.titulo, "Tu peso en kg", campo, botones(
+        ["Anotar", () => { const valor = numero(campo); if (valor) { anotar({ clase: "medida", nodo_id: o.id, valor, unidad: "kg", titulo: "Peso" }); listo(o, "peso"); } else campo.focus(); }],
+        ["Hoy no", () => listo(o)]));
+    },
+  },
+  {
+    titulo: "Notas", pregunta: "¿Salió alguna de estas notas? (en EV@ o en el portal)",
+    cosas: (d) => datos.nodos.filter((e) => e.tipos.clave === "evento" && !e.props?.repite && ramoDe(e) && typeof e.props?.nota !== "number"
+      && dia(e.fecha) <= d && dia(e.fecha) > sumarDias(d, -NOTAS)).sort(porFecha),
+    fila: (e, { listo }) => {
+      const campo = el("input", { type: "text", inputMode: "decimal", placeholder: "Nota", ariaLabel: "Nota de " + e.titulo });
+      return deNodo(e, campo, botones(
+        ["Guardar", () => { const nota = numero(campo); if (nota && nota <= 7) { cambiarProps(e, { nota }); listo(e, "nota"); } else campo.focus(); }],
+        ["Todavía no sale", () => listo(e)]));
+    },
+  },
+  {
+    titulo: "Inbox", pregunta: "Ordena lo que anotaste al vuelo.",
+    cosas: () => datos.nodos.filter((n) => n.estado === "Inbox"),
+    fila: (n, { d, listo }) => deNodo(n, botones(
+      ["Mañana", () => { cambiar(n, { estado: "Por hacer", fecha: sinHoraISO(sumarDias(d, 1)) }); listo(n, "ordenada"); }],
+      ["Algún día", () => { cambiar(n, { estado: "Por hacer" }); listo(n, "ordenada"); }],
+      ["Hecha", () => { cambiar(n, { estado: "Hecho" }); listo(n, "ordenada"); }],
+      ["Soltar", () => { archivar(n); listo(n, "ordenada"); }])),
   },
   {
     titulo: "Mañana", pregunta: `Elige hasta ${MAX_PRIORIDADES} prioridades para mañana.`,
@@ -69,7 +161,7 @@ export const PASOS = [
     fila: (n, { d, pintar }) => {
       const manana = sumarDias(d, 1), puesta = n.props?.prioridad_dia === manana;
       const lleno = abiertas().filter((x) => x.props?.prioridad_dia === manana).length >= MAX_PRIORIDADES;
-      return tarjeta(n, el("button", { className: "estrella" + (puesta ? " puesta" : ""), textContent: puesta ? "★" : "☆", disabled: !puesta && lleno,
+      return deNodo(n, el("button", { className: "estrella" + (puesta ? " puesta" : ""), textContent: puesta ? "★" : "☆", disabled: !puesta && lleno,
         ariaPressed: String(puesta), ariaLabel: puesta ? "Quitar de las prioridades de mañana" : "Hacerla prioridad de mañana",
         onclick: () => { cambiarProps(n, { prioridad_dia: puesta ? null : manana }); pintar(); } }));
     },
