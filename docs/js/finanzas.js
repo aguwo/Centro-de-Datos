@@ -507,18 +507,37 @@ const colorDe = (c) => (c ? COLORES[categorias().indexOf(c) % COLORES.length] : 
 // Un monto corto para que quepa dentro de un segmento: $800, $2,7k, $13k.
 const corto = (x) => "$" + (x < 1000 ? Math.round(x) : (x / 1000).toLocaleString("es-CL", { maximumFractionDigits: x < 10000 ? 1 : 0 }) + "k");
 
-export function finanzasSemana(v) {
-  conColor(v, BLOQUE_GASTOS);
-  let s = null; // la semana dibujada, para lo que dice el centro de la dona
+// La dona de la semana (paso 92): lo gastado en cada categoría; al elegir una, el centro dice cuánto y qué parte es.
+// La usan las dos: la ventana del escritorio y «¿En qué gastas?» del apartado (paso 99). poner(s) la llena con una semana.
+function ruedaDeGastos() {
+  let s = null; // la semana dibujada, para lo que dice el centro
   const rueda = dona((elegida) => elegida
     ? [elegida.nombre, elegida.valor, `${Math.round(elegida.valor / s.gastado * 100)}% del total`]
     : ["Esta semana", s.gastado, s.tope ? "gastado de " + plata(s.tope) : "gastado"], plata);
-  return () => {
-    s = semana(lunes(hoyTexto()));
-    const hoy = hoyTexto(), suma = new Map();
+  const poner = (semanaDibujada) => {
+    s = semanaDibujada;
+    const suma = new Map();
     for (const r of s.gastos) { const c = categoriaDe(r); suma.set(c, (suma.get(c) ?? 0) + valor(r)); }
     rueda.poner([...suma].sort((a, b) => b[1] - a[1]).map(([c, x]) =>
       ({ id: c?.id ?? "sin", valor: x, color: colorDe(c), icono: iconoDe(c), nombre: c?.titulo ?? "Sin categoría", corto: corto(x) })));
+  };
+  return { caja: rueda.caja, poner };
+}
+
+// En el apartado: solo la dona, para ver en qué se fue la plata de esta semana.
+export function enQueGastas(v) {
+  conColor(v, BLOQUE_GASTOS);
+  const rueda = ruedaDeGastos();
+  v.append(rueda.caja);
+  return () => rueda.poner(semana(lunes(hoyTexto())));
+}
+
+export function finanzasSemana(v) {
+  conColor(v, BLOQUE_GASTOS);
+  const rueda = ruedaDeGastos();
+  return () => {
+    const s = semana(lunes(hoyTexto())), hoy = hoyTexto();
+    rueda.poner(s);
     const porDia = Array.from({ length: 7 }, (_, i) => sumarDias(s.desde, i)).map((d) => [d, sumar(s.gastos.filter((r) => dia(r.fecha) === d))]);
     const mayor = Math.max(1, ...porDia.map(([, x]) => x));
     v.sub.textContent = `${Number(s.desde.slice(8))} al ${new Date(s.hasta + "T12:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" })}`;

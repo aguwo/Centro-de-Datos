@@ -3,15 +3,18 @@
 // Paso 35c: en el computador el dock es una barra lateral fija (estilos.css), y los apartados del
 // escritorio (los que tienen "lugar") van juntos en un solo botón, "Escritorio". No sabe nada de ningún apartado en particular:
 // todo lo lee de APARTADOS (apartados.js). El lienzo movible está en escritorio.js.
+// Paso 99: el escritorio y los apartados no se confunden. En la barra (y en el dock del teléfono) el escritorio es un
+// solo botón, separado de los apartados por una rayita; en el teléfono sus secciones se recorren deslizando de lado o
+// con las pastillas de arriba. Cada sección que tiene "abre" lleva «Abrir Finanzas ›» junto a su título.
 import { $, el } from "./base.js";
 import { APARTADOS, CAJONES } from "./apartados.js";
-import { iniciarEscritorio, enEscritorio, mirar } from "./escritorio.js";
+import { iniciarEscritorio, enEscritorio, escritorioActivo, alCambiarDeModo, mirar } from "./escritorio.js";
 import { montar } from "./widgets.js";
 import { preferencia, cambiar, tuCara } from "./apariencia.js";
 
 let actual = APARTADOS[0];
 let enElEscritorio = APARTADOS.find((a) => a.lugar); // la última sección del escritorio que viste: "Escritorio" vuelve ahí
-// El botón "Escritorio" de la barra lateral (en el teléfono no se ve: ahí cada sección tiene el suyo).
+// El botón "Escritorio" de la barra: lleva a la última sección del escritorio que viste.
 const ESCRITORIO = { id: "escritorio", nombre: "Escritorio",
   icono: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>' };
 export const apartadoActual = () => actual.id;
@@ -25,6 +28,7 @@ export function ir(id) {
   $("escritorio").classList.toggle("oculto", !actual.lugar);
   if (actual.lugar) enElEscritorio = actual;
   marcar();
+  pastillas();
   document.title = actual.nombre + " · Martita";
   // La dirección no se toca si trae la respuesta del inicio de sesión (#access_token=...): la lee Supabase.
   if (location.hash.slice(1) !== actual.id && !location.hash.includes("=")) history.replaceState(null, "", "#" + actual.id);
@@ -36,6 +40,7 @@ export function ir(id) {
 // En la barra: cuál es el apartado donde estás y qué cajón está abierto.
 function marcar() {
   for (const b of $("dock").querySelectorAll("[data-apartado]")) b.setAttribute("aria-current", b.dataset.apartado === actual.id ? "page" : "false");
+  for (const b of $("pastillas").children) b.setAttribute("aria-current", b.dataset.seccion === actual.id ? "page" : "false");
   $("dock").querySelector("[data-escritorio]")?.setAttribute("aria-current", actual.lugar ? "page" : "false");
   for (const b of $("dock").querySelectorAll("[data-cajon]")) b.setAttribute("aria-expanded", $(b.dataset.cajon).classList.contains("abierto"));
   moverMarca();
@@ -57,7 +62,7 @@ const redibujar = new Map(); // id del apartado -> cómo se redibuja
 const contextos = new Map(); // id del apartado -> lo que comparten sus ventanas (ctx)
 function montarApartados() {
   for (const a of APARTADOS.filter((a) => a.columnas || a.vistas)) {
-    const { seccion, dibujar, ctx } = montar(a);
+    const { seccion, dibujar, ctx } = montar(a, a.abre && botonAbrir(a.abre));
     $("panel").before(seccion);
     redibujar.set(a.id, dibujar);
     contextos.set(a.id, ctx);
@@ -68,6 +73,51 @@ function montarApartados() {
     ir(apartado);
   });
 }
+// «Abrir Finanzas ›»: de una sección del escritorio a su apartado completo.
+function botonAbrir(id) {
+  const destino = APARTADOS.find((a) => a.id === id);
+  return el("button", { className: "abrir-apartado", onclick: () => ir(id) }, "Abrir " + destino.nombre, el("span", { ariaHidden: "true", textContent: " ›" }));
+}
+
+// ---------- En el teléfono, el escritorio son sus secciones una al lado de la otra ----------
+// Arriba, una pastilla por sección (la elegida, marcada); deslizar el dedo de lado pasa a la de al lado.
+const secciones = APARTADOS.filter((a) => a.lugar);
+function pastillas() {
+  const p = $("pastillas"), ver = !!actual.lugar && !escritorioActivo();
+  p.hidden = !ver;
+  $("app").classList.toggle("con-pastillas", ver); // las secciones bajan para no quedar debajo (estilos.css)
+  const b = p.querySelector('[aria-current="page"]');
+  if (ver && b) p.scrollTo({ left: b.offsetLeft - (p.clientWidth - b.offsetWidth) / 2, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); // la elegida, al medio
+}
+function armarPastillas() {
+  $("pastillas").replaceChildren(...secciones.map((a) => {
+    const b = el("button", { textContent: a.nombre, onclick: () => ir(a.id) });
+    b.dataset.seccion = a.id;
+    return b;
+  }));
+}
+// Un deslizón cuenta si es más de lado que hacia abajo y largo (60 px). No cuenta si empezó en algo que ya se
+// desliza de lado (una fila de pastillas o de tarjetas), en un campo o con un diálogo abierto.
+function deslizar() {
+  let desde = null;
+  const seDeslizaDeLado = (x) => { for (; x && x !== document.body; x = x.parentElement) if (x.scrollWidth > x.clientWidth + 2 && getComputedStyle(x).overflowX !== "hidden") return true; return false; };
+  $("app").addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    desde = e.touches.length === 1 && actual.lugar && !escritorioActivo() && !document.querySelector("dialog[open]")
+      && !e.target.closest("input, textarea, select") && !seDeslizaDeLado(e.target) ? { x: t.clientX, y: t.clientY } : null;
+  }, { passive: true });
+  $("app").addEventListener("touchend", (e) => {
+    if (!desde) return;
+    const t = e.changedTouches[0], dx = t.clientX - desde.x, dy = t.clientY - desde.y;
+    desde = null;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const i = secciones.indexOf(actual) + (dx < 0 ? 1 : -1);
+    if (secciones[i]) { $(secciones[i].id).dataset.entra = dx < 0 ? "derecha" : "izquierda"; ir(secciones[i].id); }
+  }, { passive: true });
+  // La animación de entrada (estilos.css) se borra al terminar, para que la próxima vuelva a correr.
+  addEventListener("animationend", (e) => delete e.target.dataset?.entra);
+}
+
 // Cuando llegan datos se dibuja lo que se ve; los cajones cerrados no hacen nada. Paso 89: lo escondido (el mapa,
 // otro apartado) queda "atrasado" y se dibuja al ir a él, así marcar una tarea no rearma el mapa entero por detrás.
 const atrasados = new Set();
@@ -82,6 +132,7 @@ export function dibujarTodo() {
 
 // Lo que va en la barra: Escritorio, los apartados y los cajones, en tu orden (Ajustes) o el de siempre.
 // Lo nuevo que no está en tu orden va al final, y lo que va "abajo" (Ajustes), después de todo. Cada uno: { x (el apartado o cajón), clase, accion }.
+// Las secciones del escritorio también vienen (Ajustes las necesita), pero la barra no les pone botón: van en "Escritorio".
 export function entradasDeLaBarra() {
   const lista = APARTADOS.map((a) => ({ x: a, clase: "apartado", accion: () => ir(a.id) }));
   const conLugar = APARTADOS.findIndex((a) => a.lugar);
@@ -99,14 +150,13 @@ const atajo = (n) => (EN_MAC ? "⌥" : "Alt ") + n; // cómo se lee en el globo
 // Ajustes no salen; el que tiene "abajo" (Ajustes) va al pie de la barra, con tu foto y el botón para retraerla.
 function armarDock() {
   const { ocultos } = preferencia();
-  let puesto = 0; // los atajos cuentan lo que se ve en el computador: sin lo escondido ni lo que va junto en "Escritorio"
-  const botones = entradasDeLaBarra().map(({ x, clase, accion }, i) => {
+  let puesto = 0; // los atajos cuentan lo que se ve: sin lo escondido
+  const botones = entradasDeLaBarra().filter(({ x }) => !x.lugar).map(({ x, clase, accion }, i) => {
     const escondido = !x.abajo && ocultos.includes(x.id);
-    const numero = !escondido && !x.lugar && puesto < 9 ? ++puesto : null;
+    const numero = !escondido && puesto < 9 ? ++puesto : null;
     const b = boton(x.nombre, x.icono, accion, numero && atajo(numero));
     b.dataset[clase] = x.id;
     if (numero) { b.dataset.atajo = numero; b.setAttribute("aria-keyshortcuts", "Alt+" + numero); }
-    if (x.lugar) b.classList.add("en-lienzo"); // en el computador se juntan en "Escritorio"
     b.hidden = escondido;
     b.style.setProperty("--i", i); // su turno al aparecer (estilos.css: aparecen uno tras otro)
     b.abajo = x.abajo;
@@ -116,8 +166,10 @@ function armarDock() {
   perfil.classList.add("perfil");
   perfil.prepend(tuCara());
   const retraer = el("button", { className: "retraer", textContent: "‹", title: "Retraer la barra", ariaLabel: "Retraer la barra", onclick: () => cambiar({ retraida: true }) });
+  // La rayita va justo después de "Escritorio": separa el resumen de todo de los apartados.
+  const arriba = botones.filter((b) => !b.abajo).flatMap((b) => (b.dataset.escritorio ? [b, el("span", { className: "separador", ariaHidden: "true" })] : [b]));
   $("dock").replaceChildren(el("div", { className: "marca nueva", ariaHidden: "true" }),
-    ...botones.filter((b) => !b.abajo), el("div", { className: "pie" }, ...botones.filter((b) => b.abajo), perfil, retraer));
+    ...arriba, el("div", { className: "pie" }, ...botones.filter((b) => b.abajo), perfil, retraer));
   marcar();
 }
 // Un botón de la barra: su ícono (trazos SVG) y el globo con su nombre y, si tiene, su atajo.
@@ -174,6 +226,10 @@ function dockEscondido() {
 export function iniciarCarcasa() {
   montarApartados();
   armarDock();
+  armarPastillas();
+  alCambiarDeModo(pastillas); // se ven solo en el teléfono
+  new ResizeObserver(pastillas).observe($("pastillas")); // al aparecer la app (entraste) o girar el teléfono, la elegida vuelve al medio
+  deslizar();
   document.addEventListener("barra", armarDock); // cambiaste la barra en Ajustes (apariencia.js avisa)
   new ResizeObserver(moverMarca).observe($("dock")); // cambió el estilo o el tamaño: la marca se acomoda
   atajos();

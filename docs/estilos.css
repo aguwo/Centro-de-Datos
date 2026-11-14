@@ -38,7 +38,7 @@ body { margin: 0; font: 14px/1.5 var(--sans); color: var(--texto); background: v
          transform: translate(var(--px, 0), var(--py, 0)); transition: transform .6s cubic-bezier(.2,.7,.2,1); } /* --px/--py: parallax del escritorio */
 .fondo::after { content: ""; position: absolute; inset: 0; background: #000; opacity: var(--oscurecer); }
 /* Textos que van directo sobre la foto: blancos con una sombra suave para leerse sobre cualquier parte */
-.sobre-foto, #inicio .saludo h2, .columna > h2 { color: #fff; text-shadow: 0 1px 12px rgba(0,0,0,.45); }
+.sobre-foto, .columna > h2 { color: #fff; text-shadow: 0 1px 12px rgba(0,0,0,.45); }
 .vidrio { background: var(--vidrio); backdrop-filter: blur(var(--desenfoque)) saturate(170%); -webkit-backdrop-filter: blur(var(--desenfoque)) saturate(170%);
           border: 1px solid var(--borde); box-shadow: var(--sombra); }
 
@@ -109,7 +109,6 @@ main { position: fixed; inset: 0; }
 .asa::before { content: ""; width: 96px; height: 5px; border-radius: 99px; background: rgba(255,255,255,.6); box-shadow: 0 1px 6px rgba(0,0,0,.35); transition: opacity .2s; }
 .dock.visible ~ .asa::before { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .dock, .dock button, .marca { transition: none; } }
-.dock [data-escritorio] { display: none; } /* en el teléfono cada sección tiene su botón */
 
 /* Paso 35c: en el computador el dock es una barra lateral fija, pegada al borde izquierdo,
    con el nombre bajo cada ícono. Las secciones del escritorio van juntas en "Escritorio".
@@ -136,8 +135,6 @@ main { position: fixed; inset: 0; }
 .pie { display: contents; }
 .con-escritorio .dock .pie { display: flex; align-items: stretch; gap: 2px; margin-top: auto; }
 .con-escritorio .dock .pie > [data-apartado] { flex: 1; width: auto; min-width: 0; }
-.con-escritorio .dock .en-lienzo { display: none; }
-.con-escritorio .dock [data-escritorio] { display: grid; }
 
 /* Solo íconos e Isla: el nombre sale como globo al pasar el mouse */
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock { overflow: visible; }
@@ -250,36 +247,8 @@ main { position: fixed; inset: 0; }
 .centro h1 { margin: 0 0 4px; }
 .centro input { width: 100%; padding: 10px 12px; border: 1px solid var(--linea); border-radius: 10px; background: var(--vidrio-fuerte); margin: 8px 0 12px; }
 
-/* Inicio */
-#inicio { overflow-y: auto; padding: 28px 24px 48px; }
-#inicio .saludo, #senales, #inicio .tablero { max-width: 1240px; margin: 0 auto 20px; }
-#inicio .saludo { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
-#inicio .saludo h2 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
-#inicio .saludo h2::first-letter { text-transform: uppercase; }
-#inicio form { flex: 1 1 320px; display: flex; }
-#inicio form input { flex: 1; padding: 11px 14px; border: 1px solid var(--borde); border-radius: 12px; background: var(--vidrio); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-/* Señales: lo que se te está pasando, arriba de todo */
-#senales { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-#senales:empty { display: none; }
-.senal { border-radius: 12px; padding: 10px 14px; display: grid; gap: 2px; background: var(--vidrio-fuerte); box-shadow: var(--sombra); }
-.senal b { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; }
-.senal.alerta { box-shadow: inset 3px 0 var(--alerta), var(--sombra); } .senal.alerta b { color: var(--alerta); }
-.senal.aviso { box-shadow: inset 3px 0 var(--aviso), var(--sombra); } .senal.aviso b { color: var(--aviso); }
-/* Tres columnas por intención; en pantallas angostas, una debajo de otra */
-#inicio .tablero { display: grid; gap: 24px; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
-@media (max-width: 980px) { #inicio .tablero { grid-template-columns: 1fr; } }
 .columna { display: grid; gap: 24px; min-width: 0; }
 .columna > h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; margin: 0 0 -12px; }
-/* Una tarjeta es una ventana (ver arriba) con una lista */
-.tarjeta ul { list-style: none; padding: 0; margin: 0; }
-.tarjeta li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--linea); flex-wrap: wrap; }
-.tarjeta li:first-child { border-top: 0; }
-.tarjeta li input { margin: 0; width: 16px; height: 16px; accent-color: var(--acento-fondo); }
-.tarjeta li a { color: inherit; text-decoration: none; cursor: pointer; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tarjeta li a:hover { text-decoration: underline; }
-.puntos { display: flex; gap: 3px; }
-.puntos i { width: 8px; height: 8px; border-radius: 2px; background: var(--linea); }
-.puntos i.si { background: var(--bien); }
 .barra-p { flex-basis: 100%; height: 6px; border-radius: 99px; background: var(--linea); overflow: hidden; }
 .barra-p span { display: block; height: 100%; background: var(--acento-fondo); }
 .barra-p.pasada span { background: var(--alerta); }
@@ -426,7 +395,6 @@ main { position: fixed; inset: 0; }
          transform: translateX(calc(100% + 24px)); visibility: hidden; transition: transform .3s cubic-bezier(.2,.7,.2,1), visibility 0s .3s; }
 .cajon.abierto { transform: none; visibility: visible; transition: transform .3s cubic-bezier(.2,.7,.2,1); }
 @media (prefers-reduced-motion: reduce) { .cajon, .cajon.abierto { transition: none; } }
-.dock .separador { width: 1px; margin: 8px 4px; background: var(--linea); }
 .dock button[aria-expanded="true"] { background: var(--acento-fondo); color: var(--sobre-acento); }
 button.redondo { width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; font-size: 20px; line-height: 1; color: var(--suave); }
 button.redondo:hover { background: var(--linea); color: var(--texto); }
@@ -993,7 +961,7 @@ button.chico { padding: 1px 8px; font-size: 11.5px; border-radius: 99px; }
 .botones-barra .fija small { color: var(--suave); font-size: 11.5px; padding-right: 6px; }
 .w-cuenta .correo { margin: 0 0 12px; color: var(--suave); overflow-wrap: anywhere; }
 .w-cuenta .peligro { align-self: flex-start; }
-@media (max-width: 700px) { .con-widgets, #inicio { padding-bottom: 96px; } } /* que «+ Nuevo» no tape lo último */
+@media (max-width: 700px) { .con-widgets { padding-bottom: 96px; } } /* que «+ Nuevo» no tape lo último */
 
 /* Esta semana (paso 61, semana.js): arriba una franja con lo que más pesa, abajo una columna por día */
 .columna > .w-lo-importante { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; padding: 0;
@@ -1586,3 +1554,27 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .tu-cara .cara { width: 56px; height: 56px; }
 .tu-cara .cara.sin-foto .icono { width: 30px; height: 30px; }
 .tu-cara .correo { margin: 0 0 4px; }
+
+/* Paso 99: el escritorio (lo de ahora) y los apartados (todo) no se confunden (carcasa.js, widgets.js). */
+/* La rayita entre "Escritorio" y los apartados: de pie en el dock del teléfono, acostada en la barra lateral. */
+.dock .separador { flex: none; align-self: center; width: 1px; height: 28px; margin: 0 4px; background: color-mix(in srgb, var(--texto) 22%, transparent); }
+.con-escritorio .dock .separador { width: 60%; height: 1px; margin: 6px auto; }
+/* Sobre el título de una sección del escritorio, chico, de cuándo habla («Esta semana») */
+.sobre-titulo { display: block; margin-bottom: 2px; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
+/* «Abrir Finanzas ›»: una pastilla de vidrio junto al título */
+.abrir-apartado { padding: 7px 14px; border-radius: 99px; background: var(--vidrio-fuerte); border-color: var(--borde); font-weight: 600; white-space: nowrap;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transition: background-color .2s, transform .2s var(--suave-curva); }
+.abrir-apartado:hover { background: color-mix(in srgb, var(--acento) 18%, var(--vidrio-fuerte)); transform: translateX(2px); }
+.cabeza-apartado:has(.sobre-titulo) { align-items: flex-end; }
+/* En el teléfono: las pastillas con las secciones del escritorio, fijas arriba; las secciones bajan para no quedar debajo */
+.pastillas { position: fixed; z-index: 6; top: 0; left: 0; right: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  padding: max(10px, env(safe-area-inset-top)) 12px 10px; background: linear-gradient(to bottom, rgba(0,0,0,.35), transparent); }
+.pastillas button { flex: none; padding: 7px 14px; border-radius: 99px; background: var(--vidrio); border-color: var(--borde); font-weight: 600;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transition: background-color .2s, color .2s; }
+.pastillas button[aria-current="page"] { background: var(--acento-fondo); color: var(--sobre-acento); border-color: transparent; }
+.con-pastillas .con-widgets { padding-top: calc(64px + env(safe-area-inset-top)); }
+/* Al deslizar, la sección nueva entra desde el lado hacia donde fue el dedo */
+[data-entra="derecha"] { animation: entra-de-lado .32s var(--suave-curva); --desde: 40px; }
+[data-entra="izquierda"] { animation: entra-de-lado .32s var(--suave-curva); --desde: -40px; }
+@keyframes entra-de-lado { from { opacity: 0; transform: translateX(var(--desde)); } }
+@media (prefers-reduced-motion: reduce) { [data-entra] { animation: none; } .abrir-apartado, .pastillas button { transition: none; } }

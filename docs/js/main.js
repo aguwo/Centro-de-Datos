@@ -15,7 +15,7 @@
 //   tareas.js    la lista de tareas que comparten Hoy y Productividad
 //   apariencia.js cómo se ve la web (modo, color, fondo, vidrio, letra): se aplica y se guarda
 //   ajustes.js   los widgets del apartado Ajustes, que la cambian
-//   inicio.js    el Resumen: dibuja las señales y las tarjetas (qué muestra cada una: tarjetas.js)
+//   plantas.js   las plantas con sed (en Esta semana)
 import { traerDeLaBase } from "./apariencia.js"; // primero: así la web se pinta con tu estilo desde el comienzo
 import { db, $, avisar, recargar, escucharCambios, dejarDeEscuchar } from "./base.js";
 import { iniciarCarcasa, apartadoActual, dibujarTodo } from "./carcasa.js";
