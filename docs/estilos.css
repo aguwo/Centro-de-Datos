@@ -1972,6 +1972,42 @@ button.nodo-grafo:hover .insignia { transform: scale(1.12); }
 .segmento.minimo .icono, .herramientas-carpeta .boton-icono .icono { width: 18px; height: 18px; }
 .herramientas-carpeta .boton-icono.cambiado { color: var(--acento); }
 .segmento.minimo + .boton-icono { margin-left: 6px; }
+.herramientas-carpeta .boton-icono[aria-pressed="true"] { background: var(--resalte); color: var(--texto); }
+.herramientas-carpeta > .boton-icono:first-child { margin-right: 6px; }
+/* Paso 116: una carpeta armada por secciones (secciones.js) */
+.tarjetas-seccion { display: grid; gap: 12px; }
+.fila-seccion { display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 8px; scroll-snap-type: x proximity; }
+.fila-seccion > * { flex: 0 0 220px; scroll-snap-align: start; }
+.fila-seccion > .tarjeta-carpeta { flex-basis: 240px; min-height: 120px; }
+.nada-seccion { margin: 0; color: var(--suave); font-size: 13px; }
+.tablero-seccion { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(200px, 1fr); gap: 12px; overflow-x: auto; align-items: start; }
+.columna-seccion { display: grid; gap: 2px; padding: 10px; border-radius: 12px; background: color-mix(in srgb, var(--texto) 5%, transparent); }
+.columna-seccion h5 { display: flex; gap: 6px; align-items: baseline; margin: 0 0 6px 8px; font-size: 12.5px; font-weight: 600; }
+.columna-seccion h5 small { font-weight: 400; color: var(--suave); }
+.calendario-seccion { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; border-radius: 12px; overflow: hidden; background: var(--borde); border: 1px solid var(--borde); }
+.calendario-seccion > b { padding: 6px 8px; background: var(--vidrio-fuerte); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--suave); }
+.dia-seccion { display: grid; align-content: start; gap: 2px; min-width: 0; min-height: 72px; padding: 4px; background: var(--vidrio-fuerte); }
+.dia-seccion > small { padding: 2px 4px; font-size: 11.5px; color: var(--suave); }
+.dia-seccion.pasado { opacity: .55; }
+.dia-seccion.hoy > small { justify-self: start; padding: 2px 7px; border-radius: 999px; background: var(--acento); color: var(--sobre-acento); font-weight: 600; }
+.dia-seccion .fila-lista { padding: 2px 4px; font-size: 12px; gap: 4px; }
+.dia-seccion .fila-lista .icono { width: 14px; height: 14px; }
+.fuera-seccion { margin: 6px 0 0; color: var(--suave); font-size: 12px; }
+/* Editar la vista: cada sección en una fila sobria con sus dos selectores */
+.editor-vista { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--borde); border-radius: 12px; background: var(--vidrio-fuerte); }
+.seccion-editada { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid var(--borde); }
+.numero-seccion { width: 22px; color: var(--suave); font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; }
+.seccion-editada label { display: flex; align-items: center; gap: 8px; flex: 1 1 200px; min-width: 0; font-size: 12px; color: var(--suave); }
+.seccion-editada select { flex: 1; min-width: 0; height: 30px; padding: 0 8px; border: 1px solid var(--borde); border-radius: 8px; background: transparent; color: var(--texto); font: inherit; font-size: 13px; }
+.mover-seccion { display: flex; gap: 2px; }
+.editor-vista .boton-icono { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--suave); }
+.editor-vista .boton-icono:hover:not(:disabled) { background: var(--resalte); color: var(--texto); }
+.editor-vista .boton-icono:disabled { opacity: .3; }
+.mas-seccion { justify-self: start; margin: 4px 0; padding: 4px 10px; border: 1px dashed var(--borde); border-radius: 8px; background: none; color: var(--suave); font-weight: 400; }
+.mas-seccion:hover { color: var(--texto); border-color: var(--suave); }
+.editor-vista footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 6px; font-size: 13px; }
+.editor-vista footer > span:first-child { color: var(--suave); }
+.editor-vista footer .relleno { flex: 1; }
 /* Paso 109: las barras de desplazamiento de toda la web, mínimas: una rayita fina y redonda, sin flechas ni carril,
    que casi no se ve hasta que pasas el mouse por lo que se desplaza. Donde se escondieron a propósito (none) siguen así. */
 :root { --barrita: color-mix(in srgb, var(--texto) 16%, transparent); --barrita-fuerte: color-mix(in srgb, var(--texto) 36%, transparent); }
