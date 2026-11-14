@@ -3,7 +3,7 @@
 //   en otro apartado  directo el formulario, con botones para lo que se crea en ese apartado
 // Cada apartado dice qué se crea en él con "nuevo" (apartados.js); sin lista, se puede crear cualquier tipo.
 // Los campos de cada formulario salen de las propiedades del tipo en la base: un tipo nuevo no pide código.
-import { $, el, datos, colorDe } from "./base.js";
+import { $, el, datos, colorDe, enLaWeb } from "./base.js";
 import { APARTADOS } from "./apartados.js";
 import { apartadoActual } from "./carcasa.js";
 import { enEscritorio } from "./escritorio.js";
@@ -25,8 +25,8 @@ function abrirMenu(tipos) {
     el("hr"),
     opcion("Otra cosa…", () => formulario(null)));
   const b = $("nuevo").getBoundingClientRect(); // el menú sale hacia arriba, desde el botón
-  menu().style.setProperty("--derecha", innerWidth - b.right + "px");
-  menu().style.setProperty("--abajo", innerHeight - b.top + 8 + "px");
+  menu().style.setProperty("--derecha", enLaWeb(innerWidth - b.right) + "px");
+  menu().style.setProperty("--abajo", enLaWeb(innerHeight - b.top) + 8 + "px");
   menu().hidden = false;
   $("nuevo").setAttribute("aria-expanded", "true");
   menu().querySelector("button").focus();

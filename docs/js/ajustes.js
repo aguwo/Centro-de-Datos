@@ -11,7 +11,7 @@ import { icono } from "./dibujos.js";
 import { entradasDeLaBarra, dibujarTodo } from "./carcasa.js";
 import { APARTADOS } from "./apartados.js";
 import { selectorDeVistas, disposicionDe } from "./widgets.js";
-import { preferencia, cambiar, TEMAS, TONOS, FONDOS, BARRAS, LETRAS, cssDelFondo, tuFoto, tuCara, ponerFoto, achicar, volverALoDeSiempre } from "./apariencia.js";
+import { preferencia, cambiar, TEMAS, TONOS, FONDOS, BARRAS, LETRAS, cssDelFondo, ZOOMS, tuFoto, tuCara, ponerFoto, achicar, volverALoDeSiempre } from "./apariencia.js";
 
 // Las ventanas de Ajustes se ponen al día juntas: un cambio en una (ej. el modo) se ve en las otras.
 const ponerAlDia = new Set();
@@ -21,7 +21,7 @@ const conPonerAlDia = (f) => { ponerAlDia.add(f); return f; };
 // Un grupo de botones donde se elige uno (aria-pressed marca el elegido).
 function opciones(campo, lista, contenido, clase) {
   const caja = el("div", { className: clase, role: "group" });
-  const botones = Object.entries(lista).map(([valor, nombre]) => {
+  const botones = (Array.isArray(lista) ? lista : Object.entries(lista)).map(([valor, nombre]) => { // lista = { valor: nombre } o [[valor, nombre]] (en orden y con valores que no son texto)
     const b = el("button", { type: "button", title: nombre, onclick: () => elegir({ [campo]: valor }) }, ...contenido(valor, nombre));
     b.dataset.valor = valor;
     return b;
@@ -168,15 +168,18 @@ export function ventanas(v) {
     mostrar: (x) => (x === 1 ? "como siempre" : x < 1 ? "más transparente" : "más sólido") });
   const desenfoque = deslizador("Desenfoque", "desenfoque", { min: 0, max: 48, paso: 2, mostrar: (x) => x + " px" });
   const radio = deslizador("Esquinas", "radio", { min: 0, max: 28, paso: 2, extremos: ["Rectas", "Redondas"], mostrar: (x) => x + " px" });
+  // Paso 106: el tamaño de toda la web (también con clic derecho en cualquier parte).
+  const zoom = opciones("zoom", ZOOMS.map((z) => [z, Math.round(z * 100) + " %"]), (valor, nombre) => [el("span", { textContent: nombre })], "zooms");
   const letras = opciones("letra", Object.fromEntries(Object.keys(LETRAS).map((k) => [k, k])), (valor) => [
     el("b", { textContent: "Aa", style: `font-family:${LETRAS[valor] ? `"${LETRAS[valor]}",` : ""} system-ui` }), el("span", { textContent: valor })], "letras");
-  v.append(opacidad, desenfoque, radio, titulo("Letra"), letras,
+  v.append(opacidad, desenfoque, radio, titulo("Tamaño de la web"), zoom, titulo("Letra"), letras,
     el("button", { type: "button", className: "de-siempre", textContent: "Volver a como venía", onclick: () => { volverALoDeSiempre(); for (const f of ponerAlDia) f(); } }));
   return conPonerAlDia(() => {
     const p = preferencia();
     opacidad.poner(p.opacidad);
     desenfoque.poner(p.desenfoque);
     radio.poner(p.radio);
+    zoom.marcar(p.zoom);
     letras.marcar(p.letra);
   });
 }

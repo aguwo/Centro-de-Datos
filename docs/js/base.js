@@ -4,6 +4,11 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { SUPABASE_URL, SUPABASE_KEY } from "../config.js";
 
 export const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+// Paso 106: el zoom de la web (Ajustes o clic derecho) agranda todo con CSS zoom en el <html>. El mouse (clientX)
+// y getBoundingClientRect miden en px de pantalla, pero left/top/transform se escriben en px de la web:
+// enLaWeb() pasa de unos a otros (con zoom 125%, 125 px de pantalla son 100 de la web).
+export const zoomDeLaWeb = () => parseFloat(document.documentElement.style.zoom) || 1;
+export const enLaWeb = (px) => px / zoomDeLaWeb();
 export const $ = (id) => document.getElementById(id);
 // Un aviso abajo al centro. accion = { texto, hacer } le pone un botón (ej. «Deshacer», paso 103) y el aviso se va solo.
 let sinAviso;
