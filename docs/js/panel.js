@@ -2,7 +2,7 @@
 // Lee de los datos cargados (no del mapa), así funciona igual desde el Inicio.
 import { db, $, el, avisar, datos, colorDe, recargar, pedirRecarga, dia, hora, fijas, FIJA } from "./base.js";
 import { enfocar, desenfocar, ajustarMapa } from "./mapa.js";
-import { crear, conectar, dentroDeCaja } from "./acciones.js";
+import { crear, conectar, dentroDeCaja, cambiar, cambiarProps } from "./acciones.js";
 
 const ESTADOS = ["Inbox", "Por hacer", "En curso", "Esperando", "Hecho"]; // los mismos del paso 3
 
@@ -134,6 +134,25 @@ export function mostrarPanel(id) {
     conexiones.length ? vecinos : el("p", { className: "rel", textContent: "Sin conexiones todavía." }),
   );
   mostrando = id;
+}
+
+// Paso 103: las propiedades de uno o varios nodos, para cambiarlas ahí mismo (Archivos las muestra a la derecha).
+// Con varios salen las que tienen todos; si sus valores no son iguales, la propiedad dice «varias».
+// Cada cambio se guarda al tiro, en todos.
+export function editorDePropiedades(nodos) {
+  const [primero, ...resto] = nodos;
+  const comunes = propiedadesDe(primero.tipos.clave)
+    .filter((p) => resto.every((n) => propiedadesDe(n.tipos.clave).some((q) => q.clave === p.clave && q.tipo === p.tipo)));
+  return el("dl", { className: "propiedades" }, ...comunes.flatMap((p) => {
+    const varias = new Set(nodos.map((n) => JSON.stringify(valorDe(n, p) ?? null))).size > 1;
+    const c = control(p, varias ? null : valorDe(primero, p));
+    if (nodos.some((n) => fijas(n).includes(p.clave))) Object.assign(c, { disabled: true, title: FIJA });
+    c.onchange = () => {
+      const v = leer(p, c);
+      for (const n of nodos) EN_COLUMNA.includes(p.clave) ? cambiar(n, { [p.clave]: v }) : cambiarProps(n, { [p.clave]: v });
+    };
+    return [el("dt", {}, p.nombre, varias ? el("small", { textContent: "varias" }) : ""), el("dd", {}, c)];
+  }));
 }
 
 // Cuando cambian los datos, el panel abierto se vuelve a dibujar (o se cierra si el nodo ya no está).

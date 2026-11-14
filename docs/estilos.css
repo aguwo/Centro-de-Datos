@@ -1666,19 +1666,94 @@ span.flecha-arbol::before { display: none; }
 .nombre-arbol.raiz { font-weight: 600; }
 .nombre-arbol.raiz .icono { color: var(--acento); }
 
-.w-carpeta { gap: 16px; }
+.w-carpeta { display: flex; flex-direction: column; gap: 14px; }
+/* Paso 103: lo de adentro se desliza dentro de la ventana; la barra de arriba y la de estado quedan fijas */
+/* En el PC, Archivos es UNA ventana partida en tres por líneas (árbol | carpeta | propiedades), como el Explorador.
+   Cada parte se desliza por su cuenta; en la carpeta, solo su contenido (la barra de arriba y la de estado quedan fijas). */
+/* Ocupa toda la pantalla, sin título (como una ventana del Explorador maximizada). */
+.con-escritorio #archivos { padding: 10px; gap: 0; overflow: hidden; }
+.con-escritorio #archivos > :is(h2, .cabeza-apartado), .con-escritorio #archivos > .barra-apartado:empty { display: none; }
+.con-escritorio #archivos .columnas { gap: 0; flex: 1; min-height: 0; border-radius: var(--radio); overflow: hidden;
+  background: var(--vidrio); backdrop-filter: blur(var(--desenfoque)) saturate(170%); -webkit-backdrop-filter: blur(var(--desenfoque)) saturate(170%);
+  border: 1px solid var(--borde); box-shadow: var(--sombra); }
+.con-escritorio #archivos .columna + .columna { border-left: 1px solid var(--linea); }
+.con-escritorio #archivos .columna > .ventana { flex: 1; min-height: 0; overflow-y: auto; background: none; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.con-escritorio #archivos .w-arbol-carpetas { padding: 14px 10px; }
+.con-escritorio #archivos .w-propiedades-carpeta { background: color-mix(in srgb, var(--vidrio-fuerte) 35%, transparent); }
+.con-escritorio .w-carpeta { overflow: hidden !important; }
+.con-escritorio .w-carpeta .cuerpo-carpeta { overflow-y: auto; min-height: 0; padding: 2px; margin: -2px; }
 .ruta-carpeta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 13px; color: var(--suave); }
 .ruta-carpeta button { border: 0; padding: 2px 6px; border-radius: 6px; color: inherit; font-weight: 400; }
 .ruta-carpeta button:hover { background: var(--resalte); color: var(--texto); }
 .ruta-carpeta b { color: var(--texto); font-weight: 600; padding: 2px 6px; }
 .cabeza-carpeta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.cabeza-carpeta .volver { font-size: 26px; line-height: 1; padding: 0 4px; }
 .nombre-carpeta { flex: 1; min-width: 160px; }
 .nombre-carpeta h3 { margin: 0; font-size: 22px; letter-spacing: -.01em; text-transform: none; color: var(--texto); }
 .nombre-carpeta small { color: var(--suave); font-size: 13px; }
 .acciones-carpeta { display: flex; flex-wrap: wrap; gap: 8px; }
-.herramientas-carpeta input[type="search"] { width: 100%; }
-.cuerpo-carpeta { display: grid; gap: 20px; }
+/* Paso 103: arriba atrás, adelante y subir, la ruta y el buscador, como la barra del Explorador de Windows */
+.barra-carpeta { display: flex; align-items: center; gap: 4px; }
+.nav-carpeta { flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; font-size: 17px; }
+.nav-carpeta:hover:not(:disabled) { background: var(--resalte); }
+.nav-carpeta:disabled { opacity: .35; cursor: default; }
+.barra-carpeta .ruta-carpeta { flex: 1; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-left: 6px; padding: 4px 6px; border-radius: 10px; background: var(--vidrio-fuerte); white-space: nowrap; }
+.barra-carpeta input[type="search"] { flex: 0 1 230px; min-width: 0; height: 34px; margin-left: 8px; padding: 0 12px; border: 1px solid var(--borde); border-radius: 10px; background: var(--vidrio-fuerte); }
+.herramientas-carpeta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; color: var(--suave); }
+.herramientas-carpeta select { margin-left: 4px; padding: 4px 8px; border: 1px solid var(--borde); border-radius: 8px; background: var(--vidrio-fuerte); color: var(--texto); font: inherit; }
+.cuerpo-carpeta { display: grid; gap: 20px; align-content: start; flex: 1; outline: none; border-radius: 12px; }
+/* Lo elegido: un fondo del color de acento. El cursor del teclado lleva además un borde, solo usando el teclado. */
+.cuerpo-carpeta [data-id] { cursor: default; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.cuerpo-carpeta [aria-selected="true"]:is(.forma, .tarjeta-carpeta, .fila-lista), .cuerpo-carpeta [aria-selected="true"] > .forma,
+.cuerpo-carpeta tr[aria-selected="true"] td { background: color-mix(in srgb, var(--acento) 18%, var(--vidrio-fuerte)); border-color: color-mix(in srgb, var(--acento) 55%, transparent); }
+.cuerpo-carpeta:focus-visible .cursor:is(.forma, .tarjeta-carpeta, .fila-lista), .cuerpo-carpeta:focus-visible .cursor > .forma { outline: 2px solid var(--acento); outline-offset: 1px; }
+.cuerpo-carpeta:focus-visible tr.cursor td:first-child { box-shadow: inset 3px 0 var(--acento); }
+/* Lista: ícono y nombre, en columnas */
+.lista-archivos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2px 12px; }
+.fila-lista { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 5px 8px; border: 1px solid transparent; border-radius: 8px; text-align: left; font-weight: 400; }
+.fila-lista .icono { flex: none; width: 18px; height: 18px; color: var(--c); }
+.fila-lista span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fila-lista.es-carpeta { font-weight: 600; }
+.fila-lista:hover, .detalles-archivos tbody tr:not(.grupo):hover td { background: var(--resalte); }
+/* Detalles: una tabla; los títulos de columna ordenan */
+.detalles-archivos { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.detalles-archivos th { text-align: left; font-weight: 600; }
+.detalles-archivos thead th { position: sticky; top: 0; border-bottom: 1px solid var(--linea); }
+.detalles-archivos thead button { width: 100%; text-align: left; padding: 6px 10px; border: 0; border-radius: 6px; font-size: 12px; color: var(--suave); }
+.detalles-archivos thead button:hover { background: var(--resalte); color: var(--texto); }
+.detalles-archivos tr.grupo th { padding: 14px 10px 4px; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
+.detalles-archivos td { padding: 6px 10px; white-space: nowrap; border-top: 1px solid transparent; border-bottom: 1px solid transparent; }
+.detalles-archivos td:first-child { border-radius: 8px 0 0 8px; } .detalles-archivos td:last-child { border-radius: 0 8px 8px 0; }
+.nombre-detalle { display: flex; align-items: center; gap: 8px; max-width: 360px; }
+.nombre-detalle .icono { flex: none; width: 18px; height: 18px; color: var(--c); }
+.nombre-detalle span { overflow: hidden; text-overflow: ellipsis; }
+.nombre-detalle small { color: var(--suave); font-size: 12px; }
+.pastilla-estado { padding: 2px 8px; border-radius: 99px; font-size: 12px; background: var(--linea); }
+/* Abajo, cuántas hay y cuántas elegiste */
+.estado-carpeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding-top: 10px; border-top: 1px solid var(--linea); font-size: 12.5px; color: var(--suave); }
+/* Las propiedades, a la derecha */
+.w-propiedades-carpeta { display: flex; flex-direction: column; gap: 14px; }
+.w-propiedades-carpeta > h3 { margin: 0; }
+.cabeza-propiedades { display: flex; align-items: center; gap: 12px; }
+.cabeza-propiedades > div { display: grid; min-width: 0; }
+.cabeza-propiedades h4 { margin: 0; font-size: 16px; overflow-wrap: anywhere; border-radius: 6px; }
+.cabeza-propiedades h4[contenteditable]:hover { box-shadow: inset 0 0 0 1px var(--borde); }
+.cabeza-propiedades small, .dentro-de { color: var(--suave); font-size: 12.5px; margin: 0; }
+.dentro-de button { border: 0; padding: 2px 6px; font-weight: 600; }
+.propiedades { display: grid; grid-template-columns: minmax(70px, auto) minmax(0, 1fr); align-items: center; gap: 8px 10px; margin: 0; }
+.propiedades dt { font-size: 12.5px; color: var(--suave); }
+.propiedades dt small { display: block; font-size: 11px; font-style: italic; }
+.propiedades dd { margin: 0; min-width: 0; }
+.propiedades :is(input, select) { width: 100%; padding: 6px 8px; border: 1px solid var(--linea); border-radius: 8px; background: var(--vidrio-fuerte); color: var(--texto); font: inherit; font-size: 13px; }
+.propiedades input.check { width: auto; }
+.w-propiedades-carpeta .acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.w-propiedades-carpeta .listo { display: none; }
+/* El menú del clic derecho (menu.js) */
+.menu-contextual { position: fixed; z-index: 30; min-width: 210px; display: grid; padding: 5px; border-radius: 12px; background: var(--vidrio-fuerte); box-shadow: var(--sombra); }
+.menu-contextual button { display: flex; justify-content: space-between; gap: 18px; padding: 7px 10px; border: 0; border-radius: 7px; text-align: left; font-weight: 400; }
+.menu-contextual button:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--acento) 15%, transparent); outline: none; }
+.menu-contextual kbd { font: inherit; font-size: 12px; color: var(--suave); }
+.menu-contextual hr { width: calc(100% - 12px); margin: 4px 6px; border: 0; border-top: 1px solid var(--linea); }
+#mensaje button { margin-left: 10px; padding: 3px 10px; font-weight: 600; color: var(--acento); }
 .grupo-carpeta { display: grid; gap: 10px; }
 .grupo-carpeta h4 { display: flex; align-items: baseline; gap: 8px; margin: 0; font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
 .grupo-carpeta h4 small { font-weight: 400; letter-spacing: 0; }
@@ -1731,8 +1806,17 @@ span.flecha-arbol::before { display: none; }
 @media (prefers-reduced-motion: reduce) { .gota-forma i { transition: none; } }
 /* La ficha (el panel) sale a la derecha: la carpeta se corre para que no la tape. */
 .con-escritorio.con-panel #archivos .columnas { margin-right: 352px; }
+/* Paso 103: con la ficha abierta, ella hace de propiedades: la columna de propiedades se esconde y la carpeta usa ese espacio. */
+.con-escritorio.con-panel #archivos .columnas { grid-template-columns: minmax(0, 1fr); }
+.con-escritorio.con-panel #archivos .columna:has(> .w-propiedades-carpeta) { display: none; }
 #archivos .columnas { transition: margin-right .3s var(--suave-curva); }
 /* En el celular el árbol no se ve: se navega tocando carpetas y volviendo con «‹» o con la ruta de arriba. */
-body:not(.con-escritorio) #archivos > .costado { display: none; }
+body:not(.con-escritorio) #archivos .w-arbol-carpetas { display: none; }
+/* Paso 103: en el celular las propiedades salen desde abajo, como una hoja, solo con algo elegido (tocar abre; dejar el dedo elige). */
+body:not(.con-escritorio) .w-propiedades-carpeta:not(.con-eleccion) { display: none; }
+body:not(.con-escritorio) .w-propiedades-carpeta { position: fixed; left: 8px; right: 8px; bottom: 8px; top: auto; z-index: 9; max-height: 60vh; overflow-y: auto; box-shadow: var(--sombra); }
+body:not(.con-escritorio) .w-propiedades-carpeta .listo { display: inline-block; }
+body:not(.con-escritorio) .estado-carpeta small { display: none; }
+@media (max-width: 700px) { .barra-carpeta { flex-wrap: wrap; } .barra-carpeta input[type="search"] { flex: 1 1 100%; margin: 6px 0 0; } }
 @media (max-width: 700px) { .carpetas { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; } .nombre-carpeta h3 { font-size: 19px; } }
 @media (prefers-reduced-motion: reduce) { .tarjeta-carpeta, .flecha-arbol::before, #archivos .columnas { transition: none; } }

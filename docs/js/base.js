@@ -5,7 +5,16 @@ import { SUPABASE_URL, SUPABASE_KEY } from "../config.js";
 
 export const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 export const $ = (id) => document.getElementById(id);
-export const avisar = (t) => ($("mensaje").textContent = t);
+// Un aviso abajo al centro. accion = { texto, hacer } le pone un botón (ej. «Deshacer», paso 103) y el aviso se va solo.
+let sinAviso;
+export function avisar(t, accion) {
+  const m = $("mensaje");
+  clearTimeout(sinAviso);
+  m.textContent = t;
+  if (!accion) return;
+  m.append(el("button", { textContent: accion.texto, onclick: () => { m.textContent = ""; accion.hacer(); } }));
+  sinAviso = setTimeout(() => (m.textContent = ""), 7000);
+}
 
 // Atajo para crear elementos HTML: el("span", { textContent: "hola" }, ...hijos)
 export function el(tag, props = {}, ...hijos) {
