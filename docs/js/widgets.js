@@ -139,6 +139,44 @@ export function selectorDeVistas(a, redibujar) {
   return caja;
 }
 
+// Paso 105: un apartado con ajustable: true deja cambiar el ancho de sus columnas arrastrando el borde entre ellas
+// (en el PC; con el teclado, las flechas sobre el borde). Los anchos se recuerdan en este navegador.
+const MINIMO = 180; // lo más angosta que queda una columna, en px
+const ponerAnchos = (g, anchos) => g.style.setProperty("--columnas", anchos.map((w) => `minmax(0, ${w}fr)`).join(" "));
+function anchosGuardados(id, k) {
+  try { const a = JSON.parse(localStorage.getItem("anchos:" + id)); return Array.isArray(a) && a.length === k ? a : null; } catch { return null; }
+}
+function bordes(id, g) {
+  const columnas = [...g.children];
+  columnas.slice(0, -1).forEach((c, i) => {
+    const borde = el("div", { className: "borde-columna", role: "separator", ariaOrientation: "vertical", ariaLabel: "Cambiar el ancho", tabIndex: 0 });
+    // Mueve el borde i en dx px: crece una columna y se achica la de al lado (ninguna baja del mínimo).
+    const correr = (anchos, dx) => {
+      const par = anchos[i] + anchos[i + 1], izq = Math.min(Math.max(anchos[i] + dx, MINIMO), par - MINIMO);
+      const nuevos = [...anchos];
+      nuevos[i] = izq; nuevos[i + 1] = par - izq;
+      ponerAnchos(g, nuevos);
+      return nuevos;
+    };
+    const medir = () => columnas.map((x) => x.getBoundingClientRect().width);
+    const guardar = (anchos) => { try { localStorage.setItem("anchos:" + id, JSON.stringify(anchos.map(Math.round))); } catch {} };
+    borde.onpointerdown = (e) => {
+      e.preventDefault();
+      const desde = e.clientX, anchos = medir();
+      let ultimos = anchos;
+      borde.setPointerCapture(e.pointerId);
+      g.classList.add("ajustando");
+      borde.onpointermove = (m) => (ultimos = correr(anchos, m.clientX - desde));
+      borde.onpointerup = () => { borde.onpointermove = borde.onpointerup = null; g.classList.remove("ajustando"); guardar(ultimos); };
+    };
+    borde.onkeydown = (e) => {
+      const paso = { ArrowLeft: -24, ArrowRight: 24 }[e.key];
+      if (paso) { e.preventDefault(); e.stopPropagation(); guardar(correr(medir(), paso)); }
+    };
+    c.append(borde);
+  });
+}
+
 // Arma la <section> de un apartado: su título y sus columnas de ventanas. extra (opcional) va junto al título
 // (la carcasa pone ahí «Abrir Finanzas ›» en las secciones del escritorio, paso 99).
 // Una columna con costado: true (paso 38b) va pegada al borde izquierdo, a todo el alto, y se esconde con su botón;
@@ -172,7 +210,9 @@ export function montar(a, extra) {
     const grillaDe = (cols) => {
       const pieza = (w) => (Array.isArray(w) ? el("div", { className: "fila-ventanas" }, ...w.map(ventana)) : ventana(w));
       const g = el("div", { className: "columnas" }, ...cols.map((c) => el("div", { className: "columna" }, c.nombre ? el("h2", { textContent: c.nombre }) : "", ...c.widgets.map(pieza))));
-      g.style.setProperty("--columnas", cols.map((c) => `minmax(0, ${c.ancho ?? 1}fr)`).join(" "));
+      const anchos = (a.ajustable && anchosGuardados(a.id, cols.length)) || cols.map((c) => c.ancho ?? 1);
+      ponerAnchos(g, anchos);
+      if (a.ajustable) bordes(a.id, g);
       return g;
     };
     // Paso 70: con dos o más bloques se ve uno a la vez, con su selector arriba (bloques.js).

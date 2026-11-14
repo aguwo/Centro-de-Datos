@@ -3,6 +3,8 @@
 //   carpeta  lo que puede contener cosas (su tipo tiene "nivel" en la base: área, tópico, proyecto, objetivo...)
 //            o cualquier nodo al que ya le metiste algo. No hay una lista por rama: sale del árbol de la base.
 //   archivo  todo lo demás. Abrirlo muestra su ficha (el panel de siempre, panel.js).
+// Paso 105: el árbol crece desde aquí: arrastrar para mover (a una carpeta, al árbol o a la ruta), cortar y pegar,
+// «Mover a…» (sirve en el celular), nueva carpeta ahí mismo, y los bordes de las columnas se arrastran.
 // Paso 103: se maneja como el Explorador de Windows. Un clic elige (Ctrl suma, Shift elige un rango), doble clic abre,
 // el teclado recorre, hay atrás y adelante, tres maneras de ver (Íconos, Lista, Detalles), clic derecho y Supr.
 // Sus tres widgets comparten el ctx del apartado (widgets.js):
@@ -13,9 +15,9 @@
 //   arbol-carpetas        (costado) las carpetas como árbol, que se abren y cierran
 //   carpeta               la carpeta abierta: dónde está y lo que tiene
 //   propiedades-carpeta   (a la derecha) las propiedades de lo elegido, o de la carpeta abierta, para cambiarlas ahí
-import { el, datos, colorDe, colorDeProyecto, cajasDe, sinTildes, irA, dia, avisar, escribible, escribiendoEn } from "./base.js";
+import { el, datos, colorDe, colorDeProyecto, cajasDe, sinTildes, irA, dia, avisar, escribible, escribiendoEn, flotante } from "./base.js";
 import { mostrarPanel, formulario, editorDePropiedades, tienePropiedad } from "./panel.js";
-import { cambiar, completar } from "./acciones.js";
+import { cambiar, completar, crear, mover, porQueNoVa, dentroDeCaja } from "./acciones.js";
 import { corto } from "./fechas.js";
 import { icono, insignia } from "./dibujos.js";
 import { formaDe, iconoDe } from "./formas.js";
@@ -88,6 +90,72 @@ const abrir = (ctx, n) => (esCarpeta(n) ? entrar(ctx, n.id) : mostrarPanel(n.id)
 // Lo elegido que sigue existiendo, como nodos.
 const elegidosDe = (ctx) => [...(ctx.elegidos ?? [])].map((id) => datos.nodo.get(id)).filter(Boolean);
 
+// ---------- Mover y crear carpetas (paso 105) ----------
+// Mover varias cosas a una carpeta (null = afuera de todo). Lo que no puede ir ahí se salta y se dice por qué.
+// Sale «Deshacer», que devuelve cada una a donde estaba.
+function moverA(ids, destino_id) {
+  const nodos = ids.map((id) => datos.nodo.get(id)).filter((n) => n && (datos.padre.get(n.id) ?? null) !== destino_id);
+  const van = nodos.filter((n) => !porQueNoVa(n, destino_id)), no = nodos.map((n) => porQueNoVa(n, destino_id)).filter(Boolean);
+  if (!van.length) return no.length && avisar(no[0]);
+  const antes = new Map(van.map((n) => [n, datos.padre.get(n.id) ?? null]));
+  for (const n of van) mover(n, destino_id);
+  const donde = destino_id ? `«${datos.nodo.get(destino_id).titulo}»` : "Todo";
+  avisar((van.length > 1 ? `${van.length} cosas movidas a ${donde}` : `«${van[0].titulo}» movido a ${donde}`) + (no.length ? ` · ${no.length} no: ${no[0]}` : ""),
+    { texto: "Deshacer", hacer: () => antes.forEach((p, n) => mover(n, p)) });
+}
+// «Mover a…»: una ventana con todas las carpetas (con su camino) y un buscador. Sirve también en el celular.
+function moverAEleccion(ids) {
+  const camino = (n) => [...cajasDe(n.id).reverse().map((id) => datos.nodo.get(id).titulo), n.titulo].join(" › ");
+  const carpetas = datos.nodos.filter((n) => tipoDe(n)?.nivel != null).map((n) => ({ n, camino: camino(n) })).sort((a, b) => a.camino.localeCompare(b.camino, "es"));
+  const buscar = el("input", { type: "search", placeholder: "Buscar carpeta…", ariaLabel: "Buscar carpeta" }), lista = el("ul", { className: "candidatos" });
+  const opcion = (id, titulo, dibujo) => el("li", {}, el("button", { onclick: () => { d.close(); moverA(ids, id); } }, dibujo, el("span", { textContent: titulo })));
+  const llenar = () => {
+    const t = sinTildes(buscar.value.trim());
+    lista.replaceChildren(t ? "" : opcion(null, "Todo (afuera de todo)", insignia("carpeta", "var(--acento)", "chica")),
+      ...carpetas.filter((c) => sinTildes(c.camino).includes(t)).slice(0, 60).map((c) => opcion(c.n.id, c.camino, insignia(iconoDe(c.n), colorDeCarpeta(c.n), "chica"))));
+  };
+  buscar.oninput = llenar;
+  llenar();
+  const d = flotante(ids.length > 1 ? `Mover ${ids.length} cosas a…` : `Mover «${datos.nodo.get(ids[0])?.titulo}» a…`, el("div", { className: "mover-a" }, buscar, lista));
+  buscar.focus();
+}
+// Las clases de carpeta que se pueden crear dentro de n (null = la raíz, donde van las áreas): las más específicas que
+// ella que su tipo deja ir ahí (dentro de un área: tópico, objetivo, proyecto...).
+const carpetasPosibles = (n) => datos.tipos.filter((t) => t.nivel != null && (n ? t.nivel > (tipoDe(n)?.nivel ?? Infinity) && dentroDeCaja(t.clave, n.id) : t.nivel === 0));
+
+// Arrastrar: lo elegido (o lo que tomaste) se lleva encima de algo con data-destino (una carpeta, una fila del árbol
+// o un paso de la ruta; "" = Todo). Se marca dónde caería. En el celular no se arrastra: está «Mover a…».
+let llevando = [], sobre = null;
+function arrastrable(raiz, ctx) {
+  raiz.addEventListener("dragstart", (e) => {
+    const id = e.target.closest?.("[data-id]")?.dataset.id;
+    if (!id) return;
+    llevando = ctx.elegidos?.has(id) ? [...ctx.elegidos] : [id];
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", llevando.map((x) => datos.nodo.get(x)?.titulo).join("\n"));
+  });
+  raiz.addEventListener("dragend", () => { llevando = []; marcarSobre(null); });
+}
+function soltable(raiz) {
+  const destinoDe = (e) => e.target.closest?.("[data-destino]");
+  raiz.addEventListener("dragover", (e) => {
+    const d = destinoDe(e);
+    if (!d || !llevando.length || llevando.includes(d.dataset.destino)) return marcarSobre(null);
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    marcarSobre(d);
+  });
+  raiz.addEventListener("drop", (e) => {
+    const d = destinoDe(e);
+    if (!d || !llevando.length) return;
+    e.preventDefault();
+    moverA(llevando, d.dataset.destino || null);
+    llevando = [];
+    marcarSobre(null);
+  });
+}
+function marcarSobre(d) { if (sobre !== d) { sobre?.classList.remove("soltar"); d?.classList.add("soltar"); sobre = d; } }
+
 // ---------- Cómo se ve (se recuerda en este navegador) ----------
 // Detalles muestra estas columnas; cualquiera sirve para ordenar.
 const COLUMNAS = {
@@ -120,6 +188,7 @@ export function arbolDeCarpetas(v, ctx) {
   let ultima; // la carpeta que estaba abierta al dibujar la vez anterior
   const lista = el("ul", { className: "arbol-carpetas" });
   v.append(lista);
+  soltable(lista);
   return dibujar;
 
   function dibujar() {
@@ -133,11 +202,13 @@ export function arbolDeCarpetas(v, ctx) {
       const boton = el("button", { className: "nombre-arbol", ariaCurrent: String(n.id === actual?.id), onclick: () => entrar(ctx, n.id) },
         icono(iconoDe(n)), el("span", { textContent: n.titulo }));
       boton.style.setProperty("--c", colorDeCarpeta(n));
+      boton.dataset.destino = n.id;
       const li = el("li", {}, el("div", { className: "fila-arbol" }, flecha, boton));
       li.style.setProperty("--nivel", nivel);
       return abierto ? [li, ...subs.flatMap((s) => fila(s, nivel + 1))] : [li];
     };
     const raiz = el("button", { className: "nombre-arbol raiz", ariaCurrent: String(!actual), onclick: () => entrar(ctx, null) }, icono("carpeta"), el("span", { textContent: "Todo" }));
+    raiz.dataset.destino = "";
     lista.replaceChildren(el("li", {}, el("div", { className: "fila-arbol" }, raiz)), ...carpetasDe(null).flatMap((n) => fila(n, 0)));
   }
 }
@@ -180,12 +251,17 @@ export function carpetaAbierta(v, ctx) {
     }
     elegir([id], id);
   };
+  arrastrable(cuerpo, ctx);
+  soltable(v);
   cuerpo.ondblclick = (e) => { const item = itemDe(e); if (item && !botonPropio(e, item)) abrir(ctx, datos.nodo.get(item.dataset.id)); };
   cuerpo.oncontextmenu = (e) => {
     const item = itemDe(e);
     if (item && !ctx.elegidos?.has(item.dataset.id)) elegir([item.dataset.id], item.dataset.id);
     menuEn(e, item ? opcionesDe(elegidosDe(ctx)) : [
       { texto: "Nuevo aquí", hacer: () => nuevoEn(abierta(ctx)) },
+      ...carpetasPosibles(abierta(ctx)).map((t) => ({ texto: `Nueva carpeta: ${t.nombre}`, hacer: () => nuevaCarpeta(t.clave) })),
+      ctx.cortados?.size && { texto: "Pegar aquí", atajo: "Ctrl+V", hacer: pegar },
+      "-",
       { texto: "Elegir todo", atajo: "Ctrl+A", hacer: () => elegir(visibles()) },
     ]);
   };
@@ -201,6 +277,7 @@ export function carpetaAbierta(v, ctx) {
     Backspace: () => subir(ctx), "Alt+ArrowUp": () => subir(ctx),
     "Alt+ArrowLeft": () => viajar(ctx, -1), "Alt+ArrowRight": () => viajar(ctx, 1),
     "Ctrl+a": () => elegir(visibles(), ctx.ancla),
+    "Ctrl+x": () => cortar(elegidosDe(ctx)), "Ctrl+v": () => pegar(),
     Delete: () => archivarTodo(elegidosDe(ctx)),
     F2: () => ctx.renombrar?.(() => cuerpo.focus()),
     Escape: () => (ctx.elegidos?.size ? elegir([]) : cuerpo.blur()),
@@ -253,10 +330,29 @@ export function carpetaAbierta(v, ctx) {
       porHacer.length && { texto: porHacer.length > 1 ? `Marcar ${porHacer.length} hechas` : "Marcar hecha", hacer: () => porHacer.forEach(completar) },
       una && { texto: "Renombrar", atajo: "F2", hacer: () => ctx.renombrar?.(() => cuerpo.focus()) },
       "-",
+      { texto: "Cortar", atajo: "Ctrl+X", hacer: () => cortar(sel) },
+      una && esCarpeta(una) && ctx.cortados?.size && { texto: "Pegar dentro", atajo: "Ctrl+V", hacer: () => pegar(una.id) },
+      { texto: "Mover a…", hacer: () => moverAEleccion(sel.map((n) => n.id)) },
+      "-",
       una && esCarpeta(una) && { texto: "Nuevo aquí", hacer: () => nuevoEn(una) },
       "-",
       { texto: sel.length > 1 ? `Archivar ${sel.length}` : "Archivar", atajo: "Supr", hacer: () => archivarTodo(sel) },
     ];
+  }
+  // Cortar marca lo elegido (se ve más suave); pegar lo mueve a la carpeta abierta (o a la que digas).
+  function cortar(sel) { if (sel.length) ctx.cambiar({ cortados: new Set(sel.map((n) => n.id)) }); }
+  function pegar(destino_id = ctx.carpeta ?? null) {
+    if (!ctx.cortados?.size) return;
+    moverA([...ctx.cortados], destino_id);
+    ctx.cambiar({ cortados: null });
+  }
+  // Nueva carpeta en la abierta: se crea con nombre «Nueva carpeta», queda elegida y se escribe su nombre encima (como F2).
+  async function nuevaCarpeta(clave) {
+    const n = abierta(ctx);
+    const id = await crear(clave, { titulo: "Nueva carpeta" }, { conexion: n ? dentroDeCaja(clave, n.id) : undefined, enfocar: false });
+    if (!id) return;
+    elegir([id], id);
+    ctx.renombrar?.(() => cuerpo.focus());
   }
   // Archivar no borra: deja de verse y se puede recuperar. Igual sale «Deshacer» un rato.
   function archivarTodo(sel) {
@@ -281,8 +377,9 @@ export function carpetaAbierta(v, ctx) {
     if (buscar.value !== (ctx.buscar ?? "")) buscar.value = ctx.buscar ?? "";
 
     // Dónde estás: Todo › Universidad › Base de Datos. Cada paso se puede tocar para volver ahí.
-    ruta.replaceChildren(...[null, ...(n ? cajasDe(id).reverse() : [])].flatMap((p, i) => [i ? el("span", { ariaHidden: "true", textContent: "›" }) : "",
-      el("button", { textContent: p ? datos.nodo.get(p).titulo : "Todo", onclick: () => entrar(ctx, p) })]),
+    // También se puede soltar algo encima de un paso para llevarlo ahí.
+    const paso = (p) => { const b = el("button", { textContent: p ? datos.nodo.get(p).titulo : "Todo", onclick: () => entrar(ctx, p) }); b.dataset.destino = p ?? ""; return b; };
+    ruta.replaceChildren(...[null, ...(n ? cajasDe(id).reverse() : [])].flatMap((p, i) => [i ? el("span", { ariaHidden: "true", textContent: "›" }) : "", paso(p)]),
       n ? el("span", { ariaHidden: "true", textContent: "›" }) : "", n ? el("b", { textContent: n.titulo }) : "");
     buscar.placeholder = `Buscar en ${n?.titulo ?? "todo"}…`;
 
@@ -294,6 +391,7 @@ export function carpetaAbierta(v, ctx) {
         el("small", { textContent: [n?.tipos.nombre, resumen(id)].filter(Boolean).join(" · ") })),
       el("div", { className: "acciones-carpeta" },
         suyo ? el("button", { textContent: `Abrir en ${suyo[1]} ›`, onclick: () => suyo[2](n) }) : "",
+        botonCarpeta(n),
         el("button", { className: "principal", textContent: "+ Nuevo aquí", onclick: () => nuevoEn(n) })));
     cabeza.style.setProperty("--c", colorDeCarpeta(n));
 
@@ -321,6 +419,14 @@ export function carpetaAbierta(v, ctx) {
     total = cosas.length;
   }
 
+  // «+ Carpeta»: con una sola clase posible la crea al tiro; con varias, pregunta cuál.
+  function botonCarpeta(n) {
+    const clases = carpetasPosibles(n);
+    if (!clases.length) return "";
+    return el("button", { textContent: "+ Carpeta", title: "Nueva carpeta aquí", onclick: (e) => clases.length === 1 ? nuevaCarpeta(clases[0].clave)
+      : menuEn(e, clases.map((t) => ({ texto: t.nombre, hacer: () => nuevaCarpeta(t.clave) }))) });
+  }
+
   // Lo elegido se marca, el cursor del teclado queda a la vista, y abajo cuántas hay.
   function marcar() {
     atras.disabled = !ctx.atras?.length; adelante.disabled = !ctx.adelante?.length; arriba.disabled = !abierta(ctx);
@@ -328,11 +434,14 @@ export function carpetaAbierta(v, ctx) {
       x.ariaSelected = String(!!ctx.elegidos?.has(x.dataset.id));
       x.role = "option";
       x.classList.toggle("cursor", x.dataset.id === ctx.ancla);
+      x.classList.toggle("cortado", !!ctx.cortados?.has(x.dataset.id));
+      x.draggable = !tactil.matches;
+      if (esCarpeta(datos.nodo.get(x.dataset.id))) x.dataset.destino = x.dataset.id; // una carpeta recibe lo que sueltes encima
     }
     if (cuerpo.contains(document.activeElement)) cuerpo.querySelector(".cursor")?.scrollIntoView({ block: "nearest" });
     const k = elegidosDe(ctx).length;
     estado.replaceChildren(el("span", { textContent: [cuantas(total, "elemento", "elementos") || "Vacía", cuantas(k, "elegido", "elegidos")].filter(Boolean).join(" · ") }),
-      el("small", { textContent: "Ctrl+clic suma · Shift+clic rango · F2 renombra · Supr archiva" }));
+      el("small", { textContent: ctx.cortados?.size ? `${ctx.cortados.size} para mover: Ctrl+V pega en la carpeta abierta` : "Arrastra para mover · Ctrl+X y Ctrl+V · F2 renombra · Supr archiva" }));
   }
 
   // Íconos (las formas) o Lista (ícono y nombre): una sección por grupo, con su título.
