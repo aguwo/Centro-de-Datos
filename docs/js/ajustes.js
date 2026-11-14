@@ -11,7 +11,7 @@ import { icono } from "./dibujos.js";
 import { entradasDeLaBarra, dibujarTodo } from "./carcasa.js";
 import { APARTADOS } from "./apartados.js";
 import { selectorDeVistas, disposicionDe } from "./widgets.js";
-import { preferencia, cambiar, TEMAS, TONOS, FONDOS, BARRAS, LETRAS, cssDelFondo, ZOOMS, tuFoto, tuCara, ponerFoto, achicar, volverALoDeSiempre } from "./apariencia.js";
+import { preferencia, cambiar, TEMAS, TONOS, FONDOS, BARRAS, LETRAS, cssDelFondo, ZOOMS, MINIMAPAS, tuFoto, tuCara, ponerFoto, achicar, volverALoDeSiempre } from "./apariencia.js";
 
 // Las ventanas de Ajustes se ponen al día juntas: un cambio en una (ej. el modo) se ve en las otras.
 const ponerAlDia = new Set();
@@ -159,8 +159,10 @@ function arrastrable(li, lista, listo) {
 export function vistas(v) {
   const conVistas = APARTADOS.filter((a) => a.lugar && a.vistas?.length > 1);
   const selectores = conVistas.map((a) => selectorDeVistas(a, dibujarTodo));
-  v.append(...conVistas.flatMap((a, i) => [titulo(a.nombre), selectores[i]]));
-  return () => conVistas.forEach((a, i) => selectores[i].marcar(disposicionDe(a)));
+  // Paso 113: cómo se ve el minimapa de la esquina.
+  const minimapa = opciones("minimapa", MINIMAPAS, (valor, nombre) => [el("span", { textContent: nombre })], "zooms");
+  v.append(titulo("Minimapa"), minimapa, ...conVistas.flatMap((a, i) => [titulo(a.nombre), selectores[i]]));
+  return conPonerAlDia(() => { minimapa.marcar(preferencia().minimapa); conVistas.forEach((a, i) => selectores[i].marcar(disposicionDe(a))); });
 }
 
 export function ventanas(v) {
