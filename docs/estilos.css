@@ -82,25 +82,30 @@ main { position: fixed; inset: 0; }
 /* Dock: escondido abajo; aparece al acercarse (carcasa.js) */
 .dock { position: fixed; bottom: 12px; left: 50%; z-index: 10; display: flex; gap: 4px; padding: 8px; border-radius: 20px;
         max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none; /* en el teléfono, si no caben, se desliza */
-        transform: translate(-50%, calc(100% + 28px)); transition: transform .28s cubic-bezier(.2,.7,.2,1); }
+        transform: translate(-50%, calc(100% + 28px)); transition: transform var(--resorte-t) var(--resorte); }
 .dock.visible, .dock:focus-within { transform: translateX(-50%); }
 /* Paso 93: botones limpios, como la barra «Solo íconos» del computador: el ícono de línea y nada más. Al pasar el mouse,
    un cuadrado translúcido (--resalte); el elegido lo lleva .marca, una sola pieza que viaja de un botón a otro (carcasa.js) */
 :root { --resalte: color-mix(in srgb, var(--texto) 12%, transparent); --globo: rgba(24,24,28,.94); /* el globo con el nombre: oscuro en claro y en oscuro */ }
-.dock button { position: relative; flex: none; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 14px; background: none; color: var(--texto);
+.dock button { -webkit-tap-highlight-color: transparent; position: relative; flex: none; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 14px; background: none; color: var(--texto);
                display: grid; place-items: center; transition: background-color .2s ease; }
 .dock button:hover { background: var(--resalte); }
-.dock .icono { width: 24px; height: 24px; stroke-width: 1.6; }
+.dock .icono { width: 24px; height: 24px; stroke-width: 1.6; transition: transform .25s var(--resorte); }
+.dock button:active .icono { transform: scale(.9); transition-duration: .08s; } /* al apretar se hunde, al soltar vuelve con el resorte */
 .marca { position: absolute; left: 0; top: 0; width: var(--w, 0); height: var(--h, 0); transform: translate(var(--x, 0), var(--y, 0)); border-radius: 14px;
-         background: var(--resalte); pointer-events: none; transition: transform .45s var(--suave-curva), width .45s var(--suave-curva), height .45s var(--suave-curva), opacity .2s ease; }
-.marca.nueva { transition: none; }
+         background: var(--resalte); pointer-events: none; transition: opacity .2s ease; } /* viaja con resortes (carcasa.js), no con CSS */
 .marca.sin-elegido { opacity: 0; }
 /* El globo: una píldora oscura con el nombre y, en gris, su atajo de teclado */
 .dock .etiqueta { position: absolute; bottom: calc(100% + 10px); display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 99px;
                   background: var(--globo); color: #fff; font-size: 13px; font-weight: 500; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.28);
-                  opacity: 0; pointer-events: none; transition: opacity .15s; }
+                  opacity: 0; pointer-events: none; transition: opacity .12s; }
 .dock .etiqueta kbd { font: inherit; color: rgba(255,255,255,.5); }
 .dock button:hover .etiqueta { opacity: 1; }
+/* Paso 98: en el teléfono, al subir el dock los íconos llegan uno tras otro (--i) */
+body:not(.con-escritorio) .dock button { transition: background-color .2s ease, opacity .3s ease, transform var(--resorte-t) var(--resorte);
+  transition-delay: 0s, calc(var(--i, 0) * 22ms + 40ms), calc(var(--i, 0) * 22ms + 40ms); }
+body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0; transform: translateY(14px) scale(.85); transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) { body:not(.con-escritorio) .dock button { transition: none; } }
 .dock .perfil { display: none; } /* tu foto: solo en las barras de íconos del computador (abajo) */
 .cara { display: block; width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
 .cara.sin-foto { display: grid; place-items: center; background: var(--resalte); }
@@ -199,27 +204,33 @@ main { position: fixed; inset: 0; }
 .barra-retraida .con-escritorio .sacar-barra { transform: translate(0, -50%); opacity: 1; pointer-events: auto; }
 .barra-retraida .con-escritorio .sacar-barra:hover { color: var(--texto); width: 28px; }
 
-/* Animaciones de la barra (todas con la misma curva suave, --suave-curva):
+/* Animaciones de la barra (paso 98: todas con el mismo resorte que la cámara del escritorio, --resorte; carcasa.js
+   lo calcula con curvaDeResorte y, si el navegador no sabe de linear(), queda la curva suave de siempre):
    - pasar el mouse: el fondo y el color se funden, y el ícono se levanta apenas; al apretar, se hunde
    - el elegido: su fondo se funde y la rayita crece desde el centro
    - retraer y sacar: la barra se desliza, el contenido se corre con ella y los botones aparecen uno tras otro (--i)
    - cambiar de estilo en Ajustes: ancho, bordes y lugar cambian de a poco
    - los globos con el nombre (Solo íconos e Isla) entran deslizándose */
-:root { --suave-curva: cubic-bezier(.22,.8,.24,1); }
-.con-escritorio .dock { transition: transform .38s var(--suave-curva), width .32s var(--suave-curva), left .32s var(--suave-curva), top .32s var(--suave-curva),
-  bottom .32s var(--suave-curva), border-radius .32s var(--suave-curva), padding .32s var(--suave-curva); }
-.con-escritorio main { transition: left .38s var(--suave-curva); }
-.con-escritorio .dock button { transition: background-color .2s ease, color .2s ease, opacity .3s ease, transform .35s var(--suave-curva);
+:root { --suave-curva: cubic-bezier(.22,.8,.24,1); --resorte: var(--suave-curva); --resorte-t: .38s; }
+.con-escritorio .dock { transition: transform var(--resorte-t) var(--resorte), width var(--resorte-t) var(--resorte), left var(--resorte-t) var(--resorte),
+  top var(--resorte-t) var(--resorte), bottom var(--resorte-t) var(--resorte), border-radius var(--resorte-t) var(--resorte), padding var(--resorte-t) var(--resorte); }
+.con-escritorio main { transition: left var(--resorte-t) var(--resorte); }
+.con-escritorio .dock button { transition: background-color .2s ease, color .2s ease, opacity .3s ease, transform var(--resorte-t) var(--resorte);
   transition-delay: 0s, 0s, calc(var(--i, 0) * 28ms + 60ms), calc(var(--i, 0) * 28ms + 60ms); }
-.con-escritorio .dock button::before { transition: transform .3s var(--suave-curva); }
-.con-escritorio .dock .icono { transition: transform .25s var(--suave-curva); }
+.con-escritorio .dock button::before { transition: transform .3s var(--resorte); }
 .con-escritorio .dock button:hover .icono { transform: translateY(-1.5px) scale(1.06); }
-.con-escritorio .dock button:active .icono { transform: scale(.92); transition-duration: .08s; }
+.con-escritorio .dock button:active .icono { transform: scale(.9); }
 .barra-retraida .con-escritorio .dock .marca { opacity: 0; }
 .barra-retraida .con-escritorio .dock button { opacity: 0; transform: translateX(-10px); transition-delay: 0s; }
-.con-escritorio .sacar-barra { transition: transform .35s var(--suave-curva) .15s, opacity .25s ease .15s, width .2s var(--suave-curva), color .2s ease; }
-:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta { transform: translate(-6px, -50%); transition: opacity .18s ease, transform .25s var(--suave-curva); }
+.con-escritorio .sacar-barra { transition: transform var(--resorte-t) var(--resorte) .15s, opacity .25s ease .15s, width .2s var(--resorte), color .2s ease; }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta { transform: translate(-6px, -50%); transition: opacity .12s ease, transform .3s var(--resorte); }
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock button:is(:hover, :focus-visible) .etiqueta { transform: translate(0, -50%); }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock.globos .etiqueta { transition-property: opacity; } /* ya con globos: sin deslizarse */
+/* Paso 98: el primer globo espera un momento; con uno ya visto (.globos, carcasa.js) los demás salen al tiro y sin
+   deslizarse. Con el teclado sale de inmediato. (transition-delay en :hover solo cuenta al aparecer, no al irse;
+   :root, para ganarle a la transición que pone cada estilo) */
+:root .dock button:hover .etiqueta { transition-delay: .45s; }
+:root .dock.globos button:hover .etiqueta, :root .dock button:focus-visible .etiqueta { transition-delay: 0s; }
 @media (prefers-reduced-motion: reduce) {
   .con-escritorio .dock, .con-escritorio main, .con-escritorio .dock *, .con-escritorio .dock *::before, .con-escritorio .sacar-barra { transition: none !important; }
 }
