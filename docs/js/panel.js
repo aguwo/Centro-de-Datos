@@ -1,15 +1,15 @@
-// El panel lateral: los datos de un nodo con sus conexiones, y el formulario para crear o editar.
+// El panel lateral: el formulario para crear o editar (ver un nodo es su ficha, ficha.js), y las propiedades de los tipos.
 // Lee de los datos cargados (no del mapa), así funciona igual desde el Inicio.
-import { db, $, el, avisar, datos, colorDe, recargar, pedirRecarga, dia, hora, fijas, FIJA } from "./base.js";
+import { db, $, el, avisar, datos, colorDe, recargar, dia, hora, fijas, FIJA } from "./base.js";
 import { enfocar, desenfocar, ajustarMapa } from "./mapa.js";
 import { crear, conectar, dentroDeCaja, cambiar, cambiarProps } from "./acciones.js";
+import { abrirFicha, refrescarFicha } from "./ficha.js";
 
 const ESTADOS = ["Inbox", "Por hacer", "En curso", "Esperando", "Hecho"]; // los mismos del paso 3
 
 // ---------- Propiedades (paso 23) ----------
 // Cada tipo dice qué propiedades tiene. "estado" y "fecha" viven en su columna del nodo; el resto, en props.
 const EN_COLUMNA = ["estado", "fecha"];
-const OCULTAS = ["notion_id", "postit", "orden"]; // las pone el sistema (postit: dónde está pegado en el escritorio; orden: el de tus áreas); no se muestran
 // Las del tipo, menos las marcadas "oculta" (las maneja otra parte, como "excepto" el calendario).
 const todasDe = (clave) => datos.tipo.get(clave)?.propiedades ?? [];
 const propiedadesDe = (clave) => todasDe(clave).filter((p) => !p.oculta);
@@ -58,11 +58,7 @@ function leer(p, c) {
   return c.value;
 }
 
-// Qué nodo muestra el panel ahora (null si está cerrado o con un formulario abierto).
-let mostrando = null;
-
 function abrir(...contenido) {
-  mostrando = null;
   $("panel").replaceChildren(...contenido);
   $("panel").classList.remove("oculto");
   document.body.classList.add("con-panel"); // el mapa se corre para dejarle espacio al panel
@@ -70,70 +66,15 @@ function abrir(...contenido) {
 }
 
 export function cerrarPanel() {
-  mostrando = null;
   $("panel").classList.add("oculto");
   document.body.classList.remove("con-panel");
   ajustarMapa();
 }
 
-// La ruta del nodo: "Universidad / Base de Datos / Proyecto BD", subiendo de caja en caja.
-function ruta(id) {
-  const partes = [];
-  for (let p = datos.padre.get(id); p; p = datos.padre.get(p)) partes.unshift(datos.nodo.get(p)?.titulo);
-  return partes.join(" / ");
-}
-
-// Los datos del nodo y la lista de lo conectado (clic en uno para saltar a él).
+// Ver un nodo: su ficha (ficha.js, paso 104). El panel queda solo para el formulario de crear o editar.
 export function mostrarPanel(id) {
-  const n = datos.nodo.get(id);
-  if (!n) return;
-
-  const chip = el("span", { className: "chip", textContent: n.tipos.nombre });
-  chip.style.setProperty("--c", colorDe(n.tipos.clave));
-
-  const lista = el("dl");
-  const fila = (k, v) => { if (v !== null && v !== undefined && v !== "") lista.append(el("dt", { textContent: k }), el("dd", { textContent: String(v) })); };
-  fila("Dentro de", ruta(id));
-  const propiedades = propiedadesDe(n.tipos.clave);
-  for (const p of propiedades) fila(p.nombre, legible(p, valorDe(n, p)));
-  // Lo que el nodo tenga y su tipo no declare (por ejemplo, de antes de cambiarlo de tipo) igual se muestra.
-  const declaradas = new Set([...todasDe(n.tipos.clave).map((p) => p.clave), ...OCULTAS]);
-  for (const [k, v] of Object.entries(n.props ?? {})) if (!declaradas.has(k)) fila(k, legible({}, v));
-
-  const conexiones = datos.conexiones.filter((c) => c.origen_id === id || c.destino_id === id);
-  const vecinos = el("ul", {}, ...conexiones.map((c) => {
-    const sale = c.origen_id === id; // ¿la flecha sale de este nodo o llega a él?
-    const otro = datos.nodo.get(sale ? c.destino_id : c.origen_id);
-    const relacion = c.relacion.replaceAll("_", " ");
-    const boton = el("button", {}, el("span", { textContent: otro.titulo }),
-      el("span", { className: "rel", textContent: sale ? `${relacion} →` : `← ${relacion}` }));
-    boton.onclick = () => enfocar(otro.id);
-    return el("li", {}, boton);
-  }));
-
-  const editar = el("button", { textContent: "Editar" });
-  editar.onclick = () => formulario(n);
-  const archivar = el("button", { textContent: "Archivar" });
-  archivar.onclick = async () => {
-    if (!confirm(`¿Archivar "${n.titulo}"? Desaparece del mapa, pero no se borra.`)) return;
-    const { error } = await db.from("nodos").update({ archivado: true }).eq("id", n.id);
-    if (error) return avisar(error.message);
-    cerrarPanel();
-    pedirRecarga();
-  };
-  const cerrar = el("button", { textContent: "Cerrar" });
-  cerrar.onclick = desenfocar;
-
-  abrir(
-    chip,
-    el("h2", { textContent: n.titulo }),
-    el("div", { className: "acciones" }, editar, archivar, cerrar),
-    lista,
-    ...(n.contenido ? [el("div", { className: "contenido", textContent: n.contenido })] : []),
-    el("h3", { textContent: `Conectado con (${conexiones.length})` }),
-    conexiones.length ? vecinos : el("p", { className: "rel", textContent: "Sin conexiones todavía." }),
-  );
-  mostrando = id;
+  cerrarPanel();
+  abrirFicha(id);
 }
 
 // Paso 103: las propiedades de uno o varios nodos, para cambiarlas ahí mismo (Archivos las muestra a la derecha).
@@ -155,11 +96,8 @@ export function editorDePropiedades(nodos) {
   }));
 }
 
-// Cuando cambian los datos, el panel abierto se vuelve a dibujar (o se cierra si el nodo ya no está).
-// Un formulario a medio llenar no se toca.
-export function refrescarPanel() {
-  if (mostrando) datos.nodo.has(mostrando) ? mostrarPanel(mostrando) : cerrarPanel();
-}
+// Cuando cambian los datos, la ficha abierta se vuelve a dibujar. Un formulario a medio llenar no se toca.
+export const refrescarPanel = refrescarFicha;
 
 // Formulario para crear (sin nodo) o editar (con nodo). Se muestra en el mismo panel.
 // Al crear: tipos = lo que se puede crear desde aquí (["tarea", "evento"]; sin lista, todos los tipos)

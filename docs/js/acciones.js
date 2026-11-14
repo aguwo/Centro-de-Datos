@@ -37,6 +37,9 @@ export async function mover(n, destino_id, relacion = "pertenece_a") {
   if (error) return avisar(error.message);
   return escribir(db.from("conexiones").insert({ origen_id: n.id, relacion, destino_id }));
 }
+// Quitar una conexión: no se borra, se cierra (valido_hasta), así queda la historia. Se deja de ver al tiro.
+export const desconectar = (c) => escribir(db.from("conexiones").update({ valido_hasta: new Date().toISOString() }).eq("id", c.id),
+  () => { datos.conexiones = datos.conexiones.filter((x) => x.id !== c.id); });
 export const cambiar = (n, cambios) => escribir(nodos().update(cambios).eq("id", n.id), () => {
   if (!cambios.archivado) return Object.assign(datos.nodo.get(n.id) ?? n, cambios);
   datos.nodos = datos.nodos.filter((x) => x.id !== n.id); // archivado: deja de verse

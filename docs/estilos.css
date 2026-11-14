@@ -1678,7 +1678,7 @@ span.flecha-arbol::before { display: none; }
   border: 1px solid var(--borde); box-shadow: var(--sombra); }
 .con-escritorio #archivos .columna + .columna { border-left: 1px solid var(--linea); }
 .con-escritorio #archivos .columna > .ventana { flex: 1; min-height: 0; overflow-y: auto; background: none; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
-.con-escritorio #archivos .w-arbol-carpetas { padding: 14px 10px; }
+.con-escritorio #archivos .w-arbol-carpetas { padding: 14px 10px; overflow-x: hidden; }
 .con-escritorio #archivos .w-propiedades-carpeta { background: color-mix(in srgb, var(--vidrio-fuerte) 35%, transparent); }
 .con-escritorio .w-carpeta { overflow: hidden !important; }
 .con-escritorio .w-carpeta .cuerpo-carpeta { overflow-y: auto; min-height: 0; padding: 2px; margin: -2px; }
@@ -1820,3 +1820,70 @@ body:not(.con-escritorio) .estado-carpeta small { display: none; }
 @media (max-width: 700px) { .barra-carpeta { flex-wrap: wrap; } .barra-carpeta input[type="search"] { flex: 1 1 100%; margin: 6px 0 0; } }
 @media (max-width: 700px) { .carpetas { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; } .nombre-carpeta h3 { font-size: 19px; } }
 @media (prefers-reduced-motion: reduce) { .tarjeta-carpeta, .flecha-arbol::before, #archivos .columnas { transition: none; } }
+
+/* Paso 104: la ficha (ficha.js). Una ventana grande al centro: arriba el nombre, a la izquierda propiedades y notas,
+   a la derecha el grafo de sus conexiones. En el celular ocupa la pantalla y el grafo va debajo. */
+.ficha { outline: none; width: min(1040px, calc(100vw - 40px)); max-height: calc(100vh - 40px); padding: 0; border-radius: 22px; color: var(--texto); overflow: hidden; display: none; }
+.ficha[open] { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.ficha::backdrop { background: rgba(0, 0, 0, .3); }
+.cabeza-ficha { display: flex; align-items: center; gap: 14px; padding: 20px 24px 16px; border-bottom: 1px solid var(--linea); }
+.cabeza-ficha .volver { border: 0; font-size: 28px; line-height: 1; padding: 0 6px; color: var(--suave); }
+.nombre-ficha { flex: 1; min-width: 0; }
+.nombre-ficha h2 { margin: 0 0 2px -6px; padding: 2px 6px; font-size: 22px; letter-spacing: -.01em; border-radius: 8px; overflow-wrap: anywhere; }
+.nombre-ficha h2:hover { box-shadow: inset 0 0 0 1px var(--borde); }
+.nombre-ficha p { margin: 0; color: var(--suave); font-size: 13px; }
+.nombre-ficha .chip { background: color-mix(in srgb, var(--c) 18%, transparent); color: var(--c); font-weight: 600; }
+.lugar { border: 0; padding: 1px 4px; border-radius: 6px; font-weight: 600; color: var(--texto); }
+.lugar:hover { background: var(--resalte); }
+.acciones-ficha { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.acciones-ficha .cerrar { border: 0; font-size: 22px; line-height: 1; padding: 2px 8px; color: var(--suave); }
+.cuerpo-ficha { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); min-height: 0; }
+.cuerpo-ficha > section { display: flex; flex-direction: column; gap: 12px; padding: 18px 24px; overflow-y: auto; min-height: 0; }
+.cuerpo-ficha h3 { margin: 0; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
+.datos-ficha { border-right: 1px solid var(--linea); }
+.notas-ficha { min-height: 130px; resize: vertical; padding: 10px 12px; border: 1px solid var(--linea); border-radius: 12px; background: var(--vidrio-fuerte); color: var(--texto); font: inherit; font-size: 13.5px; }
+.titulo-conexiones { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+/* El grafo: las líneas en un svg y cada cosa como un botón encima, en el mismo plano (600 × 520). */
+.plano-grafo { position: relative; width: 100%; aspect-ratio: 600 / 520; }
+.plano-grafo > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.plano-grafo line { stroke: var(--suave); stroke-width: 2; opacity: .7; }
+.plano-grafo line.suave { stroke-width: 1.5; stroke-dasharray: 5 5; opacity: .45; }
+.plano-grafo marker path { fill: var(--suave); }
+.plano-grafo text { font-size: 11.5px; fill: var(--suave); text-anchor: middle; paint-order: stroke; stroke: var(--vidrio-fuerte); stroke-width: 4px; stroke-linejoin: round; }
+.nodo-grafo { position: absolute; transform: translate(-50%, -19px); display: grid; justify-items: center; gap: 4px; width: 130px; padding: 0; border: 0; background: none; font-size: 12.5px; font-weight: 600; text-align: center; color: var(--texto); }
+.nodo-grafo > span:last-child { padding: 0 5px; border-radius: 6px; background: color-mix(in srgb, var(--vidrio-fuerte) 80%, transparent); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nodo-grafo .insignia { transition: transform .15s var(--suave-curva); }
+button.nodo-grafo:hover .insignia { transform: scale(1.12); }
+/* Lo directo, con su ícono lleno de su color; lo de más afuera, chico y suave */
+.nodo-grafo:not(.suave, .ella) .insignia { width: 38px; height: 38px; border-radius: 12px; background: var(--c); color: #fff; box-shadow: 0 3px 10px rgba(0,0,0,.18); }
+.nodo-grafo.arriba { transform: translate(-50%, calc(-100% + 19px)); }
+.nodo-grafo.arriba > span:last-child { order: -1; }
+.nodo-grafo.suave.arriba { transform: translate(-50%, calc(-100% + 14px)); }
+.nodo-grafo.suave { opacity: .6; font-weight: 400; transform: translate(-50%, -14px); }
+.nodo-grafo.ella { transform: translate(-50%, -28px); width: 150px; font-size: 13.5px; font-weight: 700; }
+.nodo-grafo.ella .insignia { box-shadow: 0 0 0 5px var(--vidrio-fuerte), 0 6px 16px rgba(0,0,0,.25); }
+.mas-conexiones { margin: 0; font-size: 12.5px; color: var(--suave); }
+/* «+ Conectar» */
+.conectar-ficha { display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: var(--vidrio-fuerte); }
+.conectar-ficha .fila { display: flex; gap: 6px; }
+.conectar-ficha :is(select, input) { min-width: 0; padding: 6px 8px; border: 1px solid var(--linea); border-radius: 8px; background: var(--vidrio); color: var(--texto); font: inherit; font-size: 13px; }
+.conectar-ficha input { flex: 1; }
+.candidatos { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 220px; overflow-y: auto; }
+.candidatos button { width: 100%; display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 0; border-radius: 8px; text-align: left; font-weight: 400; }
+.candidatos button:hover { background: var(--resalte); }
+.candidatos small { margin-left: auto; color: var(--suave); }
+@media (max-width: 760px) {
+  .ficha { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .ficha[open] { grid-template-rows: auto minmax(0, 1fr); }
+  .cabeza-ficha { flex-wrap: wrap; padding: 14px 16px 12px; }
+  .acciones-ficha { width: 100%; }
+  .cuerpo-ficha { grid-template-columns: 1fr; overflow-y: auto; }
+  .cuerpo-ficha > section { overflow: visible; min-height: auto; padding: 14px 16px; }
+  .cabeza-ficha { position: relative; padding-right: 48px; }
+  .acciones-ficha .cerrar { position: absolute; top: 10px; right: 8px; }
+  /* En la pantalla chica solo lo directo: lo de más afuera no cabe */
+  .nodo-grafo.suave, .plano-grafo line.suave { display: none; }
+  .datos-ficha { border-right: 0; border-bottom: 1px solid var(--linea); }
+  .nodo-grafo { width: 96px; font-size: 11.5px; }
+}
+@media (prefers-reduced-motion: reduce) { .nodo-grafo .insignia { transition: none; } }
