@@ -7,11 +7,14 @@
 // «Mover a…» (sirve en el celular), nueva carpeta ahí mismo, y los bordes de las columnas se arrastran.
 // Paso 103: se maneja como el Explorador de Windows. Un clic elige (Ctrl suma, Shift elige un rango), doble clic abre,
 // el teclado recorre, hay atrás y adelante, tres maneras de ver (Íconos, Lista, Detalles), clic derecho y Supr.
+// Paso 116: cada carpeta (o todas las de una categoría) puede tener su propia vista, armada por secciones
+// (secciones.js). Aquí está qué puede mostrar cada sección (MUESTRA).
 // Sus tres widgets comparten el ctx del apartado (widgets.js):
 //   ctx.carpeta    el id de la carpeta abierta (nada = la raíz, «Todo»)
 //   ctx.elegidos   lo elegido (un Set de ids); ctx.ancla, donde está el cursor; ctx.desde, dónde empieza un rango
 //   ctx.atras / ctx.adelante  las carpetas por las que pasaste
 //   ctx.vista, ctx.orden, ctx.agrupar  cómo se ve (se recuerda en este navegador)
+//   ctx.editando   mientras editas la vista de la carpeta (paso 116), sus secciones a medio armar
 //   arbol-carpetas        (costado) las carpetas como árbol, que se abren y cierran
 //   carpeta               la carpeta abierta: dónde está y lo que tiene
 //   propiedades-carpeta   (a la derecha) las propiedades de lo elegido, o de la carpeta abierta, para cambiarlas ahí
@@ -22,6 +25,7 @@ import { corto } from "./fechas.js";
 import { icono, insignia } from "./dibujos.js";
 import { formaDe, iconoDe } from "./formas.js";
 import { menuEn } from "./menu.js";
+import { seccion as seccionDeVista, vistaDe, guardarVista as guardarSecciones, editorDeVista } from "./secciones.js";
 
 // ---------- El árbol ----------
 // Lo que hay directo dentro de cada carpeta (null = la raíz: lo que no está dentro de nada).
@@ -50,6 +54,30 @@ const archivosDe = (id) => hijosDe(id).filter((n) => !esCarpeta(n));
 // Todo lo que hay dentro, a cualquier profundidad (para buscar).
 const todoDentro = (id) => hijosDe(id).flatMap((n) => [n, ...todoDentro(n.id)]);
 
+// ---------- Lo que puede mostrar una sección de una vista (paso 116) ----------
+// Cada una con su título y sus cosas dentro de la carpeta id. Las que llevan algo después de «:» (tipo:tarea,
+// carpeta:<id>) se arman con eso. Si ya no existe (una carpeta borrada), la sección se salta.
+const MUESTRA = {
+  carpetas: { nombre: () => "Carpetas", cosas: (id) => carpetasDe(id) },
+  archivos: { nombre: () => "Lo suelto", cosas: (id) => archivosDe(id) },
+  todo: { nombre: () => "Todo lo de adentro", cosas: (id) => todoDentro(id).filter((x) => !esCarpeta(x)) },
+  tipo: { nombre: (clave) => datos.tipo.get(clave)?.nombre ?? clave, cosas: (id, clave) => todoDentro(id).filter((x) => x.tipos.clave === clave) },
+  carpeta: { nombre: (otra) => datos.nodo.get(otra)?.titulo, cosas: (_, otra) => (datos.nodo.has(otra) ? hijosDe(otra) : null) },
+};
+function muestra(m, id) {
+  const [k, arg] = m.split(/:(.*)/), M = MUESTRA[k], cosas = M?.cosas(id, arg);
+  return cosas && { nombre: M.nombre(arg), cosas };
+}
+// Lo que se puede elegir en esta carpeta: lo general, cada categoría que hay adentro y cada carpeta suya.
+function muestrasDe(n) {
+  const id = n?.id ?? null, categorias = new Map(todoDentro(id).filter((x) => !esCarpeta(x)).map((x) => [x.tipos.clave, x.tipos.nombre]));
+  return [["carpetas", "Sus carpetas"], ["archivos", "Lo suelto"], ["todo", "Todo lo de adentro"],
+    ...[...categorias].map(([k, nombre]) => ["tipo:" + k, `${nombre}: todas las de adentro`]),
+    ...carpetasDe(id).map((c) => ["carpeta:" + c.id, `Lo de ${c.titulo}`])];
+}
+// Para empezar a editar una carpeta que no tiene vista: como se ve siempre.
+const DE_SIEMPRE = [{ muestra: "carpetas", como: "tarjetas" }, { muestra: "archivos", como: "tarjetas" }];
+
 // ---------- Cómo se ve cada cosa ----------
 // Una carpeta usa el color de su proyecto o ramo (el que le elegiste, o uno suyo). Los archivos se ven con la forma
 // de su categoría (formas.js, paso 102), con el ícono y el color de su categoría.
@@ -75,7 +103,7 @@ function entrar(ctx, id = null, historia = true) {
   if (id === desde) return;
   if (historia) { (ctx.atras ??= []).push(desde); ctx.adelante = []; }
   const venia = desde && datos.padre.get(desde) === id ? desde : null;
-  ctx.cambiar({ carpeta: id, buscar: "", elegidos: new Set(venia ? [venia] : []), ancla: venia, desde: venia });
+  ctx.cambiar({ carpeta: id, buscar: "", editando: null, elegidos: new Set(venia ? [venia] : []), ancla: venia, desde: venia });
 }
 // Atrás (-1) o adelante (1) en el historial.
 function viajar(ctx, k) {
@@ -367,7 +395,7 @@ export function carpetaAbierta(v, ctx) {
   // Se arma de nuevo solo si cambió lo que se muestra (los datos, la carpeta, la búsqueda o cómo se ve). Elegir solo
   // vuelve a marcar: así el doble clic cae sobre lo mismo que el primer clic, y el teclado no pierde su lugar.
   function dibujar() {
-    const clave = [datos.nodos, datos.registros, ctx.carpeta, ctx.buscar, ctx.vista, ctx.orden?.por, ctx.orden?.al, ctx.agrupar];
+    const clave = [datos.nodos, datos.registros, ctx.carpeta, ctx.buscar, ctx.vista, ctx.orden?.por, ctx.orden?.al, ctx.agrupar, ctx.editando];
     if (clave.some((x, i) => x !== armado[i])) { armar(); armado = clave; }
     marcar();
   }
@@ -401,16 +429,22 @@ export function carpetaAbierta(v, ctx) {
     const conMenu = (nombre, dibujo, cambiado, opciones) => el("button", { className: "boton-icono" + (cambiado ? " cambiado" : ""), title: nombre, ariaLabel: nombre,
       onclick: (e) => menuEn(e, opciones.map(([texto, marcado, hacer]) => ({ texto, marcado, hacer: usar(hacer) }))) }, icono(dibujo));
     const orden = ctx.orden ?? { por: "natural" };
-    herramientas.replaceChildren(
-      el("div", { className: "segmento minimo", role: "group", ariaLabel: "Cómo se ve" }, ...Object.entries(VISTAS).map(([k, v]) =>
+    // Paso 116: con una vista propia (y sin buscar), la carpeta se arma con sus secciones; Íconos, Lista, Detalles
+    // y Agrupar son de la vista de siempre.
+    const texto = sinTildes(ctx.buscar?.trim() ?? ""), suya = !texto && vistaDe(n), porSecciones = !texto && (ctx.editando || suya);
+    const editar = el("button", { className: "boton-icono" + (suya ? " cambiado" : ""), ariaPressed: String(!!ctx.editando),
+      title: suya ? `Editar vista (${suya.de === "tipo" ? `la de todas: ${n.tipos.nombre}` : "la de esta carpeta"})` : "Editar vista", ariaLabel: "Editar vista",
+      onclick: () => ctx.cambiar({ editando: ctx.editando ? null : (suya?.secciones ?? DE_SIEMPRE), elegidos: new Set() }) }, icono("secciones"));
+    herramientas.replaceChildren(editar,
+      porSecciones ? "" : el("div", { className: "segmento minimo", role: "group", ariaLabel: "Cómo se ve" }, ...Object.entries(VISTAS).map(([k, v]) =>
         el("button", { title: v.nombre, ariaLabel: v.nombre, ariaPressed: String(ctx.vista === k), onclick: usar(() => (ctx.vista = k)) }, icono(v.icono)))),
       conMenu("Ordenar", "ordenar", !!ctx.orden, [["Normal", !ctx.orden, () => (ctx.orden = null)],
         ...Object.entries(COLUMNAS).map(([k, c]) => [c.nombre + (orden.por === k ? (orden.al > 0 ? " ↑" : " ↓") : ""), orden.por === k,
           () => (ctx.orden = { por: k, al: orden.por === k ? -orden.al : 1 })])]), // elegir la misma otra vez la da vuelta
-      conMenu("Agrupar", "agrupar", ctx.agrupar !== "categoria", Object.entries(AGRUPAR).map(([k, a]) => [a.nombre, ctx.agrupar === k, () => (ctx.agrupar = k)])));
+      porSecciones ? "" : conMenu("Agrupar", "agrupar", ctx.agrupar !== "categoria", Object.entries(AGRUPAR).map(([k, a]) => [a.nombre, ctx.agrupar === k, () => (ctx.agrupar = k)])));
 
+    if (porSecciones) return porVista(n, id, suya);
     // Lo que se muestra: lo de esta carpeta o, buscando, lo que calza de aquí y de todo lo de adentro (con dónde está).
-    const texto = sinTildes(ctx.buscar?.trim() ?? "");
     const cosas = ordenar(texto ? todoDentro(id).filter((x) => sinTildes(x.titulo).includes(texto)) : hijosDe(id), ctx.orden);
     const grupo = (x) => (ctx.agrupar === "nada" ? "" : esCarpeta(x) ? "Carpetas" : AGRUPAR[ctx.agrupar].de(x));
     const grupos = [...Map.groupBy(cosas, grupo)];
@@ -418,6 +452,19 @@ export function carpetaAbierta(v, ctx) {
     cuerpo.replaceChildren(...(ctx.vista === "detalles" ? [detalles(grupos, texto)] : grupos.map(([g, xs]) => seccion(g, xs, texto))),
       cosas.length ? "" : el("p", { className: "vacio", textContent: texto ? "Nada con ese nombre aquí adentro." : "Esta carpeta está vacía. Crea lo primero con «+ Nuevo aquí»." }));
     total = cosas.length;
+  }
+
+  // Paso 116: la carpeta armada por secciones (las suyas o, editando, el borrador, con el editor arriba).
+  function porVista(n, id, suya) {
+    const ayuda = { esCarpeta, pieza: (x, estilo) => (estilo === "lista" ? filaLista(x) : esCarpeta(x) ? tarjetaCarpeta(x) : tarjetaArchivo(x)) };
+    const secciones = (ctx.editando ?? suya.secciones).map((s) => ({ ...s, ...muestra(s.muestra, id) })).filter((s) => s.cosas);
+    const editor = ctx.editando && editorDeVista(ctx.editando, { muestras: muestrasDe(n), tipo: n?.tipos.nombre, actual: suya,
+      cambiar: (borrador) => ctx.cambiar({ editando: borrador }),
+      guardar: (de, lista = ctx.editando) => { guardarSecciones(n, de, lista); ctx.cambiar({ editando: null }); },
+      cancelar: () => ctx.cambiar({ editando: null }) });
+    cuerpo.dataset.vista = "secciones";
+    cuerpo.replaceChildren(editor || "", ...secciones.map((s) => seccionDeVista(s.nombre, ordenar(s.cosas, ctx.orden), s.como, ayuda)));
+    total = new Set(secciones.flatMap((s) => s.cosas.map((x) => x.id))).size;
   }
 
   // «+ Carpeta»: con una sola clase posible la crea al tiro; con varias, pregunta cuál.
