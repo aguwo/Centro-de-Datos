@@ -8,6 +8,15 @@ const DURACION = 0.75; // si algo no dice cuándo termina, se dibuja de 45 minut
 
 // ¿Un evento ocurre el día d? Su fecha es la primera vez; la regla de cómo sigue está en fechas.js.
 export const ocurre = (n, d) => ocurreEl(dia(n.fecha), n.props, d);
+// El próximo día (desde hoy, hasta 60 días) en que ocurre un evento, contando los que se repiten; si no, null.
+// La usan Proyectos (sus próximos eventos) y la forma Calendario (formas.js).
+export function proximaVez(e, hoy = hoyTexto()) {
+  for (let i = 0, d = new Date(hoy + "T12:00"); i < 60; i++, d.setDate(d.getDate() + 1)) {
+    const s = d.toLocaleDateString("sv-SE");
+    if (ocurre(e, s)) return s;
+  }
+  return null;
+}
 
 // Lo que va en la agenda de un día: eventos (también los que se repiten) y tareas abiertas con esa fecha.
 // ini y fin son horas locales (14.5 = 14:30); ini es null si no tiene hora (va arriba, en "todo el día").

@@ -6,9 +6,10 @@
 // Sus dos widgets comparten ctx.carpeta (widgets.js): el id de la carpeta abierta, o nada para ver la raíz.
 //   arbol-carpetas  (costado) las carpetas como árbol, que se abren y cierran
 //   carpeta         la carpeta abierta: dónde está, sus carpetas en tarjetas y sus archivos agrupados por tipo
-import { el, datos, colorDe, colorDeProyecto, cajasDe, sinTildes, irA } from "./base.js";
+import { el, datos, colorDeProyecto, cajasDe, sinTildes, irA } from "./base.js";
 import { mostrarPanel, formulario } from "./panel.js";
 import { icono, insignia } from "./dibujos.js";
+import { formaDe, iconoDe } from "./formas.js";
 
 // ---------- El árbol ----------
 // Lo que hay directo dentro de cada carpeta (null = la raíz: lo que no está dentro de nada).
@@ -38,12 +39,8 @@ const archivosDe = (id) => hijosDe(id).filter((n) => !esCarpeta(n));
 const todoDentro = (id) => hijosDe(id).flatMap((n) => [n, ...todoDentro(n.id)]);
 
 // ---------- Cómo se ve cada cosa ----------
-// El ícono de cada tipo; uno propio (props.icono) gana. Un tipo nuevo sin ícono sale con puntos.
-const ICONO = { area: "carpeta", topico: "libro", proyecto: "proyecto", objetivo: "objetivo", categoria: "monedas", rutina: "reloj",
-  tarea: "si", nota: "lista", evento: "calendario", habito: "repetir", planta: "hoja", recurso: "libro", alimento: "manzana",
-  receta: "plato", cuenta: "billetera", suscripcion: "repetir", hito: "estrella" };
-const iconoDe = (n) => n.props?.icono ?? ICONO[n.tipos.clave] ?? "puntos";
-// Una carpeta usa el color de su proyecto o ramo (el que le elegiste, o uno suyo); un archivo, el de su tipo.
+// Una carpeta usa el color de su proyecto o ramo (el que le elegiste, o uno suyo). Los archivos se ven con la forma
+// de su categoría (formas.js, paso 102), con el ícono y el color de su categoría.
 const colorDeCarpeta = (n) => (n ? colorDeProyecto(n.id) : "var(--acento)");
 // «2 carpetas · 14 cosas»
 const cuantas = (k, uno, varios) => k && `${k} ${k === 1 ? uno : varios}`;
@@ -149,11 +146,10 @@ export function carpetaAbierta(v, ctx) {
     t.style.setProperty("--c", colorDeCarpeta(x));
     return t;
   }
+  // Buscando, la forma va con dónde está arriba.
   function tarjetaArchivo(x, buscando) {
-    return el("button", { className: "tarjeta-archivo", onclick: () => mostrarPanel(x.id) },
-      insignia(iconoDe(x), colorDe(x.tipos.clave)),
-      el("span", {}, el("b", { textContent: x.titulo }),
-        el("small", { textContent: [donde(x, buscando), x.estado].filter(Boolean).join(" · ") || x.tipos.nombre })));
+    const lugar = donde(x, buscando);
+    return lugar ? el("div", { className: "con-lugar" }, el("small", { textContent: "En " + lugar }), formaDe(x)) : formaDe(x);
   }
 }
 

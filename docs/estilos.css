@@ -1683,19 +1683,52 @@ span.flecha-arbol::before { display: none; }
 .grupo-carpeta h4 { display: flex; align-items: baseline; gap: 8px; margin: 0; font-size: 11.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); }
 .grupo-carpeta h4 small { font-weight: 400; letter-spacing: 0; }
 .carpetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
-.tarjeta-carpeta { display: grid; gap: 6px; align-content: start; justify-items: start; padding: 14px; border-radius: 14px; text-align: left; font-weight: 400;
+.tarjeta-carpeta { position: relative; margin-top: 10px; display: grid; gap: 6px; align-content: start; justify-items: start; padding: 14px; border-radius: 4px 14px 14px 14px; text-align: left; font-weight: 400;
   background: color-mix(in srgb, var(--c) 14%, var(--vidrio-fuerte)); border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
   transition: transform .2s var(--suave-curva), box-shadow .2s var(--suave-curva); }
 .tarjeta-carpeta > .icono { width: 30px; height: 30px; color: var(--c); }
+/* Paso 102: la pestaña de arriba, para que una carpeta se reconozca de lejos */
+.tarjeta-carpeta::before { content: ""; position: absolute; left: -1px; top: -10px; width: 42%; height: 10px; border-radius: 9px 9px 0 0;
+  background: color-mix(in srgb, var(--c) 30%, var(--vidrio-fuerte)); border: 1px solid color-mix(in srgb, var(--c) 30%, transparent); border-bottom: 0; }
 .tarjeta-carpeta b { font-size: 14.5px; line-height: 1.25; }
 .tarjeta-carpeta small { color: var(--suave); font-size: 12.5px; }
 .tarjeta-carpeta:hover { transform: translateY(-2px); box-shadow: var(--sombra); }
-.archivos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
-.tarjeta-archivo { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 10px; border-radius: 12px; text-align: left; font-weight: 400; background: var(--vidrio-fuerte); }
-.tarjeta-archivo > span { min-width: 0; display: grid; }
-.tarjeta-archivo b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tarjeta-archivo small { color: var(--suave); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tarjeta-archivo:hover { border-color: color-mix(in srgb, var(--acento) 45%, transparent); }
+.archivos { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; align-items: start; }
+.con-lugar { display: grid; gap: 4px; } .con-lugar > small { color: var(--suave); font-size: 12px; padding-left: 4px; }
+/* Paso 102: las formas (formas.js). Todas comparten el marco: lo de adelante (un botón o un dibujo) y el botón que abre la ficha.
+   --c es el color de su categoría. */
+.forma { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 10px; border-radius: 12px; background: var(--vidrio-fuerte); border: 1px solid transparent; }
+.forma:hover { border-color: color-mix(in srgb, var(--c) 45%, transparent); }
+.abrir-forma { flex: 1; min-width: 0; display: grid; gap: 2px; padding: 0; border: 0; background: none; text-align: left; font-weight: 400; color: inherit; }
+.texto-forma { display: grid; min-width: 0; }
+.texto-forma b, .f-hoja b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.texto-forma small { color: var(--suave); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.forma.atrasada .texto-forma small { color: var(--alerta); font-weight: 600; }
+/* Check: un círculo que se llena al marcarlo */
+.marcar { flex: none; width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 2px solid var(--c); background: none; display: grid; place-items: center; color: #fff; }
+.marcar .icono { width: 14px; height: 14px; }
+.f-check.hecha .marcar { background: var(--c); }
+.f-check.hecha .texto-forma b { text-decoration: line-through; color: var(--suave); font-weight: 400; }
+/* Anillo: la racha en el centro y el anillo lleno según la racha (--p, de 0 a 1 en una semana) */
+.anillo-forma { flex: none; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--c) calc(var(--p) * 360deg), var(--resalte) 0); }
+.anillo-forma span { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--vidrio-fuerte); font-weight: 700; font-size: 13px; }
+.anillo-forma[aria-pressed="true"] span { background: var(--c); color: #fff; }
+/* Calendario: una hojita con el mes y el día */
+.hojita { flex: none; width: 42px; border-radius: 8px; overflow: hidden; text-align: center; background: var(--vidrio-fuerte); border: 1px solid var(--linea); }
+.hojita i { display: block; font-style: normal; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #fff; background: var(--c); padding: 1px 0; }
+.hojita b { display: block; font-size: 17px; line-height: 1.5; }
+/* Hoja: una hoja con la esquina recta y sus primeras líneas */
+.f-hoja { border-radius: 4px 12px 12px 12px; padding: 10px 12px; background: color-mix(in srgb, var(--c) 7%, var(--vidrio-fuerte)); }
+.f-hoja p { margin: 0; color: var(--suave); font-size: 12.5px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+/* Medidor: una gota que se vacía (--p, de 1 recién anotado a 0 cuando toca) y su botón */
+.gota-forma { flex: none; position: relative; width: 22px; height: 30px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; border: 2px solid var(--c); overflow: hidden; }
+.gota-forma i { position: absolute; inset: auto 0 0; height: calc(var(--p) * 100%); background: var(--c); transition: height .4s var(--suave-curva); }
+.accion-forma { flex: none; padding: 4px 10px; font-size: 12.5px; }
+.accion-forma[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 18%, transparent); border-color: transparent; }
+/* Portada: la foto o un lomo de su color */
+.tapa-forma { flex: none; width: 38px; height: 52px; border-radius: 3px 6px 6px 3px; object-fit: cover; background: linear-gradient(90deg, rgba(0,0,0,.2) 0 4px, var(--c) 4px); }
+@media (prefers-reduced-motion: reduce) { .gota-forma i { transition: none; } }
 /* La ficha (el panel) sale a la derecha: la carpeta se corre para que no la tape. */
 .con-escritorio.con-panel #archivos .columnas { margin-right: 352px; }
 #archivos .columnas { transition: margin-right .3s var(--suave-curva); }

@@ -151,7 +151,7 @@ export async function recargar(enfocarId) {
   const [nodos, conexiones, tipos, arbol, registros, disposiciones] = await Promise.all([
     db.from("nodos").select("id, titulo, contenido, estado, fecha, props, creado_en, tipos!inner(clave, nombre)").eq("archivado", false),
     db.from("conexiones").select("id, origen_id, relacion, destino_id").is("valido_hasta", null),
-    db.from("tipos").select("id, owner_id, clave, nombre, modulo, orden, color, nivel, subcaja, propiedades, conexiones").order("orden"),
+    db.from("tipos").select("*").order("orden"), // todas sus columnas: así una nueva (ej. apariencia, paso 102) llega sola
     db.from("arbol").select("id, padre_id"),
     db.from("registros").select("id, fecha, clase, titulo, valor, unidad, nodo_id, otro_id, props").or(`fecha.gte.${desde},clase.in.(${DE_SIEMPRE})`).order("fecha"),
     db.from("disposiciones").select("apartado, columnas"),
