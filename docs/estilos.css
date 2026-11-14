@@ -1887,3 +1887,18 @@ button.nodo-grafo:hover .insignia { transform: scale(1.12); }
   .nodo-grafo { width: 96px; font-size: 11.5px; }
 }
 @media (prefers-reduced-motion: reduce) { .nodo-grafo .insignia { transition: none; } }
+
+/* Paso 105: los bordes de columnas que se arrastran (widgets.js, apartados con ajustable) */
+.borde-columna { display: none; }
+.con-escritorio .borde-columna { display: block; position: absolute; top: 0; bottom: 0; right: -4px; width: 8px; z-index: 3; cursor: col-resize; touch-action: none; }
+.con-escritorio .borde-columna::after { content: ""; position: absolute; inset: 0 3px; border-radius: 2px; background: var(--acento); opacity: 0; transition: opacity .15s; }
+.con-escritorio .borde-columna:is(:hover, :focus-visible)::after, .ajustando .borde-columna::after { opacity: .5; }
+.con-escritorio .borde-columna:focus-visible { outline: none; }
+.columnas:has(.borde-columna) > .columna { position: relative; }
+.columnas.ajustando { cursor: col-resize; user-select: none; }
+/* Arrastrar para mover (archivos.js): dónde caería, y lo cortado (Ctrl+X) más suave */
+.soltar:is(.tarjeta-carpeta, .fila-lista, .nombre-arbol, .ruta-carpeta button), tr.soltar td { background: color-mix(in srgb, var(--acento) 25%, var(--vidrio-fuerte)) !important; box-shadow: inset 0 0 0 2px var(--acento); }
+.cuerpo-carpeta .cortado { opacity: .45; }
+.mover-a { display: grid; gap: 8px; padding: 0 18px 18px; }
+.mover-a input { padding: 8px 10px; border: 1px solid var(--linea); border-radius: 9px; background: var(--vidrio); color: var(--texto); font: inherit; }
+.mover-a .candidatos { max-height: 50vh; }

@@ -126,7 +126,7 @@ export const APARTADOS = [
   // Una sola ventana partida en tres, como el Explorador de Windows (paso 103): a la izquierda el árbol de carpetas
   // (en el celular se esconde y se navega con la ruta), al centro la carpeta abierta y a la derecha las propiedades de lo elegido.
   {
-    id: "archivos", nombre: "Archivos",
+    id: "archivos", nombre: "Archivos", ajustable: true, // los bordes entre columnas se arrastran (paso 105)
     columnas: [{ ancho: 0.95, widgets: ["arbol-carpetas"] }, { ancho: 2.6, widgets: ["carpeta"] }, { ancho: 1.05, widgets: ["propiedades-carpeta"] }],
     icono: "carpeta",
   },

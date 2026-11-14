@@ -1,7 +1,7 @@
 // Lo que la web le cambia a tus datos. Todas escriben en la base y el tiempo real redibuja todo solo.
 // Así cada vista solo dice QUÉ hacer (completar, posponer...) y nunca cómo se escribe.
 // Paso 89: cambiar un nodo y anotar o borrar un registro se ven al instante (escribir con alTiro, base.js).
-import { db, escribir, datos, avisar, recargar } from "./base.js";
+import { db, escribir, datos, avisar, recargar, cajasDe } from "./base.js";
 import { conHoraISO } from "./fechas.js";
 
 const nodos = () => db.from("nodos");
@@ -29,13 +29,40 @@ export function dentroDeCaja(clave, destino_id) {
   const regla = caja && datos.tipo.get(clave)?.conexiones?.find((c) => c.hacia.includes(caja.tipos.clave));
   return regla ? { relacion: regla.relacion, destino_id } : undefined;
 }
-// Mover algo a otra caja (como mover_nodos del agente): deja de pertenecer a lo de antes y pasa a pertenecer al destino.
-// Las conexiones viejas no se borran: se cierran (valido_hasta), así queda la historia.
-export async function mover(n, destino_id, relacion = "pertenece_a") {
-  const { error } = await db.from("conexiones").update({ valido_hasta: new Date().toISOString() })
-    .eq("origen_id", n.id).eq("relacion", relacion).is("valido_hasta", null);
-  if (error) return avisar(error.message);
-  return escribir(db.from("conexiones").insert({ origen_id: n.id, relacion, destino_id }));
+// Paso 105: mover algo a otra carpeta (destino_id; null = afuera de todo), como en el Explorador.
+// Se cierran sus conexiones con las cajas donde estaba (las de "dentro de", hacia su camino) y se conecta al destino con
+// la relación que pida su tipo (una tarea pertenece_a un proyecto, pero trata_sobre un ramo). Las viejas no se borran:
+// se cierran (valido_hasta), así queda la historia. Se ve movido al tiro.
+const DENTRO = ["pertenece_a", "trata_sobre"]; // las relaciones que meten algo en una caja (las mismas de la vista arbol)
+export function mover(n, destino_id = null) {
+  const camino = cajasDe(n.id), viejas = datos.conexiones.filter((c) => c.origen_id === n.id && DENTRO.includes(c.relacion) && camino.includes(c.destino_id));
+  const conexion = destino_id && dentroDeCaja(n.tipos.clave, destino_id);
+  const escribe = async () => {
+    if (viejas.length) {
+      const { error } = await db.from("conexiones").update({ valido_hasta: new Date().toISOString() }).in("id", viejas.map((c) => c.id));
+      if (error) return { error };
+    }
+    if (!conexion) return {};
+    // La nueva queda en los datos al tiro, así «Deshacer» la puede cerrar antes de que llegue la recarga.
+    const r = await db.from("conexiones").insert({ origen_id: n.id, ...conexion }).select("id, origen_id, relacion, destino_id").single();
+    if (r.data) datos.conexiones.push(r.data);
+    return r;
+  };
+  return escribir(escribe(), () => {
+    datos.conexiones = datos.conexiones.filter((c) => !viejas.includes(c));
+    if (destino_id) datos.padre.set(n.id, destino_id); else datos.padre.delete(n.id);
+  });
+}
+// ¿Puede n ir dentro de destino_id? Devuelve por qué no (un texto) o nada si puede.
+// Una caja va solo dentro de una más general (un proyecto dentro de un área, no de otro proyecto), nada va dentro
+// de sí misma ni de lo suyo, y cada tipo dice dónde puede estar (sus conexiones).
+export function porQueNoVa(n, destino_id) {
+  if (!destino_id) return;
+  const d = datos.nodo.get(destino_id), nivel = datos.tipo.get(n.tipos.clave)?.nivel, suyo = datos.tipo.get(d?.tipos.clave)?.nivel;
+  if (!d || destino_id === n.id || cajasDe(destino_id).includes(n.id)) return `«${n.titulo}» no puede ir dentro de sí misma.`;
+  if (suyo == null) return `«${d.titulo}» no es una carpeta: no puede contener cosas.`;
+  if ((nivel != null && suyo >= nivel) || !dentroDeCaja(n.tipos.clave, destino_id))
+    return `«${n.titulo}» (${n.tipos.nombre}) no puede ir dentro de «${d.titulo}» (${d.tipos.nombre}).`;
 }
 // Quitar una conexión: no se borra, se cierra (valido_hasta), así queda la historia. Se deja de ver al tiro.
 export const desconectar = (c) => escribir(db.from("conexiones").update({ valido_hasta: new Date().toISOString() }).eq("id", c.id),
