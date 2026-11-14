@@ -12,7 +12,7 @@ import { hoyTexto, diasEntre, corto } from "./fechas.js";
 import { cambiar, cambiarProps, completar, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario, camposDe, tienePropiedad } from "./panel.js";
 import { listaDeTareas, seccion, porFecha, agregarTarea } from "./tareas.js";
-import { ocurre } from "./agenda.js";
+import { proximaVez } from "./agenda.js";
 import { icono, portada, elegir as adivinar, progreso, anillo, pastilla, moverConSuavidad } from "./dibujos.js";
 
 const ESTADOS = ["Por hacer", "En curso", "Esperando", "Hecho"]; // las columnas del tablero (el Inbox son los post-its)
@@ -333,7 +333,7 @@ export function dentro(v, ctx) {
     if (!n) return;
     const hoy = hoyTexto();
     const notas = de("nota", n.id).sort(porNombre);
-    const eventos = de("evento", n.id).map((e) => ({ e, d: proximo(e, hoy) })).filter((x) => x.d).sort((a, b) => a.d.localeCompare(b.d)).slice(0, 5);
+    const eventos = de("evento", n.id).map((e) => ({ e, d: proximaVez(e, hoy) })).filter((x) => x.d).sort((a, b) => a.d.localeCompare(b.d)).slice(0, 5);
     const nuevo = (clave) => el("button", { className: "redondo", textContent: "+", title: `Nueva ${datos.tipo.get(clave)?.nombre.toLowerCase()} aquí`,
       onclick: () => formulario(null, { tipos: [clave], conexion: dentroDeCaja(clave, n.id) }) });
     const pieza = (titulo, boton, cosas, vacio) => el("div", { className: "pieza" },
@@ -344,12 +344,4 @@ export function dentro(v, ctx) {
       pieza("Notas y enlaces", nuevo("nota"), notas.map((x) => fila(x, "", () => mostrarPanel(x.id))), "Ideas, apuntes o links de esto."),
       pieza("Próximos eventos", nuevo("evento"), eventos.map(({ e, d }) => fila(e, d === hoy ? "hoy" : corto(d), () => mostrarPanel(e.id))), "Nada agendado."));
   };
-}
-// El próximo día (desde hoy, hasta 60 días) en que ocurre un evento, contando los que se repiten.
-function proximo(e, hoy) {
-  for (let i = 0, d = new Date(hoy + "T12:00"); i < 60; i++, d.setDate(d.getDate() + 1)) {
-    const s = d.toLocaleDateString("sv-SE");
-    if (ocurre(e, s)) return s;
-  }
-  return null;
 }
