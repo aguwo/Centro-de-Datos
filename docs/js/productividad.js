@@ -2,7 +2,7 @@
 // ctx.area es el chip elegido y ctx.filtro, el chip o uno de sus proyectos: lo que muestra "tareas".
 // Viven en ctx y no dentro del widget para que no se pierdan si la ventana se vuelve a armar.
 //   proyectos  una fila de chips: tus áreas (Proyectos, Universidad...) y al final Todas y Sin proyecto. Elegir uno filtra las tareas
-//              y muestra debajo solo sus proyectos y tópicos (los ramos), cada uno con su color, su avance, cuántas
+//              y muestra debajo solo sus proyectos, tópicos y ramos, cada uno con su color, su avance, cuántas
 //              tareas van atrasadas y la próxima. Tocar uno lo filtra (tocarlo de nuevo vuelve al área).
 //              Soltar una tarea encima de un chip o un proyecto la mueve ahí. Un proyecto sin nada pendiente se puede cerrar.
 //              Las áreas se ordenan arrastrando un chip sobre otro; el orden queda en cada área (props.orden).
@@ -17,7 +17,7 @@ import { cambiar, cambiarProps, mover } from "./acciones.js";
 import { listaDeTareas, seccion, porFecha, agregarTarea } from "./tareas.js";
 import { esObjetivo, aportesDe, comoVa } from "./objetivos.js";
 
-const LISTADOS = ["proyecto", "topico"]; // lo que aparece bajo cada área (paso 36b: los ramos también)
+const LISTADOS = ["proyecto", "topico", "ramo"]; // lo que aparece bajo cada área (paso 36b: los ramos también; paso 110: son su propia categoría)
 const TODAS = "todas", SIN = "sin"; // los filtros que no son un proyecto ni un área
 const NOMBRE = { [TODAS]: "Todas", [SIN]: "Sin proyecto" };
 const filtroDe = (ctx) => ctx.filtro ?? TODAS;
@@ -147,7 +147,7 @@ export function areasYProyectos(v, ctx) {
       ...(metas.length && sueltos.length ? [el("li", { className: "sueltos", textContent: "Sin objetivo" })] : []),
       ...sueltos.map(proyecto));
     if (!visibles.length && !metas.length) lista.append(el("li", { className: "vacio", textContent: area === SIN
-      ? "Aquí están las tareas que no son de ningún proyecto." : "Esta área no tiene proyectos ni tópicos activos." }));
+      ? "Aquí están las tareas que no son de ningún proyecto." : "Esta área no tiene proyectos, tópicos ni ramos activos." }));
   };
 }
 

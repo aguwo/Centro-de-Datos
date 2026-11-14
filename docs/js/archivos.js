@@ -62,7 +62,7 @@ const resumen = (id) => [cuantas(carpetasDe(id).length, "carpeta", "carpetas"), 
 // Si una carpeta tiene su propio apartado, se puede ir a verla completa allá.
 const SU_APARTADO = [
   [(n) => n.tipos.clave === "proyecto", "Proyectos", (n) => irA("proyectos", { caja: n.id })],
-  [(n) => n.tipos.clave === "topico" && n.props?.semestre, "Universidad", (n) => irA("universidad", { ramo: n.id })],
+  [(n) => n.tipos.clave === "ramo", "Universidad", (n) => irA("universidad", { ramo: n.id })],
 ];
 
 // ---------- Moverse ----------

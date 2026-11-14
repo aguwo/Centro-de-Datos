@@ -68,7 +68,7 @@ function medirCaja(caja) {
 // ---------- Cajas ----------
 // La caja de cada nodo la calcula la base (vista "arbol"). Aquí se agregan dos cajas que no existen
 // en la base, solo para dibujar:
-//   * subcajas: un tipo puede pedir juntarse dentro de ciertas cajas (ej. eventos de un tópico -> "Evaluaciones").
+//   * subcajas: un tipo puede pedir juntarse dentro de ciertas cajas (ej. eventos de un ramo -> "Evaluaciones").
 //   * módulos: lo que no está dentro de nada va a la caja de su módulo ("Dieta", "Biblioteca"...).
 //     Lo de nivel 0 (las áreas) queda suelto: ellas son las cajas grandes.
 function cajasVirtuales() {

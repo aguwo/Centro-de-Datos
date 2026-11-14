@@ -97,7 +97,7 @@ export const CLASES: Record<string, string> = {
   medida: "nodo = lo que se mide (ej. el objetivo de subir de peso), valor y unidad (ej. 52.2 kg)",
   comida: "nodo = alimento o receta, valor = gramos o porciones (ver unidad)",
   riego: "nodo = la planta",
-  asistencia: "nodo = el ramo (tópico), valor = 1 si fue a clases y 0 si faltó; fecha = el día de la clase",
+  asistencia: "nodo = el ramo, valor = 1 si fue a clases y 0 si faltó; fecha = el día de la clase",
 };
 
 // ---------- Agenda (paso 47) ----------
@@ -139,7 +139,7 @@ export const PASOS_CIERRE = [
   "Termina con un resumen de tres líneas de lo que quedó anotado y lo importante de mañana, y marca su hábito de revisar (el que tenga «revis» en el nombre) con anotar_registro.",
 ];
 
-const RAMO = "topico"; // los ramos son tópicos: sus clases son los eventos que se repiten y sus evaluaciones los que no
+const RAMO = "ramo"; // sus clases son los eventos que se repiten y sus evaluaciones los que no (paso 110: los ramos ya no son tópicos)
 const deRamo = (e: Nodo) => e.caja?.tipo === RAMO;
 const corto = ({ id, titulo, fecha, estado, props, caja }: Nodo) => ({ id, titulo, fecha, estado, props, caja: caja?.titulo });
 
@@ -218,7 +218,7 @@ async function validar(repo: Repositorio, clave: string, props?: Record<string, 
  * Convierte las filas del árbol en líneas con sangría, agrupadas por módulo:
  *   # General
  *   Universidad [area] <id>
- *     Base de Datos [topico] <id>
+ *     Base de Datos [ramo] <id>
  * Lo Hecho se salta (con todo lo que tiene adentro) salvo que se pida verlo.
  */
 export function dibujarArbol(filas: FilaArbol[], conHechos = false): string[] {

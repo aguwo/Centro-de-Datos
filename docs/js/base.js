@@ -116,7 +116,7 @@ export const proyectoDe = (id) => cajasDe(id).find((c) => datos.nodo.get(c)?.tip
 // El color de la caja con color más cercana (un proyecto o un tópico, como un ramo), o nada.
 // Así lo que está dentro (clases, evaluaciones, tareas) se ve del color de su ramo o proyecto, donde sea que se dibuje.
 export function colorDeSuCaja(id) {
-  const caja = cajasDe(id).find((c) => ["proyecto", "topico"].includes(datos.nodo.get(c)?.tipos.clave));
+  const caja = cajasDe(id).find((c) => ["proyecto", "topico", "ramo"].includes(datos.nodo.get(c)?.tipos.clave));
   return caja && colorDeProyecto(caja);
 }
 
@@ -138,7 +138,7 @@ let colores = { de: null, mapa: new Map() };
 export function colorDeProyecto(id) {
   if (colores.de !== datos.nodos) { // se calcula una vez por cada carga de datos
     const mapa = new Map();
-    const activos = datos.nodos.filter((n) => ["proyecto", "topico"].includes(n.tipos.clave) && n.estado !== "Hecho").sort((a, b) => a.id.localeCompare(b.id));
+    const activos = datos.nodos.filter((n) => ["proyecto", "topico", "ramo"].includes(n.tipos.clave) && n.estado !== "Hecho").sort((a, b) => a.id.localeCompare(b.id));
     const usados = new Set(activos.map(elegido).filter((i) => i >= 0)); // los elegidos van primero: nadie más los toma
     for (const p of activos) {
       let i = elegido(p);

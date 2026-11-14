@@ -114,12 +114,12 @@ export function traducir(notion, ahora = new Date()) {
   }
 
   for (const t of notion.topicos) {
-    const n = nodo(t, "topico", { props: { semestre: t.Semestre } });
+    const n = nodo(t, t.Semestre ? "ramo" : "topico", { props: { semestre: t.Semestre } }); // paso 110: con semestre es un ramo
     conectar(n.notion_id, "pertenece_a", lista(t["Área"]));
   }
 
   // Bloque de notas se fusionó con Tópico (paso 2): cada bloque apunta al tópico del mismo nombre.
-  const topicoPorNombre = new Map(nodos.filter((n) => n.tipo === "topico").map((n) => [n.titulo.toLowerCase(), n.notion_id]));
+  const topicoPorNombre = new Map(nodos.filter((n) => ["topico", "ramo"].includes(n.tipo)).map((n) => [n.titulo.toLowerCase(), n.notion_id]));
   const bloqueATopico = new Map();
   for (const b of notion.bloques) {
     const existente = topicoPorNombre.get(limpiar(b.Nombre).toLowerCase());
