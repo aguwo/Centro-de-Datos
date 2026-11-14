@@ -241,7 +241,7 @@ test("crear_nodo rechaza props que no son del tipo", async () => {
 });
 
 // ---------- Paso 47: agenda con clases que se repiten y cierre del día ----------
-const RAMO = { id: "bd", titulo: "Base de Datos", tipo: "topico" };
+const RAMO = { id: "bd", titulo: "Base de Datos", tipo: "ramo" };
 function semanaDePrueba() {
   const repo = repoFalso();
   repo.nodos.push(

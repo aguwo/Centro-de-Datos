@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
 
   // 1. Ramos con curso de EV@
   const ramos = (revisar(await db.from("nodos").select("id, owner_id, props, tipos!inner(clave)")
-    .eq("tipos.clave", "topico").eq("archivado", false).not("props->>eva", "is", null)) as any[])
+    .eq("tipos.clave", "ramo").eq("archivado", false).not("props->>eva", "is", null)) as any[])
     .map((r) => ({ id: r.id, owner_id: r.owner_id, eva: Number(r.props.eva) }));
   if (!ramos.length) return Response.json({ ramos: 0 });
 

@@ -57,8 +57,8 @@ const yDespues = (ventana, despues) => ventana.addEventListener("close", despues
 // Un número escrito con coma o punto; null si no es un número.
 const numero = (campo) => { const x = Number(campo.value.replace(",", ".")); return campo.value && x > 0 ? x : null; };
 
-// Las clases del día d: los eventos que se repiten dentro de un ramo (tópico), uno por ramo.
-const ramoDe = (e) => { const r = datos.nodo.get(datos.padre.get(e.id)); return r?.tipos.clave === "topico" ? r : null; };
+// Las clases del día d: los eventos que se repiten dentro de un ramo, uno por ramo.
+const ramoDe = (e) => { const r = datos.nodo.get(datos.padre.get(e.id)); return r?.tipos.clave === "ramo" ? r : null; };
 function clasesDel(d) {
   const ramos = new Map();
   for (const e of datos.nodos) if (e.tipos.clave === "evento" && e.props?.repite && e.fecha && ramoDe(e) && ocurreEl(dia(e.fecha), e.props, d)) ramos.set(ramoDe(e).id, { e, ramo: ramoDe(e) });

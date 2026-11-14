@@ -4,7 +4,7 @@
 //   ramo          el ramo abierto: sus evaluaciones (ponderación y nota se escriben ahí), tu asistencia y sus tareas
 //   lo-que-viene  las evaluaciones y tareas de tus ramos que vienen, de la más cercana a la más lejana
 //
-// Un ramo es un tópico con semestre (se muestran los del semestre más reciente). Sus evaluaciones son los eventos
+// Un ramo (paso 110: su propia categoría; antes era un tópico) con semestre (se muestran los del semestre más reciente). Sus evaluaciones son los eventos
 // que tiene adentro y no se repiten (las clases sí se repiten). Las cuentas están en notas.js.
 // Paso 52: cada ramo tiene su tema (ícono y portada, de dibujos.js; sin dibujo, solo su color: clase "lisa") y cada evaluación su ícono según el tipo.
 import { el, db, datos, dia, hora, cajasDe, colorDeProyecto, escribir, escribiendoEn, avisar, fijas, FIJA } from "./base.js";
@@ -20,8 +20,8 @@ const PROXIMOS = 8; // cuántas cosas muestra "Lo que viene" (las atrasadas van 
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
 // ---------- los datos de un ramo ----------
-export const semestreActual = () => datos.nodos.map((n) => n.tipos.clave === "topico" && n.props?.semestre).filter(Boolean).sort().at(-1);
-const ramos = () => datos.nodos.filter((n) => n.tipos.clave === "topico" && n.props?.semestre === semestreActual())
+export const semestreActual = () => datos.nodos.map((n) => n.tipos.clave === "ramo" && n.props?.semestre).filter(Boolean).sort().at(-1);
+const ramos = () => datos.nodos.filter((n) => n.tipos.clave === "ramo" && n.props?.semestre === semestreActual())
   .sort((a, b) => (a.estado === "Hecho") - (b.estado === "Hecho") || a.titulo.localeCompare(b.titulo, "es"));
 const dentro = (clave, ramo) => datos.nodos.filter((n) => n.tipos.clave === clave && cajasDe(n.id).includes(ramo.id));
 const evaluacionesDe = (ramo) => dentro("evento", ramo).filter((e) => !e.props?.repite).sort(porFecha);
@@ -93,7 +93,7 @@ export function tarjetasDeRamos(v, ctx) {
       faltan > 0 && pastilla("calendario", `Quedan ${faltan} días`),
       bajos && pastilla("alerta", `Asistencia baja en ${bajos} ${bajos === 1 ? "ramo" : "ramos"}`, "alerta"),
     ].filter(Boolean)));
-    if (!lista.length) return grilla.replaceChildren(el("p", { className: "vacio vidrio ventana", textContent: "No hay ramos todavía: son los tópicos que tienen semestre." }));
+    if (!lista.length) return grilla.replaceChildren(el("p", { className: "vacio vidrio ventana", textContent: "No hay ramos todavía: crea uno con la categoría Ramo y ponle su semestre." }));
     grilla.replaceChildren(...lista.map((r) => {
       const c = evaluar(evaluacionesDe(r)), a = asistencia(asistenciasDe(r)), prox = queViene(r)[0], color = colorDeProyecto(r.id);
       const como = r.estado === "Hecho" ? (r.props?.resultado === "Reprobado" ? "No alcanza" : "Seguro") : estado(c);

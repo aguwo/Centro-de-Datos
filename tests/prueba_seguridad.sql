@@ -43,12 +43,13 @@ do $$ declare r text; begin
   assert r = 'Personal / Centro de datos / Escribir migración', 'ruta inesperada: ' || coalesce(r, '(nada)');
   select nodo into r from registros_legibles where clase = 'habito';
   assert r = 'Meditar', 'registros_legibles debería mostrar el nombre del hábito, muestra ' || coalesce(r, '(nada)');
-  select subcaja->>'topico' into r from tipos where clave = 'evento';
-  assert r = 'Evaluaciones', 'evento debería agruparse en Evaluaciones dentro de un tópico';
-  assert (select propiedades @> '[{"clave":"estado"},{"clave":"resultado"}]'::jsonb from tipos where clave = 'topico'),
-    'tópico debería tener estado y resultado (paso 36)';
+  select subcaja->>'ramo' into r from tipos where clave = 'evento';
+  assert r = 'Evaluaciones', 'evento debería agruparse en Evaluaciones dentro de un ramo (paso 110)';
+  assert (select propiedades @> '[{"clave":"estado"},{"clave":"resultado"}]'::jsonb from tipos where clave = 'ramo'),
+    'ramo debería tener estado y resultado (paso 36, paso 110)';
+  assert (select not propiedades @> '[{"clave":"semestre"}]'::jsonb from tipos where clave = 'topico'), 'tópico ya no es de la U (paso 110)';
   assert (select propiedades->3->>'clave' = 'actual' from tipos where clave = 'objetivo'), 'objetivo debería tener "Va en" después de "Desde" (paso 37a)';
-  assert (select conexiones @> '[{"relacion":"aporta_a","hacia":["objetivo"]}]'::jsonb from tipos where clave = 'topico'), 'un ramo debería poder aportar a un objetivo (paso 37a)';
+  assert (select conexiones @> '[{"relacion":"aporta_a","hacia":["objetivo"]}]'::jsonb from tipos where clave = 'ramo'), 'un ramo debería poder aportar a un objetivo (paso 37a)';
   assert (select propiedades @> '[{"clave":"claude","tipo":"enlace"}]'::jsonb from tipos where clave = 'proyecto'), 'proyecto debería tener su enlace a Claude (paso 38c)';
   assert (select propiedades @> '[{"clave":"peso"},{"clave":"nota"}]'::jsonb from tipos where clave = 'evento'), 'evento debería tener ponderación y nota (paso 46a)';
 end $$;

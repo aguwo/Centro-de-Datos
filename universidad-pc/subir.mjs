@@ -73,7 +73,7 @@ async function pedir({ url, llave, token }, ruta, { method = "GET", body } = {})
 
 export async function subir(portal, conexion) {
   const nodos = (clave) => pedir(conexion, `nodos?select=id,titulo,props,tipos!inner(clave)&tipos.clave=eq.${clave}&archivado=eq.false`);
-  const ramos = (await nodos("topico")).filter((r) => r.props?.semestre);
+  const ramos = (await nodos("ramo")).filter((r) => r.props?.semestre);
   const ids = ramos.map((r) => r.id).join(",");
   const [eventos, arbol, asistencias] = await Promise.all([
     nodos("evento"),
