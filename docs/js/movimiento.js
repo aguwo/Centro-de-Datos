@@ -13,6 +13,7 @@ import { enLaWeb, zoomDeLaWeb } from "./base.js";
 const sinMovimiento = matchMedia("(prefers-reduced-motion: reduce)");
 
 // ---------- El imán ----------
+// Lo de siempre (la barra); otro imán puede pedir lo suyo (ej. el minimapa infla mucho más su punto elegido).
 const CRECE = { elegido: 1.18, cerca: 1.08, apretado: 1.4 }; // cuánto se infla cada uno
 const EMPUJA = { elegido: 5, apretado: 11 }; // cuántos px corre a los vecinos (los que están pegados; más lejos, menos)
 const ALCANCE = 110; // hasta qué distancia (px) llega el empujón
@@ -20,7 +21,7 @@ const TIRA = 0.22, TIRA_MAX = 6; // cuánto se estira hacia el puntero el que es
 const RIGIDEZ = { s: 22, x: 18, y: 18 }; // más rígido = llega más rápido
 
 export function iman(caja, { botones = () => [...caja.querySelectorAll("button")].filter((b) => b.offsetParent),
-  elegido = (b) => b.getAttribute("aria-current") === "page" } = {}) {
+  elegido = (b) => b.getAttribute("aria-current") === "page", crece = CRECE, empuja = EMPUJA, alcance = ALCANCE } = {}) {
   const resortes = new WeakMap(); // botón -> su ir() (cada uno con sus resortes)
   let puntero = null, apretado = null;
   const resorteDe = (b) => resortes.get(b) ?? resortes.set(b, conResorte((v) => {
@@ -31,21 +32,21 @@ export function iman(caja, { botones = () => [...caja.querySelectorAll("button")
     const lista = botones(), centros = new Map(lista.map((b) => { const r = b.getBoundingClientRect(); return [b, { x: r.left + r.width / 2, y: r.top + r.height / 2 }]; }));
     const cerca = puntero && lista.find((b) => { const r = b.getBoundingClientRect(); return puntero.x >= r.left && puntero.x <= r.right && puntero.y >= r.top && puntero.y <= r.bottom; });
     // Quién empuja: el apretado (fuerte) y el elegido (suave).
-    const fuentes = [...lista.filter(elegido).map((b) => [b, EMPUJA.elegido]), ...(apretado && lista.includes(apretado) ? [[apretado, EMPUJA.apretado]] : [])];
+    const fuentes = [...lista.filter(elegido).map((b) => [b, empuja.elegido]), ...(apretado && lista.includes(apretado) ? [[apretado, empuja.apretado]] : [])];
     for (const b of lista) {
       const c = centros.get(b);
       let x = 0, y = 0;
       for (const [f, fuerza] of fuentes) {
         if (f === b) continue;
         const o = centros.get(f), dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy) || 1;
-        const k = fuerza * Math.max(0, 1 - d / ALCANCE) * 1.6; // pegado empuja casi entero; lejos, nada
+        const k = fuerza * Math.max(0, 1 - d / alcance) * 1.6; // pegado empuja casi entero; lejos, nada
         x += dx / d * k; y += dy / d * k;
       }
       if (b === cerca) {
         x += Math.max(-TIRA_MAX, Math.min(TIRA_MAX, (puntero.x - c.x) * TIRA));
         y += Math.max(-TIRA_MAX, Math.min(TIRA_MAX, (puntero.y - c.y) * TIRA));
       }
-      const s = b === apretado ? CRECE.apretado : elegido(b) ? CRECE.elegido : b === cerca ? CRECE.cerca : 1;
+      const s = b === apretado ? crece.apretado : elegido(b) ? crece.elegido : b === cerca ? crece.cerca : 1;
       resorteDe(b)({ x: enLaWeb(x), y: enLaWeb(y), s }, RIGIDEZ, !sinMovimiento.matches);
     }
   }
