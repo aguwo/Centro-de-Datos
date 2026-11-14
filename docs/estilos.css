@@ -381,13 +381,18 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 .plan .insignia { width: 40px; height: 40px; border-radius: 12px; transition: filter .25s ease; }
 .plan .que { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .plan .nombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
-.plan .meta { display: flex; align-items: center; gap: 4px; }
-.plan .meta .icono { width: 13px; height: 13px; }
+.plan .meta { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.plan .meta .icono { flex: none; width: 13px; height: 13px; }
+.plan .meta span { overflow: hidden; text-overflow: ellipsis; }
 .plan .caja { width: 22px; height: 22px; border-color: color-mix(in srgb, var(--suave) 60%, transparent); }
 .plan .caja:checked { background: var(--bien); border-color: var(--bien); }
 .plan .caja.recien:checked { animation: marcar .32s var(--suave-curva); } /* solo al marcarla tú, no cada vez que se redibuja */
 .plan li.hecha { opacity: .45; }
 .plan li.hecha .insignia { filter: grayscale(1); }
+/* Paso 96: cuántas llevas, al lado del título, y la pastilla «Ahora» de un evento que está pasando (en vez de casilla) */
+.cuenta-plan { margin-left: 4px; color: var(--suave); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.plan .en-curso { padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--acento) 16%, transparent); color: var(--acento);
+               font-size: 12px; font-weight: 600; white-space: nowrap; }
 @keyframes marcar { 0% { transform: scale(.6); } 60% { transform: scale(1.15); } 100% { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .plan li, .plan .insignia { transition: none; } .plan .caja.recien { animation: none; } }
 /* El tiempo */
