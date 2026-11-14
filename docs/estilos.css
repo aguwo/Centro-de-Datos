@@ -72,14 +72,23 @@ main { position: fixed; inset: 0; }
 .con-escritorio #mundo > .apartado { inset: auto; left: var(--x); top: var(--y); width: var(--ancho); height: var(--alto); overflow: hidden; cursor: auto;
   padding-inline: 24px; } /* el margen que en pantalla completa centra el contenido aquí se calcularía sobre todo el mundo */
 .con-escritorio #mundo > .apartado .sobre-foto { cursor: grab; user-select: none; }
-/* Minimapa: abajo a la izquierda. Paso 111: puntos como un «magnetic select» (escritorio.js + movimiento.js iman) */
-.con-escritorio .minimapa { display: block; position: absolute; left: calc(var(--barra) + 24px); bottom: 24px; z-index: 5; width: 132px; height: 84px; border-radius: 12px; overflow: hidden; }
-.minimapa button { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; padding: 0; border: 0; border-radius: 50%; background: none; display: grid; place-items: center; }
-.minimapa button > i { width: 14px; height: 14px; border-radius: 50%; background: color-mix(in srgb, var(--texto) 22%, transparent);
-  transform: translate(var(--iman-x, 0px), var(--iman-y, 0px)) scale(var(--iman-s, 1)); transition: background .35s ease, box-shadow .35s ease; }
-.minimapa button:hover > i { background: color-mix(in srgb, var(--texto) 34%, transparent); }
-.minimapa button[aria-current="page"] > i { background: radial-gradient(circle at 32% 30%, color-mix(in srgb, var(--acento) 35%, #fff) 0, var(--acento) 55%, color-mix(in srgb, var(--acento) 70%, #000) 100%);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--acento) 45%, transparent); }
+/* Minimapa: abajo a la izquierda, sin caja (paso 112). Puntos de vidrio que flotan sobre el fondo; la sección donde
+   estás es una bolita iridiscente. Se mueven como un «magnetic select» (escritorio.js + movimiento.js iman) */
+.con-escritorio .minimapa { display: block; position: absolute; left: calc(var(--barra) + 28px); bottom: 26px; z-index: 5; width: 120px; height: 76px; }
+.minimapa button { position: absolute; width: 28px; height: 28px; margin: -14px 0 0 -14px; padding: 0; border: 0; border-radius: 50%; background: none; display: grid; place-items: center; }
+.minimapa button > i { width: 15px; height: 15px; border-radius: 50%; background: rgba(255,255,255,.16); backdrop-filter: blur(6px);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.32), 0 2px 8px rgba(0,0,0,.22);
+  transform: translate(var(--iman-x, 0px), var(--iman-y, 0px)) scale(var(--iman-s, 1)); transition: background .4s ease, box-shadow .4s ease; }
+.minimapa button:hover > i { background: rgba(255,255,255,.3); }
+.minimapa button[aria-current="page"] > i {
+  background: radial-gradient(circle at 32% 26%, rgba(255,255,255,.75) 0 7%, transparent 32%),
+              radial-gradient(circle at 28% 38%, #ff86dd 0, transparent 58%),
+              radial-gradient(circle at 78% 30%, #7ff0c8 0, transparent 52%),
+              radial-gradient(circle at 55% 85%, #ffb26b 0, transparent 60%), #b77bff;
+  box-shadow: 0 0 14px rgba(255,134,221,.45), 0 0 26px rgba(127,240,200,.25), 0 3px 10px rgba(0,0,0,.25);
+  animation: iridiscente 9s ease-in-out infinite alternate; }
+@keyframes iridiscente { to { filter: hue-rotate(50deg) saturate(1.15); } }
+@media (prefers-reduced-motion: reduce) { .minimapa button[aria-current="page"] > i { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .fondo { transition: none; } }
 
 /* Dock: escondido abajo; aparece al acercarse (carcasa.js) */
