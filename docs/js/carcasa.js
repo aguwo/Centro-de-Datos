@@ -4,6 +4,7 @@
 // escritorio (los que tienen "lugar") van juntos en un solo botón, "Escritorio". No sabe nada de ningún apartado en particular:
 // todo lo lee de APARTADOS (apartados.js). El lienzo movible está en escritorio.js.
 import { $, el } from "./base.js";
+import { icono } from "./dibujos.js";
 import { APARTADOS, CAJONES } from "./apartados.js";
 import { iniciarEscritorio, enEscritorio, mirar } from "./escritorio.js";
 import { montar } from "./widgets.js";
@@ -13,7 +14,7 @@ let actual = APARTADOS[0];
 let enElEscritorio = APARTADOS.find((a) => a.lugar); // la última sección del escritorio que viste: "Escritorio" vuelve ahí
 // El botón "Escritorio" de la barra lateral (en el teléfono no se ve: ahí cada sección tiene el suyo).
 const ESCRITORIO = { id: "escritorio", nombre: "Escritorio",
-  icono: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>' };
+  icono: "escritorio" };
 export const apartadoActual = () => actual.id;
 
 // Muestra un apartado y esconde los demás. Queda en la dirección (#mapa) para volver con atrás o recargar.
@@ -120,11 +121,11 @@ function armarDock() {
     ...botones.filter((b) => !b.abajo), el("div", { className: "pie" }, ...botones.filter((b) => b.abajo), perfil, retraer));
   marcar();
 }
-// Un botón de la barra: su ícono (trazos SVG) y el globo con su nombre y, si tiene, su atajo.
-function boton(nombre, icono, accion, tecla) {
+// Un botón de la barra: su ícono (por su nombre en dibujos.js) y el globo con su nombre y, si tiene, su atajo.
+function boton(nombre, dibujo, accion, tecla) {
   const b = el("button", { ariaLabel: nombre, onclick: accion },
     el("span", { className: "etiqueta" }, nombre, tecla ? el("kbd", { textContent: tecla }) : ""));
-  if (icono) b.insertAdjacentHTML("afterbegin", `<svg class="icono" viewBox="0 0 24 24" aria-hidden="true">${icono}</svg>`);
+  if (dibujo) b.prepend(icono(dibujo));
   return b;
 }
 // Alt + 1…9 (e.code dice la tecla de verdad: sirve con el teclado numérico y en Mac, donde ⌥ cambia la letra).
