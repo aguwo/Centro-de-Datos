@@ -1668,7 +1668,16 @@ span.flecha-arbol::before { display: none; }
 
 .w-carpeta { display: flex; flex-direction: column; gap: 14px; }
 /* Paso 103: lo de adentro se desliza dentro de la ventana; la barra de arriba y la de estado quedan fijas */
-.con-escritorio .w-carpeta { max-height: calc(100vh - 140px); }
+/* En el PC, Archivos es UNA ventana partida en tres por líneas (árbol | carpeta | propiedades), como el Explorador.
+   Cada parte se desliza por su cuenta; en la carpeta, solo su contenido (la barra de arriba y la de estado quedan fijas). */
+.con-escritorio #archivos .columnas { gap: 0; height: calc(100vh - 140px); min-height: 420px; flex: none; border-radius: var(--radio); overflow: hidden;
+  background: var(--vidrio); backdrop-filter: blur(var(--desenfoque)) saturate(170%); -webkit-backdrop-filter: blur(var(--desenfoque)) saturate(170%);
+  border: 1px solid var(--borde); box-shadow: var(--sombra); }
+.con-escritorio #archivos .columna + .columna { border-left: 1px solid var(--linea); }
+.con-escritorio #archivos .columna > .ventana { flex: 1; min-height: 0; overflow-y: auto; background: none; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.con-escritorio #archivos .w-arbol-carpetas { padding: 14px 10px; }
+.con-escritorio #archivos .w-propiedades-carpeta { background: color-mix(in srgb, var(--vidrio-fuerte) 35%, transparent); }
+.con-escritorio .w-carpeta { overflow: hidden !important; }
 .con-escritorio .w-carpeta .cuerpo-carpeta { overflow-y: auto; min-height: 0; padding: 2px; margin: -2px; }
 .ruta-carpeta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 13px; color: var(--suave); }
 .ruta-carpeta button { border: 0; padding: 2px 6px; border-radius: 6px; color: inherit; font-weight: 400; }
@@ -1719,7 +1728,7 @@ span.flecha-arbol::before { display: none; }
 /* Abajo, cuántas hay y cuántas elegiste */
 .estado-carpeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding-top: 10px; border-top: 1px solid var(--linea); font-size: 12.5px; color: var(--suave); }
 /* Las propiedades, a la derecha */
-.w-propiedades-carpeta { gap: 14px; align-self: start; position: sticky; top: 12px; }
+.w-propiedades-carpeta { display: flex; flex-direction: column; gap: 14px; }
 .w-propiedades-carpeta > h3 { margin: 0; }
 .cabeza-propiedades { display: flex; align-items: center; gap: 12px; }
 .cabeza-propiedades > div { display: grid; min-width: 0; }
@@ -1799,7 +1808,7 @@ span.flecha-arbol::before { display: none; }
 .con-escritorio.con-panel #archivos .columna:has(> .w-propiedades-carpeta) { display: none; }
 #archivos .columnas { transition: margin-right .3s var(--suave-curva); }
 /* En el celular el árbol no se ve: se navega tocando carpetas y volviendo con «‹» o con la ruta de arriba. */
-body:not(.con-escritorio) #archivos > .costado { display: none; }
+body:not(.con-escritorio) #archivos .w-arbol-carpetas { display: none; }
 /* Paso 103: en el celular las propiedades salen desde abajo, como una hoja, solo con algo elegido (tocar abre; dejar el dedo elige). */
 body:not(.con-escritorio) .w-propiedades-carpeta:not(.con-eleccion) { display: none; }
 body:not(.con-escritorio) .w-propiedades-carpeta { position: fixed; left: 8px; right: 8px; bottom: 8px; top: auto; z-index: 9; max-height: 60vh; overflow-y: auto; box-shadow: var(--sombra); }

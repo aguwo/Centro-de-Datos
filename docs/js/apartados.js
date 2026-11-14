@@ -123,11 +123,11 @@ export const APARTADOS = [
     icono: "billetera",
   },
   // Paso 101: todo tu árbol como carpetas (archivos.js), para llegar a cualquier rama aunque no tenga apartado propio.
-  // A la izquierda el árbol de carpetas (en el celular se esconde y se navega con la ruta); al centro la carpeta abierta;
-  // a la derecha (paso 103) las propiedades de lo elegido, como el panel de detalles del Explorador de Windows.
+  // Una sola ventana partida en tres, como el Explorador de Windows (paso 103): a la izquierda el árbol de carpetas
+  // (en el celular se esconde y se navega con la ruta), al centro la carpeta abierta y a la derecha las propiedades de lo elegido.
   {
     id: "archivos", nombre: "Archivos",
-    columnas: [{ costado: true, widgets: ["arbol-carpetas"] }, { ancho: 2.6, widgets: ["carpeta"] }, { widgets: ["propiedades-carpeta"] }],
+    columnas: [{ ancho: 0.95, widgets: ["arbol-carpetas"] }, { ancho: 2.6, widgets: ["carpeta"] }, { ancho: 1.05, widgets: ["propiedades-carpeta"] }],
     icono: "carpeta",
   },
   {
