@@ -21,7 +21,7 @@
 //   presupuesto         la suma del "Presupuesto semanal" de tus categorías (la semana va de lunes a domingo)
 //   saldo de una cuenta su "Saldo inicial" + lo que entró − lo que salió, con las transferencias entre cuentas
 //                       (registros "transferencia": de nodo_id hacia otro_id)
-import { el, db, datos, dia, escribir, areaDe, flotante } from "./base.js";
+import { el, db, datos, dia, escribir, areaDe, flotante, sinTildes } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes } from "./fechas.js";
 import { icono, elegir } from "./dibujos.js";
 import { cambiar, cambiarProps, dentroDeCaja } from "./acciones.js";
@@ -378,7 +378,6 @@ const activas = () => deTipo("suscripcion").filter((s) => s.props?.activa !== fa
 const pausadas = () => deTipo("suscripcion").filter((s) => s.props?.activa === false);
 const alMes = (s) => (Number(s.props?.precio) || 0) / (s.props?.periodo === "Anual" ? 12 : 1);
 export const totalAlMes = () => activas().reduce((t, s) => t + alMes(s), 0);
-const sinTildes = (t) => (t ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const palabra = (s) => sinTildes(s.titulo).split(/\s+/)[0];
 const esDe = (s, r) => r.clase === "gasto" && sinTildes(r.titulo).includes(palabra(s));
 const ultimoCobro = (s) => datos.registros.findLast((r) => esDe(s, r));

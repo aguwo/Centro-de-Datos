@@ -7,7 +7,7 @@
 //   dentro   sus notas y próximos eventos
 // Solo muestra proyectos (paso 35b): los ramos y los objetivos tendrán su propia vista, con su propio diseño.
 // Los widgets no saben de proyectos más allá de MUESTRA: otra vista puede reusarlos con otro tipo.
-import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, areaDe, dentroDe, escribible, escribiendoEn } from "./base.js";
+import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, areaDe, dentroDe, escribible, escribiendoEn, sinTildes } from "./base.js";
 import { hoyTexto, diasEntre, corto } from "./fechas.js";
 import { cambiar, cambiarProps, completar, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario, camposDe, tienePropiedad } from "./panel.js";
@@ -23,7 +23,6 @@ const MUESTRA = "proyecto"; // el tipo de caja que muestra esta página
 const esCaja = (n) => n?.tipos.clave === MUESTRA;
 const terminada = (n) => n.estado === "Hecho";
 const estadoDe = (t) => t.estado ?? "Por hacer";
-const sinTildes = (s) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 const porNombre = (a, b) => a.titulo.localeCompare(b.titulo, "es");
 const porCercania = (a, b) => (dia(a.fecha) || "9999").localeCompare(dia(b.fecha) || "9999"); // las con fecha primero, la más cercana arriba
 const de = (clave, caja) => datos.nodos.filter((n) => n.tipos.clave === clave && n.estado !== "Inbox" && cajasDe(n.id).includes(caja));

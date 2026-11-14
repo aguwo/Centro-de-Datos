@@ -24,7 +24,7 @@
 //   metas     las que guardes (tabla preferencias, clave "salud"); sin eso, unas sugeridas según tu peso
 // Cada hábito cae en un bloque: los de entrenar en Ejercicio, los de registrar calorías en Dieta
 // (se cumplen solos al anotar comida) y el resto en Hábitos.
-import { el, db, datos, dia, escribir, areaDe, flotante } from "./base.js";
+import { el, db, datos, dia, escribir, areaDe, flotante, sinTildes } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes, sinHoraISO } from "./fechas.js";
 import { alternarRegistro, cambiarProps, crear, dentroDeCaja } from "./acciones.js";
 import { icono, elegir } from "./dibujos.js";
@@ -96,7 +96,6 @@ const guardarMetas = (m) => { metasGuardadas = m; return escribir(db.from("prefe
 // ---------- los hábitos ----------
 // ¿Toca hoy? Si su "Días" nombra días de la semana (ej. "Lunes, martes y viernes, 08:00"), solo esos; si no, todos.
 const NOMBRES = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
-const sinTildes = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 function tocaEl(h, d) {
   const dias = sinTildes(h.props?.dias ?? "");
   const nombra = NOMBRES.filter((n) => dias.includes(n));

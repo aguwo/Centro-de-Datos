@@ -30,6 +30,7 @@ import { semanaEntreno, constanciaEntreno, rutina, peso, habitosHoy, cadaHabito,
   caloriasDia, equilibrio, comidasDia, semanaComida, dietaHoy, entrenoHoy, habitosRapidos, medidorPeso, anillosSalud, macrosHoy } from "./salud.js";
 import { semanaGasto, movimientos, porCategoria, semanasGasto, entraSale, cuentas, apartar, objetivoAhorro, historialAhorro, esteMes, suscripciones, suscripcionesDetectadas, enUnAno, suscripcionesPausadas, finanzasSemana, proximoCobro, metaAhorro, enQueGastas } from "./finanzas.js";
 import { plantasConSed } from "./plantas.js";
+import { arbolDeCarpetas, carpetaAbierta } from "./archivos.js";
 import { icono } from "./dibujos.js";
 import { selectorDeBloques } from "./bloques.js";
 import { modo, fondo, barra, vistas, ventanas, cuenta } from "./ajustes.js";
@@ -85,6 +86,8 @@ export const WIDGETS = {
   "finanzas-semana": { titulo: "Gastos", crear: finanzasSemana },
   "en-que-gastas": { titulo: "¿En qué gastas?", crear: enQueGastas },
   "plantas":       { titulo: "Plantas con sed", crear: plantasConSed },
+  "arbol-carpetas": { crear: arbolDeCarpetas },
+  "carpeta":       { crece: true, crear: carpetaAbierta },
   "proximo-cobro": { titulo: "Próximo cobro", crear: proximoCobro },
   "meta-ahorro":   { titulo: "Ahorro", crear: metaAhorro },
   "modo":          { titulo: "Modo y color", crear: modo },

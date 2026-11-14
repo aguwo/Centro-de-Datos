@@ -2,7 +2,7 @@
 // Lee de los datos cargados (no del mapa), así funciona igual desde el Inicio.
 import { db, $, el, avisar, datos, colorDe, recargar, pedirRecarga, dia, hora, fijas, FIJA } from "./base.js";
 import { enfocar, desenfocar, ajustarMapa } from "./mapa.js";
-import { crear, conectar } from "./acciones.js";
+import { crear, conectar, dentroDeCaja } from "./acciones.js";
 
 const ESTADOS = ["Inbox", "Por hacer", "En curso", "Esperando", "Hecho"]; // los mismos del paso 3
 
@@ -148,12 +148,14 @@ export function refrescarPanel() {
 // Al editar con tipos, también se puede cambiar el tipo (un post-it que pasa a proyecto).
 // valores = con qué empiezan algunos campos, ej. { estado: "Por hacer" } al ordenar un post-it.
 // conexion = con qué conexión empieza "Conectar a", ej. { relacion: "pertenece_a", destino_id } al crear dentro de un proyecto.
+// dentro = el id de una caja: "Conectar a" empieza metido en ella, con la relación que pida cada tipo (paso 101, Archivos).
 const PRINCIPALES = 3; // cuántas propiedades se ven de entrada; el resto va en "Más detalles"
-export function formulario(n, { tipos, tipo: elegido, valores = {}, conexion: inicial } = {}) {
+export function formulario(n, { tipos, tipo: elegido, valores = {}, conexion, dentro } = {}) {
   const editando = !!n;
   const campo = (etiqueta, control) => [el("label", { textContent: etiqueta }), control];
   let tipo = n?.tipos.clave ?? elegido ?? tipos?.[0] ?? "tarea";
   const tipoElegido = () => datos.tipo.get(tipo);
+  const inicial = () => (dentro ? dentroDeCaja(tipo, dentro) : conexion);
 
   // Qué crear: con pocos tipos, botones a la vista; con todos, una lista agrupada por módulo (como la leyenda).
   let selector;
@@ -200,7 +202,7 @@ export function formulario(n, { tipos, tipo: elegido, valores = {}, conexion: in
     detalles.open = !!n?.contenido;
     relacion.replaceChildren(el("option", { value: "", textContent: "(sin conexión)" }),
       ...(tipoElegido()?.conexiones ?? []).map((c) => el("option", { value: c.relacion, textContent: c.relacion.replaceAll("_", " ") })));
-    if (inicial) relacion.value = inicial.relacion;
+    if (inicial()) relacion.value = inicial().relacion;
     if (relacion.selectedIndex < 0) relacion.value = ""; // este tipo no permite esa conexión
     ajustarDestinos();
   }
@@ -209,7 +211,7 @@ export function formulario(n, { tipos, tipo: elegido, valores = {}, conexion: in
     const candidatos = regla ? datos.nodos.filter((x) => regla.hacia.includes(x.tipos.clave)).sort((a, b) => a.titulo.localeCompare(b.titulo, "es")) : [];
     destino.replaceChildren(...candidatos.map((x) => el("option", { value: x.id, textContent: `${x.titulo} (${x.tipos.nombre})` })));
     destino.hidden = !candidatos.length;
-    if (inicial?.relacion === relacion.value) destino.value = inicial.destino_id;
+    if (inicial()?.relacion === relacion.value) destino.value = inicial().destino_id;
   }
 
   const guardar = el("button", { className: "principal", textContent: editando ? "Guardar" : "Crear", type: "submit" });
