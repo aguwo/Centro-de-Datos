@@ -1586,3 +1586,55 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .tu-cara .cara { width: 56px; height: 56px; }
 .tu-cara .cara.sin-foto .icono { width: 30px; height: 30px; }
 .tu-cara .correo { margin: 0 0 4px; }
+
+/* ---------- Paso 97: la revisión de la noche (revision.js) ----------
+   El botón sale sobre «+ Nuevo»: redondo con una luna en el teléfono, una píldora «Revisar el día» en el computador.
+   La ventana es la flotante de siempre: centrada en el computador y a pantalla completa en el teléfono. */
+.revisar { position: fixed; right: 16px; bottom: 86px; z-index: 6; width: 54px; height: 54px; padding: 0; border-radius: 50%;
+           display: grid; place-content: center; border: 1px solid var(--borde); background: var(--vidrio-fuerte); color: var(--acento);
+           box-shadow: var(--sombra); backdrop-filter: blur(var(--desenfoque)); }
+.revisar svg { width: 24px; height: 24px; }
+.revisar .etiqueta { display: none; }
+.revisar.hecha { color: var(--suave); box-shadow: none; }
+.con-escritorio .revisar { right: 24px; bottom: 84px; width: auto; height: 44px; padding: 0 18px 0 14px; border-radius: 999px; display: flex; align-items: center; gap: 8px; }
+.con-escritorio .revisar svg { width: 20px; height: 20px; }
+.con-escritorio .revisar .etiqueta { display: block; font-size: 14.5px; font-weight: 600; color: var(--texto); }
+.con-escritorio .revisar.hecha .etiqueta { color: var(--suave); }
+
+.revision { height: min(720px, calc(100dvh - 48px)); }
+.revision > .cuerpo { height: 100%; grid-template-rows: auto auto auto 1fr auto; }
+.revision .barra-revision { height: 6px; border-radius: 99px; background: var(--linea); overflow: hidden; }
+.revision .barra-revision::after { content: ""; display: block; height: 100%; width: calc(var(--avance, 0) * 100%); border-radius: inherit; background: var(--acento-fondo); transition: width .35s var(--suave-curva); }
+.revision .pregunta { margin: 0; font-size: 16px; color: var(--suave); }
+.revision .lista-revision { min-height: 0; overflow-y: auto; margin: 0 -6px; padding: 0 6px; }
+.revision .lista-revision ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.revision .pie { display: flex; justify-content: space-between; gap: 10px; }
+.revision .pie button { min-width: 120px; padding: 11px 18px; font-size: 15px; border-radius: 12px; }
+.revision .pie button:disabled { visibility: hidden; }
+
+.tarjeta-revision { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; padding: 14px; border: 1px solid var(--linea); border-radius: 14px; background: var(--vidrio); }
+.tarjeta-revision .que { flex: 1 1 200px; min-width: 0; display: grid; }
+.tarjeta-revision .que b { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.tarjeta-revision .que small { color: var(--suave); font-size: 12.5px; }
+.opciones-revision { flex: 1 1 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.opciones-revision > * { min-width: 0; padding: 9px 4px; font-size: 14px; border-radius: 10px; }
+.opciones-revision input[type="date"] { border: 1px solid var(--acento); background: var(--vidrio); color: inherit; font: inherit; }
+.tarjeta-revision .estrella { width: 44px; height: 44px; border-radius: 50%; font-size: 24px; }
+.tarjeta-revision .estrella:disabled { opacity: .3; cursor: default; }
+.tarjeta-revision:has(.estrella.puesta) { border-color: var(--aviso); background: var(--aviso-suave); }
+
+.resumen-revision { display: grid; gap: 14px; font-size: 15px; }
+.resumen-revision p { margin: 0; }
+.resumen-revision h4 { margin: 0 0 6px; }
+.resumen-revision ul { padding-left: 4px; list-style: none; display: grid; gap: 4px; }
+.resumen-revision .racha { padding: 12px 14px; border-radius: 12px; background: var(--linea); color: var(--suave); }
+
+@media (max-width: 640px) {
+  .revision { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border-radius: 0; border: 0; background: var(--vidrio-fuerte); }
+  .revision > .cuerpo { padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); }
+  .revision .pie button { flex: 1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .revisar:not([hidden]) { animation: entrar .4s var(--suave-curva) both; }
+  .lista-revision.entrando li { animation: entrar .25s var(--suave-curva) both; }
+}
