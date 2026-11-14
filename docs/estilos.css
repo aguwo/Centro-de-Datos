@@ -917,8 +917,8 @@ h4.ajuste:first-of-type { margin-top: 2px; }
 .ventana .pista { margin: 8px 0 0; }
 /* Modo: tres tarjetas con un dibujito de cómo se ve */
 .temas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.temas button, .letras button { display: grid; gap: 6px; justify-items: center; padding: 10px 8px; border-radius: 12px; background: var(--vidrio-fuerte); }
-.temas button[aria-pressed="true"], .letras button[aria-pressed="true"], .fondo-tile[aria-pressed="true"] { outline: 2px solid var(--acento-fondo); outline-offset: 1px; font-weight: 600; }
+.temas button, .letras button, .zooms button { display: grid; gap: 6px; justify-items: center; padding: 10px 8px; border-radius: 12px; background: var(--vidrio-fuerte); }
+.temas button[aria-pressed="true"], .letras button[aria-pressed="true"], .zooms button[aria-pressed="true"], .fondo-tile[aria-pressed="true"] { outline: 2px solid var(--acento-fondo); outline-offset: 1px; font-weight: 600; }
 .muestra-tema { width: 100%; height: 44px; border-radius: 8px; border: 1px solid var(--linea);
   background: linear-gradient(#fff 0 0) 10px 10px / 46% 8px no-repeat, linear-gradient(#cfe0d4 0 0) 10px 24px / 30% 8px no-repeat, #eef3ef; }
 .muestra-tema.oscuro { background: linear-gradient(#2a3a33 0 0) 10px 10px / 46% 8px no-repeat, linear-gradient(#3d5a49 0 0) 10px 24px / 30% 8px no-repeat, #121c18; }
@@ -1902,3 +1902,6 @@ button.nodo-grafo:hover .insignia { transform: scale(1.12); }
 .mover-a { display: grid; gap: 8px; padding: 0 18px 18px; }
 .mover-a input { padding: 8px 10px; border: 1px solid var(--linea); border-radius: 9px; background: var(--vidrio); color: var(--texto); font: inherit; }
 .mover-a .candidatos { max-height: 50vh; }
+/* Paso 106: los tamaños de la web en Ajustes (ajustes.js) */
+.zooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; }
+.zooms button { padding: 8px 4px; font-size: 13px; }

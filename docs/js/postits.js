@@ -6,7 +6,7 @@
 //   Pasar a…    el formulario de siempre, con el estado en "Por hacer": al guardar sale del Inbox y deja de ser post-it
 // Los que no tienen lugar guardado se reparten solos en los bordes libres.
 // En pantallas angostas no hay escritorio: se ven en una fila arriba de Hoy.
-import { $, el, datos, colorDe, escribible, escribiendoEn } from "./base.js";
+import { $, el, datos, colorDe, escribible, escribiendoEn, enLaWeb } from "./base.js";
 import { cambiar, cambiarProps, completar, archivar, crear } from "./acciones.js";
 import { escritorioActivo, alCambiarDeModo, alrededor, centro, zoom } from "./escritorio.js";
 import { formulario } from "./panel.js";
@@ -91,7 +91,7 @@ function arrastrar() {
   });
   capa().addEventListener("pointermove", (e) => {
     if (!t) return;
-    const dx = (e.clientX - t.x) / zoom(), dy = (e.clientY - t.y) / zoom();
+    const dx = enLaWeb(e.clientX - t.x) / zoom(), dy = enLaWeb(e.clientY - t.y) / zoom();
     if (!t.movido && Math.hypot(dx, dy) < 4) return;
     t.movido = true;
     t.p.classList.add("moviendo");

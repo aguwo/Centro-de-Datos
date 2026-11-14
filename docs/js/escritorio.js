@@ -7,7 +7,7 @@
 // Paso 91: la cámara se mueve sola, con un resorte (ver «La cámara viaja», abajo): viajes, rueda y zoom suaves,
 // y al soltar un arrastre sigue deslizándose un poco. Con «reducir movimiento» del sistema, salta directo.
 // En pantallas angostas no hay lienzo: cada apartado se ve a pantalla completa, como los demás.
-import { $, el } from "./base.js";
+import { $, el, enLaWeb } from "./base.js";
 import { APARTADOS } from "./apartados.js";
 import { resorte } from "./dibujos.js";
 
@@ -189,14 +189,14 @@ function controles(ir) {
     if (!escritorioActivo() || e.button !== 0 || !seArrastra(e.target)) return;
     e.preventDefault(); // que no seleccione texto
     detener(); // agarrarlo a medio viaje lo frena donde está
-    tomado = { x: e.clientX - cam.x, y: e.clientY - cam.y, t: e.timeStamp, vx: 0, vy: 0 };
+    tomado = { x: enLaWeb(e.clientX) - cam.x, y: enLaWeb(e.clientY) - cam.y, t: e.timeStamp, vx: 0, vy: 0 };
     vista.classList.add("arrastrando");
     vista.setPointerCapture(e.pointerId);
   });
   vista.addEventListener("pointermove", (e) => {
     if (!tomado) return;
     // La velocidad (px por segundo), suavizada entre los últimos movimientos para que un temblón no la cambie.
-    const dt = Math.max(1, e.timeStamp - tomado.t) / 1000, x = e.clientX - tomado.x, y = e.clientY - tomado.y;
+    const dt = Math.max(1, e.timeStamp - tomado.t) / 1000, x = enLaWeb(e.clientX) - tomado.x, y = enLaWeb(e.clientY) - tomado.y;
     tomado.vx = 0.2 * tomado.vx + 0.8 * (x - cam.x) / dt; tomado.vy = 0.2 * tomado.vy + 0.8 * (y - cam.y) / dt; tomado.t = e.timeStamp;
     cam.x = x; cam.y = y;
     aplicar();
@@ -221,7 +221,7 @@ function controles(ir) {
     const c = rumbo();
     if (e.ctrlKey) {
       const z = Math.min(ZOOM.max, Math.max(ZOOM.min, c.z * Math.exp(-e.deltaY * 0.002)));
-      const r = vista.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top; // el punto bajo el puntero se queda quieto
+      const r = vista.getBoundingClientRect(), px = enLaWeb(e.clientX - r.left), py = enLaWeb(e.clientY - r.top); // el punto bajo el puntero se queda quieto
       viajar({ x: px - (px - c.x) * (z / c.z), y: py - (py - c.y) * (z / c.z), z }, true, RESORTE.rueda);
     } else viajar({ x: c.x - e.deltaX, y: c.y - e.deltaY, z: c.z }, true, RESORTE.rueda);
   }, { passive: false });

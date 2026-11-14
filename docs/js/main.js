@@ -17,7 +17,8 @@
 //   ajustes.js   los widgets del apartado Ajustes, que la cambian
 //   revision.js  la revisión de la noche: una ventana que te guía paso a paso para dejar todo al día
 //   plantas.js   las plantas con sed (en Esta semana)
-import { traerDeLaBase } from "./apariencia.js"; // primero: así la web se pinta con tu estilo desde el comienzo
+import { traerDeLaBase } from "./apariencia.js";
+import "./menu.js"; // paso 106: el clic derecho de toda la web (el zoom) // primero: así la web se pinta con tu estilo desde el comienzo
 import { db, $, avisar, recargar, escucharCambios, dejarDeEscuchar } from "./base.js";
 import { iniciarCarcasa, apartadoActual, dibujarTodo } from "./carcasa.js";
 import { enfocar } from "./mapa.js";

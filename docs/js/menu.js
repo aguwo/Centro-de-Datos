@@ -2,7 +2,8 @@
 // opciones = [{ texto, atajo?, hacer }, "-", ...]: "-" es una rayita; lo que sea falso (ej. una opción que no aplica) se salta.
 // Sale donde se hizo clic, sin salirse de la pantalla. Se maneja con las flechas y Enter, y se cierra al elegir,
 // con Esc o tocando fuera; al cerrarse, el foco vuelve a donde estaba.
-import { el } from "./base.js";
+import { el, enLaWeb } from "./base.js";
+import { preferencia, cambiar, ZOOMS } from "./apariencia.js";
 
 export function menuEn(e, opciones) {
   e.preventDefault();
@@ -18,8 +19,8 @@ export function menuEn(e, opciones) {
   // Con el teclado (tecla Menú o Shift+F10) no hay mouse: sale junto a lo que tiene el foco.
   const r = e.clientX || e.clientY ? { x: e.clientX, y: e.clientY } : (({ left, bottom }) => ({ x: left + 16, y: bottom }))(e.target.getBoundingClientRect());
   const { width, height } = m.getBoundingClientRect();
-  m.style.left = Math.max(8, Math.min(r.x, innerWidth - width - 8)) + "px";
-  m.style.top = Math.max(8, Math.min(r.y, innerHeight - height - 8)) + "px";
+  m.style.left = enLaWeb(Math.max(8, Math.min(r.x, innerWidth - width - 8))) + "px"; // con zoom, se mide en pantalla y se escribe en la web
+  m.style.top = enLaWeb(Math.max(8, Math.min(r.y, innerHeight - height - 8))) + "px";
 
   const botones = [...m.querySelectorAll("button")];
   botones[0]?.focus();
@@ -32,3 +33,16 @@ export function menuEn(e, opciones) {
   setTimeout(() => addEventListener("pointerdown", fuera, true));
   function cerrar() { m.remove(); removeEventListener("pointerdown", fuera, true); }
 }
+
+// Paso 106: clic derecho en cualquier parte que no tenga su propio menú: el zoom de toda la web.
+// Donde sirve el menú del navegador (escribir, un enlace, una imagen o con texto pintado para copiar) se deja ese.
+const zoomA = (z) => `${Math.round(z * 100)} %`;
+addEventListener("contextmenu", (e) => {
+  if (e.defaultPrevented || e.target.closest("input, textarea, select, a, img, [contenteditable]") || String(getSelection())) return;
+  const z = preferencia().zoom, i = ZOOMS.indexOf(z), mas = ZOOMS[i + 1], menos = ZOOMS[i - 1];
+  menuEn(e, [
+    mas && { texto: `Acercar la web (${zoomA(mas)})`, hacer: () => cambiar({ zoom: mas }) },
+    menos && { texto: `Alejar la web (${zoomA(menos)})`, hacer: () => cambiar({ zoom: menos }) },
+    ![z, mas, menos].includes(1) && { texto: `Tamaño normal (100 %)`, hacer: () => cambiar({ zoom: 1 }) },
+  ]);
+});
