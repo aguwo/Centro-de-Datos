@@ -7,7 +7,7 @@ import { db, avisar, el } from "./base.js";
 import { icono } from "./dibujos.js";
 
 // Lo de siempre: cómo se ve si nunca tocaste nada. null = lo decide el modo (ej. cuánto se oscurece la foto).
-export const DE_SIEMPRE = { tema: "auto", tono: null, fondo: "paisaje", oscurecer: null, mover: true, opacidad: 1, desenfoque: 28, radio: 16, letra: "Inter", zoom: 1,
+export const DE_SIEMPRE = { tema: "auto", tono: null, fondo: "paisaje", oscurecer: null, mover: true, opacidad: 1, desenfoque: 28, radio: 16, letra: "Inter", zoom: 1, minimapa: "miniatura",
   barra: "iconos", ocultos: [], orden: [], retraida: false };
 
 export const TEMAS = { auto: "Automático", claro: "Claro", oscuro: "Oscuro" };
@@ -32,6 +32,8 @@ export const FONDOS = {
   noche:     { nombre: "Noche", css: "radial-gradient(at 70% 20%, #2a3550 0, transparent 55%), linear-gradient(170deg, #0b0f14, #1b2430)" },
   propia:    { nombre: "Tu foto" },
 };
+// Paso 113: los estilos del minimapa del escritorio infinito (estilos.css, :root[data-minimapa]).
+export const MINIMAPAS = { miniatura: "Miniatura", puntos: "Puntos", nombre: "Punto con nombre", lista: "Lista" };
 // Paso 106: los tamaños de toda la web (zoom), los mismos pasos que usan los navegadores.
 export const ZOOMS = [0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2];
 // Las letras. Inter viene siempre; las otras se bajan de Google Fonts recién cuando las eliges.
@@ -55,6 +57,7 @@ function limpiar(x) {
   if (!(p.letra in LETRAS)) p.letra = DE_SIEMPRE.letra;
   if (p.tono !== null && !/^#[0-9a-f]{6}$/i.test(p.tono)) p.tono = null;
   if (!BARRAS[p.barra]) p.barra = DE_SIEMPRE.barra;
+  if (!MINIMAPAS[p.minimapa]) p.minimapa = DE_SIEMPRE.minimapa;
   if (!ZOOMS.includes(p.zoom)) p.zoom = DE_SIEMPRE.zoom;
   for (const k of ["ocultos", "orden"]) p[k] = Array.isArray(p[k]) ? p[k].filter((x) => typeof x === "string") : [];
   return p;
@@ -92,6 +95,7 @@ function aplicar() {
   poner("--sans", p.letra === "Inter" ? null : LETRAS[p.letra] ? `"${LETRAS[p.letra]}", system-ui, sans-serif` : "system-ui, sans-serif");
   r.classList.toggle("fondo-quieto", !p.mover);
   r.dataset.barra = p.barra;
+  r.dataset.minimapa = p.minimapa;
   r.classList.toggle("barra-retraida", p.retraida);
   bajarLetra(LETRAS[p.letra]);
   // El mapa lee los colores al dibujarse: si cambió el modo, que se vuelva a dibujar todo (lo atiende main.js).

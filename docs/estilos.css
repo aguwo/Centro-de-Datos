@@ -72,12 +72,34 @@ main { position: fixed; inset: 0; }
 .con-escritorio #mundo > .apartado { inset: auto; left: var(--x); top: var(--y); width: var(--ancho); height: var(--alto); overflow: hidden; cursor: auto;
   padding-inline: 24px; } /* el margen que en pantalla completa centra el contenido aquí se calcularía sobre todo el mundo */
 .con-escritorio #mundo > .apartado .sobre-foto { cursor: grab; user-select: none; }
-/* Minimapa (paso 113): el escritorio en miniatura, sin caja. Cada sección, un rectángulo de borde fino; la tuya, rellena */
+/* Minimapa (paso 113), sin caja. El estilo se elige en Ajustes (data-minimapa); los botones siempre traen su lugar y
+   su tamaño (escritorio.js), y cada estilo dibuja lo suyo encima. */
 .con-escritorio .minimapa { display: block; position: absolute; left: calc(var(--barra) + 28px); bottom: 26px; z-index: 5; width: 112px; height: 72px; }
-.minimapa button { position: absolute; padding: 0; border: 1px solid rgba(255,255,255,.42); border-radius: 3px; background: transparent;
-  box-shadow: 0 1px 6px rgba(0,0,0,.18); transition: background .3s ease, border-color .3s ease; }
-.minimapa button:hover { border-color: rgba(255,255,255,.8); background: rgba(255,255,255,.12); }
-.minimapa button[aria-current="page"] { background: rgba(255,255,255,.88); border-color: #fff; }
+.minimapa button { position: absolute; padding: 0; border: 1px solid transparent; border-radius: 3px; background: transparent; color: #fff;
+  transition: background .3s ease, border-color .3s ease, color .3s ease; }
+.minimapa button > span { display: none; }
+/* Miniatura: rectángulos de borde fino; el tuyo, relleno */
+:root[data-minimapa="miniatura"] .minimapa button { border-color: rgba(255,255,255,.42); box-shadow: 0 1px 6px rgba(0,0,0,.18); }
+:root[data-minimapa="miniatura"] .minimapa button:hover { border-color: rgba(255,255,255,.8); background: rgba(255,255,255,.12); }
+:root[data-minimapa="miniatura"] .minimapa button[aria-current="page"] { background: rgba(255,255,255,.88); border-color: #fff; }
+/* Puntos (y Punto con nombre): un punto chico al centro de cada sección; el tuyo, blanco con un anillo fino */
+:root:is([data-minimapa="puntos"], [data-minimapa="nombre"]) .minimapa button::after { content: ""; position: absolute; left: 50%; top: 50%;
+  width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: rgba(255,255,255,.42); box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  transition: background .3s ease, box-shadow .3s ease, transform .3s ease; }
+:root:is([data-minimapa="puntos"], [data-minimapa="nombre"]) .minimapa button:hover::after { background: rgba(255,255,255,.8); }
+:root[data-minimapa="puntos"] .minimapa button[aria-current="page"]::after { background: #fff; box-shadow: 0 0 0 4px rgba(0,0,0,.18), 0 0 0 5px rgba(255,255,255,.9); }
+:root[data-minimapa="nombre"] .minimapa button[aria-current="page"]::after { background: #fff; transform: scale(1.35); }
+:root[data-minimapa="nombre"] .minimapa::after { content: attr(data-actual); position: absolute; left: 0; right: 0; top: 100%; margin-top: 6px; text-align: center;
+  color: #fff; font: 500 10px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+/* Lista: los nombres en columna junto a una línea fina; la rayita blanca baja hasta el tuyo */
+:root[data-minimapa="lista"] .con-escritorio .minimapa { width: auto; height: auto; padding-left: 12px; border-left: 1px solid rgba(255,255,255,.25); }
+:root[data-minimapa="lista"] .minimapa button { position: static; display: block; width: auto !important; height: 20px !important; border: 0; text-align: left;
+  color: rgba(255,255,255,.55); font: 500 11px/20px var(--sans); letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+:root[data-minimapa="lista"] .minimapa button > span { display: inline; }
+:root[data-minimapa="lista"] .minimapa button:hover, :root[data-minimapa="lista"] .minimapa button[aria-current="page"] { color: #fff; }
+:root[data-minimapa="lista"] .minimapa::before { content: ""; position: absolute; left: -1px; top: calc(var(--fila, 0) * 20px + 3px); width: 1px; height: 14px; background: #fff;
+  transition: top .35s cubic-bezier(.3, 1.3, .5, 1); }
+:root[data-minimapa="lista"] .minimapa[style*="--fila: -1"]::before { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .fondo { transition: none; } }
 
 /* Dock: escondido abajo; aparece al acercarse (carcasa.js) */

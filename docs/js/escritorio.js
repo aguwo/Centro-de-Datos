@@ -154,12 +154,13 @@ function armarMundo() {
   $("mundo").style.setProperty("--alto", SECCION.alto + "px");
 }
 
-// Minimapa (paso 113): el escritorio en miniatura. Cada sección es un rectángulo con borde fino, en su lugar y de
-// su tamaño; la que estás mirando va rellena. Clic en una y la cámara viaja ahí.
+// Minimapa (paso 113): cada sección es un botón con su lugar y su tamaño en el escritorio a escala; la que estás
+// mirando queda marcada. Clic en una y la cámara viaja ahí. Cómo se ve lo eliges en Ajustes (estilos.css,
+// :root[data-minimapa]): Miniatura (rectángulos), Puntos, Punto con nombre o Lista (los nombres en columna).
 let enMinimapa = null;
 function armarMinimapa(ir) {
   $("minimapa").replaceChildren(...enLienzo.map((a) => {
-    const b = el("button", { title: a.nombre, ariaLabel: a.nombre, onclick: () => ir(a.id) });
+    const b = el("button", { title: a.nombre, onclick: () => ir(a.id) }, el("span", { textContent: a.nombre }));
     b.dataset.id = a.id;
     return b;
   }));
@@ -181,7 +182,10 @@ function dibujarMinimapa() {
   const actual = lejos ? null : cerca;
   if (actual === enMinimapa) return; // solo cuando cambia (esto corre en cada cuadro de la cámara)
   enMinimapa = actual;
-  for (const b of mini.querySelectorAll("button")) b.setAttribute("aria-current", b === actual ? "page" : "false");
+  const botones = [...mini.querySelectorAll("button")];
+  for (const b of botones) b.setAttribute("aria-current", b === actual ? "page" : "false");
+  mini.dataset.actual = actual?.title ?? ""; // el nombre que muestra «Punto con nombre»
+  mini.style.setProperty("--fila", botones.indexOf(actual)); // hasta dónde baja la rayita de «Lista» (-1 = ninguna)
 }
 
 // Lo que tiene su propio desplazamiento (una lista larga, la agenda) y todavía tiene para dónde moverse.
