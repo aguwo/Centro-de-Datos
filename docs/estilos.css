@@ -1670,7 +1670,10 @@ span.flecha-arbol::before { display: none; }
 /* Paso 103: lo de adentro se desliza dentro de la ventana; la barra de arriba y la de estado quedan fijas */
 /* En el PC, Archivos es UNA ventana partida en tres por líneas (árbol | carpeta | propiedades), como el Explorador.
    Cada parte se desliza por su cuenta; en la carpeta, solo su contenido (la barra de arriba y la de estado quedan fijas). */
-.con-escritorio #archivos .columnas { gap: 0; height: calc(100vh - 140px); min-height: 420px; flex: none; border-radius: var(--radio); overflow: hidden;
+/* Ocupa toda la pantalla, sin título (como una ventana del Explorador maximizada). */
+.con-escritorio #archivos { padding: 10px; gap: 0; overflow: hidden; }
+.con-escritorio #archivos > :is(h2, .cabeza-apartado), .con-escritorio #archivos > .barra-apartado:empty { display: none; }
+.con-escritorio #archivos .columnas { gap: 0; flex: 1; min-height: 0; border-radius: var(--radio); overflow: hidden;
   background: var(--vidrio); backdrop-filter: blur(var(--desenfoque)) saturate(170%); -webkit-backdrop-filter: blur(var(--desenfoque)) saturate(170%);
   border: 1px solid var(--borde); box-shadow: var(--sombra); }
 .con-escritorio #archivos .columna + .columna { border-left: 1px solid var(--linea); }
