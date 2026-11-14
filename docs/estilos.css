@@ -47,7 +47,7 @@ button, a.boton { padding: 6px 12px; border-radius: 9px; font: 500 13.5px var(--
 a.boton { display: inline-flex; align-items: center; text-decoration: none; }
 button.principal { background: var(--acento-fondo); border-color: var(--acento-fondo); color: var(--sobre-acento); font-weight: 600; }
 input, select, textarea { font: inherit; color: inherit; }
-.icono { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.icono { fill: currentColor; } /* paso 100: íconos rellenos y redondeados (dibujos.js); el color es el del texto */
 
 /* Una ventana: el cuadro de vidrio donde va cada cosa (se usa junto con .vidrio) */
 .ventana { border-radius: var(--radio); padding: 16px 20px 14px; min-width: 0; }
@@ -90,7 +90,7 @@ main { position: fixed; inset: 0; }
 .dock button { -webkit-tap-highlight-color: transparent; position: relative; flex: none; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 14px; background: none; color: var(--texto);
                display: grid; place-items: center; transition: background-color .2s ease; }
 .dock button:hover { background: var(--resalte); }
-.dock .icono { width: 24px; height: 24px; stroke-width: 1.6; transition: transform .25s var(--resorte); }
+.dock .icono { width: 24px; height: 24px; transition: transform .25s var(--resorte); }
 .dock button:active .icono { transform: scale(.9); transition-duration: .08s; } /* al apretar se hunde, al soltar vuelve con el resorte */
 .marca { position: absolute; left: 0; top: 0; width: var(--w, 0); height: var(--h, 0); transform: translate(var(--x, 0), var(--y, 0)); border-radius: 14px;
          background: var(--resalte); pointer-events: none; transition: opacity .2s ease; } /* viaja con resortes (carcasa.js), no con CSS */
@@ -366,7 +366,7 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 @media (prefers-reduced-motion: reduce) { .plan li, .plan .insignia { transition: none; } .plan .caja.recien { animation: none; } }
 /* El tiempo */
 .clima-ahora { display: flex; align-items: center; gap: 14px; }
-.clima-ahora .icono { width: 42px; height: 42px; stroke-width: 1.5; color: var(--aviso); }
+.clima-ahora .icono { width: 42px; height: 42px; color: var(--aviso); }
 .clima-ahora b { display: block; font-size: 30px; font-weight: 600; line-height: 1.1; letter-spacing: -.02em; }
 .clima-ahora span { color: var(--suave); }
 .clima-ahora dl { margin: 0 0 0 auto; font-size: 12.5px; gap: 0 10px; }
@@ -886,7 +886,7 @@ form.nodo .conexion select + select { margin-top: 6px; }
 .asistencia.baja .cifra-asis strong { color: var(--alerta); }
 .puntos { display: flex; flex-wrap: wrap; gap: 4px; }
 .puntos i { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; }
-.puntos .icono { width: 11px; height: 11px; stroke-width: 2.6; }
+.puntos .icono { width: 12px; height: 12px; }
 .puntos .fui { background: color-mix(in srgb, var(--bien) 20%, transparent); color: var(--bien); }
 .puntos .falte { background: var(--alerta-suave); color: var(--alerta); }
 .ventana .hoy { display: flex; align-items: center; gap: 8px; color: var(--suave); }
@@ -1310,7 +1310,7 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .selector-bloques .tarjeta-bloque:not([aria-selected="true"]) .anillo-avance .lleno { stroke: var(--suave); }
 .marca-agua { position: absolute; right: -18px; bottom: -30px; color: var(--c); opacity: 0; transform: rotate(-14deg); pointer-events: none;
   transition: opacity .4s, transform .6s cubic-bezier(.22, 1, .36, 1); }
-.marca-agua .icono { width: 120px; height: 120px; stroke-width: 1.2; }
+.marca-agua .icono { width: 120px; height: 120px; }
 .tarjeta-bloque[aria-selected="true"] .marca-agua { opacity: .16; transform: rotate(-6deg) scale(1.1); }
 .tarjeta-bloque:focus-visible { outline: 2px solid var(--c); outline-offset: 3px; }
 .escena-bloques { position: relative; }
@@ -1387,7 +1387,7 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .habito-rapido { display: flex; align-items: center; gap: 10px; padding: 5px 0; border: 0; background: none; color: inherit; font: inherit; font-size: 13px; text-align: left; }
 .habito-rapido .check { width: 18px; height: 18px; flex: none; border-radius: 50%; display: grid; place-items: center; color: #fff;
   border: 2px solid color-mix(in srgb, var(--bloque) 60%, transparent); transition: transform .25s cubic-bezier(.22, 1, .36, 1), background-color .2s; }
-.habito-rapido .check .icono { width: 12px; height: 12px; stroke-width: 3; }
+.habito-rapido .check .icono { width: 13px; height: 13px; }
 .habito-rapido:hover .check { transform: scale(1.1); }
 .habito-rapido.hecho .check { background: var(--bloque); border-color: var(--bloque); }
 .habito-rapido.hecho > span:last-child { color: var(--suave); text-decoration: line-through; }
@@ -1541,7 +1541,7 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .dona .parte { cursor: pointer; outline: none; transition: opacity .3s var(--suave-curva), filter .2s; }
 .dona .parte > path { fill: none; stroke: var(--color); stroke-linecap: round; }
 .dona .parte text { fill: var(--tinta); font-size: 12px; font-weight: 700; text-anchor: middle; dominant-baseline: central; font-variant-numeric: tabular-nums; pointer-events: none; }
-.dona .parte .icono { color: var(--tinta); stroke-width: 2; pointer-events: none; }
+.dona .parte .icono { color: var(--tinta); pointer-events: none; }
 .dona .parte:hover { filter: brightness(1.08); }
 .dona .parte:focus-visible > path { stroke: color-mix(in srgb, var(--color) 80%, var(--texto)); }
 .dona.con-elegida .parte:not(.elegida) { opacity: .35; }

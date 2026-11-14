@@ -7,6 +7,7 @@
 // solo botón, separado de los apartados por una rayita; en el teléfono sus secciones se recorren deslizando de lado o
 // con las pastillas de arriba. Cada sección que tiene "abre" lleva «Abrir Finanzas ›» junto a su título.
 import { $, el } from "./base.js";
+import { icono } from "./dibujos.js";
 import { APARTADOS, CAJONES } from "./apartados.js";
 import { iniciarEscritorio, enEscritorio, escritorioActivo, alCambiarDeModo, mirar } from "./escritorio.js";
 import { montar } from "./widgets.js";
@@ -17,7 +18,7 @@ let actual = APARTADOS[0];
 let enElEscritorio = APARTADOS.find((a) => a.lugar); // la última sección del escritorio que viste: "Escritorio" vuelve ahí
 // El botón "Escritorio" de la barra: lleva a la última sección del escritorio que viste.
 const ESCRITORIO = { id: "escritorio", nombre: "Escritorio",
-  icono: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>' };
+  icono: "escritorio" };
 export const apartadoActual = () => actual.id;
 
 // Muestra un apartado y esconde los demás. Queda en la dirección (#mapa) para volver con atrás o recargar.
@@ -195,11 +196,11 @@ function armarDock() {
     ...arriba, el("div", { className: "pie" }, ...botones.filter((b) => b.abajo), perfil, retraer));
   marcar();
 }
-// Un botón de la barra: su ícono (trazos SVG) y el globo con su nombre y, si tiene, su atajo.
-function boton(nombre, icono, accion, tecla) {
+// Un botón de la barra: su ícono (por su nombre en dibujos.js) y el globo con su nombre y, si tiene, su atajo.
+function boton(nombre, dibujo, accion, tecla) {
   const b = el("button", { ariaLabel: nombre, onclick: accion },
     el("span", { className: "etiqueta" }, nombre, tecla ? el("kbd", { textContent: tecla }) : ""));
-  if (icono) b.insertAdjacentHTML("afterbegin", `<svg class="icono" viewBox="0 0 24 24" aria-hidden="true">${icono}</svg>`);
+  if (dibujo) b.prepend(icono(dibujo));
   return b;
 }
 // Paso 98: el primer globo espera un momento (pasar el mouse de camino a otra cosa no lo enciende); mientras sigas

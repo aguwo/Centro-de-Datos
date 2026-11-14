@@ -7,6 +7,7 @@
 //   ventanas  qué tan transparente y difuminado es el vidrio, las esquinas y la letra
 //   cuenta    con qué correo entraste y el botón para salir
 import { db, el } from "./base.js";
+import { icono } from "./dibujos.js";
 import { entradasDeLaBarra, dibujarTodo } from "./carcasa.js";
 import { APARTADOS } from "./apartados.js";
 import { selectorDeVistas, disposicionDe } from "./widgets.js";
@@ -100,7 +101,7 @@ export function barra(v) {
   const detalle = el("p", { className: "pista" }), lista = el("ol", { className: "botones-barra" });
   v.append(titulo("Estilo"), estilos, detalle, titulo("Botones"), lista,
     el("p", { className: "pista", textContent: "Se ve en el computador. En el teléfono la barra es la de abajo, con el mismo orden." }));
-  const dibujo = (x) => { const i = el("span", { className: "icono-barra" }); i.innerHTML = `<svg class="icono" viewBox="0 0 24 24" aria-hidden="true">${x.icono}</svg>`; return i; };
+  const dibujo = (x) => el("span", { className: "icono-barra" }, icono(x.icono));
   return conPonerAlDia(() => {
     const p = preferencia(), todos = entradasDeLaBarra().map((e) => e.x);
     estilos.marcar(p.barra);
