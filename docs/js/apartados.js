@@ -32,13 +32,14 @@ import { BLOQUES as FINANZAS } from "./finanzas.js";
 
 export const APARTADOS = [
   {
-    id: "hoy", nombre: "Hoy", lugar: [1, 1], nuevo: ["tarea", "evento"],
+    id: "hoy", nombre: "Hoy", lugar: [1, 1], nuevo: ["tarea", "evento", "habito"],
     titulo: () => new Date().toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" }),
-    // Paso 94: dos vistas, que se eligen en Ajustes. Clásica: prioridades, también hoy y atrasadas. Plan: tu semana en
-    // anillos y lo de hoy en tarjetas que, al marcarlas, bajan al final. A la derecha, en las dos, el tiempo y tu día.
+    // Paso 94: dos vistas, que se eligen en Ajustes. Plan: tu semana en anillos y TODO lo de hoy (tareas, hábitos y
+    // eventos, paso 96) en tarjetas que, al marcarlas, bajan al final; es la de siempre desde el paso 96. Clásica: solo
+    // tareas (prioridades, también hoy y atrasadas). A la derecha, en las dos, el tiempo y tu día.
     vistas: [
-      { nombre: "Clásica", icono: "bloques", columnas: [{ ancho: 3, widgets: ["tareas-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }] },
       { nombre: "Plan", icono: "lista", columnas: [{ ancho: 3, widgets: ["plan-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }] },
+      { nombre: "Clásica", icono: "bloques", columnas: [{ ancho: 3, widgets: ["tareas-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }] },
     ],
     icono: "sol",
   },

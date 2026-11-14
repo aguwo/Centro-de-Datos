@@ -82,25 +82,30 @@ main { position: fixed; inset: 0; }
 /* Dock: escondido abajo; aparece al acercarse (carcasa.js) */
 .dock { position: fixed; bottom: 12px; left: 50%; z-index: 10; display: flex; gap: 4px; padding: 8px; border-radius: 20px;
         max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none; /* en el teléfono, si no caben, se desliza */
-        transform: translate(-50%, calc(100% + 28px)); transition: transform .28s cubic-bezier(.2,.7,.2,1); }
+        transform: translate(-50%, calc(100% + 28px)); transition: transform var(--resorte-t) var(--resorte); }
 .dock.visible, .dock:focus-within { transform: translateX(-50%); }
 /* Paso 93: botones limpios, como la barra «Solo íconos» del computador: el ícono de línea y nada más. Al pasar el mouse,
    un cuadrado translúcido (--resalte); el elegido lo lleva .marca, una sola pieza que viaja de un botón a otro (carcasa.js) */
 :root { --resalte: color-mix(in srgb, var(--texto) 12%, transparent); --globo: rgba(24,24,28,.94); /* el globo con el nombre: oscuro en claro y en oscuro */ }
-.dock button { position: relative; flex: none; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 14px; background: none; color: var(--texto);
+.dock button { -webkit-tap-highlight-color: transparent; position: relative; flex: none; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 14px; background: none; color: var(--texto);
                display: grid; place-items: center; transition: background-color .2s ease; }
 .dock button:hover { background: var(--resalte); }
-.dock .icono { width: 24px; height: 24px; }
+.dock .icono { width: 24px; height: 24px; transition: transform .25s var(--resorte); }
+.dock button:active .icono { transform: scale(.9); transition-duration: .08s; } /* al apretar se hunde, al soltar vuelve con el resorte */
 .marca { position: absolute; left: 0; top: 0; width: var(--w, 0); height: var(--h, 0); transform: translate(var(--x, 0), var(--y, 0)); border-radius: 14px;
-         background: var(--resalte); pointer-events: none; transition: transform .45s var(--suave-curva), width .45s var(--suave-curva), height .45s var(--suave-curva), opacity .2s ease; }
-.marca.nueva { transition: none; }
+         background: var(--resalte); pointer-events: none; transition: opacity .2s ease; } /* viaja con resortes (carcasa.js), no con CSS */
 .marca.sin-elegido { opacity: 0; }
 /* El globo: una píldora oscura con el nombre y, en gris, su atajo de teclado */
 .dock .etiqueta { position: absolute; bottom: calc(100% + 10px); display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 99px;
                   background: var(--globo); color: #fff; font-size: 13px; font-weight: 500; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.28);
-                  opacity: 0; pointer-events: none; transition: opacity .15s; }
+                  opacity: 0; pointer-events: none; transition: opacity .12s; }
 .dock .etiqueta kbd { font: inherit; color: rgba(255,255,255,.5); }
 .dock button:hover .etiqueta { opacity: 1; }
+/* Paso 98: en el teléfono, al subir el dock los íconos llegan uno tras otro (--i) */
+body:not(.con-escritorio) .dock button { transition: background-color .2s ease, opacity .3s ease, transform var(--resorte-t) var(--resorte);
+  transition-delay: 0s, calc(var(--i, 0) * 22ms + 40ms), calc(var(--i, 0) * 22ms + 40ms); }
+body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0; transform: translateY(14px) scale(.85); transition-delay: 0s; }
+@media (prefers-reduced-motion: reduce) { body:not(.con-escritorio) .dock button { transition: none; } }
 .dock .perfil { display: none; } /* tu foto: solo en las barras de íconos del computador (abajo) */
 .cara { display: block; width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
 .cara.sin-foto { display: grid; place-items: center; background: var(--resalte); }
@@ -199,27 +204,33 @@ main { position: fixed; inset: 0; }
 .barra-retraida .con-escritorio .sacar-barra { transform: translate(0, -50%); opacity: 1; pointer-events: auto; }
 .barra-retraida .con-escritorio .sacar-barra:hover { color: var(--texto); width: 28px; }
 
-/* Animaciones de la barra (todas con la misma curva suave, --suave-curva):
+/* Animaciones de la barra (paso 98: todas con el mismo resorte que la cámara del escritorio, --resorte; carcasa.js
+   lo calcula con curvaDeResorte y, si el navegador no sabe de linear(), queda la curva suave de siempre):
    - pasar el mouse: el fondo y el color se funden, y el ícono se levanta apenas; al apretar, se hunde
    - el elegido: su fondo se funde y la rayita crece desde el centro
    - retraer y sacar: la barra se desliza, el contenido se corre con ella y los botones aparecen uno tras otro (--i)
    - cambiar de estilo en Ajustes: ancho, bordes y lugar cambian de a poco
    - los globos con el nombre (Solo íconos e Isla) entran deslizándose */
-:root { --suave-curva: cubic-bezier(.22,.8,.24,1); }
-.con-escritorio .dock { transition: transform .38s var(--suave-curva), width .32s var(--suave-curva), left .32s var(--suave-curva), top .32s var(--suave-curva),
-  bottom .32s var(--suave-curva), border-radius .32s var(--suave-curva), padding .32s var(--suave-curva); }
-.con-escritorio main { transition: left .38s var(--suave-curva); }
-.con-escritorio .dock button { transition: background-color .2s ease, color .2s ease, opacity .3s ease, transform .35s var(--suave-curva);
+:root { --suave-curva: cubic-bezier(.22,.8,.24,1); --resorte: var(--suave-curva); --resorte-t: .38s; }
+.con-escritorio .dock { transition: transform var(--resorte-t) var(--resorte), width var(--resorte-t) var(--resorte), left var(--resorte-t) var(--resorte),
+  top var(--resorte-t) var(--resorte), bottom var(--resorte-t) var(--resorte), border-radius var(--resorte-t) var(--resorte), padding var(--resorte-t) var(--resorte); }
+.con-escritorio main { transition: left var(--resorte-t) var(--resorte); }
+.con-escritorio .dock button { transition: background-color .2s ease, color .2s ease, opacity .3s ease, transform var(--resorte-t) var(--resorte);
   transition-delay: 0s, 0s, calc(var(--i, 0) * 28ms + 60ms), calc(var(--i, 0) * 28ms + 60ms); }
-.con-escritorio .dock button::before { transition: transform .3s var(--suave-curva); }
-.con-escritorio .dock .icono { transition: transform .25s var(--suave-curva); }
+.con-escritorio .dock button::before { transition: transform .3s var(--resorte); }
 .con-escritorio .dock button:hover .icono { transform: translateY(-1.5px) scale(1.06); }
-.con-escritorio .dock button:active .icono { transform: scale(.92); transition-duration: .08s; }
+.con-escritorio .dock button:active .icono { transform: scale(.9); }
 .barra-retraida .con-escritorio .dock .marca { opacity: 0; }
 .barra-retraida .con-escritorio .dock button { opacity: 0; transform: translateX(-10px); transition-delay: 0s; }
-.con-escritorio .sacar-barra { transition: transform .35s var(--suave-curva) .15s, opacity .25s ease .15s, width .2s var(--suave-curva), color .2s ease; }
-:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta { transform: translate(-6px, -50%); transition: opacity .18s ease, transform .25s var(--suave-curva); }
+.con-escritorio .sacar-barra { transition: transform var(--resorte-t) var(--resorte) .15s, opacity .25s ease .15s, width .2s var(--resorte), color .2s ease; }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta { transform: translate(-6px, -50%); transition: opacity .12s ease, transform .3s var(--resorte); }
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock button:is(:hover, :focus-visible) .etiqueta { transform: translate(0, -50%); }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock.globos .etiqueta { transition-property: opacity; } /* ya con globos: sin deslizarse */
+/* Paso 98: el primer globo espera un momento; con uno ya visto (.globos, carcasa.js) los demás salen al tiro y sin
+   deslizarse. Con el teclado sale de inmediato. (transition-delay en :hover solo cuenta al aparecer, no al irse;
+   :root, para ganarle a la transición que pone cada estilo) */
+:root .dock button:hover .etiqueta { transition-delay: .45s; }
+:root .dock.globos button:hover .etiqueta, :root .dock button:focus-visible .etiqueta { transition-delay: 0s; }
 @media (prefers-reduced-motion: reduce) {
   .con-escritorio .dock, .con-escritorio main, .con-escritorio .dock *, .con-escritorio .dock *::before, .con-escritorio .sacar-barra { transition: none !important; }
 }
@@ -370,13 +381,18 @@ main { position: fixed; inset: 0; }
 .plan .insignia { width: 40px; height: 40px; border-radius: 12px; transition: filter .25s ease; }
 .plan .que { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .plan .nombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
-.plan .meta { display: flex; align-items: center; gap: 4px; }
-.plan .meta .icono { width: 13px; height: 13px; }
+.plan .meta { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.plan .meta .icono { flex: none; width: 13px; height: 13px; }
+.plan .meta span { overflow: hidden; text-overflow: ellipsis; }
 .plan .caja { width: 22px; height: 22px; border-color: color-mix(in srgb, var(--suave) 60%, transparent); }
 .plan .caja:checked { background: var(--bien); border-color: var(--bien); }
 .plan .caja.recien:checked { animation: marcar .32s var(--suave-curva); } /* solo al marcarla tú, no cada vez que se redibuja */
 .plan li.hecha { opacity: .45; }
 .plan li.hecha .insignia { filter: grayscale(1); }
+/* Paso 96: cuántas llevas, al lado del título, y la pastilla «Ahora» de un evento que está pasando (en vez de casilla) */
+.cuenta-plan { margin-left: 4px; color: var(--suave); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.plan .en-curso { padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--acento) 16%, transparent); color: var(--acento);
+               font-size: 12px; font-weight: 600; white-space: nowrap; }
 @keyframes marcar { 0% { transform: scale(.6); } 60% { transform: scale(1.15); } 100% { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .plan li, .plan .insignia { transition: none; } .plan .caja.recien { animation: none; } }
 /* El tiempo */
@@ -1586,3 +1602,55 @@ button.tarjeta-semana:hover { transform: translateY(-2px); }
 .tu-cara .cara { width: 56px; height: 56px; }
 .tu-cara .cara.sin-foto .icono { width: 30px; height: 30px; }
 .tu-cara .correo { margin: 0 0 4px; }
+
+/* ---------- Paso 97: la revisión de la noche (revision.js) ----------
+   El botón sale sobre «+ Nuevo»: redondo con una luna en el teléfono, una píldora «Revisar el día» en el computador.
+   La ventana es la flotante de siempre: centrada en el computador y a pantalla completa en el teléfono. */
+.revisar { position: fixed; right: 16px; bottom: 86px; z-index: 6; width: 54px; height: 54px; padding: 0; border-radius: 50%;
+           display: grid; place-content: center; border: 1px solid var(--borde); background: var(--vidrio-fuerte); color: var(--acento);
+           box-shadow: var(--sombra); backdrop-filter: blur(var(--desenfoque)); }
+.revisar svg { width: 24px; height: 24px; }
+.revisar .etiqueta { display: none; }
+.revisar.hecha { color: var(--suave); box-shadow: none; }
+.con-escritorio .revisar { right: 24px; bottom: 84px; width: auto; height: 44px; padding: 0 18px 0 14px; border-radius: 999px; display: flex; align-items: center; gap: 8px; }
+.con-escritorio .revisar svg { width: 20px; height: 20px; }
+.con-escritorio .revisar .etiqueta { display: block; font-size: 14.5px; font-weight: 600; color: var(--texto); }
+.con-escritorio .revisar.hecha .etiqueta { color: var(--suave); }
+
+.revision { height: min(720px, calc(100dvh - 48px)); }
+.revision > .cuerpo { height: 100%; grid-template-rows: auto auto auto 1fr auto; }
+.revision .barra-revision { height: 6px; border-radius: 99px; background: var(--linea); overflow: hidden; }
+.revision .barra-revision::after { content: ""; display: block; height: 100%; width: calc(var(--avance, 0) * 100%); border-radius: inherit; background: var(--acento-fondo); transition: width .35s var(--suave-curva); }
+.revision .pregunta { margin: 0; font-size: 16px; color: var(--suave); }
+.revision .lista-revision { min-height: 0; overflow-y: auto; margin: 0 -6px; padding: 0 6px; }
+.revision .lista-revision ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.revision .pie { display: flex; justify-content: space-between; gap: 10px; }
+.revision .pie button { min-width: 120px; padding: 11px 18px; font-size: 15px; border-radius: 12px; }
+.revision .pie button:disabled { visibility: hidden; }
+
+.tarjeta-revision { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; padding: 14px; border: 1px solid var(--linea); border-radius: 14px; background: var(--vidrio); }
+.tarjeta-revision .que { flex: 1 1 200px; min-width: 0; display: grid; }
+.tarjeta-revision .que b { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.tarjeta-revision .que small { color: var(--suave); font-size: 12.5px; }
+.opciones-revision { flex: 1 1 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.opciones-revision > * { min-width: 0; padding: 9px 4px; font-size: 14px; border-radius: 10px; }
+.opciones-revision input[type="date"] { border: 1px solid var(--acento); background: var(--vidrio); color: inherit; font: inherit; }
+.tarjeta-revision .estrella { width: 44px; height: 44px; border-radius: 50%; font-size: 24px; }
+.tarjeta-revision .estrella:disabled { opacity: .3; cursor: default; }
+.tarjeta-revision:has(.estrella.puesta) { border-color: var(--aviso); background: var(--aviso-suave); }
+
+.resumen-revision { display: grid; gap: 14px; font-size: 15px; }
+.resumen-revision p { margin: 0; }
+.resumen-revision h4 { margin: 0 0 6px; }
+.resumen-revision ul { padding-left: 4px; list-style: none; display: grid; gap: 4px; }
+.resumen-revision .racha { padding: 12px 14px; border-radius: 12px; background: var(--linea); color: var(--suave); }
+
+@media (max-width: 640px) {
+  .revision { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border-radius: 0; border: 0; background: var(--vidrio-fuerte); }
+  .revision > .cuerpo { padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); }
+  .revision .pie button { flex: 1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .revisar:not([hidden]) { animation: entrar .4s var(--suave-curva) both; }
+  .lista-revision.entrando li { animation: entrar .25s var(--suave-curva) both; }
+}

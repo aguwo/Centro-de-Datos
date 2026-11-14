@@ -9,6 +9,7 @@ import { APARTADOS, CAJONES } from "./apartados.js";
 import { iniciarEscritorio, enEscritorio, mirar } from "./escritorio.js";
 import { montar } from "./widgets.js";
 import { preferencia, cambiar, tuCara } from "./apariencia.js";
+import { conResorte, curvaDeResorte } from "./dibujos.js";
 
 let actual = APARTADOS[0];
 let enElEscritorio = APARTADOS.find((a) => a.lugar); // la última sección del escritorio que viste: "Escritorio" vuelve ahí
@@ -43,14 +44,36 @@ function marcar() {
 }
 // Paso 93: el fondo del elegido es una sola pieza (.marca) que viaja de un botón al otro en vez de apagarse
 // en uno y prenderse en otro. Se pone sobre el botón elegido que se ve (offsetParent es null si está escondido).
-// La primera vez llega sin viajar (clase "nueva"). Si no se usa en este estilo, estilos.css la esconde.
+// Si no se usa en este estilo, estilos.css la esconde.
+// Paso 98: viaja con el mismo resorte de la cámara del escritorio. Cada borde tiene su resorte, y el borde que va
+// adelante es más rígido que el de atrás: así, al viajar, la marca se estira un poco hacia donde va y al llegar
+// se recoge, como una gota. La primera vez llega sin viajar.
+const RESORTE = { adelante: 26, atras: 20, barra: 14 }; // más rígido = llega más rápido; «barra» es el de las transiciones de CSS
+let marca = null; // la marca de la barra que se ve ahora y su ir() (conResorte); se rehace al rearmar la barra
 function moverMarca() {
-  const dock = $("dock"), marca = dock.querySelector(".marca");
-  const b = [...dock.querySelectorAll('[aria-current="page"]')].find((b) => b.offsetParent);
-  if (!marca || !b) return marca?.classList.add("sin-elegido");
-  marca.classList.remove("sin-elegido");
-  for (const [k, v] of Object.entries({ x: b.offsetLeft, y: b.offsetTop, w: b.offsetWidth, h: b.offsetHeight })) marca.style.setProperty("--" + k, v + "px");
-  if (marca.classList.contains("nueva")) { marca.offsetWidth; marca.classList.remove("nueva"); } // offsetWidth: que se ubique antes de animar
+  const dock = $("dock"), b = [...dock.querySelectorAll('[aria-current="page"]')].find((b) => b.offsetParent);
+  if (!marca || marca.el !== dock.querySelector(".marca")) marca = nuevaMarca(dock.querySelector(".marca"));
+  if (!marca.el) return;
+  marca.el.classList.toggle("sin-elegido", !b);
+  if (!b) return;
+  const meta = { izq: b.offsetLeft, der: b.offsetLeft + b.offsetWidth, arriba: b.offsetTop, abajo: b.offsetTop + b.offsetHeight };
+  // En cada eje, hacia donde va el centro: el borde de adelante tira (rígido) y el de atrás lo sigue (blando).
+  const ahora = marca.ahora ?? meta, fuerza = {};
+  for (const [inicio, fin] of [["izq", "der"], ["arriba", "abajo"]]) {
+    const va = Math.sign(meta[inicio] + meta[fin] - ahora[inicio] - ahora[fin]); // +1 hacia la derecha o abajo, -1 al revés, 0 quieto
+    fuerza[fin] = va < 0 ? RESORTE.atras : RESORTE.adelante;
+    fuerza[inicio] = va > 0 ? RESORTE.atras : RESORTE.adelante;
+  }
+  marca.ir(meta, fuerza, !!marca.ahora);
+}
+// La marca y cómo se mueve: dibuja sus cuatro bordes como --x, --y, --w, --h (estilos.css los usa).
+function nuevaMarca(pieza) {
+  const m = { el: pieza, ahora: null };
+  m.ir = conResorte((v) => {
+    m.ahora = { ...v };
+    for (const [k, n] of Object.entries({ x: v.izq, y: v.arriba, w: v.der - v.izq, h: v.abajo - v.arriba })) pieza.style.setProperty("--" + k, n + "px");
+  });
+  return m;
 }
 
 // Los apartados con widgets se arman aquí (widgets.js) y se ponen en la página.
@@ -117,7 +140,7 @@ function armarDock() {
   perfil.classList.add("perfil");
   perfil.prepend(tuCara());
   const retraer = el("button", { className: "retraer", textContent: "‹", title: "Retraer la barra", ariaLabel: "Retraer la barra", onclick: () => cambiar({ retraida: true }) });
-  $("dock").replaceChildren(el("div", { className: "marca nueva", ariaHidden: "true" }),
+  $("dock").replaceChildren(el("div", { className: "marca", ariaHidden: "true" }),
     ...botones.filter((b) => !b.abajo), el("div", { className: "pie" }, ...botones.filter((b) => b.abajo), perfil, retraer));
   marcar();
 }
@@ -127,6 +150,16 @@ function boton(nombre, dibujo, accion, tecla) {
     el("span", { className: "etiqueta" }, nombre, tecla ? el("kbd", { textContent: tecla }) : ""));
   if (dibujo) b.prepend(icono(dibujo));
   return b;
+}
+// Paso 98: el primer globo espera un momento (pasar el mouse de camino a otra cosa no lo enciende); mientras sigas
+// en la barra, los siguientes salen al tiro y sin deslizarse, como en las barras de los sistemas operativos.
+function globos() {
+  const dock = $("dock");
+  let espera;
+  dock.addEventListener("pointerover", (e) => {
+    if (e.pointerType === "mouse" && e.target.closest("button")) { clearTimeout(espera); espera = setTimeout(() => dock.classList.add("globos"), 450); }
+  });
+  dock.addEventListener("pointerleave", () => { clearTimeout(espera); dock.classList.remove("globos"); });
 }
 // Alt + 1…9 (e.code dice la tecla de verdad: sirve con el teclado numérico y en Mac, donde ⌥ cambia la letra).
 function atajos() {
@@ -169,15 +202,23 @@ function dockEscondido() {
     if (e.pointerType === "mouse") ver(innerHeight - e.clientY < 90 || !!e.target.closest(".dock"));
   });
   $("asa").onclick = () => ver(!dock.classList.contains("visible"));
-  dock.addEventListener("click", () => { if (matchMedia("(hover: none)").matches) ver(false); }); // en el teléfono, se va al elegir
+  // En el teléfono se va al elegir (paso 98: soltando el foco, que si no lo deja fijo por :focus-within).
+  dock.addEventListener("click", () => { if (matchMedia("(hover: none)").matches) { document.activeElement.blur(); ver(false); } });
 }
 
 export function iniciarCarcasa() {
+  // Paso 98: las transiciones de CSS de la barra usan el mismo resorte que la marca y la cámara (estilos.css: --resorte).
+  if (CSS.supports("transition-timing-function", "linear(0, 1)")) {
+    const { curva, tiempo } = curvaDeResorte(RESORTE.barra);
+    document.documentElement.style.setProperty("--resorte", curva);
+    document.documentElement.style.setProperty("--resorte-t", tiempo);
+  }
   montarApartados();
   armarDock();
   document.addEventListener("barra", armarDock); // cambiaste la barra en Ajustes (apariencia.js avisa)
   new ResizeObserver(moverMarca).observe($("dock")); // cambió el estilo o el tamaño: la marca se acomoda
   atajos();
+  globos();
   // Con la barra retraída queda esta pestaña en el borde izquierdo para volver a sacarla.
   document.body.append(el("button", { className: "sacar-barra", textContent: "›", title: "Mostrar la barra", ariaLabel: "Mostrar la barra", onclick: () => cambiar({ retraida: false }) }));
   for (const a of APARTADOS) a.iniciar?.();
