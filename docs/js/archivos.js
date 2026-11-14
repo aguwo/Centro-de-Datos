@@ -169,7 +169,7 @@ const AGRUPAR = {
   estado: { nombre: "Estado", de: (n) => n.estado ?? "Sin estado" },
   nada: { nombre: "Nada", de: () => "" },
 };
-const VISTAS = { iconos: "Íconos", lista: "Lista", detalles: "Detalles" };
+const VISTAS = { iconos: { nombre: "Íconos", icono: "cuadricula" }, lista: { nombre: "Lista", icono: "filas" }, detalles: { nombre: "Detalles", icono: "tabla" } };
 const GUARDADO = "archivos:vista";
 function leerVista() { try { return JSON.parse(localStorage.getItem(GUARDADO)) ?? {}; } catch { return {}; } }
 function guardarVista(ctx) { try { localStorage.setItem(GUARDADO, JSON.stringify({ vista: ctx.vista, orden: ctx.orden, agrupar: ctx.agrupar })); } catch {} }
@@ -395,18 +395,19 @@ export function carpetaAbierta(v, ctx) {
         el("button", { className: "principal", textContent: "+ Nuevo aquí", onclick: () => nuevoEn(n) })));
     cabeza.style.setProperty("--c", colorDeCarpeta(n));
 
-    // Cómo se ve: Íconos, Lista o Detalles, y por qué se ordena y agrupa.
-    const elegir1 = (opciones, valor, cambio) => {
-      const s = el("select", { onchange: () => { cambio(s.value); guardarVista(ctx); ctx.cambiar({}); } },
-        ...Object.entries(opciones).map(([k, o]) => el("option", { value: k, textContent: o.nombre ?? o })));
-      s.value = valor;
-      return s;
-    };
+    // Paso 108: cómo se ve, a la derecha y en íconos: Íconos, Lista o Detalles, y dos botones que abren un menú para
+    // ordenar y agrupar. Lo que no está como siempre se marca, y el nombre de cada uno sale al pasar el mouse.
+    const usar = (cambio) => () => { cambio(); guardarVista(ctx); ctx.cambiar({}); };
+    const conMenu = (nombre, dibujo, cambiado, opciones) => el("button", { className: "boton-icono" + (cambiado ? " cambiado" : ""), title: nombre, ariaLabel: nombre,
+      onclick: (e) => menuEn(e, opciones.map(([texto, marcado, hacer]) => ({ texto, marcado, hacer: usar(hacer) }))) }, icono(dibujo));
+    const orden = ctx.orden ?? { por: "natural" };
     herramientas.replaceChildren(
-      el("div", { className: "segmento", role: "group", ariaLabel: "Cómo se ve" }, ...Object.entries(VISTAS).map(([k, nombre]) =>
-        el("button", { textContent: nombre, ariaPressed: String(ctx.vista === k), onclick: () => { ctx.vista = k; guardarVista(ctx); ctx.cambiar({}); } }))),
-      el("label", {}, "Ordenar ", elegir1({ natural: "Normal", ...COLUMNAS }, ctx.orden?.por ?? "natural", (k) => (ctx.orden = k === "natural" ? null : { por: k, al: 1 }))),
-      el("label", {}, "Agrupar ", elegir1(AGRUPAR, ctx.agrupar, (k) => (ctx.agrupar = k))));
+      el("div", { className: "segmento minimo", role: "group", ariaLabel: "Cómo se ve" }, ...Object.entries(VISTAS).map(([k, v]) =>
+        el("button", { title: v.nombre, ariaLabel: v.nombre, ariaPressed: String(ctx.vista === k), onclick: usar(() => (ctx.vista = k)) }, icono(v.icono)))),
+      conMenu("Ordenar", "ordenar", !!ctx.orden, [["Normal", !ctx.orden, () => (ctx.orden = null)],
+        ...Object.entries(COLUMNAS).map(([k, c]) => [c.nombre + (orden.por === k ? (orden.al > 0 ? " ↑" : " ↓") : ""), orden.por === k,
+          () => (ctx.orden = { por: k, al: orden.por === k ? -orden.al : 1 })])]), // elegir la misma otra vez la da vuelta
+      conMenu("Agrupar", "agrupar", ctx.agrupar !== "categoria", Object.entries(AGRUPAR).map(([k, a]) => [a.nombre, ctx.agrupar === k, () => (ctx.agrupar = k)])));
 
     // Lo que se muestra: lo de esta carpeta o, buscando, lo que calza de aquí y de todo lo de adentro (con dónde está).
     const texto = sinTildes(ctx.buscar?.trim() ?? "");

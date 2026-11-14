@@ -1,5 +1,6 @@
 // Paso 103: el menú del clic derecho (o de dejar el dedo apretado en el celular), para cualquier parte de la web.
-// opciones = [{ texto, atajo?, hacer }, "-", ...]: "-" es una rayita; lo que sea falso (ej. una opción que no aplica) se salta.
+// opciones = [{ texto, atajo?, marcado?, hacer }, "-", ...]: "-" es una rayita; marcado (true/false) la vuelve una opción
+// con ✓ (la elegida); lo que sea falso (ej. una opción que no aplica) se salta.
 // Sale donde se hizo clic, sin salirse de la pantalla. Se maneja con las flechas y Enter, y se cierra al elegir,
 // con Esc o tocando fuera; al cerrarse, el foco vuelve a donde estaba.
 import { el, enLaWeb } from "./base.js";
@@ -12,7 +13,7 @@ export function menuEn(e, opciones) {
   // Sin rayitas al principio, al final ni dos seguidas.
   const items = opciones.filter(Boolean).filter((o, i, xs) => o !== "-" || (i > 0 && i < xs.length - 1 && xs[i + 1] !== "-"));
   const m = el("div", { className: "menu-contextual vidrio", role: "menu" }, ...items.map((o) => o === "-" ? el("hr") :
-    el("button", { role: "menuitem", onclick: () => { cerrar(); o.hacer(); } }, el("span", { textContent: o.texto }), o.atajo ? el("kbd", { textContent: o.atajo }) : "")));
+    el("button", { role: o.marcado === undefined ? "menuitem" : "menuitemradio", ariaChecked: o.marcado === undefined ? null : String(!!o.marcado), onclick: () => { cerrar(); o.hacer(); } }, el("span", { textContent: o.texto }), o.atajo ? el("kbd", { textContent: o.atajo }) : "")));
   m.dataset.teclas = "";
   document.body.append(m);
 
