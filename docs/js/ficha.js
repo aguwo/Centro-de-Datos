@@ -89,7 +89,7 @@ function dibujar() {
         onclick: () => { conectando = conectando ? null : { relacion: datos.tipo.get(n.tipos.clave)?.conexiones?.[0]?.relacion, texto: "" }; dibujar(); } })),
     conectando ? formularioConectar(n) : "",
     grafo(n, directas),
-    el("small", { className: "vacio", textContent: "Toca algo para abrir su ficha · clic derecho para quitar la conexión" }));
+    el("small", { className: "vacio", textContent: "Toca algo para abrir su ficha · arrástralo para moverlo · rueda o + − para acercar · clic derecho para quitar la conexión" }));
 
   dialogo.replaceChildren(cabeza, el("div", { className: "cuerpo-ficha" }, izquierda, derecha));
 }
@@ -110,54 +110,126 @@ function grafo(n, directas) {
   // Una por cosa conectada (si hay dos conexiones con la misma, van juntas en la misma línea).
   const vecinas = [...Map.groupBy(directas, (c) => (c.origen_id === n.id ? c.destino_id : c.origen_id))].map(([id, cs]) => ({ nodo: datos.nodo.get(id), cs }));
   const puestos = new Set([n.id, ...vecinas.map((v) => v.nodo.id)]);
-  const lineas = [], nodos = [];
+  // Cada cosa sabe dónde está (x, y en el plano de 600 × 520) y qué tan grande es (r, para que la línea llegue a su borde).
+  const ella = { nodo: n, x: cx, y: cy, r: 40, ella: true };
+  const nodos = [ella], lineas = [];
   vecinas.slice(0, MAX).forEach((v, i, xs) => {
     const ang = -Math.PI / 2 + (i + (xs.length % 2 ? 0 : 0.5)) * (2 * Math.PI / xs.length);
-    const p = punto(cx, cy, ang, 200, 175);
-    nodos.push({ ...v, ...p });
-    for (const c of v.cs) lineas.push({ c, ...(c.origen_id === n.id ? { de: { x: cx, y: cy, r: 40 }, a: { ...p, r: 26 } } : { de: { ...p, r: 26 }, a: { x: cx, y: cy, r: 40 } }) });
+    const p = { ...v, ...punto(cx, cy, ang, 200, 175), r: 26 };
+    nodos.push(p);
+    for (const c of v.cs) lineas.push(c.origen_id === n.id ? { c, de: ella, a: p } : { c, de: p, a: ella });
     // Lo conectado a esta, más afuera, abriéndose un poco a cada lado.
     const otras = datos.conexiones.filter((c) => (c.origen_id === v.nodo.id || c.destino_id === v.nodo.id))
       .map((c) => (c.origen_id === v.nodo.id ? c.destino_id : c.origen_id)).filter((id) => !puestos.has(id)).slice(0, SEGUNDAS);
     otras.forEach((id, j) => {
       puestos.add(id);
-      const q = punto(cx, cy, ang + (j - (otras.length - 1) / 2) * 0.38, 285, 245);
-      nodos.push({ nodo: datos.nodo.get(id), ...q, suave: true });
-      lineas.push({ de: { ...p, r: 26 }, a: { ...q, r: 17 }, suave: true });
+      const q = { nodo: datos.nodo.get(id), ...punto(cx, cy, ang + (j - (otras.length - 1) / 2) * 0.38, 330, 290), r: 17, suave: true };
+      nodos.push(q);
+      lineas.push({ de: p, a: q, suave: true });
     });
   });
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", `0 0 ${ANCHO} ${ALTO}`);
   svg.innerHTML = `<defs><marker id="punta-ficha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker></defs>`;
-  for (const l of lineas) {
-    const [x1, y1, x2, y2] = acortar(l.de, l.a);
-    const linea = trazo("line", { x1, y1, x2, y2, class: l.suave ? "suave" : "", "marker-end": l.suave ? "" : "url(#punta-ficha)" });
-    svg.append(linea);
-    // El nombre de la relación, más cerca de la otra punta (junto al centro va el nombre de ella).
-    const [lx, ly] = l.de.r === 40 ? [x1 + (x2 - x1) * .6, y1 + (y2 - y1) * .6] : [x2 + (x1 - x2) * .6, y2 + (y1 - y2) * .6];
-    if (l.c) svg.append(Object.assign(trazo("text", { x: lx, y: ly + 4 }), { textContent: relacion(l.c.relacion) }));
-  }
-  const centro = el("div", { className: "nodo-grafo ella" }, insignia(iconoDe(n), colorDeNodo(n), "grande"), el("span", { textContent: n.titulo }));
-  ubicar(centro, cx, cy);
-  const plano = el("div", { className: "plano-grafo" }, svg, centro, ...nodos.map((x) => {
+  const trazos = lineas.map((l) => {
+    const linea = trazo("line", { class: l.suave ? "suave" : "", "marker-end": l.suave ? "" : "url(#punta-ficha)" });
+    const texto = l.c ? Object.assign(trazo("text", {}), { textContent: relacion(l.c.relacion) }) : null;
+    svg.append(linea, ...(texto ? [texto] : []));
+    return { l, linea, texto };
+  });
+  // Las líneas se vuelven a trazar cada vez que algo se mueve.
+  const dibujarLineas = () => {
+    for (const { l, linea, texto } of trazos) {
+      const [x1, y1, x2, y2] = acortar(l.de, l.a);
+      for (const [k, v] of Object.entries({ x1, y1, x2, y2 })) linea.setAttribute(k, v);
+      // El nombre de la relación, más cerca de la otra punta (junto al centro va el nombre de ella).
+      const [lx, ly] = l.de.ella ? [x1 + (x2 - x1) * .6, y1 + (y2 - y1) * .6] : [x2 + (x1 - x2) * .6, y2 + (y1 - y2) * .6];
+      texto?.setAttribute("x", lx); texto?.setAttribute("y", ly + 4);
+    }
+  };
+  const piezas = new Map(); // el botón (o el centro) -> su cosa
+  const ubicarla = (pieza, x) => {
+    ubicar(pieza, x.x, x.y);
     // Lo que queda arriba del centro lleva su nombre arriba: así las líneas que llegan desde abajo no lo cruzan.
-    const b = el("button", { className: "nodo-grafo" + (x.suave ? " suave" : "") + (x.y < ALTO / 2 - 10 ? " arriba" : ""), title: `${x.nodo.titulo} · ${x.nodo.tipos.nombre}`,
-      onclick: () => abrirFicha(x.nodo.id, true),
-      oncontextmenu: (e) => menuEn(e, [
-        { texto: "Abrir su ficha", hacer: () => abrirFicha(x.nodo.id, true) },
-        ...(x.cs ?? []).map((c) => ({ texto: `Quitar «${relacion(c.relacion)}»`, hacer: () => desconectar(c) })),
-      ]) }, insignia(iconoDe(x.nodo), colorDeNodo(x.nodo), x.suave ? "chica" : ""), el("span", { textContent: x.nodo.titulo }));
-    ubicar(b, x.x, x.y);
-    return b;
-  }));
+    if (!x.ella) pieza.classList.toggle("arriba", x.y < ella.y - 10);
+  };
+  for (const x of nodos) {
+    const pieza = x.ella ? el("div", { className: "nodo-grafo ella" }, insignia(iconoDe(n), colorDeNodo(n), "grande"), el("span", { textContent: n.titulo }))
+      : el("button", { className: "nodo-grafo" + (x.suave ? " suave" : ""), title: `${x.nodo.titulo} · ${x.nodo.tipos.nombre}`,
+        onclick: () => abrirFicha(x.nodo.id, true),
+        oncontextmenu: (e) => menuEn(e, [
+          { texto: "Abrir su ficha", hacer: () => abrirFicha(x.nodo.id, true) },
+          ...(x.cs ?? []).map((c) => ({ texto: `Quitar «${relacion(c.relacion)}»`, hacer: () => desconectar(c) })),
+        ]) }, insignia(iconoDe(x.nodo), colorDeNodo(x.nodo), x.suave ? "chica" : ""), el("span", { textContent: x.nodo.titulo }));
+    piezas.set(pieza, x);
+    ubicarla(pieza, x);
+  }
+  dibujarLineas();
+
+  // Paso 107: el grafo se recorre. Arrastrar el fondo lo mueve, la rueda (o los botones) acerca y aleja, y cada cosa
+  // se puede arrastrar a otro lugar (las líneas la siguen). Un toque sin arrastrar abre su ficha, como antes.
+  const mundo = el("div", { className: "mundo-grafo" }, svg, ...piezas.keys());
+  let cam = { x: 0, y: 0, z: 1 };
+  const ponerCam = (suave = false) => {
+    mundo.classList.toggle("viajando", suave);
+    mundo.style.transform = `translate(${cam.x / ANCHO * 100}%, ${cam.y / ALTO * 100}%) scale(${cam.z})`;
+  };
+  const ZOOM = { min: 0.35, max: 2.5 };
+  // Acercar o alejar dejando quieto el punto (px, py) del plano.
+  const acercar = (z, px = ANCHO / 2, py = ALTO / 2, suave = false) => {
+    z = Math.min(ZOOM.max, Math.max(ZOOM.min, z));
+    cam = { x: px - (px - cam.x) * (z / cam.z), y: py - (py - cam.y) * (z / cam.z), z };
+    ponerCam(suave);
+  };
+  // Todo a la vista: se centra lo que hay y, si no cabe, se aleja lo justo.
+  const verTodo = (suave = false) => {
+    const xs = nodos.map((x) => x.x), ys = nodos.map((x) => x.y);
+    const izq = Math.min(...xs) - 80, der = Math.max(...xs) + 80, arriba = Math.min(...ys) - 60, abajo = Math.max(...ys) + 65;
+    const z = Math.max(ZOOM.min, Math.min(1, ANCHO / (der - izq), ALTO / (abajo - arriba)));
+    cam = { z, x: ANCHO / 2 - (izq + der) / 2 * z, y: ALTO / 2 - (arriba + abajo) / 2 * z };
+    ponerCam(suave);
+  };
+  const boton = (texto, titulo, hacer) => el("button", { type: "button", textContent: texto, title: titulo, ariaLabel: titulo, onclick: hacer });
+  const plano = el("div", { className: "plano-grafo" }, mundo, nodos.length > 1 ? el("div", { className: "controles-grafo" },
+    boton("+", "Acercar", () => acercar(cam.z * 1.3, undefined, undefined, true)),
+    boton("−", "Alejar", () => acercar(cam.z / 1.3, undefined, undefined, true)),
+    boton("⤢", "Ver todo", () => verTodo(true))) : "");
+  verTodo();
+
+  const porPx = () => ANCHO / plano.getBoundingClientRect().width; // cuánto plano es un px de pantalla (sin acercar)
+  plano.onpointerdown = (e) => {
+    if (e.button !== 0 || e.target.closest(".controles-grafo")) return;
+    const pieza = [...piezas.keys()].find((p) => p.contains(e.target)), x = piezas.get(pieza);
+    const k = porPx(), desde = { x: e.clientX, y: e.clientY }, inicio = x ? { x: x.x, y: x.y } : { ...cam };
+    let movido = false;
+    plano.onpointermove = (m) => {
+      const dx = m.clientX - desde.x, dy = m.clientY - desde.y;
+      if (!movido) {
+        if (Math.hypot(dx, dy) < 4) return; // un temblor del dedo todavía es un toque
+        movido = true;
+        plano.setPointerCapture(e.pointerId); // desde aquí es arrastre: el clic ya no abre la ficha
+        plano.classList.add("moviendo");
+      }
+      if (x) { x.x = inicio.x + dx * k / cam.z; x.y = inicio.y + dy * k / cam.z; ubicarla(pieza, x); dibujarLineas(); }
+      else { cam = { ...cam, x: inicio.x + dx * k, y: inicio.y + dy * k }; ponerCam(); }
+    };
+    plano.onpointerup = plano.onpointercancel = () => { plano.onpointermove = plano.onpointerup = plano.onpointercancel = null; plano.classList.remove("moviendo"); };
+  };
+  plano.onwheel = (e) => {
+    e.preventDefault();
+    const r = plano.getBoundingClientRect(), k = ANCHO / r.width;
+    acercar(cam.z * Math.exp(-e.deltaY * 0.0015), (e.clientX - r.left) * k, (e.clientY - r.top) * k);
+  };
+  plano.ondblclick = (e) => { if (!e.target.closest(".nodo-grafo, .controles-grafo")) verTodo(true); };
+
   const sobran = vecinas.slice(MAX);
   return el("div", { className: "grafo-ficha" }, plano,
     !vecinas.length ? el("p", { className: "vacio", textContent: "Sin conexiones todavía. Conéctala con «+ Conectar»." }) : "",
     sobran.length ? el("p", { className: "mas-conexiones" }, `Y ${sobran.length} más: `, ...sobran.flatMap((v, i) => [i ? ", " : "",
       el("button", { className: "lugar", textContent: v.nodo.titulo, onclick: () => abrirFicha(v.nodo.id, true) })])) : "");
 }
-const punto = (cx, cy, ang, rx, ry) => ({ x: Math.max(50, Math.min(ANCHO - 50, cx + rx * Math.cos(ang))), y: Math.max(30, Math.min(ALTO - 40, cy + ry * Math.sin(ang))) });
+const punto = (cx, cy, ang, rx, ry) => ({ x: cx + rx * Math.cos(ang), y: cy + ry * Math.sin(ang) });
 // La línea va de borde a borde (no de centro a centro), para que la flecha se vea.
 function acortar(a, b) {
   const dx = b.x - a.x, dy = b.y - a.y, largo = Math.hypot(dx, dy) || 1;
