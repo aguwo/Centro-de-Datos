@@ -239,8 +239,9 @@ function controles(ir) {
 
   // Teclado: las flechas llevan a la sección de al lado en el plano (paso 82); Esc ver todo (o volver).
   // Va antes que los demás (captura) para saber si había algo abierto que Esc deba cerrar primero.
+  // Lo que usa las teclas por su cuenta (data-teclas, como la carpeta de Archivos o un menú) las recibe sin que se vayan al plano.
   addEventListener("keydown", (e) => {
-    if (!escritorioActivo() || vista.classList.contains("oculto") || e.target.closest("input, textarea, select, [contenteditable]")) return;
+    if (!escritorioActivo() || vista.classList.contains("oculto") || e.target.closest("input, textarea, select, [contenteditable], [data-teclas]")) return;
     if (e.key === "Escape") {
       if (document.querySelector(".cajon.abierto, dialog[open], #panel:not(.oculto), #menu-nuevo:not([hidden])")) return;
       return lejos ? ir(mirando) : verTodo();

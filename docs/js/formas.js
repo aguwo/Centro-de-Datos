@@ -5,7 +5,7 @@
 //   cada      (medidor) la propiedad con cada cuántos días toca, ej. "aguanta_dias"
 //   accion    (medidor, opcional) lo que dice su botón, ej. "Regué". Sin esto, «Anotar».
 // Ninguna forma sabe de una categoría en particular: todo lo que necesitan lo dice la apariencia.
-// Tocar cualquier forma abre la ficha del nodo; su botón (si tiene) hace lo típico sin abrirla.
+// Tocar cualquier forma abre la ficha del nodo (o lo que diga tocar); su botón (si tiene) hace lo típico sin abrirla.
 // Agregar una forma = escribir su función y anotarla en FORMAS.
 import { el, datos, dia, hora, colorDe } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, corto } from "./fechas.js";
@@ -17,10 +17,9 @@ import { icono, insignia } from "./dibujos.js";
 export const aparienciaDe = (n) => datos.tipo.get(n.tipos.clave)?.apariencia ?? {};
 export const iconoDe = (n) => n.props?.icono ?? aparienciaDe(n).icono ?? "puntos";
 
-// El marco de toda forma: lo de adelante (un botón o un dibujo), y el resto, que abre la ficha.
+// El marco de toda forma: lo de adelante (un botón o un dibujo), y el resto, que se toca (formaDe dice qué hace).
 function marco(n, forma, adelante, ...cuerpo) {
-  const m = el("div", { className: "forma f-" + forma }, adelante ?? "",
-    el("button", { className: "abrir-forma", onclick: () => mostrarPanel(n.id) }, ...cuerpo));
+  const m = el("div", { className: "forma f-" + forma }, adelante ?? "", el("button", { className: "abrir-forma" }, ...cuerpo));
   m.style.setProperty("--c", colorDe(n.tipos.clave));
   return m;
 }
@@ -98,5 +97,10 @@ const FORMAS = {
   },
 };
 
-// La forma de un nodo, según su categoría.
-export const formaDe = (n) => (FORMAS[aparienciaDe(n).forma] ?? FORMAS.tarjeta)(n);
+// La forma de un nodo, según su categoría. tocar = qué pasa al tocarla: abrir su ficha, o nada (null) cuando quien
+// la muestra se encarga (Archivos elige con un clic y abre con doble clic, paso 103).
+export function formaDe(n, { tocar = () => mostrarPanel(n.id) } = {}) {
+  const f = (FORMAS[aparienciaDe(n).forma] ?? FORMAS.tarjeta)(n);
+  f.querySelector(".abrir-forma").onclick = tocar;
+  return f;
+}
