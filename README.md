@@ -191,15 +191,17 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 111 | **Minimapa como «magnetic select».** Cada sección del escritorio infinito es un punto en su lugar; la que estás mirando (la más cerca del centro de lo que ves) es una bolita de color inflada y las de al lado se corren para hacerle espacio. Al pasar el mouse el punto se estira hacia el puntero, al apretarlo se infla más y empuja, y el clic te lleva ahí. Usa el mismo `iman()` de la barra (`movimiento.js`), que ahora acepta cuánto crece y empuja cada imán. Se quitó el marco de «lo que ves». |
 | 112 | **Minimapa sin caja.** Se fue el recuadro: ahora son puntitos de vidrio que flotan sobre el fondo, y la sección donde estás es una bolita iridiscente (rosado, menta y durazno) que cambia de tono despacito. Se siguen moviendo con el imán del paso 111. Sin SQL. |
 | 113 | **Minimapa a elegir.** Fuera la bolita: en Ajustes → Escritorio infinito → Minimapa eliges entre 4 estilos sobrios, todos sin caja: **Miniatura** (el escritorio en chico, rectángulos de borde fino y el tuyo relleno; viene así), **Puntos** (el tuyo con un anillo fino), **Punto con nombre** (el nombre de la sección debajo) y **Lista** (los nombres en columna, con una rayita que baja hasta el tuyo). Sin SQL. |
+| 114 | **Aviso de datos viejos.** Arriba de Hoy (en las dos vistas) sale un aviso cuando algo que llega solo dejó de llegar: los gastos del banco (más de 7 días sin un correo nuevo) o la asistencia del portal de la U (más de 4 días, solo con ramos en curso). Dice cuándo llegó lo último, «¿Qué reviso?» abre los pasos para arreglarlo y «Ya sé» lo calla por 7 días en ese navegador. Las fuentes viven en una lista (`FUENTES`): sumar otra es agregar un objeto | — | — | `docs/js/frescura.js` (nuevo), `docs/js/hoy.js`, `estilos.css` |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 96, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 115, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
-| Ahora | Respaldos semanales de la base |
-| Siguiente | EV@: material de cada ramo (lista con enlaces) y cuestionarios con fecha |
+| Hecho | Aviso de datos viejos (paso 114) |
+| Ahora | EV@: material de cada ramo (lista con enlaces) y cuestionarios con fecha |
+| Más adelante | Respaldos semanales de la base |
 | Hecho | Finanzas (pasos 83 a 87) |
 | Después | Chat con Martita en la web |
 | Después | Google Calendar en los dos sentidos |
@@ -228,6 +230,7 @@ docs/js/proyectos.js la página Proyectos: índice, cabecera, tablero y lo de ad
 docs/js/objetivos.js cómo se mide cada objetivo (cuánto llevas, cuánto tiempo pasó, si vas atrasado)
 docs/js/tareas.js    la lista de tareas (✓, ☆, Hoy/Mañana/Soltar) que comparten Hoy y Productividad
 docs/js/hoy.js       el apartado Hoy: tareas, el tiempo y tu día
+docs/js/frescura.js  los avisos de datos viejos: cuándo llegó lo último de cada fuente automática (FUENTES)
 docs/js/agenda.js    la agenda por horas (un día o varios); la usan Hoy y el calendario
 docs/js/clima.js     el tiempo de Open-Meteo y el consejo del día
 docs/js/acciones.js  lo que la web le cambia a tus datos (completar, posponer, soltar, agendar...)

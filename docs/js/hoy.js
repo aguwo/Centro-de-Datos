@@ -15,11 +15,13 @@ import { dibujarClima } from "./clima.js";
 import { mostrarPanel, formulario } from "./panel.js";
 import { insignia, anillo, icono, elegir, moverConSuavidad } from "./dibujos.js";
 import { listaDeTareas, seccion, esPrioridad, porFecha } from "./tareas.js";
+import { avisosDeDatos } from "./frescura.js";
 
 export function tareasDeHoy(v) {
-  const lista = el("div", { className: "desliza grupos" });
-  v.append(lista);
-  return () => {
+  const avisos = el("div"), lista = el("div", { className: "desliza grupos" });
+  v.append(avisos, lista);
+  return function dibujar() {
+    avisos.replaceChildren(avisosDeDatos(dibujar)); // paso 114: si algo dejó de llegar solo, arriba de todo
     const hoy = hoyTexto();
     const tareas = datos.nodos.filter((n) => n.tipos.clave === "tarea");
     const pendientes = tareas.filter((n) => n.estado !== "Hecho" && !esPrioridad(n));
@@ -113,16 +115,17 @@ const porHacer = (a, b) => (b.prioridad ?? false) - (a.prioridad ?? false) || (b
   || (a.ini ?? 99) - (b.ini ?? 99) || ORDEN[a.clase] - ORDEN[b.clase] || porFecha(a.n, b.n);
 
 export function planDeHoy(v) {
-  const semana = el("div", { className: "semana-anillos" }), lista = el("ul", { className: "plan desliza" });
+  const avisos = el("div"), semana = el("div", { className: "semana-anillos" }), lista = el("ul", { className: "plan desliza" });
   const cuenta = el("small", { className: "cuenta-plan" });
   const agregar = el("button", { className: "pildora", onclick: () => formulario(null, { tipos: ["tarea", "evento", "habito"], valores: { fecha: sinHoraISO(hoyTexto()) } }) }, "Agregar +");
-  v.append(semana, el("div", { className: "plan-cabeza" }, el("h4", {}, "Plan de hoy ", cuenta), agregar), lista);
+  v.append(avisos, semana, el("div", { className: "plan-cabeza" }, el("h4", {}, "Plan de hoy ", cuenta), agregar), lista);
   // Lo que marcaste aquí sigue a la vista hasta mañana (aunque fuera de otro día), en el orden en que lo marcaste.
   let diaDe = "", marcadas = [], firma = "";
 
   const dibujar = () => {
     const hoy = hoyTexto();
     if (diaDe !== hoy) { diaDe = hoy; marcadas = []; }
+    avisos.replaceChildren(avisosDeDatos(dibujar)); // paso 114: si algo dejó de llegar solo, arriba de todo
     const yaHecha = (x) => (marcadas.includes(x.n.id) ? marcadas.indexOf(x.n.id) : -1);
     const plan = loDelDia(hoy, hoy, marcadas).sort((a, b) => a.hecha - b.hecha || (a.hecha ? yaHecha(a) - yaHecha(b) || (a.ini ?? 99) - (b.ini ?? 99) : porHacer(a, b)));
     const hechas = plan.filter((x) => x.hecha).length;
