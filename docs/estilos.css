@@ -291,9 +291,6 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 .con-escritorio .costado-cerrado > .costado .plegar { right: calc(-28px - var(--barra)); border-left: 1px solid var(--borde); border-radius: 0 10px 10px 0; }
 @media (prefers-reduced-motion: reduce) { .con-costado, .costado { transition: none !important; } }
 .desliza { flex: 1; min-height: 0; overflow-y: auto; }
-/* Barras de desplazamiento delgadas y discretas en lo que se desliza por dentro (se ven más al pasar encima) */
-:is(.desliza, .tarjetas-estado) { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--texto) 22%, transparent) transparent; }
-:is(.desliza, .tarjetas-estado):hover { scrollbar-color: color-mix(in srgb, var(--texto) 40%, transparent) transparent; }
 .grupos h4, .hechas summary { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); margin: 20px 0 2px; }
 .grupos h4.alerta { color: var(--alerta); }
 /* Las 3 prioridades: destacadas con el color de acento */
@@ -1930,3 +1927,13 @@ button.nodo-grafo:hover .insignia { transform: scale(1.12); }
 .segmento.minimo .icono, .herramientas-carpeta .boton-icono .icono { width: 18px; height: 18px; }
 .herramientas-carpeta .boton-icono.cambiado { color: var(--acento); }
 .segmento.minimo + .boton-icono { margin-left: 6px; }
+/* Paso 109: las barras de desplazamiento de toda la web, mínimas: una rayita fina y redonda, sin flechas ni carril,
+   que casi no se ve hasta que pasas el mouse por lo que se desplaza. Donde se escondieron a propósito (none) siguen así. */
+:root { --barrita: color-mix(in srgb, var(--texto) 16%, transparent); --barrita-fuerte: color-mix(in srgb, var(--texto) 36%, transparent); }
+* { scrollbar-width: thin; scrollbar-color: var(--barrita) transparent; }
+*:hover { scrollbar-color: var(--barrita-fuerte) transparent; }
+/* Safari (no entiende scrollbar-color): lo mismo a mano */
+::-webkit-scrollbar { width: 10px; height: 10px; background: transparent; }
+::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 99px; background: var(--barrita) padding-box; }
+:hover::-webkit-scrollbar-thumb { background-color: var(--barrita-fuerte); }
+::-webkit-scrollbar-button, ::-webkit-scrollbar-corner { display: none; background: transparent; }
