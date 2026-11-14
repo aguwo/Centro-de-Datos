@@ -139,7 +139,7 @@ export function colorDeProyecto(id) {
 }
 
 // Lee todo de Supabase. No hace falta filtrar por dueño: RLS ya lo hace.
-// Cuando termina avisa con el evento "datos", y cada vista (mapa, inicio, panel) se vuelve a dibujar.
+// Cuando termina avisa con el evento "datos", y cada vista (mapa, apartados, panel) se vuelve a dibujar.
 // enfocarId: si viene, se abre ese nodo después de dibujar (útil tras crear o editar).
 export async function recargar(enfocarId) {
   if (!datos.nodos.length) avisar("Cargando tu grafo…"); // solo la primera vez; después se actualiza sin parpadear

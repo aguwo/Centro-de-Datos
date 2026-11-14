@@ -28,7 +28,8 @@ import { tarjetasDeRamos, paginaDeRamo, loQueViene } from "./universidad.js";
 import { loImportante, diasDeLaSemana } from "./semana.js";
 import { semanaEntreno, constanciaEntreno, rutina, peso, habitosHoy, cadaHabito, porDiaDeSemana, despensa,
   caloriasDia, equilibrio, comidasDia, semanaComida, dietaHoy, entrenoHoy, habitosRapidos, medidorPeso, anillosSalud, macrosHoy } from "./salud.js";
-import { semanaGasto, movimientos, porCategoria, semanasGasto, entraSale, cuentas, apartar, objetivoAhorro, historialAhorro, esteMes, suscripciones, suscripcionesDetectadas, enUnAno, suscripcionesPausadas, finanzasSemana, proximoCobro, metaAhorro } from "./finanzas.js";
+import { semanaGasto, movimientos, porCategoria, semanasGasto, entraSale, cuentas, apartar, objetivoAhorro, historialAhorro, esteMes, suscripciones, suscripcionesDetectadas, enUnAno, suscripcionesPausadas, finanzasSemana, proximoCobro, metaAhorro, enQueGastas } from "./finanzas.js";
+import { plantasConSed } from "./plantas.js";
 import { icono } from "./dibujos.js";
 import { selectorDeBloques } from "./bloques.js";
 import { modo, fondo, barra, vistas, ventanas, cuenta } from "./ajustes.js";
@@ -82,6 +83,8 @@ export const WIDGETS = {
   "en-un-ano":     { titulo: "En un año", crear: enUnAno },
   "pausadas":      { titulo: "Pausadas", crear: suscripcionesPausadas },
   "finanzas-semana": { titulo: "Gastos", crear: finanzasSemana },
+  "en-que-gastas": { titulo: "¿En qué gastas?", crear: enQueGastas },
+  "plantas":       { titulo: "Plantas con sed", crear: plantasConSed },
   "proximo-cobro": { titulo: "Próximo cobro", crear: proximoCobro },
   "meta-ahorro":   { titulo: "Ahorro", crear: metaAhorro },
   "modo":          { titulo: "Modo y color", crear: modo },
@@ -132,17 +135,18 @@ export function selectorDeVistas(a, redibujar) {
   return caja;
 }
 
-// Arma la <section> de un apartado: su título y sus columnas de ventanas.
+// Arma la <section> de un apartado: su título y sus columnas de ventanas. extra (opcional) va junto al título
+// (la carcasa pone ahí «Abrir Finanzas ›» en las secciones del escritorio, paso 99).
 // Una columna con costado: true (paso 38b) va pegada al borde izquierdo, a todo el alto, y se esconde con su botón;
 // queda escondida o no según la dejaste la última vez (en este navegador).
 // Devuelve la sección (para ponerla en la página) y la función que la redibuja entera.
 // Las ventanas se arman al primer dibujo y se vuelven a armar solo si cambió la disposición.
-export function montar(a) {
+export function montar(a, extra) {
   const titulo = el("h2", { className: "sobre-foto", id: a.id + "-titulo" });
   // La barra: una fila bajo el título, a todo el ancho, para pastillas o avisos de un widget (vacía no se ve).
   const barra = el("div", { className: "barra-apartado" });
   const vistas = a.vistas?.length > 1 && !a.lugar ? selectorDeVistas(a, () => dibujar()) : null;
-  const cabeza = vistas ? el("div", { className: "cabeza-apartado" }, titulo, vistas) : titulo;
+  const cabeza = vistas || extra ? el("div", { className: "cabeza-apartado" }, titulo, vistas ?? "", extra ?? "") : titulo;
   const seccion = el("section", { id: a.id, className: "apartado con-widgets oculto" }, cabeza, barra);
   const ctx = { barra, cambiar(campos) { Object.assign(ctx, campos); dibujar(); } };
   let armada = { clave: null, grilla: null, redibujar: [] };
@@ -205,7 +209,8 @@ export function montar(a) {
     const columnas = disposicionDe(a);
     if (JSON.stringify(columnas) !== armada.clave) armar(columnas);
     vistas?.marcar(columnas);
-    titulo.textContent = a.titulo?.() ?? a.nombre;
+    // Paso 99: en el escritorio, de cuándo habla la sección («Esta semana») va chico arriba del nombre.
+    titulo.replaceChildren(a.momento ? el("small", { className: "sobre-titulo", textContent: a.momento }) : "", a.titulo?.() ?? a.nombre);
     for (const r of armada.redibujar) r();
   }
   return { seccion, dibujar, ctx };

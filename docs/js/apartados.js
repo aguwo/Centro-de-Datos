@@ -19,11 +19,13 @@
 //   nuevo     (opcional) qué tipos se crean desde aquí con "+ Nuevo" (claves, ej. ["tarea", "evento"]). Sin lista: todos
 //   abajo     (opcional) true: su botón va pegado al fondo de la barra lateral y no se puede esconder (Ajustes)
 //   lugar     (opcional) [columna, fila] en el escritorio movible (escritorio.js). Los que tienen lugar se ven
-//             juntos en el lienzo; los demás, a pantalla completa. El plan del escritorio:
+//             juntos en el lienzo (en el teléfono, uno a la vez, deslizando de lado); los demás, a pantalla completa.
+//             Paso 99: el escritorio muestra lo de ahora y lo rápido; el apartado guarda todo lo demás. El plan del escritorio:
 //                            [1,0] Esta semana
 //             [0,1] Productividad   [1,1] Hoy   [2,1] Salud hoy
 //                            [1,2] Finanzas
-import { dibujarInicio } from "./inicio.js";
+//   momento   (opcional, con lugar) de cuándo habla la sección («Hoy», «Esta semana»): va chico sobre su título
+//   abre      (opcional, con lugar) el apartado completo de esta sección: sale «Abrir Finanzas ›» junto al título
 import { dibujar as dibujarMapa, ajustarMapa } from "./mapa.js";
 import { dibujarCalendario, iniciarCalendario } from "./calendario.js";
 import { semestreActual } from "./universidad.js";
@@ -46,17 +48,17 @@ export const APARTADOS = [
   // Paso 61: tus 7 días de un vistazo (semana.js), arriba de Hoy en el escritorio infinito.
   {
     id: "semana", nombre: "Esta semana", lugar: [1, 0], nuevo: ["evento", "tarea"],
-    columnas: [{ widgets: ["lo-importante", "dias"] }],
+    columnas: [{ widgets: ["lo-importante", "dias", "plantas"] }], // paso 99: las plantas con sed, que antes iban en el Resumen
     icono: "semana",
   },
   {
-    id: "productividad", nombre: "Productividad", lugar: [0, 1], nuevo: ["tarea", "proyecto"],
+    id: "productividad", nombre: "Productividad", lugar: [0, 1], abre: "proyectos", nuevo: ["tarea", "proyecto"],
     columnas: [{ widgets: ["tareas"] }, { widgets: ["proyectos"] }],
     icono: "test",
   },
   // Paso 73: lo de hoy de Salud, a la derecha de Hoy en el escritorio infinito. Tocar una tarjeta abre Salud en ese bloque.
   {
-    id: "salud-hoy", nombre: "Salud hoy", lugar: [2, 1], nuevo: ["habito", "alimento"], titulo: () => "Salud",
+    id: "salud-hoy", nombre: "Salud hoy", lugar: [2, 1], momento: "Hoy", abre: "salud", nuevo: ["habito", "alimento"], titulo: () => "Salud",
     // Paso 81: dos vistas, que se eligen en Ajustes. Bento: Dieta grande a la izquierda; a la derecha el peso y,
     // debajo, Ejercicio y Hábitos lado a lado. Anillos: los cuatro de un vistazo arriba y el detalle abajo.
     vistas: [
@@ -68,7 +70,7 @@ export const APARTADOS = [
   // Paso 87: Finanzas de un vistazo, abajo de Hoy en el escritorio infinito: la semana a la izquierda; a la derecha
   // las categorías y, debajo, el próximo cobro y tu objetivo de ahorro lado a lado.
   {
-    id: "finanzas-hoy", nombre: "Finanzas hoy", lugar: [1, 2], nuevo: ["categoria", "cuenta"], titulo: () => "Finanzas",
+    id: "finanzas-hoy", nombre: "Finanzas hoy", lugar: [1, 2], momento: "Esta semana", abre: "finanzas", nuevo: ["categoria", "cuenta"], titulo: () => "Finanzas",
     columnas: [{ widgets: ["finanzas-semana"] }, { ancho: 1.15, widgets: ["por-categoria", ["proximo-cobro", "meta-ahorro"]] }],
     icono: "billetera",
   },
@@ -110,7 +112,7 @@ export const APARTADOS = [
     columnas: [
       FINANZAS.gastos,
       { nombre: "Esta semana", ancho: 1, widgets: ["semana-gasto", "movimientos"] },
-      { nombre: "Cómo vas", ancho: 1.25, widgets: ["por-categoria", "semanas-gasto", "entra-sale"] },
+      { nombre: "Cómo vas", ancho: 1.25, widgets: ["en-que-gastas", "por-categoria", "semanas-gasto", "entra-sale"] }, // paso 99: la dona también aquí
       FINANZAS.ahorro,
       { nombre: "Ahora", ancho: 1, widgets: ["cuentas", "apartar"] },
       { nombre: "Cómo vas", ancho: 1.25, widgets: ["objetivo-ahorro", "historial-ahorro"] },
@@ -119,11 +121,6 @@ export const APARTADOS = [
       { nombre: "Cómo vas", ancho: 1.25, widgets: ["detectadas", "en-un-ano", "pausadas"] },
     ],
     icono: "billetera",
-  },
-  // Las tarjetas de antes (hábitos, gastos, plantas...). Se quedan hasta que cada una tenga su apartado (paso 32).
-  {
-    id: "inicio", nombre: "Resumen", dibujar: dibujarInicio,
-    icono: "resumen",
   },
   {
     id: "mapa", nombre: "Mapa", dibujar: dibujarMapa, alMostrar: () => ajustarMapa(true),
