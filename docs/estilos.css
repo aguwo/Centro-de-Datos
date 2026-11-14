@@ -1918,3 +1918,15 @@ button.nodo-grafo:hover .insignia { transform: scale(1.12); }
 .segmento > button { position: relative; z-index: 1; transition: color .2s ease; }
 .segmento > .pildora { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; }
 .segmento > button.llegando { background: transparent !important; box-shadow: none !important; }
+/* Paso 108: opciones con ✓ en el menú (menu.js, marcado) */
+.menu-contextual [aria-checked] span::before { content: ""; display: inline-block; width: 1.3em; }
+.menu-contextual [aria-checked="true"] span::before { content: "✓"; font-weight: 700; color: var(--acento); }
+/* Paso 108: la vista de una carpeta, mínima y a la derecha (archivos.js) */
+.herramientas-carpeta { justify-content: flex-end; gap: 4px; }
+.segmento.minimo { padding: 0; gap: 2px; background: none; }
+.segmento.minimo button, .herramientas-carpeta .boton-icono { display: grid; place-items: center; width: 32px; height: 30px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--suave); }
+.segmento.minimo button:hover, .herramientas-carpeta .boton-icono:hover { background: var(--resalte); color: var(--texto); }
+.segmento.minimo button[aria-pressed="true"] { background: var(--resalte); color: var(--texto); box-shadow: none; font-weight: 400; }
+.segmento.minimo .icono, .herramientas-carpeta .boton-icono .icono { width: 18px; height: 18px; }
+.herramientas-carpeta .boton-icono.cambiado { color: var(--acento); }
+.segmento.minimo + .boton-icono { margin-left: 6px; }
