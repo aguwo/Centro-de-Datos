@@ -367,6 +367,7 @@ export function anotar(tipo = "gasto") {
   }
   dibujar();
   campoMonto.focus();
+  return d; // la revisión de la noche (paso 97) mira cuándo se cierra
 }
 const botonAnotar = (texto = "+ Anotar", tipo) => el("button", { className: "enlace", textContent: texto, ariaHasPopup: "dialog", onclick: () => anotar(tipo) });
 
