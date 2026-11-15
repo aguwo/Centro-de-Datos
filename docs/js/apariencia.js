@@ -8,7 +8,7 @@ import { icono } from "./dibujos.js";
 
 // Lo de siempre: cómo se ve si nunca tocaste nada. null = lo decide el modo (ej. cuánto se oscurece la foto).
 export const DE_SIEMPRE = { tema: "auto", tono: null, fondo: "paisaje", oscurecer: null, mover: true, opacidad: 1, desenfoque: 28, radio: 16, letra: "Inter", zoom: 1, minimapa: "miniatura",
-  barra: "iconos", ocultos: [], orden: [], retraida: false };
+  barra: "iconos", ocultos: [], orden: [], retraida: false, comportamiento: "fija" };
 
 export const TEMAS = { auto: "Automático", claro: "Claro", oscuro: "Oscuro" };
 // Los colores de acento (todos se leen bien con letra blanca encima). También se puede elegir cualquier otro.
@@ -21,6 +21,12 @@ export const BARRAS = {
   ancha:    { nombre: "Ancha", detalle: "Ícono y nombre en una fila" },
   flotante: { nombre: "Flotante", detalle: "Una tarjeta de vidrio separada del borde" },
   isla:     { nombre: "Isla", detalle: "Una píldora corta al centro, solo íconos" },
+};
+// Paso 122: cómo se porta la barra en el computador (estilos.css, :root[data-comportamiento]; carcasa.js la mueve).
+export const COMPORTAMIENTOS = {
+  fija:    { nombre: "Fija", detalle: "Siempre a la vista, como hasta ahora" },
+  respira: { nombre: "Respira", detalle: "Lejos del mouse se achica y se aclara; al acercarlo crece de nuevo" },
+  sola:    { nombre: "Se esconde sola", detalle: "Desaparece cuando no la usas y el contenido toma todo el ancho. Lleva el mouse al borde izquierdo y vuelve" },
 };
 // Los fondos: tu foto de siempre, unos degradados y la foto que subas (propia).
 export const FONDOS = {
@@ -95,6 +101,7 @@ function aplicar() {
   poner("--sans", p.letra === "Inter" ? null : LETRAS[p.letra] ? `"${LETRAS[p.letra]}", system-ui, sans-serif` : "system-ui, sans-serif");
   r.classList.toggle("fondo-quieto", !p.mover);
   r.dataset.barra = p.barra;
+  r.dataset.comportamiento = p.comportamiento;
   r.dataset.minimapa = p.minimapa;
   r.classList.toggle("barra-retraida", p.retraida);
   bajarLetra(LETRAS[p.letra]);

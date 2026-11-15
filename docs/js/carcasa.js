@@ -278,6 +278,27 @@ function cajones() {
   addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.querySelector("dialog[open]")) cajon(null, false); });
 }
 
+// Paso 122: la barra del computador según cómo se porta (Ajustes). Mira dónde está el mouse y le pone a la barra:
+//   .cerca  (Respira) el mouse está a menos de CERCA px de ella: crece; lejos se achica (estilos.css)
+//   .asoma  (Se esconde sola) llegaste al borde izquierdo: sale; al irte, se vuelve a esconder después de un rato
+// Con el teclado (Tab hasta un botón) se ve siempre: eso lo dice estilos.css con :focus-visible.
+const CERCA = 110, BORDE = 8, ESPERA_AL_IRSE = 600;
+function barraViva() {
+  const dock = $("dock"), orilla = el("div", { className: "orilla-barra", ariaHidden: "true" });
+  document.body.append(orilla);
+  let irse;
+  addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse" || !document.body.classList.contains("con-escritorio")) return;
+    const como = document.documentElement.dataset.comportamiento, r = dock.getBoundingClientRect();
+    const encima = !!e.target.closest?.(".dock");
+    if (como === "respira") dock.classList.toggle("cerca", encima || (e.clientX - r.right < CERCA && e.clientY > r.top - CERCA && e.clientY < r.bottom + CERCA));
+    if (como !== "sola") return;
+    orilla.classList.toggle("cerca", e.clientX < 60 && !dock.classList.contains("asoma"));
+    if (e.clientX <= BORDE || encima) { clearTimeout(irse); irse = null; dock.classList.add("asoma"); }
+    else if (dock.classList.contains("asoma") && !irse) irse = setTimeout(() => { dock.classList.remove("asoma"); irse = null; }, ESPERA_AL_IRSE);
+  });
+}
+
 // El dock vive escondido para dejarle la pantalla al contenido. Aparece al llevar el mouse
 // al borde de abajo (o al tocar la manilla en el teléfono) y se esconde al alejarse.
 function dockEscondido() {
@@ -322,6 +343,7 @@ export function iniciarCarcasa() {
   for (const a of APARTADOS) a.iniciar?.();
   cajones();
   dockEscondido();
+  barraViva();
   iniciarEscritorio(ir, apartadoActual);
   addEventListener("hashchange", () => ir(location.hash.slice(1)));
   ir(location.hash.slice(1));

@@ -11,7 +11,7 @@ import { icono } from "./dibujos.js";
 import { entradasDeLaBarra, dibujarTodo } from "./carcasa.js";
 import { APARTADOS } from "./apartados.js";
 import { selectorDeVistas, disposicionDe } from "./widgets.js";
-import { preferencia, cambiar, TEMAS, TONOS, FONDOS, BARRAS, LETRAS, cssDelFondo, ZOOMS, MINIMAPAS, tuFoto, tuCara, ponerFoto, achicar, volverALoDeSiempre } from "./apariencia.js";
+import { preferencia, cambiar, TEMAS, TONOS, FONDOS, BARRAS, COMPORTAMIENTOS, LETRAS, cssDelFondo, ZOOMS, MINIMAPAS, tuFoto, tuCara, ponerFoto, achicar, volverALoDeSiempre } from "./apariencia.js";
 
 // Las ventanas de Ajustes se ponen al día juntas: un cambio en una (ej. el modo) se ve en las otras.
 const ponerAlDia = new Set();
@@ -98,14 +98,19 @@ export function fondo(v) {
 export function barra(v) {
   const estilos = opciones("barra", Object.fromEntries(Object.entries(BARRAS).map(([k, b]) => [k, b.nombre])), (valor) => [
     el("i", { className: "muestra-barra " + valor }, el("b"), el("b"), el("b")), el("span", { textContent: BARRAS[valor].nombre })], "barras");
-  const detalle = el("p", { className: "pista" }), lista = el("ol", { className: "botones-barra" });
-  v.append(titulo("Estilo"), estilos, detalle, titulo("Botones"), lista,
+  // Paso 122: cómo se porta (fija, respira o se esconde sola), con su dibujito.
+  const porta = opciones("comportamiento", Object.fromEntries(Object.entries(COMPORTAMIENTOS).map(([k, c]) => [k, c.nombre])), (valor) => [
+    el("i", { className: "muestra-barra iconos " + valor }, el("b"), el("b"), el("b")), el("span", { textContent: COMPORTAMIENTOS[valor].nombre })], "barras");
+  const detalle = el("p", { className: "pista" }), detallePorta = el("p", { className: "pista" }), lista = el("ol", { className: "botones-barra" });
+  v.append(titulo("Estilo"), estilos, detalle, titulo("Cómo se porta"), porta, detallePorta, titulo("Botones"), lista,
     el("p", { className: "pista", textContent: "Se ve en el computador. En el teléfono la barra es la de abajo, con el mismo orden." }));
   const dibujo = (x) => el("span", { className: "icono-barra" }, icono(x.icono));
   return conPonerAlDia(() => {
     const p = preferencia(), todos = entradasDeLaBarra().map((e) => e.x);
     estilos.marcar(p.barra);
     detalle.textContent = BARRAS[p.barra].detalle;
+    porta.marcar(p.comportamiento);
+    detallePorta.textContent = COMPORTAMIENTOS[p.comportamiento]?.detalle ?? "";
     const movibles = todos.filter((x) => !x.lugar && !x.abajo);
     lista.replaceChildren(...movibles.map((x) => {
       const ver = el("input", { type: "checkbox", checked: !p.ocultos.includes(x.id),

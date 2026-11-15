@@ -142,12 +142,12 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 /* Paso 35c: en el computador el dock es una barra lateral fija, pegada al borde izquierdo,
    con el nombre bajo cada ícono. Las secciones del escritorio van juntas en "Escritorio".
    Paso 55: su estilo se elige en Ajustes (:root[data-barra], abajo). --barra = el espacio que el contenido le deja a la izquierda. */
-.con-escritorio { --barra: 84px; }
+.con-escritorio { --ancho-barra: 84px; --barra: var(--ancho-barra); } /* paso 122: lo que mide la barra y el espacio que deja (Se esconde sola deja 0) */
 .con-escritorio main { left: var(--barra); } /* se corre con la barra; la animación va abajo, con las demás */
 .con-escritorio .asa { display: none; }
 /* La barra va casi sólida (--vidrio-fuerte): así nada se transparenta ni se mezcla con lo que queda detrás.
    --fuera la saca hacia la izquierda al retraerla; --medio la centra en alto (Isla). */
-.con-escritorio .dock { top: 0; bottom: 0; left: 0; width: var(--barra); max-width: none; transform: translate(var(--fuera, 0), var(--medio, 0));
+.con-escritorio .dock { top: 0; bottom: 0; left: 0; width: var(--ancho-barra); max-width: none; transform: translate(var(--fuera, 0), var(--medio, 0));
   transition: transform .25s cubic-bezier(.2,.7,.2,1); background: var(--vidrio-fuerte);
   flex-direction: column; gap: 2px; padding: 10px 8px; border-radius: 0; border-width: 0 1px 0 0; box-shadow: none; overflow-y: auto; }
 .con-escritorio .dock button { width: 100%; height: auto; flex: none; padding: 9px 0 7px; gap: 3px; border-radius: 12px; background: none; color: var(--suave); }
@@ -176,7 +176,7 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .perfil { display: grid; }
 /* Paso 93: Solo íconos, limpia: una columna centrada en alto de íconos de línea en cuadrados de 44 px, sin nombres.
    El que tiene el mouse y el elegido llevan el cuadrado translúcido (el del elegido es la .marca que viaja). Al final, tu foto */
-[data-barra="iconos"] .con-escritorio { --barra: 72px; }
+[data-barra="iconos"] .con-escritorio { --ancho-barra: 72px; }
 [data-barra="iconos"] .con-escritorio .dock { align-items: center; justify-content: safe center; gap: 8px; padding: 16px 0; }
 [data-barra="iconos"] .con-escritorio .dock .pie { flex-direction: column; align-items: center; gap: 8px; margin-top: 0; }
 [data-barra="iconos"] .con-escritorio .dock button, [data-barra="iconos"] .con-escritorio .dock .pie > * { flex: none; width: 44px; height: 44px; padding: 0; }
@@ -187,7 +187,7 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 [data-barra="iconos"] .con-escritorio .dock .marca { display: block; border-radius: 12px; }
 [data-barra="iconos"] .con-escritorio .dock .pie > .retraer { height: 22px; }
 /* Ancha: ícono y nombre en una fila, con el nombre de la web arriba */
-[data-barra="ancha"] .con-escritorio { --barra: 212px; }
+[data-barra="ancha"] .con-escritorio { --ancho-barra: 212px; }
 [data-barra="ancha"] .con-escritorio .dock { padding: 16px 12px; }
 [data-barra="ancha"] .con-escritorio .dock::before { content: "Martita"; padding: 2px 12px 14px; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--texto); }
 [data-barra="ancha"] .con-escritorio .dock button { grid-template-columns: 22px minmax(0, 1fr); justify-items: start; align-items: center; gap: 12px; padding: 9px 12px; }
@@ -270,6 +270,24 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 .barra-retraida .con-escritorio .dock { --fuera: calc(-100% - 24px); }
 .barra-retraida .con-escritorio .sacar-barra { transform: translate(0, -50%); opacity: 1; pointer-events: auto; }
 .barra-retraida .con-escritorio .sacar-barra:hover { color: var(--texto); width: 28px; }
+
+/* Paso 122: cómo se porta la barra (Ajustes → Barra lateral; :root[data-comportamiento]). carcasa.js (barraViva) le
+   pone .cerca y .asoma según dónde está el mouse. Con el teclado (un botón elegido con Tab) se ve siempre.
+   Respira: lejos del mouse se achica hacia su borde y se aclara; cerca crece con el mismo resorte de siempre. */
+[data-comportamiento="respira"] .con-escritorio .dock { transform-origin: 0 50%; transition-property: transform, width, left, top, bottom, border-radius, padding, scale, opacity; }
+[data-comportamiento="respira"] .con-escritorio .dock:not(.cerca, :has(:focus-visible)) { scale: .8; opacity: .5; }
+/* Se esconde sola: el contenido toma todo el ancho y la barra sale por encima al llegar al borde. Queda una rayita de luz
+   en el borde, que se enciende al acercarte. Retraer ya no hace falta. */
+[data-comportamiento="sola"] .con-escritorio { --barra: 0px; }
+[data-comportamiento="sola"] .con-escritorio .dock { box-shadow: var(--sombra); }
+[data-comportamiento="sola"] .con-escritorio .dock:not(.asoma, :has(:focus-visible)) { --fuera: calc(-100% - 24px); }
+[data-comportamiento="sola"] .con-escritorio .dock:not(.asoma, :has(:focus-visible)) button { opacity: 0; transform: translateX(-10px); transition-delay: 0s; }
+[data-comportamiento="sola"] .con-escritorio .dock:not(.asoma, :has(:focus-visible)) .marca { opacity: 0; }
+[data-comportamiento="sola"] .con-escritorio :is(.dock .retraer, .sacar-barra) { display: none; }
+.orilla-barra { display: none; }
+[data-comportamiento="sola"] .con-escritorio .orilla-barra { display: block; position: fixed; left: 0; top: 30%; bottom: 30%; z-index: 9; width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--acento); opacity: .35; pointer-events: none; transition: opacity .25s ease, width .25s var(--resorte), box-shadow .25s ease; }
+[data-comportamiento="sola"] .con-escritorio .orilla-barra.cerca { opacity: 1; width: 5px; box-shadow: 0 0 14px 2px color-mix(in srgb, var(--acento) 55%, transparent); }
 
 /* Animaciones de la barra (paso 98: todas con el mismo resorte que la cámara del escritorio, --resorte; carcasa.js
    lo calcula con curvaDeResorte y, si el navegador no sabe de linear(), queda la curva suave de siempre):
@@ -1053,6 +1071,10 @@ button.chico { padding: 1px 8px; font-size: 11.5px; border-radius: 99px; }
 .muestra-barra.iconos b:first-child { width: 14%; } .muestra-barra.iconos b:nth-child(2) { left: 4%; width: 6%; } .muestra-barra.iconos b:nth-child(3) { left: 24%; }
 .muestra-barra.ancha b:first-child { width: 36%; } .muestra-barra.ancha b:nth-child(2) { width: 22%; } .muestra-barra.ancha b:nth-child(3) { left: 44%; }
 .muestra-barra.flotante b:first-child { inset: 8% auto 8% 4%; border-radius: 4px; } .muestra-barra.flotante b:nth-child(2) { left: 9%; } .muestra-barra.flotante b:nth-child(3) { left: 34%; }
+.muestra-barra.respira b:first-child { inset: 20% auto 20% 0; width: 11%; opacity: .45; } /* paso 122: cómo se porta */
+.muestra-barra.respira b:nth-child(2) { opacity: .45; top: 30%; }
+.muestra-barra.sola b:first-child { inset: 30% auto 30% 0; width: 3%; background: var(--acento); }
+.muestra-barra.sola b:nth-child(2) { display: none; } .muestra-barra.sola b:nth-child(3) { left: 10%; }
 .muestra-barra.isla b:first-child { inset: 26% auto 26% 5%; width: 10%; border-radius: 99px; } .muestra-barra.isla b:nth-child(2) { left: 7%; top: 36%; width: 6%; } .muestra-barra.isla b:nth-child(3) { left: 24%; }
 .botones-barra { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .botones-barra li { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 10px; background: color-mix(in srgb, var(--texto) 4%, transparent); }
