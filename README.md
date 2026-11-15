@@ -195,10 +195,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 115 | **EV@ completo.** La copia de EV@ (dos veces al día) ahora también trae los **cuestionarios**: cada uno con fecha es una tarea «Responder …» dentro de su ramo, que pasa a Hecho cuando terminas un intento (EV@ solo muestra los de tu sección). Y guarda en cada ramo su **material** (`props.material`): en la página del ramo, «Material de EV@» lo lista por sección, plegable, con enlaces que abren EV@ en otra pestaña (no se copia ningún archivo). La copia deja la hora en `props.eva_al_dia`, y el aviso de datos viejos del paso 114 suma «La copia de EV@» (más de 2 días). Hay que volver a publicar la función `eva` | — | — | `supabase/functions/eva/plan.ts` (`material`, `Pendiente`), `eva/index.ts`, `docs/js/universidad.js`, `docs/js/frescura.js` (`ultimo()` por fuente), `supabase/functions/mcp/servidor.ts`, `tests/eva.test.ts`, `estilos.css` |
 | 116 | **Vistas por carpeta.** En Archivos, el botón «Editar vista» (arriba a la derecha de cada carpeta) la arma por secciones, de arriba hacia abajo. En cada sección eliges **qué muestra** (sus carpetas, lo suelto, todo lo de adentro, todas las de una categoría de adentro como las tareas de todos los ramos, o lo de una subcarpeta) y **cómo se ve** (tarjetas, fila que se desliza, lista, tablero por estado o calendario de 5 semanas). Se guarda en tu cuenta para **solo esta carpeta** o para **todas las de su categoría**; sin vista propia, una carpeta usa la de su categoría y si no, la de siempre. Nuevo docs/js/secciones.js. Sin SQL (usa la tabla disposiciones). |
 | 117 | **Editar los apartados.** Cada apartado a pantalla completa (Salud, Finanzas, Universidad, Proyectos, Ajustes) trae arriba a la derecha «Editar apartado»: cada pieza se sube, se baja, pasa a la columna de al lado o se quita, abajo de cada columna «+ Agregar pieza…» trae cualquier pieza de la web (agrupadas por el apartado donde viven) y arriba de cada columna se cambia su ancho o se suma una columna nueva. «Guardar» lo deja en tu cuenta (tabla disposiciones, llave `apartado:<id>`); «Volver a la de siempre» lo borra. Sin editar, todo se ve igual que antes: los apartados de siempre ya eran plantillas de piezas en apartados.js. Una pieza que falla fuera de su apartado avisa en vez de dejar el apartado en blanco. Archivos no se edita (`editable: false`). Nuevo docs/js/editar.js. Sin SQL. |
+| 118 | **Editor de apartados con arrastre.** En «Editar apartado» cada pieza se agarra de su manija ⋮⋮ y se arrastra a cualquier lugar (otra columna o entre piezas): las demás se corren con animación y al soltar la pieza aterriza en su hueco. A la derecha aparece el panel «Agregar» con todas las piezas (buscador, pestañas «De este apartado» / «Todas»); se arrastran al lugar o se tocan para sumarlas. Arriba queda la barra de edición con Deshacer / Rehacer (también Ctrl+Z y Ctrl+Shift+Z), «Volver a la de siempre», Cancelar y Guardar. Cada pieza trae Duplicar y Quitar; con teclado, flechas mueven y Supr quita. En el celular el panel es una bandeja abajo y las columnas se ven apiladas. Respeta «reducir movimiento». Sin SQL. |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 118, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 119, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
@@ -209,6 +210,7 @@ Lo que viene va con nombre, sin número: el número se pone recién al empezar e
 | Después | Chat con Martita en la web |
 | Después | Google Calendar en los dos sentidos |
 | Hecho | Modo editar los apartados (paso 117) |
+| Hecho | Editor con arrastre, panel de piezas y deshacer (paso 118) |
 | Después | Varios usuarios |
 
 ## Cómo está ordenada la web
