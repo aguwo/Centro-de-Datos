@@ -13,7 +13,11 @@
 // Paso 81: en una columna, una lista de widgets (ej. ["entreno-hoy", "habitos-rapidos"]) va en una fila, lado a lado.
 // Las vistas de un apartado del escritorio infinito (con lugar) no se eligen arriba sino en Ajustes.
 //
+// Paso 117: cada apartado a pantalla completa se puede editar (editar.js): lo tuyo se guarda con la llave apartado:<id>
+// y gana sobre todo lo demás.
+//
 //   titulo  (opcional) lo que dice arriba de la ventana; sin título, empieza directo con su contenido
+//   nombre  (si no tiene título) cómo se llama en la lista para agregar piezas al editar un apartado
 //   crece   (opcional) ocupa el alto que sobra en su columna (las listas largas); las demás miden lo que su contenido
 //   filtra  (opcional) elige qué muestran las otras ventanas del apartado; en el teléfono va primero
 //   crear(v, ctx)  arma la ventana v una sola vez y devuelve la función que la redibuja cuando llegan datos.
@@ -34,32 +38,34 @@ import { arbolDeCarpetas, carpetaAbierta, propiedadesCarpeta } from "./archivos.
 import { icono } from "./dibujos.js";
 import { selectorDeBloques } from "./bloques.js";
 import { modo, fondo, barra, vistas, ventanas, cuenta } from "./ajustes.js";
+import { APARTADOS } from "./apartados.js";
+import { CAMBIOS, llaveEditada, controlesDePieza, controlesDeColumna, agregarEn, barraDeEdicion, guardarEditada } from "./editar.js";
 
 export const WIDGETS = {
   "tareas-de-hoy": { titulo: "Tareas de hoy", crece: true, crear: tareasDeHoy },
   "el-tiempo":     { titulo: "El tiempo", crear: elTiempo },
   "tu-dia":        { titulo: "Tu día", crece: true, crear: tuDia },
-  "plan-de-hoy":   { crece: true, crear: planDeHoy },
+  "plan-de-hoy":   { nombre: "Plan de hoy", crece: true, crear: planDeHoy },
   "tareas":        { titulo: "Tareas", crece: true, crear: tareasDelFiltro },
-  "proyectos":     { crece: true, filtra: true, crear: areasYProyectos },
-  "galeria":       { crear: galeria },
-  "caja":          { crear: cabecera },
+  "proyectos":     { nombre: "Áreas y proyectos", crece: true, filtra: true, crear: areasYProyectos },
+  "galeria":       { nombre: "Galería de proyectos", crear: galeria },
+  "caja":          { nombre: "Cabecera del proyecto", crear: cabecera },
   "tablero":       { titulo: "Tareas", crear: tablero },
-  "dentro":        { crear: dentro },
-  "ramos":         { crear: tarjetasDeRamos },
-  "ramo":          { crear: paginaDeRamo },
+  "dentro":        { nombre: "Lo de adentro del proyecto", crear: dentro },
+  "ramos":         { nombre: "Tarjetas de ramos", crear: tarjetasDeRamos },
+  "ramo":          { nombre: "Página del ramo", crear: paginaDeRamo },
   "lo-que-viene":  { titulo: "Lo que viene", crear: loQueViene },
-  "lo-importante": { crear: loImportante },
-  "dias":          { crece: true, crear: diasDeLaSemana },
+  "lo-importante": { nombre: "Lo importante de la semana", crear: loImportante },
+  "dias":          { nombre: "Días de la semana", crece: true, crear: diasDeLaSemana },
   "semana-entreno": { titulo: "Esta semana", crear: semanaEntreno },
   "constancia-entreno": { titulo: "Constancia", crear: constanciaEntreno },
   "rutina":        { titulo: "Rutina", crear: rutina },
-  "peso":          { crear: peso },
+  "peso":          { nombre: "Peso", crear: peso },
   "habitos-hoy":   { titulo: "Hábitos de hoy", crear: habitosHoy },
   "cada-habito":   { titulo: "Cada hábito", crear: cadaHabito },
   "por-dia":       { titulo: "Por día de la semana", crear: porDiaDeSemana },
   "despensa":      { titulo: "Despensa", crear: despensa },
-  "calorias-dia":  { crear: caloriasDia },
+  "calorias-dia":  { nombre: "Calorías del día", crear: caloriasDia },
   "equilibrio":    { titulo: "Equilibrio de nutrientes", crear: equilibrio },
   "comidas-dia":   { titulo: "Comidas del día", crear: comidasDia },
   "semana-comida": { titulo: "Tendencia de la semana", crear: semanaComida },
@@ -67,9 +73,9 @@ export const WIDGETS = {
   "entreno-hoy":   { titulo: "Ejercicio", crear: entrenoHoy },
   "habitos-rapidos": { titulo: "Hábitos de hoy", crear: habitosRapidos },
   "medidor-peso":  { titulo: "Peso", crear: medidorPeso },
-  "anillos-salud": { crear: anillosSalud },
+  "anillos-salud": { nombre: "Anillos de salud", crear: anillosSalud },
   "macros-hoy":    { titulo: "Macros", crear: macrosHoy },
-  "semana-gasto":  { crear: semanaGasto },
+  "semana-gasto":  { nombre: "Gasto de la semana", crear: semanaGasto },
   "movimientos":   { titulo: "Movimientos", crece: true, crear: movimientos },
   "por-categoria": { titulo: "Presupuesto por categoría", crear: porCategoria },
   "semanas-gasto": { titulo: "Últimas 8 semanas", crear: semanasGasto },
@@ -78,7 +84,7 @@ export const WIDGETS = {
   "apartar":       { titulo: "Apartar plata", crear: apartar },
   "objetivo-ahorro": { titulo: "Tu objetivo", crear: objetivoAhorro },
   "historial-ahorro": { titulo: "Lo que entró y salió del ahorro", crece: true, crear: historialAhorro },
-  "este-mes":      { crear: esteMes },
+  "este-mes":      { nombre: "Suscripciones este mes", crear: esteMes },
   "suscripciones": { titulo: "Activas", crece: true, crear: suscripciones },
   "detectadas":    { titulo: "¿Son suscripciones?", crear: suscripcionesDetectadas },
   "en-un-ano":     { titulo: "En un año", crear: enUnAno },
@@ -86,9 +92,9 @@ export const WIDGETS = {
   "finanzas-semana": { titulo: "Gastos", crear: finanzasSemana },
   "en-que-gastas": { titulo: "¿En qué gastas?", crear: enQueGastas },
   "plantas":       { titulo: "Plantas con sed", crear: plantasConSed },
-  "arbol-carpetas": { crear: arbolDeCarpetas },
-  "carpeta":       { crece: true, crear: carpetaAbierta },
-  "propiedades-carpeta": { crear: propiedadesCarpeta },
+  "arbol-carpetas": { nombre: "Árbol de carpetas", crear: arbolDeCarpetas },
+  "carpeta":       { nombre: "Carpeta abierta", crece: true, crear: carpetaAbierta },
+  "propiedades-carpeta": { nombre: "Propiedades", crear: propiedadesCarpeta },
   "proximo-cobro": { titulo: "Próximo cobro", crear: proximoCobro },
   "meta-ahorro":   { titulo: "Ahorro", crear: metaAhorro },
   "modo":          { titulo: "Modo y color", crear: modo },
@@ -105,10 +111,28 @@ export const WIDGETS = {
 // Por ahora lo único que se guarda es la vista elegida, así que un apartado sin vistas usa siempre la suya
 // (Salud tuvo vistas hasta el paso 69: lo que quedó guardado de entonces no cuenta).
 export function disposicionDe(a) {
+  const editada = normal(datos.disposiciones.get(llaveEditada(a)));
+  // Lo que no se guarda en la base (el resumen() de la tarjeta de un bloque) se recupera del bloque de siempre con su nombre.
+  if (editada.length) return editada.map((c) => (c.bloque ? { ...columnasDe(a).find((x) => x.bloque === c.bloque), ...c } : c));
   const tuya = a.vistas ? normal(datos.disposiciones.get(a.id)) : [];
   return tuya.length ? tuya : columnasDe(a);
 }
+// Paso 117: la lista para agregar piezas, agrupadas por el apartado donde están de siempre (donde salen primero).
+function caja() {
+  const ids = (cols) => (cols ?? []).flatMap((c) => (c.widgets ?? []).flat());
+  const vistos = new Set(), grupos = [];
+  for (const a of APARTADOS) {
+    const suyos = [...new Set([...ids(a.columnas), ...(a.vistas ?? []).flatMap((v) => ids(v.columnas))])].filter((id) => WIDGETS[id] && !vistos.has(id));
+    suyos.forEach((id) => vistos.add(id));
+    if (suyos.length) grupos.push([a.nombre, suyos]);
+  }
+  const otras = Object.keys(WIDGETS).filter((id) => !vistos.has(id));
+  if (otras.length) grupos.push(["Otras", otras]);
+  return grupos.map(([g, xs]) => [g, xs.map((id) => [id, WIDGETS[id].titulo ?? WIDGETS[id].nombre ?? id])]);
+}
 const lista = (x) => (Array.isArray(x) ? x : []);
+// Una función de redibujar que, si falla, lo anota en la consola en vez de cortar las de las otras ventanas.
+const seguro = (f) => () => { try { f?.(); } catch (e) { console.error(e); } };
 // Los widgets de una columna: cada uno es un id o una fila de ids (paso 81). Los que no existen se saltan.
 const piezas = (ws) => lista(ws).map((w) => (Array.isArray(w) ? w.filter((id) => WIDGETS[id]) : w))
   .filter((w) => (Array.isArray(w) ? w.length : WIDGETS[w]));
@@ -183,6 +207,8 @@ function bordes(id, g) {
 // queda escondida o no según la dejaste la última vez (en este navegador).
 // Devuelve la sección (para ponerla en la página) y la función que la redibuja entera.
 // Las ventanas se arman al primer dibujo y se vuelven a armar solo si cambió la disposición.
+// Paso 117: un apartado a pantalla completa trae «Editar apartado» arriba a la derecha. Mientras editas, ctx.editando
+// es el borrador de sus columnas: se dibuja ese, con los controles de editar.js sobre cada pieza y cada columna.
 export function montar(a, extra) {
   const titulo = el("h2", { className: "sobre-foto", id: a.id + "-titulo" });
   // La barra: una fila bajo el título, a todo el ancho, para pastillas o avisos de un widget (vacía no se ve).
@@ -192,6 +218,13 @@ export function montar(a, extra) {
   const seccion = el("section", { id: a.id, className: "apartado con-widgets oculto" }, cabeza, barra);
   const ctx = { barra, cambiar(campos) { Object.assign(ctx, campos); dibujar(); } };
   let armada = { clave: null, grilla: null, redibujar: [] };
+  if (!a.lugar && a.editable !== false) seccion.append(el("button", { className: "boton-icono editar-apartado", title: "Editar apartado", ariaLabel: "Editar apartado",
+    onclick: () => ctx.cambiar({ editando: ctx.editando ? null : disposicionDe(a) }) }, icono("secciones")));
+  const editar = (cambio, ...x) => ctx.cambiar({ editando: CAMBIOS[cambio](ctx.editando, ...x) });
+  function guardar(columnas = normal(ctx.editando)) {
+    guardarEditada(a, columnas, normal(columnasDe(a)));
+    ctx.cambiar({ editando: null });
+  }
 
   function armar(columnas) {
     const redibujar = [];
@@ -200,16 +233,24 @@ export function montar(a, extra) {
       const v = el("div", { className: ["ventana vidrio", "w-" + id, w.crece && "crece", w.filtra && "filtra"].filter(Boolean).join(" ") },
         w.titulo ? el("h3", {}, w.titulo, sub) : "");
       v.sub = sub;
-      redibujar.push(w.crear(v, ctx));
+      // Paso 117: una pieza puesta fuera de su apartado puede no tener lo que necesita; si falla, avisa y no tumba el resto.
+      try { redibujar.push(seguro(w.crear(v, ctx))); }
+      catch (e) { console.error(e); v.append(el("p", { className: "nada-seccion", textContent: "Esta pieza no funciona en este apartado." })); }
       return v;
     };
+    const b = ctx.editando;
     const centro = columnas.filter((c) => !c.costado), lado = columnas.filter((c) => c.costado);
     // Los bloques (paso 69): cada marca { bloque } abre una fila nueva con su título y sus propias columnas.
     const grupos = [];
     for (const c of centro) if (c.bloque || !grupos.length) grupos.push({ b: c.bloque ? c : null, cols: c.bloque ? [] : [c] }); else grupos.at(-1).cols.push(c);
     const grillaDe = (cols) => {
       const pieza = (w) => (Array.isArray(w) ? el("div", { className: "fila-ventanas" }, ...w.map(ventana)) : ventana(w));
-      const g = el("div", { className: "columnas" }, ...cols.map((c) => el("div", { className: "columna" }, c.nombre ? el("h2", { textContent: c.nombre }) : "", ...c.widgets.map(pieza))));
+      // Editando, cada pieza lleva sus controles y cada columna los suyos arriba y «+ Agregar pieza…» abajo.
+      // (Van en una caja aparte: una ventana se vuelve a llenar al redibujarse y se llevaría los controles.)
+      const conControles = (ci) => (w, pi) => (b ? el("div", { className: "pieza-editable" }, pieza(w), controlesDePieza(b, ci, pi, editar)) : pieza(w));
+      const g = el("div", { className: "columnas" }, ...cols.map((c) => { const ci = columnas.indexOf(c);
+        return el("div", { className: "columna" }, b ? controlesDeColumna(b, ci, editar) : "", c.nombre ? el("h2", { textContent: c.nombre }) : "",
+          ...c.widgets.map(conControles(ci)), b ? agregarEn(ci, caja(), editar) : ""); }));
       const anchos = (a.ajustable && anchosGuardados(a.id, cols.length)) || cols.map((c) => c.ancho ?? 1);
       ponerAnchos(g, anchos);
       if (a.ajustable) bordes(a.id, g);
@@ -227,11 +268,15 @@ export function montar(a, extra) {
     const costado = lado.length ? el("aside", { className: "costado vidrio" }, botonCostado(), ...lado.flatMap((c) => c.widgets.flat().map(ventana))) : null;
     barra.replaceChildren(); // lo que puso la disposición anterior (ej. otra vista) no se queda
     armada.costado?.remove();
+    armada.edicion?.remove();
+    const edicion = b ? barraDeEdicion(a, { tuya: datos.disposiciones.has(llaveEditada(a)), guardar, cancelar: () => ctx.cambiar({ editando: null }) }) : null;
+    if (edicion) barra.after(edicion);
+    seccion.classList.toggle("editando", !!b);
     if (armada.grilla) armada.grilla.replaceWith(grilla);
     else seccion.append(grilla);
     if (costado) cabeza.after(costado);
     seccion.classList.toggle("con-costado", !!costado);
-    armada = { clave: JSON.stringify(columnas), grilla, costado, redibujar };
+    armada = { clave: JSON.stringify([columnas, !!b]), grilla, costado, edicion, redibujar };
   }
 
   const guardado = "costado-cerrado:" + a.id;
@@ -250,8 +295,8 @@ export function montar(a, extra) {
   }
 
   function dibujar() {
-    const columnas = disposicionDe(a);
-    if (JSON.stringify(columnas) !== armada.clave) armar(columnas);
+    const columnas = ctx.editando ?? disposicionDe(a);
+    if (JSON.stringify([columnas, !!ctx.editando]) !== armada.clave) armar(columnas);
     vistas?.marcar(columnas);
     // Paso 99: en el escritorio, de cuándo habla la sección («Esta semana») va chico arriba del nombre.
     titulo.replaceChildren(a.momento ? el("small", { className: "sobre-titulo", textContent: a.momento }) : "", a.titulo?.() ?? a.nombre);

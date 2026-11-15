@@ -25,6 +25,7 @@
 //             [0,1] Productividad   [1,1] Hoy   [2,1] Salud hoy
 //                            [1,2] Finanzas
 //   momento   (opcional, con lugar) de cuándo habla la sección («Hoy», «Esta semana»): va chico sobre su título
+//   editable  (opcional) false: sin «Editar apartado» (paso 117). Los que van a pantalla completa se pueden editar
 //   abre      (opcional, con lugar) el apartado completo de esta sección: sale «Abrir Finanzas ›» junto al título
 import { dibujar as dibujarMapa, ajustarMapa } from "./mapa.js";
 import { dibujarCalendario, iniciarCalendario } from "./calendario.js";
@@ -127,6 +128,7 @@ export const APARTADOS = [
   // (en el celular se esconde y se navega con la ruta), al centro la carpeta abierta y a la derecha las propiedades de lo elegido.
   {
     id: "archivos", nombre: "Archivos", ajustable: true, // los bordes entre columnas se arrastran (paso 105)
+    editable: false, // paso 117: es la herramienta para llegar a todo, no una plantilla
     columnas: [{ ancho: 0.95, widgets: ["arbol-carpetas"] }, { ancho: 2.6, widgets: ["carpeta"] }, { ancho: 1.05, widgets: ["propiedades-carpeta"] }],
     icono: "carpeta",
   },
