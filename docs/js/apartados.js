@@ -46,7 +46,7 @@ export const APARTADOS = [
       { nombre: "Clásica", icono: "bloques", columnas: [{ ancho: 3, widgets: ["tareas-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }] },
     ],
     icono: "sol",
-    pendiente: pendienteDeHoy, // paso 119: su insignia en la barra (carcasa.js); al ser del escritorio, va en el botón Escritorio
+    pendiente: pendienteDeHoy, // paso 120: su insignia en la barra (carcasa.js); al ser del escritorio, va en el botón Escritorio
   },
   // Paso 61: tus 7 días de un vistazo (semana.js), arriba de Hoy en el escritorio infinito.
   {

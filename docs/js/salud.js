@@ -678,7 +678,7 @@ export function resumenHabitos() {
   return { dato: deHoy.length ? `${hechos} de ${deHoy.length} hechos` : "Nada para hoy", detalle: hechos === deHoy.length && hechos ? "¡todo listo hoy!" : "los hábitos de hoy",
     avance: deHoy.length ? hechos / deHoy.length : 0, cifra: `${hechos}/${deHoy.length}`, faltan: deHoy.length - hechos };
 }
-// Paso 119: la insignia de Salud en la barra (carcasa.js): los hábitos de hoy que te faltan.
+// Paso 120: la insignia de Salud en la barra (carcasa.js): los hábitos de hoy que te faltan.
 export function pendienteDeSalud() {
   const { faltan } = resumenHabitos();
   return faltan > 0 ? { n: faltan, tono: "aviso", texto: faltan === 1 ? "Te falta 1 hábito de hoy" : `Te faltan ${faltan} hábitos de hoy` } : null;

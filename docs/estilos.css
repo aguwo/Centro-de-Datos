@@ -193,7 +193,7 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 [data-barra="ancha"] .con-escritorio .dock button { grid-template-columns: 22px minmax(0, 1fr); justify-items: start; align-items: center; gap: 12px; padding: 9px 12px; }
 [data-barra="ancha"] .con-escritorio .dock .etiqueta { font-size: 14px; }
 [data-barra="ancha"] .con-escritorio .dock button::before { left: -12px; }
-/* Paso 119: insignias vivas (carcasa.js). Un número arriba a la derecha del ícono, del color de lo urgente que es:
+/* Paso 120: insignias vivas (carcasa.js). Un número arriba a la derecha del ícono, del color de lo urgente que es:
    rojo (algo atrasado), amarillo (vence pronto) o el de acento. Sigue al ícono cuando el imán lo mueve.
    El detalle va en el globo (Solo íconos, Isla y el dock del teléfono); en Clásica y Ancha basta el número. */
 :root { --sobre-insignia: #fff; }

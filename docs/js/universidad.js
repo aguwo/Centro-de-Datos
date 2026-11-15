@@ -37,7 +37,7 @@ function queViene(ramo) {
     ...pendientes(ramo).filter((t) => t.fecha)]
     .map((n) => ({ n, ramo, d: dia(n.fecha) })).sort((a, b) => porFecha(a.n, b.n));
 }
-// Paso 119: la insignia de Universidad en la barra (carcasa.js). Cuenta lo de tus ramos que vence en los próximos
+// Paso 120: la insignia de Universidad en la barra (carcasa.js). Cuenta lo de tus ramos que vence en los próximos
 // 7 días (entregas de EV@, evaluaciones y tareas), más lo atrasado. Roja si algo se atrasó, amarilla si algo vence hoy o mañana.
 export function pendienteDeLaU() {
   const hoy = hoyTexto(), tope = sumarDias(hoy, 7);

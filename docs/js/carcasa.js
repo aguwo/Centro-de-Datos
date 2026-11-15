@@ -202,7 +202,7 @@ function armarDock() {
   insignias();
 }
 
-// Paso 119: insignias vivas. Un apartado puede traer pendiente() (apartados.js), que dice cuánto pide tu atención:
+// Paso 120: insignias vivas. Un apartado puede traer pendiente() (apartados.js), que dice cuánto pide tu atención:
 // { n, tono, texto } o nada. Su botón muestra el número sobre el ícono (tono: "alerta" rojo, "aviso" amarillo o
 // "acento") y el texto en el globo. Los del escritorio (los que tienen "lugar") se suman en el botón Escritorio,
 // con el tono más urgente. Se recalcula cada vez que llegan datos y cada 10 minutos (por si cambió el día).

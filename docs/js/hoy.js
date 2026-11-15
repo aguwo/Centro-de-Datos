@@ -17,7 +17,7 @@ import { insignia, anillo, icono, elegir, moverConSuavidad } from "./dibujos.js"
 import { listaDeTareas, seccion, esPrioridad, porFecha } from "./tareas.js";
 import { avisosDeDatos } from "./frescura.js";
 
-// Paso 119: la insignia de Hoy en la barra (va en el botón Escritorio, carcasa.js): las tareas atrasadas, en rojo;
+// Paso 120: la insignia de Hoy en la barra (va en el botón Escritorio, carcasa.js): las tareas atrasadas, en rojo;
 // si no hay, las que quedan para hoy.
 export function pendienteDeHoy() {
   const hoy = hoyTexto(), pendientes = datos.nodos.filter((n) => n.tipos.clave === "tarea" && n.estado !== "Hecho" && dia(n.fecha));
