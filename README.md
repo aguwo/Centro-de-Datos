@@ -194,10 +194,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 114 | **Aviso de datos viejos.** Arriba de Hoy (en las dos vistas) sale un aviso cuando algo que llega solo dejó de llegar: los gastos del banco (más de 7 días sin un correo nuevo) o la asistencia del portal de la U (más de 4 días, solo con ramos en curso). Dice cuándo llegó lo último, «¿Qué reviso?» abre los pasos para arreglarlo y «Ya sé» lo calla por 7 días en ese navegador. Las fuentes viven en una lista (`FUENTES`): sumar otra es agregar un objeto | — | — | `docs/js/frescura.js` (nuevo), `docs/js/hoy.js`, `estilos.css` |
 | 115 | **EV@ completo.** La copia de EV@ (dos veces al día) ahora también trae los **cuestionarios**: cada uno con fecha es una tarea «Responder …» dentro de su ramo, que pasa a Hecho cuando terminas un intento (EV@ solo muestra los de tu sección). Y guarda en cada ramo su **material** (`props.material`): en la página del ramo, «Material de EV@» lo lista por sección, plegable, con enlaces que abren EV@ en otra pestaña (no se copia ningún archivo). La copia deja la hora en `props.eva_al_dia`, y el aviso de datos viejos del paso 114 suma «La copia de EV@» (más de 2 días). Hay que volver a publicar la función `eva` | — | — | `supabase/functions/eva/plan.ts` (`material`, `Pendiente`), `eva/index.ts`, `docs/js/universidad.js`, `docs/js/frescura.js` (`ultimo()` por fuente), `supabase/functions/mcp/servidor.ts`, `tests/eva.test.ts`, `estilos.css` |
 | 116 | **Vistas por carpeta.** En Archivos, el botón «Editar vista» (arriba a la derecha de cada carpeta) la arma por secciones, de arriba hacia abajo. En cada sección eliges **qué muestra** (sus carpetas, lo suelto, todo lo de adentro, todas las de una categoría de adentro como las tareas de todos los ramos, o lo de una subcarpeta) y **cómo se ve** (tarjetas, fila que se desliza, lista, tablero por estado o calendario de 5 semanas). Se guarda en tu cuenta para **solo esta carpeta** o para **todas las de su categoría**; sin vista propia, una carpeta usa la de su categoría y si no, la de siempre. Nuevo docs/js/secciones.js. Sin SQL (usa la tabla disposiciones). |
+| 117 | **Editar los apartados.** Cada apartado a pantalla completa (Salud, Finanzas, Universidad, Proyectos, Ajustes) trae arriba a la derecha «Editar apartado»: cada pieza se sube, se baja, pasa a la columna de al lado o se quita, abajo de cada columna «+ Agregar pieza…» trae cualquier pieza de la web (agrupadas por el apartado donde viven) y arriba de cada columna se cambia su ancho o se suma una columna nueva. «Guardar» lo deja en tu cuenta (tabla disposiciones, llave `apartado:<id>`); «Volver a la de siempre» lo borra. Sin editar, todo se ve igual que antes: los apartados de siempre ya eran plantillas de piezas en apartados.js. Una pieza que falla fuera de su apartado avisa en vez de dejar el apartado en blanco. Archivos no se edita (`editable: false`). Nuevo docs/js/editar.js. Sin SQL. |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 116, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 118, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
@@ -207,7 +208,7 @@ Lo que viene va con nombre, sin número: el número se pone recién al empezar e
 | Hecho | Finanzas (pasos 83 a 87) |
 | Después | Chat con Martita en la web |
 | Después | Google Calendar en los dos sentidos |
-| Después | Modo editar la interfaz |
+| Hecho | Modo editar los apartados (paso 117) |
 | Después | Varios usuarios |
 
 ## Cómo está ordenada la web
@@ -227,6 +228,7 @@ docs/js/nuevo.js     el botón "+ Nuevo": qué se crea según el apartado (lista
 docs/js/calendario.js el cajón del calendario (día, semana, mes) y su editor de eventos
 docs/js/postits.js   lo del Inbox como post-its alrededor de las secciones del escritorio
 docs/js/widgets.js   las ventanas como piezas (widgets) y cómo se arma un apartado con sus columnas
+docs/js/editar.js    editar un apartado: mover, quitar y agregar piezas, anchos y columnas; se guarda en tu cuenta
 docs/js/productividad.js tus proyectos y sus tareas
 docs/js/proyectos.js la página Proyectos: índice, cabecera, tablero y lo de adentro
 docs/js/objetivos.js cómo se mide cada objetivo (cuánto llevas, cuánto tiempo pasó, si vas atrasado)
