@@ -196,10 +196,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 116 | **Vistas por carpeta.** En Archivos, el botón «Editar vista» (arriba a la derecha de cada carpeta) la arma por secciones, de arriba hacia abajo. En cada sección eliges **qué muestra** (sus carpetas, lo suelto, todo lo de adentro, todas las de una categoría de adentro como las tareas de todos los ramos, o lo de una subcarpeta) y **cómo se ve** (tarjetas, fila que se desliza, lista, tablero por estado o calendario de 5 semanas). Se guarda en tu cuenta para **solo esta carpeta** o para **todas las de su categoría**; sin vista propia, una carpeta usa la de su categoría y si no, la de siempre. Nuevo docs/js/secciones.js. Sin SQL (usa la tabla disposiciones). |
 | 117 | **Editar los apartados.** Cada apartado a pantalla completa (Salud, Finanzas, Universidad, Proyectos, Ajustes) trae arriba a la derecha «Editar apartado»: cada pieza se sube, se baja, pasa a la columna de al lado o se quita, abajo de cada columna «+ Agregar pieza…» trae cualquier pieza de la web (agrupadas por el apartado donde viven) y arriba de cada columna se cambia su ancho o se suma una columna nueva. «Guardar» lo deja en tu cuenta (tabla disposiciones, llave `apartado:<id>`); «Volver a la de siempre» lo borra. Sin editar, todo se ve igual que antes: los apartados de siempre ya eran plantillas de piezas en apartados.js. Una pieza que falla fuera de su apartado avisa en vez de dejar el apartado en blanco. Archivos no se edita (`editable: false`). Nuevo docs/js/editar.js. Sin SQL. |
 | 118 | **Editor de apartados con arrastre.** En «Editar apartado» cada pieza se agarra de su manija ⋮⋮ y se arrastra a cualquier lugar (otra columna o entre piezas): las demás se corren con animación y al soltar la pieza aterriza en su hueco. A la derecha aparece el panel «Agregar» con todas las piezas (buscador, pestañas «De este apartado» / «Todas»); se arrastran al lugar o se tocan para sumarlas. Arriba queda la barra de edición con Deshacer / Rehacer (también Ctrl+Z y Ctrl+Shift+Z), «Volver a la de siempre», Cancelar y Guardar. Cada pieza trae Duplicar y Quitar; con teclado, flechas mueven y Supr quita. En el celular el panel es una bandeja abajo y las columnas se ven apiladas. Respeta «reducir movimiento». Sin SQL. |
+| 120 | **Insignias vivas en la barra.** Cada ícono de la barra (y del dock del teléfono) muestra con un número lo que pide atención: en Escritorio las tareas atrasadas (rojo) o las de hoy; en Universidad las entregas, evaluaciones y tareas de los próximos 7 días (amarillo si vence hoy o mañana, rojo si algo se atrasó); en Salud los hábitos de hoy que faltan. Al pasar el mouse, el globo dice qué es. Es genérico: un apartado suma su insignia con `pendiente()` en apartados.js. Sin SQL. |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 119, sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 121; el 119 lo tiene reservado «agrandar piezas y vista del celular», sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
@@ -211,6 +212,10 @@ Lo que viene va con nombre, sin número: el número se pone recién al empezar e
 | Después | Google Calendar en los dos sentidos |
 | Hecho | Modo editar los apartados (paso 117) |
 | Hecho | Editor con arrastre, panel de piezas y deshacer (paso 118) |
+| Hecho | Barra lateral: insignias vivas (paso 120) |
+| Ahora | Barra lateral: buscador con la barra espaciadora |
+| Después | Barra lateral: isla que respira y barra que se esconde sola |
+| Después | Barra lateral: Martita en la barra |
 | Después | Varios usuarios |
 
 ## Cómo está ordenada la web

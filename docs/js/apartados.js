@@ -29,8 +29,9 @@
 //   abre      (opcional, con lugar) el apartado completo de esta sección: sale «Abrir Finanzas ›» junto al título
 import { dibujar as dibujarMapa, ajustarMapa } from "./mapa.js";
 import { dibujarCalendario, iniciarCalendario } from "./calendario.js";
-import { semestreActual } from "./universidad.js";
-import { BLOQUES } from "./salud.js";
+import { semestreActual, pendienteDeLaU } from "./universidad.js";
+import { BLOQUES, pendienteDeSalud } from "./salud.js";
+import { pendienteDeHoy } from "./hoy.js";
 import { BLOQUES as FINANZAS } from "./finanzas.js";
 
 export const APARTADOS = [
@@ -45,6 +46,7 @@ export const APARTADOS = [
       { nombre: "Clásica", icono: "bloques", columnas: [{ ancho: 3, widgets: ["tareas-de-hoy"] }, { ancho: 2, widgets: ["el-tiempo", "tu-dia"] }] },
     ],
     icono: "sol",
+    pendiente: pendienteDeHoy, // paso 120: su insignia en la barra (carcasa.js); al ser del escritorio, va en el botón Escritorio
   },
   // Paso 61: tus 7 días de un vistazo (semana.js), arriba de Hoy en el escritorio infinito.
   {
@@ -87,6 +89,7 @@ export const APARTADOS = [
     titulo: () => ["Universidad", semestreActual()].filter(Boolean).join(" · "),
     columnas: [{ ancho: 3, widgets: ["ramos", "ramo"] }, { ancho: 1.1, widgets: ["lo-que-viene"] }],
     icono: "examen",
+    pendiente: pendienteDeLaU,
   },
   // Paso 63: tu salud completa (salud.js). Va a pantalla completa.
   // Paso 69: tres bloques, Ejercicio, Hábitos y Dieta (paso 67, como Samsung Health); en cada uno, lo de hoy a la
@@ -105,6 +108,7 @@ export const APARTADOS = [
       { nombre: "Cómo vas", ancho: 1.5, widgets: ["equilibrio", "semana-comida", "despensa"] },
     ],
     icono: "salud",
+    pendiente: pendienteDeSalud,
   },
   // Paso 83: tu plata (finanzas.js), como Salud: tres bloques, Gastos, Ahorro y Suscripciones, con lo de ahora a la
   // izquierda y cómo vas a la derecha. Va a pantalla completa.

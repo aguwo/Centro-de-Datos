@@ -199,6 +199,37 @@ function armarDock() {
   $("dock").replaceChildren(el("div", { className: "marca", ariaHidden: "true" }),
     ...arriba, el("div", { className: "pie" }, ...botones.filter((b) => b.abajo), perfil, retraer));
   marcar();
+  insignias();
+}
+
+// Paso 120: insignias vivas. Un apartado puede traer pendiente() (apartados.js), que dice cuánto pide tu atención:
+// { n, tono, texto } o nada. Su botón muestra el número sobre el ícono (tono: "alerta" rojo, "aviso" amarillo o
+// "acento") y el texto en el globo. Los del escritorio (los que tienen "lugar") se suman en el botón Escritorio,
+// con el tono más urgente. Se recalcula cada vez que llegan datos y cada 10 minutos (por si cambió el día).
+const URGENCIA = ["acento", "aviso", "alerta"];
+function juntar(lista) {
+  const p = lista.filter(Boolean);
+  return p.length ? { n: p.reduce((t, x) => t + x.n, 0), texto: p.map((x) => x.texto).join(" · "),
+    tono: URGENCIA[Math.max(...p.map((x) => URGENCIA.indexOf(x.tono)))] } : null;
+}
+function insignias() {
+  const pedir = (a) => { try { return a.pendiente?.() ?? null; } catch (e) { console.error(e); return null; } }; // una que falle no apaga las demás
+  const de = new Map(APARTADOS.map((a) => [a.id, pedir(a)]));
+  de.set(ESCRITORIO.id, juntar(APARTADOS.filter((a) => a.lugar).map((a) => de.get(a.id))));
+  for (const b of $("dock").querySelectorAll("[data-apartado], [data-escritorio]")) ponerInsignia(b, de.get(b.dataset.apartado ?? b.dataset.escritorio));
+}
+// El número aparece con un saltito y, si cambia, salta de nuevo; el texto va en el globo, antes del atajo.
+function ponerInsignia(b, p) {
+  let i = b.querySelector(".pendiente"), d = b.querySelector(".detalle");
+  if (!p) { i?.remove(); d?.remove(); b.removeAttribute("aria-description"); return; }
+  const n = p.n > 9 ? "9+" : String(p.n);
+  if (!i) b.append(i = el("span", { className: "pendiente llega", ariaHidden: "true" }));
+  else if (i.textContent !== n) { i.classList.remove("llega", "salta"); void i.offsetWidth; i.classList.add("salta"); }
+  i.textContent = n;
+  i.dataset.tono = p.tono;
+  if (!d) { const e = b.querySelector(".etiqueta"); d = el("span", { className: "detalle" }); e.insertBefore(d, e.querySelector("kbd")); }
+  d.textContent = p.texto;
+  b.setAttribute("aria-description", p.texto);
 }
 // Un botón de la barra: su ícono (por su nombre en dibujos.js) y el globo con su nombre y, si tiene, su atajo.
 function boton(nombre, dibujo, accion, tecla) {
@@ -276,6 +307,8 @@ export function iniciarCarcasa() {
   new ResizeObserver(pastillas).observe($("pastillas")); // al aparecer la app (entraste) o girar el teléfono, la elegida vuelve al medio
   deslizar();
   document.addEventListener("barra", armarDock); // cambiaste la barra en Ajustes (apariencia.js avisa)
+  document.addEventListener("datos", insignias);
+  setInterval(insignias, 10 * 60e3);
   moverIman = iman($("dock"));
   new ResizeObserver(() => { moverMarca(); moverIman(); }).observe($("dock")); // cambió el estilo o el tamaño: la marca se acomoda
   atajos();
