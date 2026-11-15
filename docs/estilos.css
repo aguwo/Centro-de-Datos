@@ -2112,7 +2112,7 @@ button.nodo-grafo:hover .insignia { transform: scale(1.12); }
 :hover::-webkit-scrollbar-thumb { background-color: var(--barrita-fuerte); }
 ::-webkit-scrollbar-button, ::-webkit-scrollbar-corner { display: none; background: transparent; }
 
-/* Pasos 117 y 118: editar un apartado (editar.js). El botón va arriba a la derecha, a la altura del título. Mientras
+/* Pasos 117 a 119: editar un apartado (editar.js). El botón va arriba a la derecha, a la altura del título. Mientras
    editas: la barra de arriba queda pegada al tope, el panel «Agregar» entra desde la derecha (en el celular, desde
    abajo), cada pieza se marca con una línea punteada y lleva su agarre ⋮⋮ y, al pasar por encima, Duplicar y Quitar.
    Al arrastrar, la copia flota sobre todo y un hueco marca dónde va a caer. */
@@ -2169,12 +2169,41 @@ button.nodo-grafo:hover .insignia { transform: scale(1.12); }
 .arrastrada { display: none !important; }
 .hueco { border-radius: var(--radio); border: 2px dashed var(--acento); background: color-mix(in srgb, var(--acento) 12%, transparent); min-height: 56px; }
 .fantasma { position: fixed; z-index: 100; margin: 0; pointer-events: none; transform: scale(1.03) rotate(-1deg); box-shadow: 0 24px 60px rgba(0,0,0,.3); border-radius: var(--radio); opacity: .96; transition: transform .2s var(--suave-curva); }
-.fantasma .controles-pieza, .fantasma .agarre { display: none; }
+.fantasma .controles-pieza, .fantasma .agarre, .fantasma .esquina { display: none; }
+/* Paso 119: la esquina para agrandar (abajo a la derecha), la medida mientras tiras, y una pieza con alto propio
+   (si su contenido no cabe, se desplaza dentro). */
+.esquina { position: absolute; right: -9px; bottom: -9px; z-index: 2; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: var(--vidrio-fuerte); box-shadow: var(--sombra); cursor: nwse-resize; touch-action: none; opacity: 0; scale: .8; transition: opacity .18s, scale .18s var(--suave-curva), background-color .15s; }
+.esquina::before { content: ""; position: absolute; inset: 7px; border-right: 2px solid var(--suave); border-bottom: 2px solid var(--suave); border-radius: 0 0 4px 0; }
+.pieza-editable:hover .esquina, .esquina:focus-visible, .agrandando .esquina { opacity: 1; scale: 1; }
+.esquina:hover, .esquina:focus-visible, .agrandando .esquina { background: var(--acento); }
+.esquina:hover::before, .esquina:focus-visible::before, .agrandando .esquina::before { border-color: var(--sobre-acento); }
+.agrandando { outline-color: var(--acento); outline-style: solid; }
+body:has(.agrandando), body:has(.agrandando) * { cursor: nwse-resize !important; user-select: none; }
+.medida { position: absolute; right: 22px; bottom: -14px; z-index: 3; padding: 3px 10px; border-radius: 999px; background: var(--acento); color: var(--sobre-acento); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; box-shadow: var(--sombra); }
+.medida:empty { display: none; }
+.con-alto { flex: none !important; min-height: 0; overflow: auto; }
+.editando .columnas { transition: grid-template-columns .32s var(--suave-curva); }
+.editando .columnas:has(.agrandando) { transition: none; }
+/* «PC | Celular» en la barra: el celular se ve como un teléfono angosto al centro, con todo en una columna. */
+.como-se-ve { margin-left: 10px; }
+.como-se-ve button { height: 30px !important; padding: 0 12px !important; font-size: 13px; }
+.con-widgets.vista-celular > :is(.columnas, .grupos-widgets) { width: 390px; max-width: 100%; margin: 8px auto 0; padding: 18px 14px 28px; box-sizing: border-box; border: 10px solid color-mix(in srgb, var(--texto) 16%, transparent); border-radius: 46px; background: color-mix(in srgb, var(--fondo, #000) 30%, transparent); box-shadow: var(--sombra); animation: aparecer-celular .38s var(--suave-curva); }
+.vista-celular .columnas { display: flex; flex-direction: column; gap: 20px; }
+.vista-celular .columna > .filtra, .vista-celular .columna > .pieza-editable:has(> .filtra) { order: -1; }
+.vista-celular .fila-ventanas { grid-auto-flow: row; }
+.vista-celular .controles-columna { display: none; }
+.vista-celular .esquina { cursor: ns-resize; }
+.vista-celular .selector-bloques { gap: 8px; }
+.vista-celular .tarjeta-bloque { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; padding: 12px 6px; min-height: 0; }
+.vista-celular :is(.texto-bloque small, .tarjeta-bloque .anillo-avance) { display: none; }
+@keyframes aparecer-celular { from { opacity: 0; transform: scale(.97); } }
 /* En el teléfono y la tableta los botones de cada pieza se ven siempre (no hay mouse que pase por encima). */
 @media (pointer: coarse) {
   .controles-pieza { opacity: 1; transform: none; pointer-events: auto; }
   .controles-pieza .boton-icono, .controles-columna .boton-icono { width: 40px; height: 40px; }
   .agarre { width: 56px; height: 30px; line-height: 30px; }
+  .esquina { opacity: 1; scale: 1; width: 32px; height: 32px; right: -12px; bottom: -12px; }
+  .esquina::before { inset: 10px; }
 }
 @media (max-width: 700px) {
   /* Editando en el teléfono, cada columna vuelve a ser una caja (una debajo de otra), para ver a cuál va cada pieza. */
@@ -2182,13 +2211,15 @@ button.nodo-grafo:hover .insignia { transform: scale(1.12); }
   .con-widgets.editando { padding-right: 16px; padding-bottom: 200px; }
   .editando .editar-apartado { right: 16px; }
   .barra-edicion { margin-right: 52px; flex-wrap: wrap; }
+  .como-se-ve { display: none !important; } /* ya estás en el celular */
+  .esquina { opacity: 1; scale: 1; cursor: ns-resize; }
   .panel-piezas { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; height: 180px; animation-name: subir; }
   .panel-piezas h3, .panel-piezas .segmento { display: none; }
   .lista-piezas { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
   .lista-piezas h5 { display: none; }
   .tarjeta-pieza { flex: 0 0 200px; }
 }
-@media (prefers-reduced-motion: reduce) { .barra-edicion, .panel-piezas { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .barra-edicion, .panel-piezas, .con-widgets.vista-celular > * { animation: none; } .editando .columnas, .esquina { transition: none; } }
 /* Mientras editas, «+ Nuevo» y «Revisar el día» se esconden: el panel ocupa ese lado. */
 body:has(.con-widgets.editando:not(.oculto)) :is(#nuevo, #revisar, #cajones) { visibility: hidden; }
 

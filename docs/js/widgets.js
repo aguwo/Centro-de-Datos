@@ -39,7 +39,7 @@ import { icono } from "./dibujos.js";
 import { selectorDeBloques } from "./bloques.js";
 import { modo, fondo, barra, vistas, ventanas, cuenta } from "./ajustes.js";
 import { APARTADOS } from "./apartados.js";
-import { CAMBIOS, llaveEditada, piezaEditable, controlesDeColumna, barraDeEdicion, panelDePiezas, arrastrar, conViaje, guardarEditada } from "./editar.js";
+import { CAMBIOS, cuerpo, ponerAnchos, llaveEditada, piezaEditable, controlesDeColumna, barraDeEdicion, panelDePiezas, arrastrar, conViaje, guardarEditada } from "./editar.js";
 
 export const WIDGETS = {
   "tareas-de-hoy": { titulo: "Tareas de hoy", crece: true, crear: tareasDeHoy },
@@ -133,9 +133,15 @@ function caja() {
 const lista = (x) => (Array.isArray(x) ? x : []);
 // Una función de redibujar que, si falla, lo anota en la consola en vez de cortar las de las otras ventanas.
 const seguro = (f) => () => { try { f?.(); } catch (e) { console.error(e); } };
-// Los widgets de una columna: cada uno es un id o una fila de ids (paso 81). Los que no existen se saltan.
-const piezas = (ws) => lista(ws).map((w) => (Array.isArray(w) ? w.filter((id) => WIDGETS[id]) : w))
-  .filter((w) => (Array.isArray(w) ? w.length : WIDGETS[w]));
+// Los widgets de una columna: cada uno es un id o una fila de ids (paso 81), o { pieza, alto } si le diste un alto
+// (paso 119). Los que no existen se saltan.
+const existe = (w) => (Array.isArray(w) ? w.filter((id) => WIDGETS[id]) : w);
+const vale = (w) => (Array.isArray(w) ? w.length : WIDGETS[w]);
+const piezas = (ws) => lista(ws).map((w) => {
+  const p = existe(cuerpo(w));
+  if (!vale(p)) return null;
+  return Number(w?.alto) > 0 ? { pieza: p, alto: Math.round(Number(w.alto)) } : p;
+}).filter(Boolean);
 const normal = (columnas) => lista(columnas)
   .map((c) => (c?.bloque ? { ...c, bloque: String(c.bloque) }
     : { ancho: Number(c?.ancho) > 0 ? Number(c.ancho) : 1, costado: c?.costado === true, nombre: c?.nombre, widgets: piezas(c?.widgets) }))
@@ -166,7 +172,6 @@ export function selectorDeVistas(a, redibujar) {
 // Paso 105: un apartado con ajustable: true deja cambiar el ancho de sus columnas arrastrando el borde entre ellas
 // (en el PC; con el teclado, las flechas sobre el borde). Los anchos se recuerdan en este navegador.
 const MINIMO = 180; // lo más angosta que queda una columna, en px
-const ponerAnchos = (g, anchos) => g.style.setProperty("--columnas", anchos.map((w) => `minmax(0, ${w}fr)`).join(" "));
 function anchosGuardados(id, k) {
   try { const a = JSON.parse(localStorage.getItem("anchos:" + id)); return Array.isArray(a) && a.length === k ? a : null; } catch { return null; }
 }
@@ -225,13 +230,17 @@ export function montar(a, extra) {
     onclick: () => (ctx.editando ? salir() : ctx.cambiar({ editando: disposicionDe(a), antes: [], despues: [] })) }, icono("secciones")));
   // Cada cambio deja el borrador anterior para deshacer (hasta 50) y se anima (las piezas viajan a su lugar nuevo).
   const HISTORIA = 50;
-  const editar = (cambio, ...x) => conViaje(seccion, () =>
-    ctx.cambiar({ editando: CAMBIOS[cambio](ctx.editando, ...x), antes: [...ctx.antes, ctx.editando].slice(-HISTORIA), despues: [] }));
+  // Si el cambio vino del teclado (el agarre o la esquina de una pieza), el foco vuelve a ese botón en la pieza rearmada.
+  const editar = (cambio, ...x) => {
+    const f = document.activeElement, clave = seccion.contains(f) && f.closest("[data-clave]")?.dataset.clave, cual = f?.classList?.[0];
+    conViaje(seccion, () => ctx.cambiar({ editando: CAMBIOS[cambio](ctx.editando, ...x), antes: [...ctx.antes, ctx.editando].slice(-HISTORIA), despues: [] }));
+    if (clave) seccion.querySelector(`[data-clave="${CSS.escape(clave)}"] > .${cual}`)?.focus();
+  };
   const deshacer = () => ctx.antes.length && conViaje(seccion, () =>
     ctx.cambiar({ editando: ctx.antes.at(-1), antes: ctx.antes.slice(0, -1), despues: [...ctx.despues, ctx.editando] }));
   const rehacer = () => ctx.despues.length && conViaje(seccion, () =>
     ctx.cambiar({ editando: ctx.despues.at(-1), despues: ctx.despues.slice(0, -1), antes: [...ctx.antes, ctx.editando] }));
-  const salir = () => ctx.cambiar({ editando: null, antes: [], despues: [] });
+  const salir = () => { edicion.alSalir(); ctx.cambiar({ editando: null, antes: [], despues: [] }); };
   function guardar(columnas = normal(ctx.editando)) {
     guardarEditada(a, columnas, normal(columnasDe(a)));
     salir();
@@ -247,7 +256,8 @@ export function montar(a, extra) {
   const agregar = (id) => { const ci = primera(); if (ci >= 0) editar("poner", ci, Infinity, id); };
   const panel = editable && panelDePiezas(a, caja(), { agregar,
     alArrastrar: (e, tarjeta, id) => arrastrar(e, { seccion, pieza: tarjeta, soltar: (d) => d && editar("poner", d.ci, d.pi, id), tocar: () => agregar(id) }) });
-  const edicion = editable && barraDeEdicion(a, { deshacer, rehacer, volver: () => guardar(null), cancelar: salir, guardar: () => guardar() });
+  const edicion = editable && barraDeEdicion(a, { deshacer, rehacer, volver: () => guardar(null), cancelar: salir, guardar: () => guardar(),
+    ver: (celular) => conViaje(seccion, () => seccion.classList.toggle("vista-celular", celular)) });
 
   function armar(columnas) {
     const redibujar = [];
@@ -267,13 +277,17 @@ export function montar(a, extra) {
     const grupos = [];
     for (const c of centro) if (c.bloque || !grupos.length) grupos.push({ b: c.bloque ? c : null, cols: c.bloque ? [] : [c] }); else grupos.at(-1).cols.push(c);
     const grillaDe = (cols) => {
-      const pieza = (w) => (Array.isArray(w) ? el("div", { className: "fila-ventanas" }, ...w.map(ventana)) : ventana(w));
+      const pieza = (w) => {
+        const p = cuerpo(w), x = Array.isArray(p) ? el("div", { className: "fila-ventanas" }, ...p.map(ventana)) : ventana(p);
+        if (w.alto) { x.classList.add("con-alto"); x.style.height = w.alto + "px"; }
+        return x;
+      };
       // Editando, cada pieza lleva sus controles y cada columna los suyos arriba y «+ Agregar pieza…» abajo.
       // (Van en una caja aparte: una ventana se vuelve a llenar al redibujarse y se llevaría los controles.)
       // Paso 118: cada pieza lleva una clave (su id y cuántas veces va), para animar su viaje cuando cambia de lugar.
       const conControles = (ci) => (w, pi) => {
         if (!b) return pieza(w);
-        const k = String(w), n = (vistas.get(k) ?? 0) + 1;
+        const k = String(cuerpo(w)), n = (vistas.get(k) ?? 0) + 1;
         vistas.set(k, n);
         return piezaEditable(pieza(w), { clave: k + "#" + n, ci, pi, b, editar,
           alArrastrar: (e, caja) => arrastrar(e, { seccion, pieza: caja, propia: true, soltar: (d) => d && editar("llevar", [ci, pi], [d.ci, d.pi]) }) });
@@ -282,6 +296,7 @@ export function montar(a, extra) {
         const col = el("div", { className: "columna" }, b ? controlesDeColumna(b, ci, editar) : "", c.nombre ? el("h2", { textContent: c.nombre }) : "",
           ...c.widgets.map(conControles(ci)), b ? el("div", { className: "final-columna" }) : "");
         col.dataset.ci = ci;
+        col.dataset.ancho = c.ancho ?? 1;
         return col; }));
       const anchos = (a.ajustable && anchosGuardados(a.id, cols.length)) || cols.map((c) => c.ancho ?? 1);
       ponerAnchos(g, anchos);
