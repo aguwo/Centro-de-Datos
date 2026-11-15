@@ -5,6 +5,9 @@
 // Paso 118: las piezas se arrastran (con el mouse o el dedo, desde su agarre ⋮⋮) y las demás se corren para hacerle
 // lugar; a la derecha, el panel «Agregar» trae todas las piezas para arrastrarlas (o tocarlas) al apartado; y todo se
 // deshace y rehace (botones, Ctrl+Z y Ctrl+Shift+Z). Cada cambio se anima: lo que se movió viaja a su lugar nuevo.
+// Paso 119: cada pieza se agranda tirando de su esquina (abajo a la derecha): hacia el lado cambia el ancho de su
+// columna y hacia abajo su alto (una pieza con alto se guarda como { pieza, alto }). Y arriba se elige ver el
+// apartado como en el PC o como en el celular.
 import { el, db, datos, escribir, enLaWeb, sinTildes } from "./base.js";
 import { icono } from "./dibujos.js";
 
@@ -17,6 +20,11 @@ const conColumna = (b, ci, cambio) => b.map((c, j) => (j === ci ? { ...c, ...cam
 const insertar = (xs, i, x) => [...xs.slice(0, i), x, ...xs.slice(i)];
 // Una pieza solo pasa a otra columna si es de las normales (no un título de bloque ni el costado).
 export const puedeIrA = (b, j) => !!b[j] && !b[j].bloque && !b[j].costado;
+// Una pieza es un id, una fila de ids (lado a lado) o { pieza, alto } si le diste un alto (px).
+export const cuerpo = (w) => w?.pieza ?? w;
+const conAlto = (w, alto) => (alto ? { pieza: cuerpo(w), alto } : cuerpo(w));
+const MIN_ANCHO = 0.5, MAX_ANCHO = 4, MIN_ALTO = 80;
+const cuarto = (x) => Math.min(MAX_ANCHO, Math.max(MIN_ANCHO, Math.round(x * 4) / 4));
 export const CAMBIOS = {
   // Lleva la pieza [ci, pi] a [cj, pj]; pj cuenta sin la pieza que se mueve (como se ve mientras la arrastras).
   llevar(b, [ci, pi], [cj, pj]) {
@@ -28,7 +36,10 @@ export const CAMBIOS = {
   poner: (b, ci, pi, id) => conColumna(b, ci, (c) => ({ widgets: insertar(c.widgets, Math.min(pi, c.widgets.length), id) })),
   duplicar: (b, ci, pi) => CAMBIOS.poner(b, ci, pi + 1, b[ci].widgets[pi]),
   quitar: (b, ci, pi) => conColumna(b, ci, (c) => ({ widgets: c.widgets.filter((_, k) => k !== pi) })),
-  ancho: (b, ci, d) => conColumna(b, ci, (c) => ({ ancho: Math.max(0.5, Math.round(((c.ancho ?? 1) + d) * 4) / 4) })),
+  ancho: (b, ci, d) => conColumna(b, ci, (c) => ({ ancho: cuarto((c.ancho ?? 1) + d) })),
+  // El tamaño que quedó al tirar de la esquina: el ancho de la columna y el alto de la pieza (null = el suyo).
+  tamano: (b, ci, pi, { ancho, alto }) => conColumna(b, ci, (c) => ({ ancho: ancho ?? c.ancho,
+    widgets: c.widgets.map((w, k) => (k === pi && alto !== undefined ? conAlto(w, alto && Math.max(MIN_ALTO, Math.round(alto))) : w)) })),
   columna: (b, ci) => insertar(b, ci + 1, { ancho: 1, widgets: [] }),
 };
 
@@ -113,6 +124,50 @@ export function arrastrar(e, { seccion, pieza, propia, soltar, tocar }) {
   addEventListener("pointercancel", terminar);
 }
 
+// ---------- Agrandar ----------
+// Los anchos de las columnas de una grilla (cada uno en partes, «fr»).
+export const ponerAnchos = (g, anchos) => g.style.setProperty("--columnas", anchos.map((w) => `minmax(0, ${w}fr)`).join(" "));
+// Tirar de la esquina de una pieza: hacia abajo cambia su alto y, si sus columnas van lado a lado, hacia el lado cambia
+// el ancho de su columna (de a cuartos). Mientras tiras se ve en vivo, con la medida al lado; al soltar se llama
+// listo({ ancho, alto }) con lo que cambió.
+export function agrandar(e, { caja, contenido, columna, listo }) {
+  if (e.button > 0) return;
+  e.preventDefault();
+  const grilla = columna.parentElement, cols = [...grilla.children], i = cols.indexOf(columna);
+  const anchos = cols.map((c) => Number(c.dataset.ancho) || 1), lado = getComputedStyle(grilla).display === "grid" && cols.length > 1;
+  const r = contenido.getBoundingClientRect(), w = cols.map((c) => c.getBoundingClientRect().width);
+  const total = w.reduce((x, y) => x + y), otros = anchos.reduce((x, y) => x + y) - anchos[i];
+  // El ancho (en partes) que hace que la columna mida lo de ahora más dx px, con las demás igual que están.
+  const partes = (dx) => { const quiere = Math.min(w[i] + dx, total - 40); return cuarto((otros * quiere) / (total - quiere)); };
+  const medida = el("span", { className: "medida" });
+  const antes = contenido.style.height;
+  let ancho = anchos[i], alto; // alto queda sin tocar hasta que tires hacia abajo o arriba
+  caja.classList.add("agrandando");
+  caja.append(medida);
+  const mover = (m) => {
+    const dy = m.clientY - e.clientY;
+    if (alto !== undefined || Math.abs(dy) > UMBRAL) {
+      alto = Math.max(MIN_ALTO, Math.round((enLaWeb(r.height) + enLaWeb(dy)) / 10) * 10);
+      contenido.style.height = alto + "px";
+    }
+    if (lado) { ancho = partes(m.clientX - e.clientX); ponerAnchos(grilla, anchos.with(i, ancho)); }
+    medida.textContent = [alto && `Alto ${alto} px`, lado && `Ancho ${String(ancho).replace(".", ",")}`].filter(Boolean).join(" · ");
+  };
+  const soltar = () => {
+    removeEventListener("pointermove", mover);
+    removeEventListener("pointerup", soltar);
+    removeEventListener("pointercancel", soltar);
+    caja.classList.remove("agrandando");
+    medida.remove();
+    const cambio = { ancho: lado && ancho !== anchos[i] ? ancho : undefined, alto };
+    if (cambio.ancho === undefined && alto === undefined) return (contenido.style.height = antes);
+    listo(cambio);
+  };
+  addEventListener("pointermove", mover);
+  addEventListener("pointerup", soltar);
+  addEventListener("pointercancel", soltar);
+}
+
 // Dónde caería algo soltado en el punto p: la columna visible bajo el puntero (o la más cercana de esa fila) y antes
 // de qué pieza. pi cuenta sin la pieza que se está arrastrando.
 function destinoEn(seccion, p) {
@@ -132,11 +187,13 @@ function destinoEn(seccion, p) {
 const boton = (contenido, titulo, hacer, apagado, clase = "boton-icono") => el("button", { type: "button", className: clase, title: titulo,
   ariaLabel: titulo, disabled: !!apagado, onclick: hacer }, contenido);
 
-// Una pieza mientras editas: su contenido, el agarre ⋮⋮ para arrastrarla (o moverla con las flechas, Supr la quita)
-// y, al pasar por encima o tocarla, Duplicar y Quitar.
+// Una pieza mientras editas: su contenido, el agarre ⋮⋮ para arrastrarla (o moverla con las flechas, Supr la quita),
+// la esquina para agrandarla (o, con el foco en ella, las flechas; doble clic le devuelve su alto) y, al pasar por
+// encima o tocarla, Duplicar y Quitar.
 export function piezaEditable(contenido, { clave, ci, pi, b, editar, alArrastrar }) {
   const agarre = el("button", { type: "button", className: "agarre", title: "Arrastrar (o mover con las flechas)", ariaLabel: "Mover pieza", textContent: "⋮⋮" });
-  const caja = el("div", { className: "pieza-editable" }, contenido, agarre,
+  const esquina = el("button", { type: "button", className: "esquina", title: "Agrandar (doble clic: su alto de siempre)", ariaLabel: "Cambiar el tamaño" });
+  const caja = el("div", { className: "pieza-editable" }, contenido, agarre, esquina,
     el("div", { className: "controles-pieza" },
       boton(icono("secciones"), "Duplicar", () => editar("duplicar", ci, pi)),
       boton("×", "Quitar", () => editar("quitar", ci, pi))));
@@ -148,6 +205,15 @@ export function piezaEditable(contenido, { clave, ci, pi, b, editar, alArrastrar
       ArrowLeft: puedeIrA(b, ci - 1) && ["cambiarDeColumna", ci, pi, -1], ArrowRight: puedeIrA(b, ci + 1) && ["cambiarDeColumna", ci, pi, 1],
       Delete: ["quitar", ci, pi], Backspace: ["quitar", ci, pi] }[e.key];
     if (accion) { e.preventDefault(); editar(...accion); }
+  };
+  const tamano = (cambio) => editar("tamano", ci, pi, cambio);
+  esquina.onpointerdown = (e) => agrandar(e, { caja, contenido, columna: caja.parentElement, listo: tamano });
+  esquina.ondblclick = () => b[ci].widgets[pi]?.alto && tamano({ alto: null });
+  esquina.onkeydown = (e) => {
+    const alto = () => enLaWeb(contenido.getBoundingClientRect().height);
+    const cambio = { ArrowUp: { alto: alto() - 40 }, ArrowDown: { alto: alto() + 40 },
+      ArrowLeft: { ancho: cuarto((b[ci].ancho ?? 1) - 0.25) }, ArrowRight: { ancho: cuarto((b[ci].ancho ?? 1) + 0.25) } }[e.key];
+    if (cambio) { e.preventDefault(); tamano(cambio); }
   };
   return caja;
 }
@@ -161,14 +227,20 @@ export const controlesDeColumna = (b, ci, editar) => el("div", { className: "con
   boton("⊞", "Columna nueva a la derecha", () => editar("columna", ci)));
 
 // La barra de arriba mientras editas. Se arma una vez; poner({ antes, despues, tuya }) prende o apaga sus botones.
-export function barraDeEdicion(a, { deshacer, rehacer, volver, cancelar, guardar }) {
+// «PC | Celular» llama a ver(celular) para ver el apartado como queda en cada uno (en el celular no hace falta).
+export function barraDeEdicion(a, { deshacer, rehacer, volver, cancelar, guardar, ver }) {
+  const como = [["PC", false], ["Celular", true]].map(([texto, celular]) => el("button", { type: "button", textContent: texto,
+    onclick: () => { como.forEach((x) => x.setAttribute("aria-pressed", String(x === como[+celular]))); ver(celular); } }));
+  como[0].setAttribute("aria-pressed", "true");
   const atras = boton("↶", "Deshacer (Ctrl+Z)", deshacer), adelante = boton("↷", "Rehacer (Ctrl+Shift+Z)", rehacer);
   const deSiempre = boton("Volver a la de siempre", "Volver a la de siempre", volver, false, "suave");
   const barra = el("div", { className: "barra-edicion" }, icono("secciones"), el("b", { textContent: `Editando «${a.nombre}»` }),
+    el("div", { className: "segmento como-se-ve", role: "group", ariaLabel: "Ver como en" }, ...como),
     el("span", { className: "relleno" }), atras, adelante, deSiempre,
     el("button", { type: "button", textContent: "Cancelar", onclick: cancelar }),
     el("button", { type: "button", className: "principal", textContent: "Guardar", onclick: guardar }));
   barra.poner = ({ antes, despues, tuya }) => { atras.disabled = !antes; adelante.disabled = !despues; deSiempre.hidden = !tuya; };
+  barra.alSalir = () => como[0].click(); // la próxima vez se entra viendo el PC
   return barra;
 }
 
