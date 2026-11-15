@@ -1,4 +1,4 @@
-// Paso 121: el buscador. La barra espaciadora (cuando no estás escribiendo) o la lupa de la barra abren una caja
+// Paso 121: el buscador. La barra espaciadora (cuando no estás escribiendo) abre una caja
 // arriba al centro. Escribes y aparecen los apartados y los nodos que coinciden, o un comando si empiezas con su palabra:
 //   tarea comprar pan mañana 10:00   crea la tarea, con fecha y hora si las escribes (como «Agregar tarea»)
 //   gasto 5000 almuerzo              abre «Anotar» con el monto y el nombre ya puestos (ingreso, igual)

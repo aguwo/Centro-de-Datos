@@ -106,7 +106,7 @@ export function barra(v) {
     el("p", { className: "pista", textContent: "Se ve en el computador. En el teléfono la barra es la de abajo, con el mismo orden." }));
   const dibujo = (x) => el("span", { className: "icono-barra" }, icono(x.icono));
   return conPonerAlDia(() => {
-    const p = preferencia(), todos = entradasDeLaBarra().map((e) => e.x);
+    const p = preferencia(), todos = entradasDeLaBarra().filter((e) => e.clase !== "cajon").map((e) => e.x); // los cajones no van en la barra
     estilos.marcar(p.barra);
     detalle.textContent = BARRAS[p.barra].detalle;
     porta.marcar(p.comportamiento);

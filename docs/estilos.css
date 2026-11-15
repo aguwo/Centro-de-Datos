@@ -130,7 +130,6 @@ body:not(.con-escritorio) .dock button { transition: background-color .2s ease, 
   transition-delay: 0s, calc(var(--i, 0) * 22ms + 40ms), calc(var(--i, 0) * 22ms + 40ms); }
 body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0; transform: translateY(14px) scale(.85); transition-delay: 0s; }
 @media (prefers-reduced-motion: reduce) { body:not(.con-escritorio) .dock button { transition: none; } }
-.dock .perfil { display: none; } /* tu foto: solo en las barras de íconos del computador (abajo) */
 .cara { display: block; width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
 .cara.sin-foto { display: grid; place-items: center; background: var(--resalte); }
 .cara.sin-foto .icono { width: 20px; height: 20px; }
@@ -160,10 +159,9 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 .con-escritorio .dock .etiqueta { position: static; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; opacity: 1; padding: 0; border-radius: 0;
   background: none; box-shadow: none; color: inherit; font-size: 11px; font-weight: inherit; }
 .con-escritorio .dock .etiqueta kbd, .con-escritorio .dock .marca { display: none; } /* el atajo y la marca, solo donde hay globo (abajo) */
-/* El pie: Ajustes y, a su lado, el botón para retraer la barra; pegado abajo del todo */
+/* El pie: su rayita, Archivos y Ajustes uno sobre otro y el botón para retraer la barra; pegado abajo del todo (paso 124) */
 .pie { display: contents; }
-.con-escritorio .dock .pie { display: flex; align-items: stretch; gap: 2px; margin-top: auto; }
-.con-escritorio .dock .pie > [data-apartado] { flex: 1; width: auto; min-width: 0; }
+.con-escritorio .dock .pie { display: flex; flex-direction: column; align-items: stretch; gap: 2px; margin-top: auto; }
 
 /* Solo íconos e Isla: el nombre sale como globo al pasar el mouse */
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock { overflow: visible; }
@@ -173,7 +171,6 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
   font-size: 13.5px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,.28); opacity: 0; pointer-events: none; }
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta kbd { display: inline; }
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock button:is(:hover, :focus-visible) .etiqueta { opacity: 1; }
-:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .perfil { display: grid; }
 /* Paso 93: Solo íconos, limpia: una columna centrada en alto de íconos de línea en cuadrados de 44 px, sin nombres.
    El que tiene el mouse y el elegido llevan el cuadrado translúcido (el del elegido es la .marca que viaja). Al final, tu foto */
 [data-barra="iconos"] .con-escritorio { --ancho-barra: 72px; }
@@ -213,8 +210,7 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 .con-escritorio .dock .etiqueta .detalle { display: none; }
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta .detalle { display: inline; }
 /* Paso 121: el buscador (buscador.js). Una caja de vidrio arriba al centro; los resultados entran uno tras otro.
-   La lupa va primera en la barra, un poco más tenue que los apartados. */
-.dock button.buscar { color: var(--suave); }
+   Se abre con la barra espaciadora (paso 124: sin lupa en la barra). */
 .buscador { width: min(560px, calc(100vw - 32px)); max-height: min(72vh, 540px); margin: 12vh auto auto; padding: 0; border-radius: 18px;
   background: var(--vidrio-fuerte); color: var(--texto); overflow: hidden; flex-direction: column; }
 .buscador[open] { display: flex; animation: buscador-entra .3s cubic-bezier(.34,1.3,.5,1); }
@@ -259,7 +255,7 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 /* Retraer la barra: su último botón (‹) la saca de la pantalla y el contenido toma todo el ancho;
    queda una pestaña › en el borde para volver a sacarla. Se recuerda (apariencia.js: retraida). */
 .retraer { display: none; }
-.con-escritorio .dock .retraer { display: grid; place-items: center; flex: none; width: 22px; padding: 0; color: var(--suave); font-size: 16px; }
+.con-escritorio .dock .retraer { display: grid; place-items: center; flex: none; align-self: center; width: 22px; padding: 0; color: var(--suave); font-size: 16px; }
 [data-barra="isla"] .con-escritorio .dock .retraer { width: 100%; aspect-ratio: auto; padding: 4px 0; }
 [data-barra="ancha"] .con-escritorio .dock .retraer { width: 32px; }
 .sacar-barra { display: none; }
@@ -1713,13 +1709,13 @@ dialog.flotante .opciones { max-height: 300px; }
 /* ---------- Paso 97: la revisión de la noche (revision.js) ----------
    El botón sale sobre «+ Nuevo»: redondo con una luna en el teléfono, una píldora «Revisar el día» en el computador.
    La ventana es la flotante de siempre: centrada en el computador y a pantalla completa en el teléfono. */
-.revisar { position: fixed; right: 16px; bottom: 86px; z-index: 6; width: 54px; height: 54px; padding: 0; border-radius: 50%;
+.revisar { position: fixed; right: 16px; bottom: 152px; z-index: 6; width: 54px; height: 54px; padding: 0; border-radius: 50%;
            display: grid; place-content: center; border: 1px solid var(--borde); background: var(--vidrio-fuerte); color: var(--acento);
            box-shadow: var(--sombra); backdrop-filter: blur(var(--desenfoque)); }
 .revisar svg { width: 24px; height: 24px; }
 .revisar .etiqueta { display: none; }
 .revisar.hecha { color: var(--suave); box-shadow: none; }
-.con-escritorio .revisar { right: 24px; bottom: 84px; width: auto; height: 44px; padding: 0 18px 0 14px; border-radius: 999px; display: flex; align-items: center; gap: 8px; }
+.con-escritorio .revisar { right: 24px; bottom: 144px; width: auto; height: 44px; padding: 0 18px 0 14px; border-radius: 999px; display: flex; align-items: center; gap: 8px; }
 .con-escritorio .revisar svg { width: 20px; height: 20px; }
 .con-escritorio .revisar .etiqueta { display: block; font-size: 14.5px; font-weight: 600; color: var(--texto); }
 .con-escritorio .revisar.hecha .etiqueta { color: var(--suave); }
@@ -2194,4 +2190,17 @@ button.nodo-grafo:hover .insignia { transform: scale(1.12); }
 }
 @media (prefers-reduced-motion: reduce) { .barra-edicion, .panel-piezas { animation: none; } }
 /* Mientras editas, «+ Nuevo» y «Revisar el día» se esconden: el panel ocupa ese lado. */
-body:has(.con-widgets.editando:not(.oculto)) :is(#nuevo, #revisar) { visibility: hidden; }
+body:has(.con-widgets.editando:not(.oculto)) :is(#nuevo, #revisar, #cajones) { visibility: hidden; }
+
+/* Paso 124: los cajones (el calendario) fuera de la barra. Un botón redondo de vidrio sobre «+ Nuevo»; la revisión
+   de la noche sube un puesto. Encendido mientras su cajón está abierto. */
+.botones-cajon { position: fixed; right: 16px; bottom: 86px; z-index: 6; display: flex; flex-direction: column; gap: 10px; }
+.boton-cajon { display: grid; place-items: center; width: 54px; height: 54px; padding: 0; border: 1px solid var(--borde); border-radius: 50%;
+               background: var(--vidrio-fuerte); color: var(--texto); box-shadow: var(--sombra); backdrop-filter: blur(var(--desenfoque));
+               transition: transform var(--resorte-t, .3s) var(--resorte, ease), color .2s, border-color .2s; }
+.boton-cajon svg { width: 24px; height: 24px; }
+.boton-cajon:hover { transform: translateY(-2px); }
+.boton-cajon[aria-expanded="true"] { color: var(--acento); border-color: var(--acento); }
+.con-escritorio .botones-cajon { right: 24px; bottom: 84px; }
+.con-escritorio .boton-cajon { width: 48px; height: 48px; }
+.con-escritorio .boton-cajon svg { width: 21px; height: 21px; }
