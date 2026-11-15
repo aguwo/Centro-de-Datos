@@ -199,10 +199,11 @@ Agrupado por módulo. «SQL N» es el archivo que se pegó en el editor SQL de S
 | 120 | **Insignias vivas en la barra.** Cada ícono de la barra (y del dock del teléfono) muestra con un número lo que pide atención: en Escritorio las tareas atrasadas (rojo) o las de hoy; en Universidad las entregas, evaluaciones y tareas de los próximos 7 días (amarillo si vence hoy o mañana, rojo si algo se atrasó); en Salud los hábitos de hoy que faltan. Al pasar el mouse, el globo dice qué es. Es genérico: un apartado suma su insignia con `pendiente()` en apartados.js. Sin SQL. |
 | 121 | **Buscador con la barra espaciadora.** La barra espaciadora (cuando no estás escribiendo) o la lupa, arriba en la barra, abren una caja al centro: escribes y salen los apartados y los nodos que coinciden; Enter abre el elegido. También entiende comandos: «tarea comprar pan mañana 10:00» crea la tarea con fecha, «gasto 5000 almuerzo» abre Anotar con el monto y el nombre puestos (igual «ingreso»), «nota …» crea una nota. Flechas para elegir, Esc para cerrar. Un comando nuevo es una fila en `COMANDOS` (buscador.js). Sin SQL. |
 | 122 | **Barra que respira o que se esconde sola.** En Ajustes → Barra lateral, «Cómo se porta»: Fija (como siempre), Respira (lejos del mouse se achica y se aclara; al acercarlo crece) o Se esconde sola (desaparece y el contenido toma todo el ancho; queda una rayita de luz en el borde izquierdo, que se enciende al acercarte, y al llevar el mouse al borde la barra sale por encima). Con el teclado se ve siempre. Funciona con cualquier estilo; `--ancho-barra` es lo que mide la barra y `--barra` el espacio que deja. Sin SQL. |
+| 123 | **Martita en la barra.** Arriba de todo en la barra, el ojo de Martita (la pupila y el anillo de luces de su iris). Cuando tiene algo que decirte, las luces se encienden por turno y sale una onda suave; al tocarla abre un globo con sus avisos, del más urgente al menos, cada uno con su botón: lo que piden los apartados (las mismas insignias del paso 120, con «Ver»), lo que dejó de llegar solo («¿Qué reviso?», paso 114) y, de noche, «Te falta revisar el día». Un aviso nuevo es una función en `AVISOS` (martita.js). El chat y la voz llegan después al mismo lugar. Sin SQL. |
 
 ## Hoja de ruta
 
-Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 123; el 119 lo tiene reservado «agrandar piezas y vista del celular», sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
+Lo que viene va con nombre, sin número: el número se pone recién al empezar el paso (el siguiente es el 124; el 119 lo tiene reservado «agrandar piezas y vista del celular», sin letras; un paso = un PR). Los pendientes viven como tareas del proyecto «Proyecto Martita» en el centro de datos.
 
 | Cuándo | Qué |
 | --- | --- |
@@ -217,7 +218,8 @@ Lo que viene va con nombre, sin número: el número se pone recién al empezar e
 | Hecho | Barra lateral: insignias vivas (paso 120) |
 | Hecho | Barra lateral: buscador con la barra espaciadora (paso 121) |
 | Hecho | Barra lateral: respira o se esconde sola (paso 122) |
-| Ahora | Barra lateral: Martita en la barra |
+| Hecho | Barra lateral: Martita en la barra, con avisos (paso 123) |
+| Después | Martita en la barra: chat y voz |
 | Después | Varios usuarios |
 
 ## Cómo está ordenada la web

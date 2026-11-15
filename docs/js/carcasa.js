@@ -15,6 +15,7 @@ import { preferencia, cambiar, tuCara } from "./apariencia.js";
 import { conResorte, curvaDeResorte } from "./dibujos.js";
 import { iman } from "./movimiento.js";
 import { abrirBuscador, iniciarBuscador } from "./buscador.js";
+import { abrirMartita, botonDeMartita } from "./martita.js";
 
 let actual = APARTADOS[0];
 let enElEscritorio = APARTADOS.find((a) => a.lugar); // la última sección del escritorio que viste: "Escritorio" vuelve ahí
@@ -196,10 +197,12 @@ function armarDock() {
   perfil.prepend(tuCara());
   const buscar = boton("Buscar", "lupa", abrirBuscador, "Espacio"); // paso 121: arriba de todo; también con la barra espaciadora
   buscar.classList.add("buscar");
+  const martita = botonDeMartita(boton("Martita", "martita", abrirMartita)); // paso 123: brilla si tiene algo que decirte
+  martita.setAttribute("aria-expanded", "false");
   const retraer = el("button", { className: "retraer", textContent: "‹", title: "Retraer la barra", ariaLabel: "Retraer la barra", onclick: () => cambiar({ retraida: true }) });
   // La rayita va justo después de "Escritorio": separa el resumen de todo de los apartados.
   const arriba = botones.filter((b) => !b.abajo).flatMap((b) => (b.dataset.escritorio ? [b, el("span", { className: "separador", ariaHidden: "true" })] : [b]));
-  $("dock").replaceChildren(el("div", { className: "marca", ariaHidden: "true" }), buscar,
+  $("dock").replaceChildren(el("div", { className: "marca", ariaHidden: "true" }), martita, buscar,
     ...arriba, el("div", { className: "pie" }, ...botones.filter((b) => b.abajo), perfil, retraer));
   marcar();
   insignias();
@@ -215,9 +218,13 @@ function juntar(lista) {
   return p.length ? { n: p.reduce((t, x) => t + x.n, 0), texto: p.map((x) => x.texto).join(" · "),
     tono: URGENCIA[Math.max(...p.map((x) => URGENCIA.indexOf(x.tono)))] } : null;
 }
-function insignias() {
+// Lo que pide cada apartado ahora: id -> { n, tono, texto } o null. Lo usan las insignias y Martita (martita.js).
+export function pendientesDeApartados() {
   const pedir = (a) => { try { return a.pendiente?.() ?? null; } catch (e) { console.error(e); return null; } }; // una que falle no apaga las demás
-  const de = new Map(APARTADOS.map((a) => [a.id, pedir(a)]));
+  return new Map(APARTADOS.map((a) => [a.id, pedir(a)]));
+}
+function insignias() {
+  const de = pendientesDeApartados();
   de.set(ESCRITORIO.id, juntar(APARTADOS.filter((a) => a.lugar).map((a) => de.get(a.id))));
   for (const b of $("dock").querySelectorAll("[data-apartado], [data-escritorio]")) ponerInsignia(b, de.get(b.dataset.apartado ?? b.dataset.escritorio));
 }
