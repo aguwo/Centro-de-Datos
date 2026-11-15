@@ -14,7 +14,7 @@
 //   ctx.elegidos   lo elegido (un Set de ids); ctx.ancla, donde está el cursor; ctx.desde, dónde empieza un rango
 //   ctx.atras / ctx.adelante  las carpetas por las que pasaste
 //   ctx.vista, ctx.orden, ctx.agrupar  cómo se ve (se recuerda en este navegador)
-//   ctx.editando   mientras editas la vista de la carpeta (paso 116), sus secciones a medio armar
+//   ctx.editandoVista  mientras editas la vista de la carpeta (paso 116), sus secciones a medio armar
 //   arbol-carpetas        (costado) las carpetas como árbol, que se abren y cierran
 //   carpeta               la carpeta abierta: dónde está y lo que tiene
 //   propiedades-carpeta   (a la derecha) las propiedades de lo elegido, o de la carpeta abierta, para cambiarlas ahí
@@ -103,7 +103,7 @@ function entrar(ctx, id = null, historia = true) {
   if (id === desde) return;
   if (historia) { (ctx.atras ??= []).push(desde); ctx.adelante = []; }
   const venia = desde && datos.padre.get(desde) === id ? desde : null;
-  ctx.cambiar({ carpeta: id, buscar: "", editando: null, elegidos: new Set(venia ? [venia] : []), ancla: venia, desde: venia });
+  ctx.cambiar({ carpeta: id, buscar: "", editandoVista: null, elegidos: new Set(venia ? [venia] : []), ancla: venia, desde: venia });
 }
 // Atrás (-1) o adelante (1) en el historial.
 function viajar(ctx, k) {
@@ -395,7 +395,7 @@ export function carpetaAbierta(v, ctx) {
   // Se arma de nuevo solo si cambió lo que se muestra (los datos, la carpeta, la búsqueda o cómo se ve). Elegir solo
   // vuelve a marcar: así el doble clic cae sobre lo mismo que el primer clic, y el teclado no pierde su lugar.
   function dibujar() {
-    const clave = [datos.nodos, datos.registros, ctx.carpeta, ctx.buscar, ctx.vista, ctx.orden?.por, ctx.orden?.al, ctx.agrupar, ctx.editando];
+    const clave = [datos.nodos, datos.registros, ctx.carpeta, ctx.buscar, ctx.vista, ctx.orden?.por, ctx.orden?.al, ctx.agrupar, ctx.editandoVista];
     if (clave.some((x, i) => x !== armado[i])) { armar(); armado = clave; }
     marcar();
   }
@@ -431,10 +431,10 @@ export function carpetaAbierta(v, ctx) {
     const orden = ctx.orden ?? { por: "natural" };
     // Paso 116: con una vista propia (y sin buscar), la carpeta se arma con sus secciones; Íconos, Lista, Detalles
     // y Agrupar son de la vista de siempre.
-    const texto = sinTildes(ctx.buscar?.trim() ?? ""), suya = !texto && vistaDe(n), porSecciones = !texto && (ctx.editando || suya);
-    const editar = el("button", { className: "boton-icono" + (suya ? " cambiado" : ""), ariaPressed: String(!!ctx.editando),
+    const texto = sinTildes(ctx.buscar?.trim() ?? ""), suya = !texto && vistaDe(n), porSecciones = !texto && (ctx.editandoVista || suya);
+    const editar = el("button", { className: "boton-icono" + (suya ? " cambiado" : ""), ariaPressed: String(!!ctx.editandoVista),
       title: suya ? `Editar vista (${suya.de === "tipo" ? `la de todas: ${n.tipos.nombre}` : "la de esta carpeta"})` : "Editar vista", ariaLabel: "Editar vista",
-      onclick: () => ctx.cambiar({ editando: ctx.editando ? null : (suya?.secciones ?? DE_SIEMPRE), elegidos: new Set() }) }, icono("secciones"));
+      onclick: () => ctx.cambiar({ editandoVista: ctx.editandoVista ? null : (suya?.secciones ?? DE_SIEMPRE), elegidos: new Set() }) }, icono("secciones"));
     herramientas.replaceChildren(editar,
       porSecciones ? "" : el("div", { className: "segmento minimo", role: "group", ariaLabel: "Cómo se ve" }, ...Object.entries(VISTAS).map(([k, v]) =>
         el("button", { title: v.nombre, ariaLabel: v.nombre, ariaPressed: String(ctx.vista === k), onclick: usar(() => (ctx.vista = k)) }, icono(v.icono)))),
@@ -457,11 +457,11 @@ export function carpetaAbierta(v, ctx) {
   // Paso 116: la carpeta armada por secciones (las suyas o, editando, el borrador, con el editor arriba).
   function porVista(n, id, suya) {
     const ayuda = { esCarpeta, pieza: (x, estilo) => (estilo === "lista" ? filaLista(x) : esCarpeta(x) ? tarjetaCarpeta(x) : tarjetaArchivo(x)) };
-    const secciones = (ctx.editando ?? suya.secciones).map((s) => ({ ...s, ...muestra(s.muestra, id) })).filter((s) => s.cosas);
-    const editor = ctx.editando && editorDeVista(ctx.editando, { muestras: muestrasDe(n), tipo: n?.tipos.nombre, actual: suya,
-      cambiar: (borrador) => ctx.cambiar({ editando: borrador }),
-      guardar: (de, lista = ctx.editando) => { guardarSecciones(n, de, lista); ctx.cambiar({ editando: null }); },
-      cancelar: () => ctx.cambiar({ editando: null }) });
+    const secciones = (ctx.editandoVista ?? suya.secciones).map((s) => ({ ...s, ...muestra(s.muestra, id) })).filter((s) => s.cosas);
+    const editor = ctx.editandoVista && editorDeVista(ctx.editandoVista, { muestras: muestrasDe(n), tipo: n?.tipos.nombre, actual: suya,
+      cambiar: (borrador) => ctx.cambiar({ editandoVista: borrador }),
+      guardar: (de, lista = ctx.editandoVista) => { guardarSecciones(n, de, lista); ctx.cambiar({ editandoVista: null }); },
+      cancelar: () => ctx.cambiar({ editandoVista: null }) });
     cuerpo.dataset.vista = "secciones";
     cuerpo.replaceChildren(editor || "", ...secciones.map((s) => seccionDeVista(s.nombre, ordenar(s.cosas, ctx.orden), s.como, ayuda)));
     total = new Set(secciones.flatMap((s) => s.cosas.map((x) => x.id))).size;
