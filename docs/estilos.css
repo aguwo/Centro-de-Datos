@@ -193,6 +193,25 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 [data-barra="ancha"] .con-escritorio .dock button { grid-template-columns: 22px minmax(0, 1fr); justify-items: start; align-items: center; gap: 12px; padding: 9px 12px; }
 [data-barra="ancha"] .con-escritorio .dock .etiqueta { font-size: 14px; }
 [data-barra="ancha"] .con-escritorio .dock button::before { left: -12px; }
+/* Paso 119: insignias vivas (carcasa.js). Un número arriba a la derecha del ícono, del color de lo urgente que es:
+   rojo (algo atrasado), amarillo (vence pronto) o el de acento. Sigue al ícono cuando el imán lo mueve.
+   El detalle va en el globo (Solo íconos, Isla y el dock del teléfono); en Clásica y Ancha basta el número. */
+:root { --sobre-insignia: #fff; }
+:root[data-tema="oscuro"] { --sobre-insignia: #0b0f14; }
+.dock button > .pendiente { position: absolute; top: 4px; left: calc(50% + 3px); min-width: 17px; height: 17px; padding: 0 5px; border-radius: 99px;
+  display: grid; place-items: center; font: 700 10.5px/1 var(--sans); font-variant-numeric: tabular-nums; color: var(--sobre-insignia);
+  background: var(--acento); box-shadow: 0 0 0 2px var(--vidrio-fuerte); pointer-events: none; translate: var(--iman-x, 0px) var(--iman-y, 0px); }
+.dock .pendiente[data-tono="alerta"] { background: var(--alerta); }
+.dock .pendiente[data-tono="aviso"] { background: var(--aviso); }
+.pendiente.llega { animation: insignia-llega .55s cubic-bezier(.34,1.7,.5,1) both; }
+.pendiente.salta { animation: insignia-salta .45s ease-out; }
+@keyframes insignia-llega { from { scale: 0; } }
+@keyframes insignia-salta { 40% { scale: 1.45; } }
+@media (prefers-reduced-motion: reduce) { .pendiente.llega, .pendiente.salta { animation: none; } }
+[data-barra="ancha"] .con-escritorio .dock button > .pendiente { left: 24px; top: 3px; }
+.dock .etiqueta .detalle { color: rgba(255,255,255,.72); font-weight: 400; }
+.con-escritorio .dock .etiqueta .detalle { display: none; }
+:is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta .detalle { display: inline; }
 /* Flotante: una tarjeta de vidrio separada del borde */
 [data-barra="flotante"] .con-escritorio { --barra: 108px; }
 [data-barra="flotante"] .con-escritorio .dock { top: 12px; bottom: 12px; left: 12px; width: 84px; border-radius: 22px; border-width: 1px; box-shadow: var(--sombra); }

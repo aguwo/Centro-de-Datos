@@ -8,7 +8,7 @@
 // que tiene adentro y no se repiten (las clases sí se repiten). Las cuentas están en notas.js.
 // Paso 52: cada ramo tiene su tema (ícono y portada, de dibujos.js; sin dibujo, solo su color: clase "lisa") y cada evaluación su ícono según el tipo.
 import { el, db, datos, dia, hora, cajasDe, colorDeProyecto, escribir, escribiendoEn, avisar, fijas, FIJA } from "./base.js";
-import { hoyTexto, diasEntre, corto } from "./fechas.js";
+import { hoyTexto, diasEntre, corto, sumarDias } from "./fechas.js";
 import { cambiarProps, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario } from "./panel.js";
 import { listaDeTareas, agregarTarea, porFecha } from "./tareas.js";
@@ -36,6 +36,16 @@ function queViene(ramo) {
   return [...evaluacionesDe(ramo).filter((e) => typeof e.props?.nota !== "number" && dia(e.fecha) >= hoy),
     ...pendientes(ramo).filter((t) => t.fecha)]
     .map((n) => ({ n, ramo, d: dia(n.fecha) })).sort((a, b) => porFecha(a.n, b.n));
+}
+// Paso 119: la insignia de Universidad en la barra (carcasa.js). Cuenta lo de tus ramos que vence en los próximos
+// 7 días (entregas de EV@, evaluaciones y tareas), más lo atrasado. Roja si algo se atrasó, amarilla si algo vence hoy o mañana.
+export function pendienteDeLaU() {
+  const hoy = hoyTexto(), tope = sumarDias(hoy, 7);
+  const lista = ramos().filter((r) => r.estado !== "Hecho").flatMap(queViene).filter((x) => x.d <= tope).sort((a, b) => porFecha(a.n, b.n));
+  if (!lista.length) return null;
+  const primero = lista[0], faltan = diasEntre(hoy, primero.d);
+  return { n: lista.length, tono: faltan < 0 ? "alerta" : faltan <= 1 ? "aviso" : "acento",
+    texto: `${primero.n.titulo}, ${cuando(primero.n)}` + (lista.length > 1 ? ` · ${lista.length - 1} más en 7 días` : "") };
 }
 // "hoy", "mañana", "el jueves" (esta semana), "en 12 días" o la fecha; con la hora, si tiene.
 function cuando(n) {
