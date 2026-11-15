@@ -46,7 +46,7 @@ iniciarPostits();
 iniciarRevision();
 
 // Sesión: un enlace al correo (Supabase Auth). Sin sesión se ve solo el formulario de entrada.
-const SOLO_CON_SESION = ["nuevo", "revisar", "app", "dock", "asa"];
+const SOLO_CON_SESION = ["nuevo", "revisar", "cajones", "app", "dock", "asa"];
 function mostrarApp(conSesion) {
   $("login").classList.toggle("oculto", conSesion);
   for (const id of SOLO_CON_SESION) $(id).classList.toggle("oculto", !conSesion);

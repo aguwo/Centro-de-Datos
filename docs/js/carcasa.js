@@ -11,10 +11,10 @@ import { icono } from "./dibujos.js";
 import { APARTADOS, CAJONES } from "./apartados.js";
 import { iniciarEscritorio, enEscritorio, escritorioActivo, alCambiarDeModo, mirar } from "./escritorio.js";
 import { montar } from "./widgets.js";
-import { preferencia, cambiar, tuCara } from "./apariencia.js";
+import { preferencia, cambiar } from "./apariencia.js";
 import { conResorte, curvaDeResorte } from "./dibujos.js";
 import { iman } from "./movimiento.js";
-import { abrirBuscador, iniciarBuscador } from "./buscador.js";
+import { iniciarBuscador } from "./buscador.js";
 import { abrirMartita, botonDeMartita } from "./martita.js";
 
 let actual = APARTADOS[0];
@@ -47,7 +47,7 @@ function marcar() {
   for (const b of $("dock").querySelectorAll("[data-apartado]")) b.setAttribute("aria-current", b.dataset.apartado === actual.id ? "page" : "false");
   for (const b of $("pastillas").children) b.setAttribute("aria-current", b.dataset.seccion === actual.id ? "page" : "false");
   $("dock").querySelector("[data-escritorio]")?.setAttribute("aria-current", actual.lugar ? "page" : "false");
-  for (const b of $("dock").querySelectorAll("[data-cajon]")) b.setAttribute("aria-expanded", $(b.dataset.cajon).classList.contains("abierto"));
+  for (const b of document.querySelectorAll("[data-cajon]")) b.setAttribute("aria-expanded", $(b.dataset.cajon).classList.contains("abierto"));
   moverMarca();
   moverIman();
 }
@@ -177,11 +177,14 @@ const EN_MAC = /Mac|iPhone|iPad/.test(navigator.platform);
 const atajo = (n) => (EN_MAC ? "⌥" : "Alt ") + n; // cómo se lee en el globo
 
 // El dock: un botón por entrada, con su ícono y su nombre (y su atajo, que se ve en el globo). Los que escondiste en
-// Ajustes no salen; el que tiene "abajo" (Ajustes) va al pie de la barra, con tu foto y el botón para retraerla.
+// Ajustes no salen. Paso 124: tres grupos separados por una rayita: Martita y Escritorio arriba, los apartados al medio
+// y lo que va "abajo" (Archivos y Ajustes) al pie, con el botón para retraerla. Los cajones (Calendario) no van en la
+// barra: tienen su botón redondo abajo a la derecha, sobre «+ Nuevo» (y el buscador también los encuentra).
 function armarDock() {
   const { ocultos } = preferencia();
   let puesto = 0; // los atajos cuentan lo que se ve: sin lo escondido
-  const botones = entradasDeLaBarra().filter(({ x }) => !x.lugar).map(({ x, clase, accion }, i) => {
+  const entradas = entradasDeLaBarra().filter(({ x }) => !x.lugar);
+  const botones = entradas.filter(({ clase }) => clase !== "cajon").map(({ x, clase, accion }, i) => {
     const escondido = !x.abajo && ocultos.includes(x.id);
     const numero = !escondido && puesto < 9 ? ++puesto : null;
     const b = boton(x.nombre, x.icono, accion, numero && atajo(numero));
@@ -192,18 +195,20 @@ function armarDock() {
     b.abajo = x.abajo;
     return b;
   });
-  const perfil = boton("Tu cuenta", null, () => ir("ajustes"));
-  perfil.classList.add("perfil");
-  perfil.prepend(tuCara());
-  const buscar = boton("Buscar", "lupa", abrirBuscador, "Espacio"); // paso 121: arriba de todo; también con la barra espaciadora
-  buscar.classList.add("buscar");
   const martita = botonDeMartita(boton("Martita", "martita", abrirMartita)); // paso 123: brilla si tiene algo que decirte
   martita.setAttribute("aria-expanded", "false");
   const retraer = el("button", { className: "retraer", textContent: "‹", title: "Retraer la barra", ariaLabel: "Retraer la barra", onclick: () => cambiar({ retraida: true }) });
-  // La rayita va justo después de "Escritorio": separa el resumen de todo de los apartados.
-  const arriba = botones.filter((b) => !b.abajo).flatMap((b) => (b.dataset.escritorio ? [b, el("span", { className: "separador", ariaHidden: "true" })] : [b]));
-  $("dock").replaceChildren(el("div", { className: "marca", ariaHidden: "true" }), martita, buscar,
-    ...arriba, el("div", { className: "pie" }, ...botones.filter((b) => b.abajo), perfil, retraer));
+  const separador = () => el("span", { className: "separador", ariaHidden: "true" });
+  // Escritorio sube junto a Martita; la rayita va después de él (o de Martita, si no hay escritorio).
+  const escritorio = botones.filter((b) => b.dataset.escritorio), medio = botones.filter((b) => !b.abajo && !b.dataset.escritorio);
+  $("dock").replaceChildren(el("div", { className: "marca", ariaHidden: "true" }), martita, ...escritorio, separador(),
+    ...medio, el("div", { className: "pie" }, separador(), ...botones.filter((b) => b.abajo), retraer));
+  $("cajones").replaceChildren(...entradas.filter(({ clase }) => clase === "cajon").map(({ x, accion }) => {
+    const b = el("button", { className: "boton-cajon", title: x.nombre, ariaLabel: x.nombre, onclick: accion }, icono(x.icono));
+    b.dataset.cajon = x.id;
+    b.setAttribute("aria-expanded", "false");
+    return b;
+  }));
   marcar();
   insignias();
 }
@@ -272,7 +277,7 @@ export function cajon(id, si) {
   for (const c of CAJONES) {
     const abrir = c.id === id && (si ?? !$(c.id).classList.contains("abierto"));
     $(c.id).classList.toggle("abierto", abrir);
-    $("dock").querySelector(`[data-cajon="${c.id}"]`).setAttribute("aria-expanded", abrir);
+    document.querySelector(`[data-cajon="${c.id}"]`)?.setAttribute("aria-expanded", abrir);
     if (abrir) c.dibujar?.();
   }
 }

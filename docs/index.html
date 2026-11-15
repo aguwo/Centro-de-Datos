@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <!-- ?v= cambia cuando cambian los estilos: así el navegador no usa los de antes que tenía guardados -->
-  <link rel="stylesheet" href="estilos.css?v=128">
+  <link rel="stylesheet" href="estilos.css?v=129">
 </head>
 <body>
   <div class="fondo" aria-hidden="true"></div>
@@ -39,6 +39,8 @@
   <div id="menu-nuevo" class="menu vidrio" role="menu" hidden></div>
   <!-- Paso 97: la revisión de la noche (revision.js). Aparece desde las 21:00, sobre «+ Nuevo» -->
   <button id="revisar" class="revisar oculto" hidden><span class="etiqueta">Revisar el día</span></button>
+  <!-- Paso 124: los cajones (el calendario) tienen su botón redondo aquí, sobre «+ Nuevo», fuera de la barra (carcasa.js) -->
+  <div id="cajones" class="botones-cajon oculto"></div>
 
   <main id="app" class="oculto">
     <div id="escritorio" class="escritorio">

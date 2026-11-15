@@ -17,7 +17,7 @@
 //   alMostrar (opcional) se llama al entrar al apartado
 //   iniciar   (opcional) se llama una vez, al empezar (para conectar sus botones y formularios)
 //   nuevo     (opcional) qué tipos se crean desde aquí con "+ Nuevo" (claves, ej. ["tarea", "evento"]). Sin lista: todos
-//   abajo     (opcional) true: su botón va pegado al fondo de la barra lateral y no se puede esconder (Ajustes)
+//   abajo     (opcional) true: su botón va pegado al fondo de la barra lateral y no se puede esconder (Archivos, Ajustes)
 //   lugar     (opcional) [columna, fila] en el escritorio movible (escritorio.js). Los que tienen lugar se ven
 //             juntos en el lienzo (en el teléfono, uno a la vez, deslizando de lado); los demás, a pantalla completa.
 //             Paso 99: el escritorio muestra lo de ahora y lo rápido; el apartado guarda todo lo demás. El plan del escritorio:
@@ -131,7 +131,7 @@ export const APARTADOS = [
   // Una sola ventana partida en tres, como el Explorador de Windows (paso 103): a la izquierda el árbol de carpetas
   // (en el celular se esconde y se navega con la ruta), al centro la carpeta abierta y a la derecha las propiedades de lo elegido.
   {
-    id: "archivos", nombre: "Archivos", ajustable: true, // los bordes entre columnas se arrastran (paso 105)
+    id: "archivos", nombre: "Archivos", abajo: true, ajustable: true, // los bordes entre columnas se arrastran (paso 105)
     editable: false, // paso 117: es la herramienta para llegar a todo, no una plantilla
     columnas: [{ ancho: 0.95, widgets: ["arbol-carpetas"] }, { ancho: 2.6, widgets: ["carpeta"] }, { ancho: 1.05, widgets: ["propiedades-carpeta"] }],
     icono: "carpeta",
@@ -149,7 +149,7 @@ export const APARTADOS = [
 ];
 
 // Los cajones: paneles que salen desde la derecha sin dejar el apartado donde estás (el calendario,
-// más adelante el chat). Van al final del dock, separados. Cada uno es un <aside id="..." class="cajon">.
+// más adelante el chat). No van en la barra: su botón redondo está abajo a la derecha (paso 124). Cada uno es un <aside id="..." class="cajon">.
 //   iniciar   se llama una vez, al empezar
 //   dibujar   se llama al abrirlo y cada vez que llegan datos nuevos (si está cerrado, no hace nada)
 export const CAJONES = [
