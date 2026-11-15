@@ -314,14 +314,17 @@ export function historialAhorro(v) {
 // Una ventana flotante para anotar en segundos: un gasto (cuánto, en qué categoría, con qué cuenta), un ingreso
 // o plata que mueves al ahorro. Abajo te dice cómo quedarías antes de anotar. Anotado, la ventana se cierra.
 const TIPOS_ANOTAR = { gasto: ["Gasto", BLOQUE_GASTOS], ingreso: ["Ingreso", BLOQUE_GASTOS], ahorro: ["Mover a ahorro", BLOQUE_AHORRO] };
-export function anotar(tipo = "gasto") {
-  const f = { tipo, monto: 0, categoria: null, cuenta: null, titulo: "", ayer: false };
+// Paso 121: puede venir con el monto y el nombre ya puestos (el buscador: «gasto 5000 almuerzo»).
+export function anotar(tipo = "gasto", { monto = 0, titulo = "" } = {}) {
+  const f = { tipo, monto, categoria: null, cuenta: null, titulo, ayer: false };
   const cuerpo = el("div", { className: "anotar" });
   const d = flotante("Anotar", cuerpo);
   d.classList.add("w-finanzas");
   const campoMonto = el("input", { type: "text", inputMode: "numeric", placeholder: "$0", ariaLabel: "¿Cuánto?", autocomplete: "off",
     oninput: () => { f.monto = Number(campoMonto.value.replace(/\D/g, "")) || 0; campoMonto.value = f.monto ? plata(f.monto) : ""; pie(); } });
   const campoTitulo = el("input", { type: "text", placeholder: "Ej. almuerzo casino", oninput: () => { f.titulo = campoTitulo.value; } });
+  campoMonto.value = f.monto ? plata(f.monto) : "";
+  campoTitulo.value = f.titulo;
   const linea = el("p", { className: "frase-finanzas", ariaLive: "polite" }), boton = el("button", { className: "principal anotar-boton", onclick: guardar });
   const cuentasPara = () => deTipo("cuenta").filter((c) => f.tipo !== "ahorro" || !esAhorro(c));
   function pie() {

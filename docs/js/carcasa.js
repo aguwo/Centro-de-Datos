@@ -14,6 +14,7 @@ import { montar } from "./widgets.js";
 import { preferencia, cambiar, tuCara } from "./apariencia.js";
 import { conResorte, curvaDeResorte } from "./dibujos.js";
 import { iman } from "./movimiento.js";
+import { abrirBuscador, iniciarBuscador } from "./buscador.js";
 
 let actual = APARTADOS[0];
 let enElEscritorio = APARTADOS.find((a) => a.lugar); // la última sección del escritorio que viste: "Escritorio" vuelve ahí
@@ -193,10 +194,12 @@ function armarDock() {
   const perfil = boton("Tu cuenta", null, () => ir("ajustes"));
   perfil.classList.add("perfil");
   perfil.prepend(tuCara());
+  const buscar = boton("Buscar", "lupa", abrirBuscador, "Espacio"); // paso 121: arriba de todo; también con la barra espaciadora
+  buscar.classList.add("buscar");
   const retraer = el("button", { className: "retraer", textContent: "‹", title: "Retraer la barra", ariaLabel: "Retraer la barra", onclick: () => cambiar({ retraida: true }) });
   // La rayita va justo después de "Escritorio": separa el resumen de todo de los apartados.
   const arriba = botones.filter((b) => !b.abajo).flatMap((b) => (b.dataset.escritorio ? [b, el("span", { className: "separador", ariaHidden: "true" })] : [b]));
-  $("dock").replaceChildren(el("div", { className: "marca", ariaHidden: "true" }),
+  $("dock").replaceChildren(el("div", { className: "marca", ariaHidden: "true" }), buscar,
     ...arriba, el("div", { className: "pie" }, ...botones.filter((b) => b.abajo), perfil, retraer));
   marcar();
   insignias();
@@ -312,6 +315,7 @@ export function iniciarCarcasa() {
   moverIman = iman($("dock"));
   new ResizeObserver(() => { moverMarca(); moverIman(); }).observe($("dock")); // cambió el estilo o el tamaño: la marca se acomoda
   atajos();
+  iniciarBuscador();
   globos();
   // Con la barra retraída queda esta pestaña en el borde izquierdo para volver a sacarla.
   document.body.append(el("button", { className: "sacar-barra", textContent: "›", title: "Mostrar la barra", ariaLabel: "Mostrar la barra", onclick: () => cambiar({ retraida: false }) }));
