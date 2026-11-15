@@ -230,6 +230,9 @@ export function abrirRevision() {
   ir(1);
 }
 
+// Paso 123: ¿toca revisar el día y no lo has hecho? (un aviso de Martita)
+export const faltaRevisar = () => { const h = habitoDeRevisar(); return esDeNoche() && !(h && revisado(h, diaDeRevision())); };
+
 // El botón «Revisar el día»: se ve de noche y, si ya revisaste, se apaga (pero se puede abrir igual).
 export function iniciarRevision() {
   const b = $("revisar");

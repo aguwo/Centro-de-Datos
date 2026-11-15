@@ -84,6 +84,6 @@ export function avisosDeDatos(alCambiar) {
       } }))));
 }
 
-function explicar(fuente) {
+export function explicar(fuente) {
   flotante(`${fuente.nombre}: qué revisar`, el("ol", { className: "pasos-revisar" }, ...fuente.revisar.map((t) => el("li", { textContent: t }))));
 }

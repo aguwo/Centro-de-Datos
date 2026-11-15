@@ -271,6 +271,35 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 .barra-retraida .con-escritorio .sacar-barra { transform: translate(0, -50%); opacity: 1; pointer-events: auto; }
 .barra-retraida .con-escritorio .sacar-barra:hover { color: var(--texto); width: 28px; }
 
+/* Paso 123: Martita en la barra (martita.js). Con avisos, las luces de su iris se encienden por turno, su color pasa
+   al de acento y una onda suave sale de ella. Al tocarla, un globo con los avisos al lado (o arriba del dock). */
+.dock button.martita .luz { opacity: .4; }
+.dock button.martita.con-avisos { color: var(--acento); }
+.dock button.martita.con-avisos .luz { animation: martita-luz 1.6s ease-in-out infinite; animation-delay: calc(var(--i) * .2s); }
+.dock button.martita.con-avisos::after { content: ""; position: absolute; inset: 3px; border-radius: inherit; pointer-events: none; animation: martita-onda 2.6s ease-out infinite; }
+@keyframes martita-luz { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+@keyframes martita-onda { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--acento) 45%, transparent); } 70%, 100% { box-shadow: 0 0 0 9px transparent; } }
+.martita-globo { position: fixed; left: var(--x); top: var(--y); z-index: 40; width: min(340px, calc(100vw - 24px)); padding: 14px 14px 10px; border-radius: 18px;
+  background: var(--vidrio-fuerte); color: var(--texto); border: 1px solid var(--borde); box-shadow: var(--sombra);
+  backdrop-filter: blur(var(--desenfoque)) saturate(170%); -webkit-backdrop-filter: blur(var(--desenfoque)) saturate(170%);
+  transform-origin: left center; animation: martita-abre .32s cubic-bezier(.34,1.4,.5,1); }
+.martita-globo.arriba { transform-origin: left bottom; }
+.martita-globo header { display: flex; align-items: center; gap: 10px; margin: 0 2px 10px; }
+.martita-globo header > .icono { width: 30px; height: 30px; color: var(--acento); }
+.martita-globo header .luz { animation: martita-luz 1.6s ease-in-out infinite; animation-delay: calc(var(--i) * .2s); }
+.martita-globo header div { display: grid; }
+.martita-globo header b { font-size: 15px; }
+.martita-globo header small { color: var(--suave); font-size: 12.5px; }
+.martita-globo ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }
+.martita-globo li { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 10px; border-radius: 12px; background: color-mix(in srgb, var(--c) 10%, transparent);
+  animation: buscador-fila .3s ease both; animation-delay: calc(var(--i, 0) * 45ms + 60ms); }
+.martita-globo li > .icono { width: 18px; height: 18px; flex: none; color: var(--c); }
+.martita-globo li p { margin: 0; flex: 1; min-width: 0; font-size: 13px; line-height: 1.35; }
+.martita-globo li .pildora { flex: none; padding: 4px 11px; border-radius: 99px; font-size: 12.5px; font-weight: 600; background: color-mix(in srgb, var(--c) 22%, transparent); color: var(--texto); }
+.martita-globo .pista { margin: 10px 4px 0; font-size: 12px; color: var(--suave); }
+@keyframes martita-abre { from { opacity: 0; transform: scale(.92) translateX(-6px); } }
+@media (prefers-reduced-motion: reduce) { .dock button.martita .luz, .dock button.martita::after, .martita-globo, .martita-globo li, .martita-globo header .luz { animation: none !important; } }
+
 /* Paso 122: cómo se porta la barra (Ajustes → Barra lateral; :root[data-comportamiento]). carcasa.js (barraViva) le
    pone .cerca y .asoma según dónde está el mouse. Con el teclado (un botón elegido con Tab) se ve siempre.
    Respira: lejos del mouse se achica hacia su borde y se aclara; cerca crece con el mismo resorte de siempre. */
