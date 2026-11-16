@@ -12,8 +12,8 @@ import { APARTADOS, CAJONES } from "./apartados.js";
 import { iniciarEscritorio, enEscritorio, escritorioActivo, alCambiarDeModo, mirar } from "./escritorio.js";
 import { montar } from "./widgets.js";
 import { preferencia, cambiar } from "./apariencia.js";
-import { conResorte, curvaDeResorte } from "./dibujos.js";
-import { iman } from "./movimiento.js";
+import { curvaDeResorte } from "./dibujos.js";
+import { iman, marcaQueViaja } from "./movimiento.js";
 import { iniciarBuscador } from "./buscador.js";
 import { abrirMartita, botonDeMartita } from "./martita.js";
 
@@ -49,43 +49,9 @@ function marcar() {
   $("dock").querySelector("[data-escritorio]")?.setAttribute("aria-current", actual.lugar ? "page" : "false");
   for (const b of document.querySelectorAll("[data-cajon]")) b.setAttribute("aria-expanded", $(b.dataset.cajon).classList.contains("abierto"));
   moverMarca();
-  moverIman();
 }
-// Paso 107: los íconos de la barra como un imán (movimiento.js): el elegido se infla y los vecinos le hacen lugar.
-let moverIman = () => {};
-// Paso 93: el fondo del elegido es una sola pieza (.marca) que viaja de un botón al otro en vez de apagarse
-// en uno y prenderse en otro. Se pone sobre el botón elegido que se ve (offsetParent es null si está escondido).
-// Si no se usa en este estilo, estilos.css la esconde.
-// Paso 98: viaja con el mismo resorte de la cámara del escritorio. Cada borde tiene su resorte, y el borde que va
-// adelante es más rígido que el de atrás: así, al viajar, la marca se estira un poco hacia donde va y al llegar
-// se recoge, como una gota. La primera vez llega sin viajar.
-const RESORTE = { adelante: 26, atras: 20, barra: 14 }; // más rígido = llega más rápido; «barra» es el de las transiciones de CSS
-let marca = null; // la marca de la barra que se ve ahora y su ir() (conResorte); se rehace al rearmar la barra
-function moverMarca() {
-  const dock = $("dock"), b = [...dock.querySelectorAll('[aria-current="page"]')].find((b) => b.offsetParent);
-  if (!marca || marca.el !== dock.querySelector(".marca")) marca = nuevaMarca(dock.querySelector(".marca"));
-  if (!marca.el) return;
-  marca.el.classList.toggle("sin-elegido", !b);
-  if (!b) return;
-  const meta = { izq: b.offsetLeft, der: b.offsetLeft + b.offsetWidth, arriba: b.offsetTop, abajo: b.offsetTop + b.offsetHeight };
-  // En cada eje, hacia donde va el centro: el borde de adelante tira (rígido) y el de atrás lo sigue (blando).
-  const ahora = marca.ahora ?? meta, fuerza = {};
-  for (const [inicio, fin] of [["izq", "der"], ["arriba", "abajo"]]) {
-    const va = Math.sign(meta[inicio] + meta[fin] - ahora[inicio] - ahora[fin]); // +1 hacia la derecha o abajo, -1 al revés, 0 quieto
-    fuerza[fin] = va < 0 ? RESORTE.atras : RESORTE.adelante;
-    fuerza[inicio] = va > 0 ? RESORTE.atras : RESORTE.adelante;
-  }
-  marca.ir(meta, fuerza, !!marca.ahora);
-}
-// La marca y cómo se mueve: dibuja sus cuatro bordes como --x, --y, --w, --h (estilos.css los usa).
-function nuevaMarca(pieza) {
-  const m = { el: pieza, ahora: null };
-  m.ir = conResorte((v) => {
-    m.ahora = { ...v };
-    for (const [k, n] of Object.entries({ x: v.izq, y: v.arriba, w: v.der - v.izq, h: v.abajo - v.arriba })) pieza.style.setProperty("--" + k, n + "px");
-  });
-  return m;
-}
+// Paso 128: el fondo del elegido es una sola pieza (.marca) que se desliza de un botón al otro (movimiento.js).
+let moverMarca = () => {};
 
 // Los apartados con widgets se arman aquí (widgets.js) y se ponen en la página.
 const redibujar = new Map(); // id del apartado -> cómo se redibuja
@@ -329,10 +295,11 @@ function dockEscondido() {
   dock.addEventListener("click", () => { if (matchMedia("(hover: none)").matches) { document.activeElement.blur(); ver(false); } });
 }
 
+const RIGIDEZ_BARRA = 14; // el resorte de las transiciones de CSS de la barra: más rígido = llega más rápido
 export function iniciarCarcasa() {
-  // Paso 98: las transiciones de CSS de la barra usan el mismo resorte que la marca y la cámara (estilos.css: --resorte).
+  // Paso 98: las transiciones de CSS de la barra (retraer, cambiar de estilo) usan un resorte (estilos.css: --resorte).
   if (CSS.supports("transition-timing-function", "linear(0, 1)")) {
-    const { curva, tiempo } = curvaDeResorte(RESORTE.barra);
+    const { curva, tiempo } = curvaDeResorte(RIGIDEZ_BARRA);
     document.documentElement.style.setProperty("--resorte", curva);
     document.documentElement.style.setProperty("--resorte-t", tiempo);
   }
@@ -345,8 +312,9 @@ export function iniciarCarcasa() {
   document.addEventListener("barra", armarDock); // cambiaste la barra en Ajustes (apariencia.js avisa)
   document.addEventListener("datos", insignias);
   setInterval(insignias, 10 * 60e3);
-  moverIman = iman($("dock"));
-  new ResizeObserver(() => { moverMarca(); moverIman(); }).observe($("dock")); // cambió el estilo o el tamaño: la marca se acomoda
+  iman($("dock")); // paso 107: el ícono bajo el mouse se estira hacia él y se infla al apretarlo
+  moverMarca = marcaQueViaja($("dock"));
+  new ResizeObserver(moverMarca).observe($("dock")); // cambió el estilo o el tamaño: la marca se acomoda
   atajos();
   iniciarBuscador();
   globos();

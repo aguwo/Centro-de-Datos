@@ -1,9 +1,11 @@
 // Paso 107: lo que se mueve solo, para cualquier parte de la web.
 //
-// iman(caja): la barra de navegación como un «imán». El botón elegido se infla y los de al lado se corren para
-// hacerle lugar; al pasar el mouse, el ícono más cerca se estira hacia el puntero; al apretar, se infla más y empuja
-// más fuerte. Todo con resortes (conResorte), así nada salta. Sirve para cualquier fila o columna de botones, en
-// cualquier dirección: se calcula con la posición real de cada uno.
+// iman(caja): la barra de navegación como un «imán». Al pasar el mouse, el ícono más cerca se estira hacia el
+// puntero; al apretar, se infla y los de al lado se corren para hacerle lugar. Todo con resortes (conResorte), así
+// nada salta. Sirve para cualquier fila o columna de botones, en cualquier dirección: se calcula con la posición real
+// de cada uno.
+//
+// marcaQueViaja(caja): el fondo del botón elegido es una sola pieza que se desliza de uno al otro (paso 128).
 //
 // Las barras de opciones (.segmento, ej. Íconos | Lista | Detalles): el fondo de la elegida se desliza a la nueva
 // en vez de apagarse en una y prenderse en otra. Lo hace solo, para todas las que hay y las que se armen después.
@@ -14,14 +16,14 @@ const sinMovimiento = matchMedia("(prefers-reduced-motion: reduce)");
 
 // ---------- El imán ----------
 // Lo de siempre (la barra); otro imán puede pedir lo suyo (cuánto crece, empuja y hasta dónde llega).
-const CRECE = { elegido: 1.18, cerca: 1.08, apretado: 1.4 }; // cuánto se infla cada uno
-const EMPUJA = { elegido: 5, apretado: 11 }; // cuántos px corre a los vecinos (los que están pegados; más lejos, menos)
+const CRECE = { cerca: 1.08, apretado: 1.4 }; // cuánto se infla cada uno
+const EMPUJA = 11; // cuántos px corre el apretado a sus vecinos (a los que están pegados; más lejos, menos)
 const ALCANCE = 110; // hasta qué distancia (px) llega el empujón
 const TIRA = 0.22, TIRA_MAX = 6; // cuánto se estira hacia el puntero el que está debajo
 const RIGIDEZ = { s: 22, x: 18, y: 18 }; // más rígido = llega más rápido
 
 export function iman(caja, { botones = () => [...caja.querySelectorAll("button")].filter((b) => b.offsetParent),
-  elegido = (b) => b.getAttribute("aria-current") === "page", crece = CRECE, empuja = EMPUJA, alcance = ALCANCE } = {}) {
+  crece = CRECE, empuja = EMPUJA, alcance = ALCANCE } = {}) {
   const resortes = new WeakMap(); // botón -> su ir() (cada uno con sus resortes)
   let puntero = null, apretado = null;
   const resorteDe = (b) => resortes.get(b) ?? resortes.set(b, conResorte((v) => {
@@ -31,22 +33,20 @@ export function iman(caja, { botones = () => [...caja.querySelectorAll("button")
   function mover() {
     const lista = botones(), centros = new Map(lista.map((b) => { const r = b.getBoundingClientRect(); return [b, { x: r.left + r.width / 2, y: r.top + r.height / 2 }]; }));
     const cerca = puntero && lista.find((b) => { const r = b.getBoundingClientRect(); return puntero.x >= r.left && puntero.x <= r.right && puntero.y >= r.top && puntero.y <= r.bottom; });
-    // Quién empuja: el apretado (fuerte) y el elegido (suave).
-    const fuentes = [...lista.filter(elegido).map((b) => [b, empuja.elegido]), ...(apretado && lista.includes(apretado) ? [[apretado, empuja.apretado]] : [])];
+    const o = apretado && lista.includes(apretado) && centros.get(apretado); // el que empuja a sus vecinos
     for (const b of lista) {
       const c = centros.get(b);
       let x = 0, y = 0;
-      for (const [f, fuerza] of fuentes) {
-        if (f === b) continue;
-        const o = centros.get(f), dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy) || 1;
-        const k = fuerza * Math.max(0, 1 - d / alcance) * 1.6; // pegado empuja casi entero; lejos, nada
+      if (o && b !== apretado) {
+        const dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy) || 1;
+        const k = empuja * Math.max(0, 1 - d / alcance) * 1.6; // pegado empuja casi entero; lejos, nada
         x += dx / d * k; y += dy / d * k;
       }
       if (b === cerca) {
         x += Math.max(-TIRA_MAX, Math.min(TIRA_MAX, (puntero.x - c.x) * TIRA));
         y += Math.max(-TIRA_MAX, Math.min(TIRA_MAX, (puntero.y - c.y) * TIRA));
       }
-      const s = b === apretado ? crece.apretado : elegido(b) ? crece.elegido : b === cerca ? crece.cerca : 1;
+      const s = b === apretado ? crece.apretado : b === cerca ? crece.cerca : 1;
       resorteDe(b)({ x: enLaWeb(x), y: enLaWeb(y), s }, RIGIDEZ, !sinMovimiento.matches);
     }
   }
@@ -55,7 +55,25 @@ export function iman(caja, { botones = () => [...caja.querySelectorAll("button")
   caja.addEventListener("pointerdown", (e) => { apretado = e.target.closest("button"); mover(); });
   addEventListener("pointerup", () => { if (apretado) { apretado = null; mover(); } });
   addEventListener("pointercancel", () => { if (apretado) { apretado = null; mover(); } });
-  return mover; // llamarlo cuando cambia el elegido o se rearma la barra
+}
+
+// ---------- La marca del elegido se desliza (paso 128) ----------
+// marcaQueViaja(caja, { elegido }): en una caja con una pieza .marca adentro, la pone detrás del botón elegido que se
+// ve; al cambiar de elegido, se desliza hasta el nuevo. Aquí solo se dice dónde va y cuánto mide (--x, --y, --w, --h);
+// el viaje lo hace CSS (estilos.css, .marca) con una sola curva suave, así un cambio a medio camino sigue desde donde
+// iba, sin tirones. La primera vez (o una marca nueva, al rearmarse la caja) aparece ya en su lugar.
+// Devuelve mover(): llamarlo cuando cambia el elegido o la caja cambia de tamaño.
+export function marcaQueViaja(caja, { elegido = (b) => b.getAttribute("aria-current") === "page" } = {}) {
+  return () => {
+    const m = caja.querySelector(":scope > .marca"), b = [...caja.querySelectorAll("button")].find((b) => elegido(b) && b.offsetParent);
+    if (!m) return;
+    m.classList.toggle("sin-elegido", !b);
+    if (!b) return;
+    const primera = !m.style.getPropertyValue("--w");
+    if (primera) m.style.transition = "none";
+    for (const [k, n] of Object.entries({ x: b.offsetLeft, y: b.offsetTop, w: b.offsetWidth, h: b.offsetHeight })) m.style.setProperty("--" + k, n + "px");
+    if (primera) { m.offsetWidth; m.style.transition = ""; } // se dibuja en su lugar y desde ahí ya viaja
+  };
 }
 
 // ---------- El fondo de la opción elegida se desliza ----------
