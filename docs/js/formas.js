@@ -7,7 +7,7 @@
 // Ninguna forma sabe de una categoría en particular: todo lo que necesitan lo dice la apariencia.
 // Tocar cualquier forma abre la ficha del nodo (o lo que diga tocar); su botón (si tiene) hace lo típico sin abrirla.
 // Agregar una forma = escribir su función y anotarla en FORMAS.
-import { el, datos, dia, hora, colorDe } from "./base.js";
+import { el, datos, dia, hora, colorDe, conNodo } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, corto } from "./fechas.js";
 import { completar, reabrir, alternarRegistro } from "./acciones.js";
 import { proximaVez } from "./agenda.js";
@@ -102,5 +102,5 @@ const FORMAS = {
 export function formaDe(n, { tocar = () => mostrarPanel(n.id) } = {}) {
   const f = (FORMAS[aparienciaDe(n).forma] ?? FORMAS.tarjeta)(n);
   f.querySelector(".abrir-forma").onclick = tocar;
-  return f;
+  return conNodo(f, n);
 }

@@ -4,7 +4,7 @@
 //   "Mis calendarios" son tus áreas (Universidad, Salud...): cada evento va en el del área donde está.
 // Más adelante (paso 33) se sincroniza con Google Calendar.
 // Paso 126: las tareas y los eventos se arrastran a otro día u hora (moverA en acciones.js); lo que se repite se mueve entero.
-import { $, el, datos, dia, sinHora, PALETA, areaDe, colorDeSuCaja, sinLoQueYaSeVe } from "./base.js";
+import { $, el, datos, dia, sinHora, PALETA, areaDe, colorDeSuCaja, sinLoQueYaSeVe, conNodo } from "./base.js";
 import { hoyTexto, sumarDias, lunes, sinHoraISO, conHoraISO, horaDecimal, hhmm, aHora, esDia } from "./fechas.js";
 import { delDia, dibujarAgenda, conDia } from "./agenda.js";
 import { crear, cambiar, cambiarProps, archivar, moverA } from "./acciones.js";
@@ -70,6 +70,7 @@ function dibujarMes() {
         const c = el("button", { className: "chip-mes", title: x.n.titulo, onclick: () => tocar(x.n, d) },
           x.ini === null ? "" : el("small", { textContent: hhmm(x.ini) + " " }), sinLoQueYaSeVe(x.n.titulo, esDia));
         c.style.setProperty("--c", colorDeCosa(x.n));
+        conNodo(c, x.n, d);
         moverEnMes(c, x);
         return c;
       }),
@@ -125,8 +126,8 @@ const REPITE = (d) => {
 };
 let abierto = null; // { n, d }: el evento que se edita (n es null si es nuevo) y el día que tocaste
 
-// n: el evento (o null para uno nuevo). d: el día; h: la hora (para uno nuevo).
-function editar(n, { d, h = 9 }) {
+// n: el evento (o null para uno nuevo). d: el día; h: la hora (para uno nuevo). El clic derecho también lo usa.
+export function editar(n, { d, h = 9 }) {
   const f = $("editor-evento").querySelector("form"), x = f.elements;
   abierto = { n, d };
   f.reset();

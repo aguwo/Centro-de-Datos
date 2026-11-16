@@ -6,7 +6,7 @@
 //                  hábitos y eventos) en una lista de tarjetas que bajan al marcarlas
 // Todo se calcula de los datos cargados y se escribe con acciones.js; el tiempo real redibuja.
 // Cómo se arma una ventana con estas funciones: widgets.js.
-import { el, datos, dia, hora, colorDe, colorDeSuCaja, dentroDe } from "./base.js";
+import { el, datos, dia, hora, colorDe, colorDeSuCaja, dentroDe, conNodo } from "./base.js";
 import { hoyTexto, lunes, sumarDias, corto, sinHoraISO, hhmm, aHora, horaDecimal } from "./fechas.js";
 import { agendar, moverA, completar, reabrir, alternarRegistro } from "./acciones.js";
 import { dibujarAgenda, delDia } from "./agenda.js";
@@ -175,6 +175,7 @@ export function planDeHoy(v) {
         el("span", { className: "meta" + (x.atrasada ? " atrasada" : "") }, icono(simbolo), el("span", { textContent: textos.filter(Boolean).join(" · ") }))),
       caja || (x.ahora ? el("span", { className: "en-curso", textContent: "Ahora" }) : ""));
     li.dataset.id = n.id;
+    conNodo(li, n, hoyTexto()); // en Hoy, lo que se repite es el de hoy
     li.ondragstart = (e) => e.dataTransfer.setData("text/plain", n.id);
     // Primero se ve el ✓ y la tarjeta se apaga; un instante después baja (o sube, si la desmarcas).
     if (caja) caja.onchange = () => {

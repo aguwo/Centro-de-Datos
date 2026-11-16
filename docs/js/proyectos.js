@@ -7,7 +7,7 @@
 //   dentro   sus notas y próximos eventos
 // Solo muestra proyectos (paso 35b): los ramos y los objetivos tendrán su propia vista, con su propio diseño.
 // Los widgets no saben de proyectos más allá de MUESTRA: otra vista puede reusarlos con otro tipo.
-import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, areaDe, dentroDe, escribible, escribiendoEn, sinTildes } from "./base.js";
+import { el, datos, dia, hora, colorDe, colorDeProyecto, cajasDe, areaDe, dentroDe, escribible, escribiendoEn, sinTildes, conNodo } from "./base.js";
 import { hoyTexto, diasEntre, corto } from "./fechas.js";
 import { cambiar, cambiarProps, completar, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario, camposDe, tienePropiedad } from "./panel.js";
@@ -210,9 +210,9 @@ function siguientePaso(r, tarjeta) {
         e.currentTarget.classList.add("hecha"); // el ✓ se ve al tiro, antes de que vuelvan los datos
         completar(sig);
       } }, icono("si")),
-      el("button", { className: "nombre", onclick: () => mostrarPanel(sig.id) },
+      conNodo(el("button", { className: "nombre", onclick: () => mostrarPanel(sig.id) },
         el("b", { textContent: sig.titulo }),
-        el("small", { className: cuando === "atrasada" ? "alerta" : "suave", textContent: cuando ? (cuando === "atrasada" ? "Atrasada, era para el " + corto(dia(sig.fecha)) : "Para " + (cuando === "hoy" ? "hoy" : "el " + cuando)) : "Sin fecha" }))),
+        el("small", { className: cuando === "atrasada" ? "alerta" : "suave", textContent: cuando ? (cuando === "atrasada" ? "Atrasada, era para el " + corto(dia(sig.fecha)) : "Para " + (cuando === "hoy" ? "hoy" : "el " + cuando)) : "Sin fecha" })), sig)),
     despues ? el("small", { className: "despues suave", textContent: "Después: " + despues.titulo }) : "");
 }
 
@@ -339,7 +339,7 @@ export function dentro(v, ctx) {
     const pieza = (titulo, boton, cosas, vacio) => el("div", { className: "pieza" },
       el("h4", {}, el("span", { textContent: titulo }), boton),
       cosas.length ? el("ul", {}, ...cosas) : el("p", { className: "vacio", textContent: vacio }));
-    const fila = (x, extra, accion) => el("li", {}, el("button", { onclick: accion }, punto(x), el("span", { className: "nombre", textContent: x.titulo }), extra ? el("small", { textContent: extra }) : ""));
+    const fila = (x, extra, accion) => conNodo(el("li", {}, el("button", { onclick: accion }, punto(x), el("span", { className: "nombre", textContent: x.titulo }), extra ? el("small", { textContent: extra }) : "")), x);
     v.replaceChildren(
       pieza("Notas y enlaces", nuevo("nota"), notas.map((x) => fila(x, "", () => mostrarPanel(x.id))), "Ideas, apuntes o links de esto."),
       pieza("Próximos eventos", nuevo("evento"), eventos.map(({ e, d }) => fila(e, d === hoy ? "hoy" : corto(d), () => mostrarPanel(e.id))), "Nada agendado."));

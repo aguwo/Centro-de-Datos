@@ -6,7 +6,7 @@
 //
 // Todo sale de delDia (agenda.js), lo mismo que usa el calendario: eventos (también los que se repiten) y tareas
 // abiertas. "De una vez" = un evento que no se repite; "lo que pesa" = su ponderación (props.peso), si la tiene.
-import { el, datos, dia, colorDe, colorDeSuCaja, dentroDe, sinLoQueYaSeVe } from "./base.js";
+import { el, datos, dia, colorDe, colorDeSuCaja, dentroDe, sinLoQueYaSeVe, conNodo } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes, hhmm, esDia } from "./fechas.js";
 import { completar } from "./acciones.js";
 import { delDia } from "./agenda.js";
@@ -66,7 +66,7 @@ function tarjeta(clase, n, adelante, etiqueta, titulo, detalle) {
   const t = el(n ? "button" : "div", { className: "tarjeta-semana " + clase, onclick: n ? () => mostrarPanel(n.id) : null },
     adelante, el("span", { className: "texto" }, el("small", { textContent: etiqueta }), el("b", { textContent: titulo }), el("span", { textContent: detalle })));
   if (n && clase.includes("principal")) t.style.setProperty("--c", colorDeX(n));
-  return t;
+  return n ? conNodo(t, n) : t;
 }
 
 // ---------- dias (las columnas) ----------
@@ -122,21 +122,21 @@ function evento(x) {
   const b = el("button", { className: "unico", onclick: () => mostrarPanel(x.n.id) }, el("b", { textContent: x.n.titulo }),
     el("small", { textContent: [dentroDe(x.n.id), x.ini === null ? "" : hhmm(x.ini), peso(x.n) ? String(peso(x.n)).replace(".", ",") + "%" : ""].filter(Boolean).join(" · ") }));
   b.style.setProperty("--c", colorDeX(x.n));
-  return b;
+  return conNodo(b, x.n, x.d);
 }
 // Lo que se repite (las clases): un punto de su color, el nombre (sin el día, que ya se ve arriba) y la hora.
 function fijo(x) {
   const b = el("button", { className: "fijo", onclick: () => mostrarPanel(x.n.id) }, el("i"),
     el("span", {}, sinLoQueYaSeVe(x.n.titulo, esDia).replace(/^Clase\s+/, ""), el("small", { textContent: x.ini === null ? "todo el día" : `${hhmm(x.ini)} – ${hhmm(x.fin)}` })));
   b.style.setProperty("--c", colorDeX(x.n));
-  return b;
+  return conNodo(b, x.n, x.d);
 }
 // Una tarea: su casilla para marcarla hecha y, abajo, dónde está y hasta cuándo (si tiene plazo).
 function tarea(x) {
   const n = x.n, caja = el("input", { type: "checkbox", className: "caja", title: "Marcar como hecha", ariaLabel: "Marcar como hecha" });
   caja.onchange = () => { caja.disabled = true; completar(n); };
   const hasta = n.props?.fecha_fin && dia(n.props.fecha_fin) !== x.d ? "hasta " + nombreDia(dia(n.props.fecha_fin)).toLowerCase() + " " + Number(dia(n.props.fecha_fin).slice(8)) : "";
-  return el("div", { className: "tarea-dia" }, caja,
+  return conNodo(el("div", { className: "tarea-dia" }, caja,
     el("span", {}, el("a", { textContent: n.titulo, onclick: () => mostrarPanel(n.id) }),
-      el("small", { textContent: [dentroDe(n.id), x.ini === null ? "" : hhmm(x.ini), hasta].filter(Boolean).join(" · ") })));
+      el("small", { textContent: [dentroDe(n.id), x.ini === null ? "" : hhmm(x.ini), hasta].filter(Boolean).join(" · ") }))), n, x.d);
 }

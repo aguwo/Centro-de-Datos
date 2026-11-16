@@ -24,7 +24,7 @@
 //   metas     las que guardes (tabla preferencias, clave "salud"); sin eso, unas sugeridas según tu peso
 // Cada hábito cae en un bloque: los de entrenar en Ejercicio, los de registrar calorías en Dieta
 // (se cumplen solos al anotar comida) y el resto en Hábitos.
-import { el, db, datos, dia, escribir, areaDe, flotante, sinTildes } from "./base.js";
+import { el, db, datos, dia, escribir, areaDe, flotante, sinTildes, conNodo } from "./base.js";
 import { hoyTexto, sumarDias, diasEntre, lunes, sinHoraISO } from "./fechas.js";
 import { alternarRegistro, cambiarProps, crear, dentroDeCaja } from "./acciones.js";
 import { icono, elegir } from "./dibujos.js";
@@ -299,7 +299,7 @@ export function cadaHabito(v, ctx) {
         const hechos = diasMarcados([h]), [nombre] = temaDe(h), rayas = [];
         for (let d = desde; d <= hoy; d = sumarDias(d, 1))
           rayas.push(el("i", { className: hechos.has(d) ? "si" : tocaEl(h, d) ? "" : "libre", title: `${d.split("-").reverse().join("/")}: ${hechos.has(d) ? "cumplido" : tocaEl(h, d) ? "no" : "no tocaba"}` }));
-        return el("div", { className: "tira-habito" }, el("span", { className: "insignia" }, icono(nombre)), el("button", { className: "nombre", textContent: h.titulo, title: "Ver o editar", onclick: () => mostrarPanel(h.id) }),
+        return el("div", { className: "tira-habito" }, el("span", { className: "insignia" }, icono(nombre)), conNodo(el("button", { className: "nombre", textContent: h.titulo, title: "Ver o editar", onclick: () => mostrarPanel(h.id) }), h),
           el("span", { className: "rayas" }, ...rayas), el("b", {}, String(Math.round(frac * 100) + "%")), el("small", { textContent: "mejor racha " + mejorRacha(h, desde, hoy) }));
       })),
       sin !== null && sin > 2 ? el("p", { className: "aviso-salud" }, icono("reloj"), el("span", { textContent: `Hace ${sin} días que no marcas ningún hábito. ¿Retomas hoy con uno solo?` })) : "");
@@ -409,7 +409,7 @@ export function rutina(v, ctx) {
       const hecho = hechos.has(e.id), kg = hechos.get(e.id) ?? kgDe(e);
       return el("div", { className: "ejercicio" + (hecho ? " hecho" : "") },
         el("input", { type: "checkbox", checked: hecho, ariaLabel: "Hecho: " + e.titulo, onchange: () => { if (hecho) hechos.delete(e.id); else hechos.set(e.id, kg); ctx.cambiar({}); } }),
-        el("button", { className: "nombre", textContent: e.titulo, title: "Ver o editar", onclick: () => mostrarPanel(e.id) }),
+        conNodo(el("button", { className: "nombre", textContent: e.titulo, title: "Ver o editar", onclick: () => mostrarPanel(e.id) }), e),
         el("small", { textContent: [e.props?.series, e.props?.reps].filter(Boolean).join(" × ") }),
         el("input", { type: "number", min: "0", step: "0.5", value: kg || "", placeholder: "kg", ariaLabel: "Kilos de " + e.titulo,
           onchange: (ev) => { hechos.set(e.id, Number(ev.target.value) || 0); ctx.cambiar({}); } }), el("small", { textContent: "kg" }));

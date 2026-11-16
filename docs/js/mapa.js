@@ -162,8 +162,9 @@ export function dibujar() {
 
   cy.on("tap", "node", (e) => { if (!e.target.data("virtual")) enfocar(e.target.id()); });
   cy.on("tap", (e) => { if (e.target === cy) desenfocar(); });
-  cy.on("mouseover", "node", (e) => e.target.addClass("conEtiqueta"));
-  cy.on("mouseout", "node", (e) => { if (!e.target.hasClass("vecino")) e.target.removeClass("conEtiqueta"); });
+  // El nodo bajo el mouse queda anotado en el grafo (data-nodo): así el clic derecho lo encuentra (paso 127).
+  cy.on("mouseover", "node", (e) => { e.target.addClass("conEtiqueta"); if (!e.target.data("virtual")) $("grafo").dataset.nodo = e.target.id(); });
+  cy.on("mouseout", "node", (e) => { if (!e.target.hasClass("vecino")) e.target.removeClass("conEtiqueta"); delete $("grafo").dataset.nodo; });
 
   dibujarLeyenda();
   aplicarFiltros();

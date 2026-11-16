@@ -7,7 +7,7 @@
 // Un ramo (paso 110: su propia categoría; antes era un tópico) con semestre (se muestran los del semestre más reciente). Sus evaluaciones son los eventos
 // que tiene adentro y no se repiten (las clases sí se repiten). Las cuentas están en notas.js.
 // Paso 52: cada ramo tiene su tema (ícono y portada, de dibujos.js; sin dibujo, solo su color: clase "lisa") y cada evaluación su ícono según el tipo.
-import { el, db, datos, dia, hora, cajasDe, colorDeProyecto, escribir, escribiendoEn, avisar, fijas, FIJA } from "./base.js";
+import { el, db, datos, dia, hora, cajasDe, colorDeProyecto, escribir, escribiendoEn, avisar, fijas, FIJA, conNodo } from "./base.js";
 import { hoyTexto, diasEntre, corto, sumarDias } from "./fechas.js";
 import { cambiarProps, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel, formulario } from "./panel.js";
@@ -169,11 +169,11 @@ export function paginaDeRamo(v, ctx) {
     };
     const tabla = el("table", { className: "evaluaciones" },
       el("thead", {}, el("tr", {}, ...["Evaluación", "Fecha", "Pondera", "Nota"].map((t) => el("th", { textContent: t })))),
-      el("tbody", {}, ...evals.map((e) => el("tr", { className: typeof e.props?.nota === "number" && e.props.nota < 4 ? "roja" : "" },
+      el("tbody", {}, ...evals.map((e) => conNodo(el("tr", { className: typeof e.props?.nota === "number" && e.props.nota < 4 ? "roja" : "" },
         el("td", {}, el("span", { className: "con-insignia" }, insignia(tipoDe(e), color, "chica"), el("a", { className: "nombre", textContent: e.titulo, onclick: () => mostrarPanel(e.id) }))),
         el("td", { className: "meta", textContent: e.fecha ? corto(dia(e.fecha)) : "" }),
         el("td", {}, numero(e, "peso", "Ponderación", 0, 100), el("span", { className: "meta", textContent: " %" })),
-        el("td", {}, numero(e, "nota", "Nota", MINIMA, MAXIMA))))));
+        el("td", {}, numero(e, "nota", "Nota", MINIMA, MAXIMA))), e))));
     const nueva = el("button", { textContent: "+ Evaluación", onclick: () => formulario(null, { tipos: ["evento"], conexion: dentroDeCaja("evento", ramo.id) }) });
 
     // ¿Y si me saco…? Prueba una nota en la próxima evaluación que cuenta, sin guardarla.
@@ -259,8 +259,8 @@ export function loQueViene(v, ctx) {
     for (const x of mostrar) grupos.set(grupo(x), [...(grupos.get(grupo(x)) ?? []), x]);
     lista.replaceChildren(...[...grupos].flatMap(([titulo, xs]) => [
       el("h4", { className: titulo === "Atrasado" || titulo === "Hoy" || titulo === "Mañana" ? "urgente" : "", textContent: titulo }),
-      el("ul", {}, ...xs.map(({ n, ramo }) => el("li", {}, insignia(tipoDe(n), colorDeProyecto(ramo.id), "chica"),
+      el("ul", {}, ...xs.map(({ n, ramo }) => conNodo(el("li", {}, insignia(tipoDe(n), colorDeProyecto(ramo.id), "chica"),
         el("a", { className: "nombre", textContent: n.titulo, onclick: () => mostrarPanel(n.id) }),
-        el("span", { className: "meta", textContent: (abierto ? "" : ramo.titulo + " · ") + cuando(n) + (n.tipos.clave === "evento" ? " · evaluación" : "") }))))]));
+        el("span", { className: "meta", textContent: (abierto ? "" : ramo.titulo + " · ") + cuando(n) + (n.tipos.clave === "evento" ? " · evaluación" : "") })), n)))]));
   };
 }

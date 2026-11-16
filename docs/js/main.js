@@ -19,6 +19,7 @@
 //   plantas.js   las plantas con sed (en Esta semana)
 import { traerDeLaBase } from "./apariencia.js";
 import "./menu.js"; // paso 106: el clic derecho de toda la web (el zoom) // primero: así la web se pinta con tu estilo desde el comienzo
+import "./clic-derecho.js"; // paso 127: y sobre tus cosas (tareas, eventos...), lo que se les puede hacer
 import { db, $, avisar, recargar, escucharCambios, dejarDeEscuchar } from "./base.js";
 import { iniciarCarcasa, apartadoActual, dibujarTodo } from "./carcasa.js";
 import { enfocar } from "./mapa.js";
