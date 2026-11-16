@@ -108,16 +108,19 @@ main { position: fixed; inset: 0; }
         transform: translate(-50%, calc(100% + 28px)); transition: transform var(--resorte-t) var(--resorte); }
 .dock.visible, .dock:focus-within { transform: translateX(-50%); }
 /* Paso 93: botones limpios, como la barra «Solo íconos» del computador: el ícono de línea y nada más. Al pasar el mouse,
-   un cuadrado translúcido (--resalte); el elegido lo lleva .marca, una sola pieza que viaja de un botón a otro (carcasa.js) */
+   un cuadrado translúcido (--resalte); el elegido lo lleva .marca, una sola pieza que se desliza de un botón a otro */
 :root { --resalte: color-mix(in srgb, var(--texto) 12%, transparent); --globo: rgba(24,24,28,.94); /* el globo con el nombre: oscuro en claro y en oscuro */ }
 .dock button { -webkit-tap-highlight-color: transparent; position: relative; flex: none; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 14px; background: none; color: var(--texto);
                display: grid; place-items: center; transition: background-color .2s ease; }
-.dock button:hover { background: var(--resalte); }
+.dock button:not([aria-current="page"]):hover { background: var(--resalte); }
 .dock .icono { width: 24px; height: 24px; }
 /* Paso 107: el imán (movimiento.js): cada ícono se corre y se infla con sus resortes, en vez de transiciones de CSS */
 .dock button > :is(.icono, .cara) { transform: translate(var(--iman-x, 0px), var(--iman-y, 0px)) scale(var(--iman-s, 1)); }
-.marca { position: absolute; left: 0; top: 0; width: var(--w, 0); height: var(--h, 0); transform: translate(var(--x, 0), var(--y, 0)); border-radius: 14px;
-         background: var(--resalte); pointer-events: none; transition: opacity .2s ease; } /* viaja con resortes (carcasa.js), no con CSS */
+/* Paso 128: la marca del elegido (movimiento.js, marcaQueViaja, pone --x --y --w --h). Se desliza al nuevo con una sola
+   curva suave que frena al llegar, sin rebote ni estirarse; si eliges otro a medio camino, sigue desde donde iba. */
+.marca { --desliza: .5s cubic-bezier(.32,.72,0,1); position: absolute; left: 0; top: 0; width: var(--w, 0); height: var(--h, 0);
+         transform: translate(var(--x, 0), var(--y, 0)); border-radius: 14px; background: var(--resalte); pointer-events: none;
+         transition: transform var(--desliza), width var(--desliza), height var(--desliza), opacity .2s ease; }
 .marca.sin-elegido { opacity: 0; }
 /* El globo: una píldora oscura con el nombre y, en gris, su atajo de teclado */
 .dock .etiqueta { position: absolute; bottom: calc(100% + 10px); display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 99px;
@@ -150,15 +153,15 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
   transition: transform .25s cubic-bezier(.2,.7,.2,1); background: var(--vidrio-fuerte);
   flex-direction: column; gap: 2px; padding: 10px 8px; border-radius: 0; border-width: 0 1px 0 0; box-shadow: none; overflow-y: auto; }
 .con-escritorio .dock button { width: 100%; height: auto; flex: none; padding: 9px 0 7px; gap: 3px; border-radius: 12px; background: none; color: var(--suave); }
-.con-escritorio .dock button:hover { background: color-mix(in srgb, var(--texto) 7%, transparent); color: var(--texto); }
-/* El elegido: un fondo suave del color de acento y una rayita al costado */
-.con-escritorio .dock button[aria-current="page"] { background: color-mix(in srgb, var(--acento) 15%, transparent); color: var(--acento); font-weight: 600; }
-.con-escritorio .dock button::before { content: ""; position: absolute; left: -8px; top: 22%; bottom: 22%; width: 3px; border-radius: 0 3px 3px 0; background: var(--acento); transform: scaleY(0); }
-.con-escritorio .dock button[aria-current="page"]::before { transform: scaleY(1); }
+.con-escritorio .dock button:not([aria-current="page"]):hover { background: color-mix(in srgb, var(--texto) 7%, transparent); color: var(--texto); }
+/* El elegido: su ícono y nombre del color de acento; detrás, la marca con un fondo suave de acento y una rayita al costado */
+.con-escritorio .dock button[aria-current="page"] { color: var(--acento); font-weight: 600; }
+.con-escritorio .dock .marca { background: color-mix(in srgb, var(--acento) 15%, transparent); border-radius: 12px; }
+.con-escritorio .dock .marca::before { content: ""; position: absolute; left: -8px; top: 22%; bottom: 22%; width: 3px; border-radius: 0 3px 3px 0; background: var(--acento); }
 .con-escritorio .dock .icono { width: 22px; height: 22px; }
 .con-escritorio .dock .etiqueta { position: static; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; opacity: 1; padding: 0; border-radius: 0;
   background: none; box-shadow: none; color: inherit; font-size: 11px; font-weight: inherit; }
-.con-escritorio .dock .etiqueta kbd, .con-escritorio .dock .marca { display: none; } /* el atajo y la marca, solo donde hay globo (abajo) */
+.con-escritorio .dock .etiqueta kbd { display: none; } /* el atajo, solo donde hay globo (abajo) */
 /* El pie: su rayita, Archivos y Ajustes uno sobre otro y el botón para retraer la barra; pegado abajo del todo (paso 124) */
 .pie { display: contents; }
 .con-escritorio .dock .pie { display: flex; flex-direction: column; align-items: stretch; gap: 2px; margin-top: auto; }
@@ -172,16 +175,16 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock .etiqueta kbd { display: inline; }
 :is([data-barra="iconos"], [data-barra="isla"]) .con-escritorio .dock button:is(:hover, :focus-visible) .etiqueta { opacity: 1; }
 /* Paso 93: Solo íconos, limpia: una columna centrada en alto de íconos de línea en cuadrados de 44 px, sin nombres.
-   El que tiene el mouse y el elegido llevan el cuadrado translúcido (el del elegido es la .marca que viaja). Al final, tu foto */
+   El que tiene el mouse y el elegido llevan el cuadrado translúcido (el del elegido es la .marca que se desliza). Al final, tu foto */
 [data-barra="iconos"] .con-escritorio { --ancho-barra: 72px; }
 [data-barra="iconos"] .con-escritorio .dock { align-items: center; justify-content: safe center; gap: 8px; padding: 16px 0; }
 [data-barra="iconos"] .con-escritorio .dock .pie { flex-direction: column; align-items: center; gap: 8px; margin-top: 0; }
 [data-barra="iconos"] .con-escritorio .dock button, [data-barra="iconos"] .con-escritorio .dock .pie > * { flex: none; width: 44px; height: 44px; padding: 0; }
 [data-barra="iconos"] .con-escritorio .dock button { color: var(--texto); }
-[data-barra="iconos"] .con-escritorio .dock button:hover { background: var(--resalte); }
-[data-barra="iconos"] .con-escritorio .dock button[aria-current="page"] { background: none; color: var(--texto); font-weight: inherit; }
-[data-barra="iconos"] .con-escritorio .dock button::before { display: none; }
-[data-barra="iconos"] .con-escritorio .dock .marca { display: block; border-radius: 12px; }
+[data-barra="iconos"] .con-escritorio .dock button:not([aria-current="page"]):hover { background: var(--resalte); }
+[data-barra="iconos"] .con-escritorio .dock button[aria-current="page"] { color: var(--texto); font-weight: inherit; }
+[data-barra="iconos"] .con-escritorio .dock .marca { background: var(--resalte); }
+[data-barra="iconos"] .con-escritorio .dock .marca::before { display: none; }
 [data-barra="iconos"] .con-escritorio .dock .pie > .retraer { height: 22px; }
 /* Ancha: ícono y nombre en una fila, con el nombre de la web arriba */
 [data-barra="ancha"] .con-escritorio { --ancho-barra: 212px; }
@@ -189,7 +192,7 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 [data-barra="ancha"] .con-escritorio .dock::before { content: "Martita"; padding: 2px 12px 14px; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--texto); }
 [data-barra="ancha"] .con-escritorio .dock button { grid-template-columns: 22px minmax(0, 1fr); justify-items: start; align-items: center; gap: 12px; padding: 9px 12px; }
 [data-barra="ancha"] .con-escritorio .dock .etiqueta { font-size: 14px; }
-[data-barra="ancha"] .con-escritorio .dock button::before { left: -12px; }
+[data-barra="ancha"] .con-escritorio .dock .marca::before { left: -12px; }
 /* Paso 120: insignias vivas (carcasa.js). Un número arriba a la derecha del ícono, del color de lo urgente que es:
    rojo (algo atrasado), amarillo (vence pronto) o el de acento. Sigue al ícono cuando el imán lo mueve.
    El detalle va en el globo (Solo íconos, Isla y el dock del teléfono); en Clásica y Ancha basta el número. */
@@ -238,14 +241,15 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 /* Flotante: una tarjeta de vidrio separada del borde */
 [data-barra="flotante"] .con-escritorio { --barra: 108px; }
 [data-barra="flotante"] .con-escritorio .dock { top: 12px; bottom: 12px; left: 12px; width: 84px; border-radius: 22px; border-width: 1px; box-shadow: var(--sombra); }
-[data-barra="flotante"] .con-escritorio .dock button::before { display: none; }
+[data-barra="flotante"] .con-escritorio .dock .marca::before { display: none; }
 /* Isla: una píldora corta, al centro de la altura */
 [data-barra="isla"] .con-escritorio { --barra: 84px; }
 [data-barra="isla"] .con-escritorio .dock { --medio: -50%; top: 50%; bottom: auto; left: 14px; width: 58px; padding: 8px 6px; gap: 4px;
   border-radius: 29px; border-width: 1px; box-shadow: var(--sombra); }
 [data-barra="isla"] .con-escritorio .dock button { border-radius: 50%; aspect-ratio: 1; padding: 0; }
-[data-barra="isla"] .con-escritorio .dock button[aria-current="page"] { background: var(--acento-fondo); color: var(--sobre-acento); }
-[data-barra="isla"] .con-escritorio .dock button::before { display: none; }
+[data-barra="isla"] .con-escritorio .dock button[aria-current="page"] { color: var(--sobre-acento); }
+[data-barra="isla"] .con-escritorio .dock .marca { background: var(--acento-fondo); border-radius: 50%; }
+[data-barra="isla"] .con-escritorio .dock .marca::before { display: none; }
 /* Con Flotante o Isla, el costado de Proyectos también flota: una tarjeta separada del borde y de la barra */
 :is([data-barra="flotante"], [data-barra="isla"]) .con-escritorio .con-costado > .costado { top: 12px; bottom: 12px; border-radius: 22px; border-width: 1px; box-shadow: var(--sombra); }
 :is([data-barra="flotante"], [data-barra="isla"]) .con-escritorio .con-costado { padding-left: calc(var(--costado) + 44px); }
@@ -317,7 +321,7 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 /* Animaciones de la barra (paso 98: todas con el mismo resorte que la cámara del escritorio, --resorte; carcasa.js
    lo calcula con curvaDeResorte y, si el navegador no sabe de linear(), queda la curva suave de siempre):
    - pasar el mouse: el fondo y el color se funden, y el ícono se levanta apenas; al apretar, se hunde
-   - el elegido: su fondo se funde y la rayita crece desde el centro
+   - el elegido: la marca se desliza hasta él (paso 128, arriba en .marca)
    - retraer y sacar: la barra se desliza, el contenido se corre con ella y los botones aparecen uno tras otro (--i)
    - cambiar de estilo en Ajustes: ancho, bordes y lugar cambian de a poco
    - los globos con el nombre (Solo íconos e Isla) entran deslizándose */
@@ -327,7 +331,6 @@ body:not(.con-escritorio) .dock:not(.visible, :focus-within) button { opacity: 0
 .con-escritorio main { transition: left var(--resorte-t) var(--resorte); }
 .con-escritorio .dock button { transition: background-color .2s ease, color .2s ease, opacity .3s ease, transform var(--resorte-t) var(--resorte);
   transition-delay: 0s, 0s, calc(var(--i, 0) * 28ms + 60ms), calc(var(--i, 0) * 28ms + 60ms); }
-.con-escritorio .dock button::before { transition: transform .3s var(--resorte); }
 .barra-retraida .con-escritorio .dock .marca { opacity: 0; }
 .barra-retraida .con-escritorio .dock button { opacity: 0; transform: translateX(-10px); transition-delay: 0s; }
 .con-escritorio .sacar-barra { transition: transform var(--resorte-t) var(--resorte) .15s, opacity .25s ease .15s, width .2s var(--resorte), color .2s ease; }
