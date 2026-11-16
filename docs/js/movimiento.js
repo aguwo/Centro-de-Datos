@@ -104,3 +104,57 @@ new MutationObserver((cambios) => {
   // Anotar dónde queda cada elegida, para cuando su barra se rearme (solo si alguna barra cambió).
   if (llegaron.size || cambios.some((c) => [...(c.addedNodes ?? [])].some((n) => n instanceof Element && (n.matches(".segmento") || n.querySelector(".segmento"))))) requestAnimationFrame(() => { for (const g of document.querySelectorAll(".segmento[aria-label]")) { const b = g.querySelector('[aria-pressed="true"]'); if (b?.offsetParent) antes.set(g.ariaLabel, caja(b, g)); } });
 }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-pressed"], attributeOldValue: true });
+
+// ---------- Arrastrar con el mouse o el dedo (paso 126) ----------
+// arrastrable(cosa, { mover, soltar, desplaza }): hace que algo se pueda agarrar y llevar a otra parte.
+//   Con el mouse empieza al moverlo unos px; con el dedo, al dejarlo apretado un momento (así deslizar sigue siendo
+//   desplazar la página). Un toque sin arrastrar sigue siendo un clic normal.
+//   mover(p) se llama mientras se arrastra y soltar(p) al soltar. p = { x, y, arriba }: dónde está el puntero y dónde
+//   quedaría el borde de arriba de lo agarrado (para que no salte a la punta del puntero).
+//   desplaza: la caja con barra que se desplaza sola cuando el puntero se acerca a su borde de arriba o de abajo.
+const UMBRAL = 5, ESPERA_DEDO = 350, BORDE = 50; // px para que cuente como arrastre; ms apretando con el dedo; px del borde
+export function arrastrable(cosa, { mover, soltar, desplaza }) {
+  let arrastrando = false;
+  // Mientras se arrastra con el dedo, la página no se desplaza ni sale el menú de mantener apretado.
+  cosa.addEventListener("touchmove", (t) => arrastrando && t.preventDefault(), { passive: false });
+  cosa.addEventListener("contextmenu", (e) => e.pointerType !== "mouse" && e.preventDefault());
+  cosa.addEventListener("pointerdown", (e) => {
+    if (e.button > 0) return;
+    const inicio = { x: e.clientX, y: e.clientY }, dedo = e.pointerType !== "mouse";
+    let listo = false; // ¿ya puede desplazar la caja? (ver abajo)
+    const agarre = e.clientY - cosa.getBoundingClientRect().top;
+    const punto = (m) => ({ x: m.clientX, y: m.clientY, arriba: m.clientY - agarre });
+    const empezar = () => { arrastrando = true; cosa.classList.add("moviendo"); document.body.classList.add("arrastrando-algo"); if (dedo) navigator.vibrate?.(12); };
+    const espera = dedo && setTimeout(empezar, ESPERA_DEDO);
+    const alMover = (m) => {
+      const lejos = Math.hypot(m.clientX - inicio.x, m.clientY - inicio.y) > UMBRAL;
+      if (!arrastrando) return lejos && (dedo ? terminar() : empezar()); // con el dedo, moverse antes de tiempo es desplazar
+      m.preventDefault();
+      if (desplaza) {
+        // Recién se desplaza después de haber salido de los bordes (si se agarró algo pegado a un borde, no se va solo).
+        const r = desplaza.getBoundingClientRect(), arriba = m.clientY < r.top + BORDE, abajo = m.clientY > r.bottom - BORDE;
+        if (!arriba && !abajo) listo = true;
+        else if (listo) desplaza.scrollTop += arriba ? -12 : 12;
+      }
+      mover?.(punto(m));
+    };
+    const terminar = (m) => {
+      clearTimeout(espera);
+      removeEventListener("pointermove", alMover);
+      removeEventListener("pointerup", terminar);
+      removeEventListener("pointercancel", terminar);
+      if (!arrastrando) return;
+      arrastrando = false;
+      cosa.classList.remove("moviendo");
+      document.body.classList.remove("arrastrando-algo");
+      // El clic que viene después de soltar no cuenta (no abre lo que se arrastró).
+      const sinClic = (c) => { c.stopPropagation(); c.preventDefault(); };
+      addEventListener("click", sinClic, { capture: true, once: true });
+      setTimeout(() => removeEventListener("click", sinClic, { capture: true }), 0);
+      soltar?.(m?.type === "pointerup" ? punto(m) : null); // null: se canceló
+    };
+    addEventListener("pointermove", alMover);
+    addEventListener("pointerup", terminar);
+    addEventListener("pointercancel", terminar);
+  });
+}

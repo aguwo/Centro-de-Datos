@@ -1,9 +1,10 @@
 // El panel lateral: el formulario para crear o editar (ver un nodo es su ficha, ficha.js), y las propiedades de los tipos.
 // Lee de los datos cargados (no del mapa), así funciona igual desde el Inicio.
-import { db, $, el, avisar, datos, colorDe, recargar, dia, hora, fijas, FIJA } from "./base.js";
+import { db, $, el, avisar, datos, colorDe, recargar, dia, hora, sinHora, fijas, FIJA } from "./base.js";
 import { enfocar, desenfocar, ajustarMapa } from "./mapa.js";
 import { crear, conectar, dentroDeCaja, cambiar, cambiarProps } from "./acciones.js";
 import { abrirFicha, refrescarFicha } from "./ficha.js";
+import { conHoraISO, aHora, hhmm, horaDecimal } from "./fechas.js";
 
 const ESTADOS = ["Inbox", "Por hacer", "En curso", "Esperando", "Hecho"]; // los mismos del paso 3
 
@@ -41,17 +42,32 @@ function control(p, v) {
     case "seleccion": return lista(p.opciones ?? []);
     case "booleano": return el("input", { type: "checkbox", checked: !!v, className: "check" });
     case "numero": return el("input", { type: "number", step: "any", value: v ?? "" });
-    case "fecha": return el("input", { type: "date", value: dia(v) ?? "" });
-    case "fecha_hora": return el("input", { type: "datetime-local", value: v ? `${dia(v)}T${hora(v) || "00:00"}` : "" });
+    case "fecha": return diaYHora(v);
+    case "fecha_hora": return el("input", { type: "datetime-local", value: v ? `${dia(v)}T${horaDeControl(v) || "00:00"}` : "" });
     case "enlace": return el("input", { type: "url", value: v ?? "", placeholder: "https://…" });
     case "imagen": return el("input", { type: "url", value: v ?? "", placeholder: "https://… (el enlace a una foto)" });
     default: return el("input", { value: v ?? "" });
   }
 }
 
+// La hora como la piden los campos de hora ("14:30"; vacío si no tiene), sin depender del idioma del navegador.
+const horaDeControl = (v) => (v && !sinHora(new Date(v)) ? hhmm(horaDecimal(v)) : "");
+// Un día con hora opcional (paso 126): el día y al lado la hora. Sin hora queda para todo el día.
+// Se guarda como antes ("2026-11-20") si no tiene hora, o como fecha completa si la tiene.
+function diaYHora(v) {
+  return el("span", { className: "dia-y-hora" },
+    el("input", { type: "date", value: dia(v) ?? "", ariaLabel: "Día" }),
+    el("input", { type: "time", step: 900, value: horaDeControl(v), ariaLabel: "Hora (opcional)", title: "Hora (opcional): déjala vacía si es para todo el día" }));
+}
+const leerDiaYHora = (c) => {
+  const [d, h] = c.querySelectorAll("input");
+  return !d.value ? null : h.value ? conHoraISO(d.value, aHora(h.value)) : d.value;
+};
+
 // Lo contrario: del control al valor que se guarda (vacío = null, que borra la propiedad).
 function leer(p, c) {
   if (p.tipo === "booleano") return c.checked;
+  if (p.tipo === "fecha") return leerDiaYHora(c);
   if (!c.value) return null;
   if (p.tipo === "numero") return Number(c.value);
   if (p.tipo === "fecha_hora") return new Date(c.value).toISOString();

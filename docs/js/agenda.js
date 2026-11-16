@@ -3,6 +3,7 @@
 // Solo sabe dibujar: qué pasa al tocar un bloque, un hueco o al soltar una tarea encima lo decide quien la usa.
 import { el, datos, dia, sinHora, colorDe, colorDeSuCaja, sinLoQueYaSeVe } from "./base.js";
 import { hoyTexto, hhmm, horaDecimal, ocurreEl, esDia } from "./fechas.js";
+import { arrastrable } from "./movimiento.js";
 
 const DURACION = 0.75; // si algo no dice cuándo termina, se dibuja de 45 minutos
 
@@ -45,6 +46,8 @@ function columnas(items) {
   for (const g of grupos) g.sort((a, b) => fijo(b) - fijo(a) || a.ini - b.ini).forEach((x, i) => Object.assign(x, { col: i, de: g.length }));
   return items;
 }
+// Marca un lugar con su día (data-d), para saber dónde cae lo que se arrastra.
+export const conDia = (lugar, d) => ((lugar.dataset.d = d), lugar);
 const ESCALON = 22; // % que se corre cada bloque encima de otro
 const LINEA = 15.6; // alto de una línea de texto en un bloque (12px × 1.3, como en estilos.css)
 
@@ -58,8 +61,10 @@ const LINEA = 15.6; // alto de una línea de texto en un bloque (12px × 1.3, co
 //   alTocarHueco(d, hora)    al hacer clic en un espacio vacío
 //   alSoltar(id, d, hora)    al soltar encima algo arrastrado (con su id)
 //   (las horas de alTocarHueco y alSoltar vienen redondeadas a media hora)
+//   alMover(x, d, hora)      con esto los bloques se pueden arrastrar a otro día u hora (paso 126): al soltar dice
+//                            adónde (hora redondeada a 15 minutos, o null si cayó en «todo el día»)
 export function dibujarAgenda(cont, dias, { desde = 7, hasta = 24, alto = 48, todoElDia: conTodoElDia = true,
-  filtro = () => true, color = (n) => colorDeSuCaja(n.id) ?? colorDe(n.tipos.clave), alTocar, alTocarHueco, alSoltar } = {}) {
+  filtro = () => true, color = (n) => colorDeSuCaja(n.id) ?? colorDe(n.tipos.clave), alTocar, alTocarHueco, alSoltar, alMover } = {}) {
   const hoy = hoyTexto(), ahora = new Date().getHours() + new Date().getMinutes() / 60;
   const plantilla = `52px repeat(${dias.length}, minmax(0, 1fr))`;
   const fila = (clase, ...hijos) => { const f = el("div", { className: clase }, ...hijos); f.style.gridTemplateColumns = plantilla; return f; };
@@ -67,7 +72,44 @@ export function dibujarAgenda(cont, dias, { desde = 7, hasta = 24, alto = 48, to
     const b = el("button", { className: "bloque" + (x.tarea ? " tarea" : "") + (todoElDia ? " todo-el-dia" : ""), title: x.n.titulo, onclick: () => alTocar?.(x.n, x.d) },
       el("b", { textContent: sinLoQueYaSeVe(x.n.titulo, esDia) }), todoElDia ? "" : el("small", { textContent: hhmm(x.ini) + (x.fin - x.ini !== DURACION ? "–" + hhmm(x.fin) : "") }));
     b.style.setProperty("--c", color(x.n));
+    if (alMover) moverBloque(b, x);
     return b;
+  };
+
+  // Arrastrar un bloque: mientras, una sombra muestra dónde y a qué hora quedaría; al soltar, alMover dice adónde.
+  // Los lugares donde se puede soltar son las columnas de horas y las celdas de «todo el día» (llevan data-d).
+  const sombra = el("div", { className: "bloque sombra" }, el("b"), el("small"));
+  const destinoEn = (p) => {
+    const lugar = p && document.elementFromPoint(p.x, p.y)?.closest("[data-d]");
+    if (!lugar || !cont.contains(lugar)) return null;
+    if (!lugar.classList.contains("dia")) return { lugar, d: lugar.dataset.d, hora: null };
+    const r = lugar.getBoundingClientRect(), horas = hasta - desde;
+    const hora = Math.round((desde + ((p.arriba - r.top) / r.height) * horas) * 4) / 4; // de a 15 minutos
+    return { lugar, d: lugar.dataset.d, hora: Math.min(Math.max(hora, desde), hasta - 0.25) };
+  };
+  const moverBloque = (b, x) => {
+    const dura = x.ini === null ? 1 : x.fin - x.ini;
+    let antes = null;
+    arrastrable(b, {
+      desplaza: cont,
+      mover: (p) => {
+        const a = destinoEn(p);
+        antes?.lugar.classList.remove("soltar");
+        antes = a;
+        if (a?.hora == null) return sombra.remove(), a?.lugar.classList.add("soltar"); // en «todo el día» se marca la celda
+        sombra.style.setProperty("--c", color(x.n));
+        Object.assign(sombra.style, { top: (a.hora - desde) * alto + "px", height: Math.max(22, dura * alto - 2) + "px" });
+        sombra.firstChild.textContent = sinLoQueYaSeVe(x.n.titulo, esDia);
+        sombra.lastChild.textContent = hhmm(a.hora) + "–" + hhmm(Math.min(a.hora + dura, 24));
+        if (sombra.parentElement !== a.lugar) a.lugar.append(sombra);
+      },
+      soltar: (p) => {
+        antes?.lugar.classList.remove("soltar");
+        sombra.remove();
+        const a = p && destinoEn(p);
+        if (a && (a.d !== x.d || a.hora !== x.ini)) alMover(x, a.d, a.hora);
+      },
+    });
   };
 
   const cabecera = dias.length > 1 && fila("agenda-cab", el("span"), ...dias.map((d) => {
@@ -76,14 +118,14 @@ export function dibujarAgenda(cont, dias, { desde = 7, hasta = 24, alto = 48, to
   }));
   const items = dias.map((d) => delDia(d).filter(filtro));
   const todoElDia = conTodoElDia && items.some((l) => l.some((x) => x.ini === null)) && fila("agenda-todo", el("span", { className: "hora", textContent: "todo el día" }),
-    ...items.map((l) => el("div", {}, ...l.filter((x) => x.ini === null).map((x) => bloque(x, true)))));
+    ...items.map((l, i) => conDia(el("div", {}, ...l.filter((x) => x.ini === null).map((x) => bloque(x, true))), dias[i])));
 
   const cuerpo = fila("agenda-cuerpo", el("div", { className: "horas" },
     ...Array.from({ length: hasta - desde }, (_, i) => { const s = el("span", { className: "hora", textContent: `${desde + i}:00` }); s.style.top = i * alto + "px"; return s; })));
   cuerpo.style.height = (hasta - desde) * alto + "px";
   cuerpo.style.setProperty("--alto", alto + "px");
   dias.forEach((d, i) => {
-    const col = el("div", { className: "dia" + (d === hoy ? " hoy" : "") });
+    const col = conDia(el("div", { className: "dia" + (d === hoy ? " hoy" : "") }), d);
     for (const x of columnas(items[i].filter((x) => x.ini !== null && x.fin > desde))) {
       const b = bloque(x);
       const ini = Math.max(x.ini, desde);

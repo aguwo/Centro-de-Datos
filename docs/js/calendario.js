@@ -3,10 +3,12 @@
 //   Los eventos pueden repetirse (agenda.js sabe cuándo ocurren) y borrarse "solo este" o "todos".
 //   "Mis calendarios" son tus áreas (Universidad, Salud...): cada evento va en el del área donde está.
 // Más adelante (paso 33) se sincroniza con Google Calendar.
+// Paso 126: las tareas y los eventos se arrastran a otro día u hora (moverA en acciones.js); lo que se repite se mueve entero.
 import { $, el, datos, dia, sinHora, PALETA, areaDe, colorDeSuCaja, sinLoQueYaSeVe } from "./base.js";
 import { hoyTexto, sumarDias, lunes, sinHoraISO, conHoraISO, horaDecimal, hhmm, aHora, esDia } from "./fechas.js";
-import { delDia, dibujarAgenda } from "./agenda.js";
-import { crear, cambiar, cambiarProps, archivar } from "./acciones.js";
+import { delDia, dibujarAgenda, conDia } from "./agenda.js";
+import { crear, cambiar, cambiarProps, archivar, moverA } from "./acciones.js";
+import { arrastrable } from "./movimiento.js";
 import { mostrarPanel } from "./panel.js";
 
 const ALTO = 44; // píxeles por hora
@@ -48,7 +50,7 @@ export function dibujarCalendario() {
   const cuerpo = $("cal-cuerpo"), arriba = cuerpo.scrollTop;
   dibujarAgenda(cuerpo, dias, {
     desde: 0, hasta: 24, alto: ALTO, filtro: seVe, color: colorDeCosa,
-    alTocar: tocar, alTocarHueco: (d, h) => editar(null, { d, h }),
+    alTocar: tocar, alTocarHueco: (d, h) => editar(null, { d, h }), alMover: (x, d, h) => moverA(x.n, x.d, d, h),
   });
   cuerpo.scrollTop = arriba || 8 * ALTO; // la primera vez abre en las 8:00; después se queda donde estabas
 }
@@ -68,14 +70,26 @@ function dibujarMes() {
         const c = el("button", { className: "chip-mes", title: x.n.titulo, onclick: () => tocar(x.n, d) },
           x.ini === null ? "" : el("small", { textContent: hhmm(x.ini) + " " }), sinLoQueYaSeVe(x.n.titulo, esDia));
         c.style.setProperty("--c", colorDeCosa(x.n));
+        moverEnMes(c, x);
         return c;
       }),
       sobran > 0 ? el("button", { className: "chip-mes mas", textContent: `+${sobran + 1} más`, onclick: verDia }) : "");
     celda.onclick = (e) => { if (e.target === celda) editar(null, { d, h: 9 }); };
+    conDia(celda, d);
     return celda;
   });
   $("cal-cuerpo").scrollTop = 0;
   $("cal-cuerpo").replaceChildren(el("div", { className: "mes" }, ...nombres, ...celdas));
+}
+
+// En el mes, arrastrar algo a otro día lo cambia de día y conserva su hora.
+function moverEnMes(chip, x) {
+  let antes = null;
+  const celdaEn = (p) => p && document.elementFromPoint(p.x, p.y)?.closest(".mes [data-d]");
+  arrastrable(chip, {
+    mover: (p) => { const c = celdaEn(p); if (c !== antes) { antes?.classList.remove("soltar"); c?.classList.add("soltar"); antes = c; } },
+    soltar: (p) => { antes?.classList.remove("soltar"); const d = celdaEn(p)?.dataset.d; if (d && d !== x.d) moverA(x.n, x.d, d); },
+  });
 }
 
 // El costado: mini mes (tocar un día lo muestra) y Mis calendarios (marcar o desmarcar).
