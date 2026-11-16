@@ -1,7 +1,7 @@
 // La agenda por horas: una columna por día, cada evento o tarea con hora es un bloque.
 // La usan "Tu día" en Hoy (un día, desde ahora) y el calendario (un día o siete).
 // Solo sabe dibujar: qué pasa al tocar un bloque, un hueco o al soltar una tarea encima lo decide quien la usa.
-import { el, datos, dia, sinHora, colorDe, colorDeSuCaja, sinLoQueYaSeVe } from "./base.js";
+import { el, datos, dia, sinHora, colorDe, colorDeSuCaja, sinLoQueYaSeVe, conNodo } from "./base.js";
 import { hoyTexto, hhmm, horaDecimal, ocurreEl, esDia } from "./fechas.js";
 import { arrastrable } from "./movimiento.js";
 
@@ -72,6 +72,7 @@ export function dibujarAgenda(cont, dias, { desde = 7, hasta = 24, alto = 48, to
     const b = el("button", { className: "bloque" + (x.tarea ? " tarea" : "") + (todoElDia ? " todo-el-dia" : ""), title: x.n.titulo, onclick: () => alTocar?.(x.n, x.d) },
       el("b", { textContent: sinLoQueYaSeVe(x.n.titulo, esDia) }), todoElDia ? "" : el("small", { textContent: hhmm(x.ini) + (x.fin - x.ini !== DURACION ? "–" + hhmm(x.fin) : "") }));
     b.style.setProperty("--c", color(x.n));
+    conNodo(b, x.n, x.d);
     if (alMover) moverBloque(b, x);
     return b;
   };

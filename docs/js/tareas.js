@@ -3,7 +3,7 @@
 //   ☆  hacerla una de tus 3 prioridades de hoy
 //   a las atrasadas: Hoy / Mañana / Soltar
 // Cada fila se puede arrastrar a una agenda ("Tu día") para reservarle una hora.
-import { el, avisar, datos, dia, hora, dentroDe, proyectoDe, colorDeProyecto } from "./base.js";
+import { el, avisar, datos, dia, hora, dentroDe, proyectoDe, colorDeProyecto, conNodo } from "./base.js";
 import { hoyTexto, sumarDias, corto, sinHoraISO, hhmm, leerFecha, fechaLeida } from "./fechas.js";
 import { cambiar, cambiarProps, completar, reabrir, archivar, crear, dentroDeCaja } from "./acciones.js";
 import { mostrarPanel } from "./panel.js";
@@ -45,7 +45,7 @@ function fila(n, { prioridad, atrasada, conFecha, sinCaja, lleno }) {
       boton("Mañana", () => cambiar(n, { fecha: sinHoraISO(sumarDias(hoy, 1)) })),
       boton("Soltar", () => archivar(n), "Archivarla: deja de aparecer, pero se puede recuperar")) : "");
   li.ondragstart = (e) => e.dataTransfer.setData("text/plain", n.id);
-  return li;
+  return conNodo(li, n);
 }
 // "Agregar tarea" (Productividad, Proyectos): entiende fechas escritas ("dentista mañana 10:00"), muestra abajo
 // la fecha que entendió y deja la tarea "Por hacer" dentro de la caja que diga destino() (un id, o nada).

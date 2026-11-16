@@ -90,6 +90,9 @@ export const hora = (fecha) => {
 
 // Props que llegan solas de afuera y no se cambian a mano (paso 51): la nota de una evaluación
 // que subió el portal de la U (universidad-pc/subir.mjs le pone props.portal = su nombre allá).
+// Paso 127: marca un elemento de la página como «es tal nodo» (y d, el día, para lo que se repite). Con eso, el clic
+// derecho sobre él (clic-derecho.js) ofrece lo que se le puede hacer, en cualquier parte de la web.
+export const conNodo = (x, n, d) => { x.dataset.nodo = n.id; if (d) x.dataset.dia = d; return x; };
 export const fijas = (n) => (n?.props?.portal ? ["nota"] : []);
 export const FIJA = "Viene del portal de la U: se actualiza sola";
 
