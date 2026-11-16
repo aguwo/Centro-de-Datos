@@ -8,7 +8,7 @@
 // Cómo se arma una ventana con estas funciones: widgets.js.
 import { el, datos, dia, hora, colorDe, colorDeSuCaja, dentroDe } from "./base.js";
 import { hoyTexto, lunes, sumarDias, corto, sinHoraISO, hhmm, aHora, horaDecimal } from "./fechas.js";
-import { agendar, completar, reabrir, alternarRegistro } from "./acciones.js";
+import { agendar, moverA, completar, reabrir, alternarRegistro } from "./acciones.js";
 import { dibujarAgenda, delDia } from "./agenda.js";
 import { habitosDelDia } from "./salud.js";
 import { dibujarClima } from "./clima.js";
@@ -64,6 +64,7 @@ export function tuDia(v) {
     alTocar: (n) => mostrarPanel(n.id),
     // Soltar una tarea a una hora: queda agendada hoy a esa hora, por una hora.
     alSoltar: (id, d, h) => datos.nodo.has(id) && agendar(datos.nodo.get(id), d, h),
+    alMover: (x, d, h) => moverA(x.n, x.d, d, h), // y lo que ya está se arrastra a otra hora
   });
   cadaMinuto(v, dibujar); // la línea de "ahora" avanza sola
   return dibujar;

@@ -1,8 +1,8 @@
 // Lo que la web le cambia a tus datos. Todas escriben en la base y el tiempo real redibuja todo solo.
 // Así cada vista solo dice QUÉ hacer (completar, posponer...) y nunca cómo se escribe.
 // Paso 89: cambiar un nodo y anotar o borrar un registro se ven al instante (escribir con alTiro, base.js).
-import { db, escribir, datos, avisar, recargar, cajasDe } from "./base.js";
-import { conHoraISO } from "./fechas.js";
+import { db, escribir, datos, avisar, recargar, cajasDe, dia, sinHora } from "./base.js";
+import { conHoraISO, sinHoraISO, sumarDias, diasEntre, horaDecimal } from "./fechas.js";
 
 const nodos = () => db.from("nodos");
 
@@ -89,6 +89,21 @@ export function completar(n) {
 // Reservarle una hora a algo: el día d desde la hora h (14.5 = 14:30), por "horas" horas.
 export const agendar = (n, d, h, horas = 1) =>
   cambiar(n, { fecha: conHoraISO(d, h), props: { ...n.props, fecha_fin: conHoraISO(d, h + horas) } });
+// Mover algo (una tarea o un evento) del día «de» al día «a» (paso 126, al arrastrarlo en el calendario). h es la hora:
+//   un número (14.5 = 14:30) lo pone a esa hora y lo que duraba sigue durando lo mismo (si no tenía hora, dura 1 hora);
+//   null lo deja para todo el día; sin h conserva la hora que tenía.
+// Lo que se repite se mueve entero: su primera vez se corre los mismos días (una clase de los lunes pasa a los martes).
+const horaDe = (f) => (sinHora(new Date(f)) ? null : horaDecimal(f));
+const correr = (f, dias, h = horaDe(f)) => (h === null ? sinHoraISO : conHoraISO)(sumarDias(dia(f), dias), h);
+export function moverA(n, de, a, h) {
+  const salto = diasEntre(de, a), fin = n.props?.fecha_fin, props = { ...n.props };
+  const fecha = correr(n.fecha, salto, h);
+  const conHoras = horaDe(n.fecha) !== null && fin && horaDe(fin) !== null;
+  if (typeof h === "number") props.fecha_fin = conHoraISO(dia(fecha), h + (conHoras ? (new Date(fin) - new Date(n.fecha)) / 36e5 : 1));
+  else if (h === null && conHoras) delete props.fecha_fin;
+  else if (fin) props.fecha_fin = correr(fin, salto);
+  return cambiar(n, { fecha, props });
+}
 export const reabrir = (n) => cambiar(n, { estado: "Por hacer" });
 // Soltar = archivar: deja de aparecer, pero se puede recuperar (el agente sabe hacerlo).
 export const archivar = (n) => cambiar(n, { archivado: true });
