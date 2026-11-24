@@ -56,6 +56,16 @@ export function crearRepositorio(db: SupabaseClient, usuario: string): Repositor
       return fila?.tipos?.clave ?? null;
     },
 
+    // Un uuid se ordena como texto, así que «empieza con X» = está entre X000… y Xfff…, y usa el índice de la llave.
+    async idsQueEmpiezanCon(prefijo) {
+      const relleno = (c: string) => {
+        const hex = (prefijo + c.repeat(32)).slice(0, 32);
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+      };
+      const filas = revisar(await db.from("nodos").select("id").gte("id", relleno("0")).lte("id", relleno("f")).limit(2)) ?? [];
+      return filas.map((f: any) => f.id);
+    },
+
     async arbol(desde) {
       let q = db.from("arbol").select("id, titulo, tipo, modulo, orden, estado, padre_id");
       if (desde) q = q.contains("camino", [desde]); // el nodo y todo lo que tiene adentro
