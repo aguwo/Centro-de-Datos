@@ -66,6 +66,8 @@ export interface Repositorio {
   /** Un tipo por clave: si tienes tu propia versión, esa en vez de la plantilla. */
   listarTipos(): Promise<Tipo[]>;
   tipoDeNodo(id: string): Promise<string | null>;
+  /** Los ids de tus nodos que empiezan con ese pedazo (paso 129: ids cortos). Con dos basta para saber que es ambiguo. */
+  idsQueEmpiezanCon(prefijo: string): Promise<string[]>;
   arbol(desde?: string): Promise<FilaArbol[]>;
   buscarNodos(f: { texto?: string; tipo?: string; estado?: string; archivados?: boolean; limite: number }): Promise<Nodo[]>;
   verNodo(id: string, profundidad: number): Promise<{ nodo: Nodo; vecinos: Vecino[] } | null>;
@@ -217,31 +219,77 @@ async function validar(repo: Repositorio, clave: string, props?: Record<string, 
 /**
  * Convierte las filas del árbol en líneas con sangría, agrupadas por módulo:
  *   # General
- *   Universidad [area] <id>
- *     Base de Datos [ramo] <id>
+ *   Universidad [area] (76) #effc0d3e
+ *     Base de Datos [ramo, En curso] (21) #8171a8c7
+ * Paso 129: para que el agente gaste poco al orientarse,
+ *   profundidad   cuántos niveles se muestran desde arriba (las raíces son el nivel 1).
+ *   soloCarpetas  se saltan las hojas (tareas, notas...); las carpetas dicen entre paréntesis cuántas cosas tienen
+ *                 adentro, así se sabe dónde entrar con 'desde'. Carpeta = un tipo de `carpetas` o algo con hijos.
+ *   el id va corto (#8 caracteres): todas las herramientas lo aceptan así (ver completarIds).
  * Lo Hecho se salta (con todo lo que tiene adentro) salvo que se pida verlo.
  */
-export function dibujarArbol(filas: FilaArbol[], conHechos = false): string[] {
+export function dibujarArbol(
+  filas: FilaArbol[],
+  { conHechos = false, profundidad = Infinity, soloCarpetas = false, carpetas = new Set<string>() } = {},
+): string[] {
   const ids = new Set(filas.map((f) => f.id));
   const hijos = new Map<string | null, FilaArbol[]>();
   for (const f of filas) {
     const p = f.padre_id && ids.has(f.padre_id) ? f.padre_id : null; // si el padre quedó fuera, es raíz
     hijos.set(p, [...(hijos.get(p) ?? []), f]);
   }
+  const visible = (f: FilaArbol) => conHechos || f.estado !== "Hecho";
+  const deF = (f: FilaArbol) => (hijos.get(f.id) ?? []).filter(visible);
+  const cuantos = (f: FilaArbol): number => deF(f).reduce((s, h) => s + 1 + cuantos(h), 0);
+  const esCarpeta = (f: FilaArbol) => carpetas.has(f.tipo) || deF(f).length > 0;
   const enOrden = (a: FilaArbol, b: FilaArbol) => a.orden - b.orden || a.titulo.localeCompare(b.titulo, "es");
   const lineas: string[] = [];
-  const bajar = (f: FilaArbol, sangria: number) => {
-    if (!conHechos && f.estado === "Hecho") return;
+  const bajar = (f: FilaArbol, nivel: number) => {
+    if (soloCarpetas && !esCarpeta(f)) return;
     const detalle = [f.tipo, f.estado].filter(Boolean).join(", ");
-    lineas.push(`${"  ".repeat(sangria)}${f.titulo} [${detalle}] ${f.id}`);
-    for (const h of (hijos.get(f.id) ?? []).sort(enOrden)) bajar(h, sangria + 1);
+    const n = cuantos(f);
+    lineas.push(`${"  ".repeat(nivel)}${f.titulo} [${detalle}]${n ? ` (${n})` : ""} #${f.id.slice(0, LARGO_CORTO)}`);
+    if (nivel + 1 < profundidad) for (const h of deF(f).sort(enOrden)) bajar(h, nivel + 1);
   };
   let modulo = "";
-  for (const r of (hijos.get(null) ?? []).sort(enOrden)) {
+  for (const r of (hijos.get(null) ?? []).filter(visible).sort(enOrden)) {
+    if (soloCarpetas && !esCarpeta(r)) continue;
     if (r.modulo !== modulo) lineas.push(`# ${(modulo = r.modulo)}`);
     bajar(r, 0);
   }
   return lineas;
+}
+
+// ---------- Ids cortos (paso 129) ----------
+// Un id completo (36 caracteres) pesa más que el título en la mitad de las líneas. Con 8 basta para distinguir
+// tus nodos, y si alguna vez dos empiezan igual, la herramienta responde con las opciones.
+export const LARGO_CORTO = 8;
+const ES_CORTO = /^#?[0-9a-f]{6,31}$/i; // un pedazo del comienzo de un id; una fecha (AAAA-MM-DD) o un id completo no calzan
+const ES_CLAVE_DE_ID = (k: string) => k === "id" || k === "ids" || k === "desde" || k.endsWith("_id");
+
+/**
+ * Recorre los argumentos de una herramienta y cambia cada id corto por el completo (en id, ids, desde y
+ * cualquier *_id, también dentro de listas como conectar_a). Así ninguna herramienta tiene que saberlo.
+ */
+export async function completarIds(args: unknown, repo: Repositorio): Promise<unknown> {
+  if (Array.isArray(args)) return Promise.all(args.map((a) => completarIds(a, repo)));
+  if (!args || typeof args !== "object") return args;
+  const salida: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(args)) {
+    const completar = async (x: unknown) => {
+      if (typeof x !== "string" || !ES_CORTO.test(x)) return x;
+      const prefijo = x.replace("#", "").toLowerCase();
+      const encontrados = await repo.idsQueEmpiezanCon(prefijo);
+      if (encontrados.length === 1) return encontrados[0];
+      throw new ErrorHerramienta(encontrados.length
+        ? `El id corto #${prefijo} calza con varios nodos: ${encontrados.join(", ")}. Usa más caracteres.`
+        : `No existe ningún nodo cuyo id empiece con #${prefijo}.`);
+    };
+    salida[k] = !ES_CLAVE_DE_ID(k) ? await completarIds(v, repo)
+      : Array.isArray(v) ? await Promise.all(v.map(completar))
+      : await completar(v);
+  }
+  return salida;
 }
 
 type Grupo = { grupo: string; cantidad: number; suma: number };
@@ -284,16 +332,26 @@ export const HERRAMIENTAS: Herramienta[] = [
   {
     name: "ver_arbol",
     description:
-      "Muestra todo como un árbol (área > tópico > proyecto > tarea), agrupado por módulo y con el id de cada nodo. " +
-      "Úsala primero para orientarte. Con 'desde' muestra solo lo que está dentro de ese nodo.",
+      "Muestra el árbol (área > tópico/ramo > proyecto > tarea), agrupado por módulo. Úsala primero para orientarte. " +
+      "Sin 'desde' muestra solo las carpetas, 2 niveles, cada una con cuántas cosas tiene adentro (N) y su id corto (#…). " +
+      "Con 'desde' (id de una carpeta) muestra todo lo que hay dentro, también tareas y notas.",
     inputSchema: {
       type: "object",
       properties: {
-        desde: { ...texto, description: "id de un nodo, ej. un área" },
+        desde: { ...texto, description: "id (o id corto) de una carpeta, ej. un área o un proyecto" },
+        profundidad: { type: "integer", minimum: 1, description: "Cuántos niveles mostrar. Por defecto 2, o 3 con 'desde'" },
         con_hechos: { type: "boolean", default: false, description: "Incluir lo que ya está Hecho" },
       },
     },
-    ejecutar: async (repo, a) => dibujarArbol(await repo.arbol(a.desde), a.con_hechos ?? false),
+    ejecutar: async (repo, a) => {
+      const [filas, tipos] = await Promise.all([repo.arbol(a.desde), repo.listarTipos()]);
+      return dibujarArbol(filas, {
+        conHechos: a.con_hechos ?? false,
+        profundidad: a.profundidad ?? (a.desde ? 3 : 2),
+        soloCarpetas: !a.desde,
+        carpetas: new Set(tipos.filter((t) => t.nivel != null).map((t) => t.clave)),
+      });
+    },
   },
   {
     name: "buscar_nodos",
@@ -584,8 +642,10 @@ export async function procesar(msg: Peticion, repo: Repositorio): Promise<object
         capabilities: { tools: { listChanged: false } },
         serverInfo: { name: "centro-de-datos", version: "0.1.0" },
         instructions:
-          "Centro de datos personal en forma de grafo. Usa ver_arbol para orientarte, busca antes de crear " +
-          "para no duplicar, y conecta cada tarea a su proyecto o área. Si pide el cierre del día, usa cierre_del_dia.",
+          "Centro de datos personal en forma de grafo. Usa ver_arbol para orientarte (solo carpetas; entra con 'desde'), " +
+          "busca antes de crear para no duplicar, y guarda todo dentro de algo: conecta cada cosa a su proyecto, ramo o " +
+          "área (si no sabes dónde va, al área Bandeja, y dilo). Los ids se pueden dar cortos (#8 caracteres). " +
+          "Si pide el cierre del día, usa cierre_del_dia.",
       });
     }
     case "ping":
@@ -598,7 +658,7 @@ export async function procesar(msg: Peticion, repo: Repositorio): Promise<object
       const h = HERRAMIENTAS.find((x) => x.name === msg.params?.name);
       if (!h) return error(msg.id, -32602, `Herramienta desconocida: ${msg.params?.name}`);
       try {
-        const resultado = await h.ejecutar(repo, msg.params?.arguments ?? {});
+        const resultado = await h.ejecutar(repo, await completarIds(msg.params?.arguments ?? {}, repo));
         return respuesta(msg.id, {
           content: [{ type: "text", text: JSON.stringify(resultado, null, 2) }],
           structuredContent: { resultado },

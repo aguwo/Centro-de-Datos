@@ -2,7 +2,7 @@
 // Ejecutar: node --test tests/servidor.test.ts   (Node 22.18 o superior)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { atenderPost, dibujarArbol, resumirRegistros, revisarProps, type Nodo, type Registro, type Repositorio } from "../supabase/functions/mcp/servidor.ts";
+import { atenderPost, completarIds, dibujarArbol, resumirRegistros, revisarProps, type Nodo, type Registro, type Repositorio } from "../supabase/functions/mcp/servidor.ts";
 
 function repoFalso(): Repositorio & { nodos: Nodo[]; conexiones: string[]; anotados: Registro[] } {
   const nodos: Nodo[] = [];
@@ -48,6 +48,9 @@ function repoFalso(): Repositorio & { nodos: Nodo[]; conexiones: string[]; anota
           { clave: "minutos", nombre: "Minutos", tipo: "numero" },
         ],
       }];
+    },
+    async idsQueEmpiezanCon(prefijo) {
+      return nodos.map((n) => n.id).filter((id) => id.startsWith(prefijo)).slice(0, 2);
     },
     async tipoDeNodo(id) {
       return nodos.find((n) => n.id === id)?.tipo ?? null;
@@ -143,7 +146,7 @@ test("JSON inválido da 400", async () => {
   assert.equal(res.status, 400);
 });
 
-test("dibujarArbol agrupa por módulo, ordena, sangra y salta lo Hecho", () => {
+test("dibujarArbol agrupa por módulo, ordena, sangra, cuenta y salta lo Hecho", () => {
   const fila = (id: string, titulo: string, tipo: string, modulo: string, orden: number, padre_id: string | null, estado?: string) =>
     ({ id, titulo, tipo, modulo, orden, padre_id, estado });
   const filas = [
@@ -152,18 +155,46 @@ test("dibujarArbol agrupa por módulo, ordena, sangra y salta lo Hecho", () => {
     fila("x1", "Arroz", "alimento", "Dieta", 41, null),
     fila("p1", "Proyecto BD", "proyecto", "Productividad", 13, "a1", "En curso"),
     fila("t1", "Diseñar MER", "tarea", "Productividad", 14, "p1", "Por hacer"),
+    fila("v1", "Tema vacío", "topico", "General", 2, "a1"),
   ];
   assert.deepEqual(dibujarArbol(filas), [
     "# General",
-    "Universidad [area] a1",
-    "  Proyecto BD [proyecto, En curso] p1",
-    "    Diseñar MER [tarea, Por hacer] t1",
+    "Universidad [area] (3) #a1",
+    "  Tema vacío [topico] #v1",
+    "  Proyecto BD [proyecto, En curso] (1) #p1",
+    "    Diseñar MER [tarea, Por hacer] #t1",
     "# Dieta",
-    "Arroz [alimento] x1",
+    "Arroz [alimento] #x1",
   ]);
-  assert.equal(dibujarArbol(filas, true).length, 7);
+  assert.equal(dibujarArbol(filas, { conHechos: true }).length, 8);
   // Si el padre no vino (ej. se pidió "desde" un nodo), ese nodo es la raíz.
-  assert.deepEqual(dibujarArbol(filas.filter((f) => f.id !== "a1")).slice(0, 2), ["# Productividad", "Proyecto BD [proyecto, En curso] p1"]);
+  assert.deepEqual(dibujarArbol(filas.filter((f) => f.id !== "a1")).slice(0, 2), ["# General", "Tema vacío [topico] #v1"]);
+  // Paso 129: solo carpetas (un tipo carpeta vacío también cuenta) y hasta cierta profundidad.
+  assert.deepEqual(dibujarArbol(filas, { soloCarpetas: true, carpetas: new Set(["topico"]) }), [
+    "# General",
+    "Universidad [area] (3) #a1",
+    "  Tema vacío [topico] #v1",
+    "  Proyecto BD [proyecto, En curso] (1) #p1",
+  ]);
+  assert.deepEqual(dibujarArbol(filas, { soloCarpetas: true, profundidad: 1 }), ["# General", "Universidad [area] (3) #a1"]);
+});
+
+test("completarIds cambia ids cortos por completos, también dentro de listas, y avisa si no calzan", async () => {
+  const repo = repoFalso();
+  repo.nodos.push({ id: "aaaa1111-0000-4000-8000-000000000001", tipo: "area", titulo: "A" },
+                  { id: "bbbb2222-0000-4000-8000-000000000002", tipo: "proyecto", titulo: "B" },
+                  { id: "bbbb2299-0000-4000-8000-000000000003", tipo: "proyecto", titulo: "C" });
+  const r: any = await completarIds({
+    id: "#aaaa1111", ids: ["bbbb2222"], titulo: "aaaa1111", desde: "2026-11-01",
+    conectar_a: [{ relacion: "pertenece_a", destino_id: "#bbbb2299" }],
+  }, repo);
+  assert.equal(r.id, "aaaa1111-0000-4000-8000-000000000001");
+  assert.deepEqual(r.ids, ["bbbb2222-0000-4000-8000-000000000002"]);
+  assert.equal(r.titulo, "aaaa1111"); // un título nunca se toca
+  assert.equal(r.desde, "2026-11-01"); // una fecha no parece id
+  assert.equal(r.conectar_a[0].destino_id, "bbbb2299-0000-4000-8000-000000000003");
+  await assert.rejects(completarIds({ id: "#bbbb22" }, repo), /varios nodos/);
+  await assert.rejects(completarIds({ id: "#cccccc" }, repo), /No existe/);
 });
 
 test("anotar_registro guarda y rechaza clases inventadas", async () => {
